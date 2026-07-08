@@ -1,0 +1,21 @@
+# BIShare Flutter — analyzer configuration.
+# Strict type-safety (catches real bugs) + flutter_lints defaults. Generated code excluded.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    invalid_annotation_target: ignore # freezed/json_serializable annotation false positives
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.config.dart"
+    - "lib/src/rust/**" # flutter_rust_bridge generated bindings
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    avoid_print: true

@@ -1,0 +1,7 @@
+/* iOS permission prompts — localize the values (keep the keys).
+   'en' is the source; translate the others. */
+
+"NSCameraUsageDescription" = "BIShare uses the camera to scan QR codes for transfers, share links and rooms.";
+"NSContactsUsageDescription" = "BIShare lets you pick a contact to share it as a vCard with nearby devices.";
+"NSLocalNetworkUsageDescription" = "BIShare discovers and transfers files with nearby devices on your local network.";
+"NSMicrophoneUsageDescription" = "BIShare records a short voice message so you can send it to nearby devices.";

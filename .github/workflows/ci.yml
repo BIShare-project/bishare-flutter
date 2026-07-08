@@ -1,0 +1,41 @@
+name: flutter-ci
+
+on: [push, pull_request]
+
+jobs:
+  # The cross-platform parity gate: the shared bishare-protocol crypto/binary/wire
+  # vectors must be green before any Dart runs. Mark this a required status check.
+  rust-vectors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: dtolnay/rust-toolchain@stable
+      - name: 183 cross-platform crypto/binary/model/util vectors
+        run: cargo test --release --manifest-path bishare-protocol/rust/Cargo.toml
+      - name: FFI crate builds + golden generator runs
+        run: |
+          cargo build --release --manifest-path bishare-flutter/rust/Cargo.toml
+          cargo run --example golden --manifest-path bishare-flutter/rust/Cargo.toml
+
+  flutter:
+    needs: rust-vectors # Dart is skipped if the vectors are red
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: bishare-flutter
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter analyze
+      - run: flutter test
+      # FFI cross-vector parity (loads the cargokit-built lib), byte-exact vs golden.
+      - run: flutter test integration_test/rust_vectors_test.dart -d macos
+      # Throughput gate (≥40 MB/s encrypted) is a RELEASE measurement — `flutter
+      # test` only builds debug (unoptimised AES). Measured via the app's bench hook:
+      #   BISHARE_BENCH=1 flutter run --release -d macos   → "BISHARE_BENCH RESULT: N MB/s"
+      # Verified locally: 57.9 MB/s (single-isolate loopback; cross-device is faster).

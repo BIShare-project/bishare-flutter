@@ -1,0 +1,5 @@
+# Duplicated from rust/.cargo/config.toml so the flags are found regardless of the
+# CWD cargokit runs cargo from (cargo searches for config.toml up from the CWD, not
+# from the --manifest-path). Enables ARMv8 hardware AES + PMULL (aes-gcm ~11× faster).
+[target.'cfg(target_arch = "aarch64")']
+rustflags = ["--cfg", "aes_armv8", "--cfg", "polyval_armv8"]

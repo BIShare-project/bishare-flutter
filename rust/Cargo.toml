@@ -1,0 +1,41 @@
+[package]
+name = "bishare_ffi"
+version = "0.1.0"
+edition = "2021"
+description = "flutter_rust_bridge entrypoint that re-uses the bishare-protocol crate"
+
+[lib]
+# cdylib (Android/Linux/Windows), staticlib (iOS/macOS), lib (host tests + FRB codegen).
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+flutter_rust_bridge = "=2.12.0"
+# Re-use the existing, test-vector-covered protocol crate (crypto/binary/utils).
+bishare-protocol = { path = "../../bishare-protocol/rust" }
+
+# QUIC transport (Flutter↔Flutter, cross-platform). rustls-ring is chosen over
+# aws-lc-rs because `ring` cross-compiles cleanly for iOS/Android/Windows/Linux
+# via cargokit; aws-lc-sys' C/cmake build is fragile on those targets.
+quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls-ring", "log"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
+rcgen = { version = "0.13", default-features = false, features = ["ring", "pem"] }
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "sync", "time", "fs"] }
+
+# cargokit builds the FFI crate matching the Flutter build mode, so a debug app
+# would otherwise get an UNOPTIMISED AES-GCM (~2 MB/s). Optimise dependencies even
+# in debug builds so encrypted transfers clear the ≥40 MB/s gate regardless of mode.
+[profile.dev.package."*"]
+opt-level = 3
+
+# Release builds ship inside the app bundle, so trim the FFI lib's footprint.
+# opt-level stays at 3 (NOT "z"/"s") to preserve AES-GCM throughput above the
+# ≥40 MB/s transfer gate — the QUIC/crypto hot path must not regress for size.
+# `strip` (drop symbol tables) + `lto` (cross-crate inlining) shrink the binary,
+# and lto can also speed up the hot path. `panic = "abort"` is deliberately NOT
+# set: flutter_rust_bridge uses catch_unwind to turn Rust panics into Dart
+# exceptions, and abort would crash the app instead.
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
