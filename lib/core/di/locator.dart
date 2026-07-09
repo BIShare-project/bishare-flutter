@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../storage/save_folder_channel.dart';
+import '../storage/android_downloads_channel.dart';
 import '../../features/clipboard/data/clipboard_service.dart';
 import '../../features/discovery/data/discovery_service.dart';
 import '../../features/favorites/data/favorites_repository.dart';
@@ -106,7 +107,8 @@ Future<void> setupLocator() async {
 ///   the app Documents dir. The Settings "Save location" row changes this.
 /// * **Windows / Linux**: the plain custom path (applied by [SettingsCubit]) or
 ///   the app Documents dir.
-/// * **iOS / Android**: the app Documents dir (iOS surfaces it in the Files app).
+/// * **iOS**: the app Documents dir (iOS surfaces it in the Files app).
+/// * **Android**: public Downloads directory (visible in Files app + Gallery).
 ///
 /// Always kept in a `BIShare/` subfolder for the default location so it doesn't
 /// clutter Documents; a user-picked folder is used directly.
@@ -118,6 +120,18 @@ Future<Directory> _resolveSaveDirectory() async {
       if (dir.existsSync()) return dir;
     }
   }
+  if (Platform.isAndroid) {
+    // Android: use public Downloads (visible in Files app + Gallery)
+    // Note: Requires scoped storage (Android 10+), Downloads is always writable
+    final downloadsPath = await AndroidDownloadsPath.getPublicDownloads();
+    if (downloadsPath != null && downloadsPath.isNotEmpty) {
+      final dir = Directory('$downloadsPath${Platform.pathSeparator}BIShare');
+      if (!dir.existsSync()) dir.createSync(recursive: true);
+      return dir;
+    }
+    // Fallback to app Documents if channel unavailable
+  }
+  // iOS, macOS (default), Windows, Linux
   final base = await getApplicationDocumentsDirectory();
   final dir = Directory('${base.path}${Platform.pathSeparator}BIShare');
   if (!dir.existsSync()) dir.createSync(recursive: true);

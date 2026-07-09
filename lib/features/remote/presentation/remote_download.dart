@@ -14,7 +14,10 @@ import '../data/cloud_transfer_service.dart';
 Future<void> showRemoteDownload(
   BuildContext context, {
   required String label,
-  required Future<ReceivedFile> Function(ProgressCb onProgress, CancelToken cancel)
+  required Future<ReceivedFile> Function(
+    ProgressCb onProgress,
+    CancelToken cancel,
+  )
   run,
 }) async {
   final messenger = context; // for the post-close toast
@@ -26,7 +29,11 @@ Future<void> showRemoteDownload(
   if (result == null || !messenger.mounted) return;
   switch (result) {
     case _DownloadOk(:final file):
-      toast(messenger, 'remote.saved_file'.tr(namedArgs: {'name': file.fileName}), type: ToastType.success);
+      toast(
+        messenger,
+        'remote.saved_file'.tr(namedArgs: {'name': file.fileName}),
+        type: ToastType.success,
+      );
     case _DownloadFailed(:final message):
       toast(messenger, message, type: ToastType.error);
     case _DownloadCancelled():
@@ -115,7 +122,9 @@ class _DownloadModalState extends State<_DownloadModal> {
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
     final fraction = _total > 0 ? _received / _total : null;
-    final pct = fraction != null ? (fraction * 100).clamp(0, 100).toInt() : null;
+    final pct = fraction != null
+        ? (fraction * 100).clamp(0, 100).toInt()
+        : null;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
       child: Column(
@@ -149,7 +158,11 @@ class _DownloadModalState extends State<_DownloadModal> {
                       ),
                     )
                   else
-                    AppSvgIcon(AppIcons.downloadFile, size: 22, color: cs.primary),
+                    AppSvgIcon(
+                      AppIcons.downloadFile,
+                      size: 22,
+                      color: cs.primary,
+                    ),
                 ],
               ),
             ),

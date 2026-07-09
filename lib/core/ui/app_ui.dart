@@ -10,6 +10,8 @@
 /// - [AppBadge]        small tinted tag (e.g. "TCP")
 /// - [AppStatusPill]   dot + label pill (e.g. "Online")
 /// - [AppIconButton]   ghost icon button with an optional count badge
+/// - [AppButton]       premium button with variants (primary/secondary/outline/ghost/destructive)
+/// - [AppIconOnlyButton] icon-only button with consistent sizing
 /// - [AppEmptyState]   centered icon + title + message
 /// - [showAppSheet] / [AppSheetAction]  frosted-glass modal sheet (no dialogs)
 library;
@@ -17,6 +19,7 @@ library;
 export 'app_avatar.dart';
 export 'app_badge.dart';
 export 'app_bottom_nav.dart';
+export 'app_button.dart';
 export 'app_card.dart';
 export 'app_empty_state.dart';
 export 'app_format.dart';

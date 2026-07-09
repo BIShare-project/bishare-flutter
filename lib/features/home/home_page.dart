@@ -184,13 +184,13 @@ class HomePage extends StatelessWidget {
               onSubmitted: (_) => submit(),
             ),
             const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: ShadButton(
-                onPressed: submit,
-                leading: const AppSvgIcon(AppIcons.send, size: 18),
-                child: Text('home.send'.tr()),
-              ),
+            AppButton(
+              label: 'home.send'.tr(),
+              icon: AppIcons.send,
+              variant: AppButtonVariant.primary,
+              size: AppButtonSize.medium,
+              fullWidth: true,
+              onPressed: submit,
             ),
           ],
         );

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,11 +21,23 @@ typedef GalleryArgs = ({List<TransferRecord> images, int startIndex});
 final GoRouter appRouter = GoRouter(
   // Gate first-run: show onboarding until the user finishes it.
   redirect: (context, state) {
-    final done = getIt<SharedPreferences>().getBool(kOnboardingDone) ?? false;
-    final atOnboarding = state.matchedLocation == '/onboarding';
-    if (!done && !atOnboarding) return '/onboarding';
-    if (done && atOnboarding) return '/';
-    return null;
+    try {
+      final done = getIt<SharedPreferences>().getBool(kOnboardingDone) ?? false;
+      final atOnboarding = state.matchedLocation == '/onboarding';
+      if (!done && !atOnboarding) return '/onboarding';
+      if (done && atOnboarding) return '/';
+      return null;
+    } catch (e) {
+      // If there's an error during redirect, don't crash
+      debugPrint('Router redirect error: $e');
+      return null;
+    }
+  },
+  errorBuilder: (context, state) {
+    // If no route matches, just show the main shell - deep links are handled
+    // separately by DeepLinkService, not by GoRouter navigation
+    debugPrint('No route found for: ${state.uri} - staying on main shell');
+    return const MainShell();
   },
   routes: [
     GoRoute(

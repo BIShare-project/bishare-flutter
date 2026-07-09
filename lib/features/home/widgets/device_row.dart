@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-
 import '../../../core/storage/app_database.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../discovery/domain/discovered_device.dart';
@@ -127,12 +126,12 @@ class DeviceRow extends StatelessWidget {
               onSubmitted: (_) => submit(),
             ),
             const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: ShadButton(
-                onPressed: submit,
-                child: Text('home.send_request'.tr()),
-              ),
+            AppButton(
+              label: 'home.send_request'.tr(),
+              variant: AppButtonVariant.primary,
+              size: AppButtonSize.medium,
+              fullWidth: true,
+              onPressed: submit,
             ),
           ],
         );
@@ -235,9 +234,12 @@ class DeviceRow extends StatelessWidget {
               onSubmitted: (_) => submit(),
             ),
             const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: ShadButton(onPressed: submit, child: Text('home.save'.tr())),
+            AppButton(
+              label: 'home.save'.tr(),
+              variant: AppButtonVariant.primary,
+              size: AppButtonSize.medium,
+              fullWidth: true,
+              onPressed: submit,
             ),
           ],
         );

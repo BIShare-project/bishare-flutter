@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
+import 'package:flutter/foundation.dart';
 
 import 'deep_link.dart';
 
@@ -30,11 +31,25 @@ class DeepLinkService {
   Future<void> start() async {
     if (_started) return;
     _started = true;
-    _sub = _appLinks.uriLinkStream.listen((uri) => _dispatch(uri.toString()));
+
+    _sub = _appLinks.uriLinkStream.listen(
+      (uri) {
+        debugPrint('Deep link received: $uri');
+        _dispatch(uri.toString());
+      },
+      onError: (Object error) {
+        debugPrint('Deep link stream error: $error');
+      },
+    );
+
     try {
       final initial = await _appLinks.getInitialLink();
-      if (initial != null) _dispatch(initial.toString());
-    } on Object {
+      if (initial != null) {
+        debugPrint('Initial deep link: $initial');
+        _dispatch(initial.toString());
+      }
+    } on Object catch (e) {
+      debugPrint('Error getting initial link: $e');
       // no launch link
     }
   }

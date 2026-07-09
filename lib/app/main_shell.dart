@@ -53,7 +53,12 @@ class _MainShellState extends State<MainShell> {
     super.initState();
     // Subscribe BEFORE start() so the cold-start launch link is delivered.
     final links = getIt<DeepLinkService>();
-    _linkSub = links.actions.listen(_dispatch);
+    _linkSub = links.actions.listen((action) {
+      // Ensure the widget is fully built before handling deep links
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _dispatch(action);
+      });
+    });
     links.start();
     _initShareIntent();
   }
@@ -88,37 +93,47 @@ class _MainShellState extends State<MainShell> {
   /// Route a parsed link/QR payload to the right action.
   void _dispatch(DeepLinkAction action) {
     if (!mounted) return;
-    final cloud = getIt<CloudTransferService>();
-    switch (action) {
-      case CloudTransferLink(:final code):
-        showRemoteDownload(
-          context,
-          label: 'nav.transfer_code'.tr(namedArgs: {'code': code}),
-          run: (p, c) => cloud.downloadTransfer(code, onProgress: p, cancel: c),
-        );
-      case CloudShareLink(:final token):
-        showRemoteDownload(
-          context,
-          label: 'nav.shared_file'.tr(),
-          run: (p, c) => cloud.downloadShare(token, onProgress: p, cancel: c),
-        );
-      case LocalInstantLink(:final url):
-        showRemoteDownload(
-          context,
-          label: url.host,
-          run: (p, c) => cloud.downloadDirect(url, onProgress: p, cancel: c),
-        );
-      case StreamReceiveLink(:final code):
-        showRemoteDownload(
-          context,
-          label: 'nav.live_transfer'.tr(),
-          run: (p, c) =>
-              getIt<StreamRelayService>().receive(code, onProgress: p, cancel: c),
-        );
-      case OpenExternalLink(:final url):
-        launchUrl(url, mode: LaunchMode.externalApplication);
-      case RescanSharedLink():
-        _select(0); // jump to the Share tab
+
+    try {
+      final cloud = getIt<CloudTransferService>();
+      switch (action) {
+        case CloudTransferLink(:final code):
+          showRemoteDownload(
+            context,
+            label: 'nav.transfer_code'.tr(namedArgs: {'code': code}),
+            run: (p, c) => cloud.downloadTransfer(code, onProgress: p, cancel: c),
+          );
+        case CloudShareLink(:final token):
+          showRemoteDownload(
+            context,
+            label: 'nav.shared_file'.tr(),
+            run: (p, c) => cloud.downloadShare(token, onProgress: p, cancel: c),
+          );
+        case LocalInstantLink(:final url):
+          showRemoteDownload(
+            context,
+            label: url.host,
+            run: (p, c) => cloud.downloadDirect(url, onProgress: p, cancel: c),
+          );
+        case StreamReceiveLink(:final code):
+          showRemoteDownload(
+            context,
+            label: 'nav.live_transfer'.tr(),
+            run: (p, c) =>
+                getIt<StreamRelayService>().receive(code, onProgress: p, cancel: c),
+          );
+        case OpenExternalLink(:final url):
+          launchUrl(url, mode: LaunchMode.externalApplication);
+        case RescanSharedLink():
+          _select(0); // jump to the Share tab
+      }
+    } catch (e) {
+      // Log error but don't crash the app
+      debugPrint('Error handling deep link: $e');
+      // Optionally show error to user
+      if (mounted) {
+        toast(context, 'nav.error_processing_link'.tr());
+      }
     }
   }
 

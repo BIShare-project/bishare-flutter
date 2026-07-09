@@ -1,11 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-
 import '../../../core/ui/app_ui.dart';
 
 class MyDeviceCard extends StatelessWidget {
-  const MyDeviceCard({super.key, 
+  const MyDeviceCard({
+    super.key,
     required this.alias,
     required this.deviceType,
     this.hidden = false,
@@ -20,8 +20,7 @@ class MyDeviceCard extends StatelessWidget {
     return AppCard(
       gradient: true,
       accent: hidden ? cs.mutedForeground : null,
-      margin: const EdgeInsets.fromLTRB(14, 6, 14, 4),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       child: Row(
         children: [
           AppAvatar(icon: iconForDevice(deviceType), size: 50, online: !hidden),

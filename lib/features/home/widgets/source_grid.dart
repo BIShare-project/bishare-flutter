@@ -120,12 +120,12 @@ Future<void> _textNote(BuildContext context, TrayCubit tray) async {
           placeholder: Text('home.type_something'.tr()),
         ),
         const SizedBox(height: 14),
-        SizedBox(
-          width: double.infinity,
-          child: ShadButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: Text('home.add'.tr()),
-          ),
+        AppButton(
+          label: 'home.add'.tr(),
+          variant: AppButtonVariant.primary,
+          size: AppButtonSize.medium,
+          fullWidth: true,
+          onPressed: () => Navigator.pop(ctx, controller.text),
         ),
       ],
     ),

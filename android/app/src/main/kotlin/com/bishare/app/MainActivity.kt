@@ -3,6 +3,7 @@ package com.bishare.app
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.OpenableColumns
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -22,18 +23,34 @@ import java.io.File
  * (MainActivity is launchMode=singleTop, so resumes reuse this instance).
  */
 class MainActivity : FlutterActivity() {
-    private val channelName = "app.bishare/share"
-    private var channel: MethodChannel? = null
+    private val shareChannelName = "app.bishare/share"
+    private val downloadsChannelName = "app.bishare/android_downloads"
+    private var shareChannel: MethodChannel? = null
+    private var downloadsChannel: MethodChannel? = null
     private var pending: List<String>? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
-        channel!!.setMethodCallHandler { call, result ->
+        // Share channel (existing)
+        shareChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, shareChannelName)
+        shareChannel!!.setMethodCallHandler { call, result ->
             when (call.method) {
                 "getInitialShare" -> {
                     result.success(pending)
                     pending = null
+                }
+                else -> result.notImplemented()
+            }
+        }
+        // Android Downloads channel: get public Downloads directory
+        downloadsChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, downloadsChannelName)
+        downloadsChannel!!.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getPublicDownloads" -> {
+                    // Return public Downloads path (e.g. /storage/emulated/0/Download)
+                    // Works on all Android versions, no permissions needed on Android 10+
+                    val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    result.success(downloadsDir.absolutePath)
                 }
                 else -> result.notImplemented()
             }
@@ -67,7 +84,7 @@ class MainActivity : FlutterActivity() {
         if (initial) {
             pending = paths
         } else {
-            channel?.invokeMethod("onShare", paths)
+            shareChannel?.invokeMethod("onShare", paths)
         }
     }
 
