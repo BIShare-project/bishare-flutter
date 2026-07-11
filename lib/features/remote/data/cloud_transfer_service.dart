@@ -183,8 +183,10 @@ class CloudTransferService {
     return _record(target, res.headers.value(Headers.contentTypeHeader), 'Nearby device');
   }
 
-  /// Upload [file] as a 24h one-time cloud transfer (raw body + headers), the
-  /// off-LAN "web share" path. Returns the shareable code/URL.
+  /// Upload [file] as a 24h one-time cloud transfer, the off-LAN "web share"
+  /// path. Prefers the presigned direct-to-R2 flow (no Worker body-size cap, so
+  /// files >200MB work); falls back to the legacy raw-body upload when the
+  /// server doesn't have the endpoint yet. Returns the shareable code/URL.
   Future<CloudUploadResult> uploadTransfer({
     required File file,
     required String fileName,
@@ -195,6 +197,70 @@ class CloudTransferService {
     CancelToken? cancel,
   }) async {
     final length = await file.length();
+
+    Map<String, dynamic>? meta;
+    try {
+      final res = await _dio.postUri<Map<String, dynamic>>(
+        _api(CloudConfig.transferUploadUrl),
+        data: {
+          'name': fileName,
+          'size': length,
+          'mime_type': mimeType,
+          'sender_alias': senderAlias,
+          'one_time': oneTime,
+        },
+        cancelToken: cancel,
+      );
+      meta = res.data;
+    } on DioException catch (e) {
+      // 404/405 = older server without /upload-url — use the legacy path.
+      final status = e.response?.statusCode;
+      if (status != 404 && status != 405) rethrow;
+    }
+
+    final uploadUrl = meta?['uploadUrl'] as String?;
+    if (meta == null || uploadUrl == null) {
+      return _uploadTransferLegacy(
+        file: file,
+        fileName: fileName,
+        mimeType: mimeType,
+        senderAlias: senderAlias,
+        length: length,
+        oneTime: oneTime,
+        onProgress: onProgress,
+        cancel: cancel,
+      );
+    }
+
+    // Direct PUT to R2. Content-Type must match the presigned signature.
+    await _dio.put<void>(
+      uploadUrl,
+      data: file.openRead(),
+      options: Options(
+        headers: {
+          Headers.contentLengthHeader: length,
+          Headers.contentTypeHeader:
+              (meta['uploadHeaders'] as Map<String, dynamic>?)?['Content-Type'] as String? ?? mimeType,
+        },
+      ),
+      onSendProgress: onProgress,
+      cancelToken: cancel,
+    );
+    return _uploadResult(meta, oneTime);
+  }
+
+  /// Legacy raw-body upload through the Worker (caps out at the Cloudflare
+  /// edge body limit; kept for servers without the presigned endpoint).
+  Future<CloudUploadResult> _uploadTransferLegacy({
+    required File file,
+    required String fileName,
+    required String mimeType,
+    required String senderAlias,
+    required int length,
+    required bool oneTime,
+    ProgressCb? onProgress,
+    CancelToken? cancel,
+  }) async {
     final res = await _dio.postUri<Map<String, dynamic>>(
       _api(CloudConfig.transferUpload),
       data: file.openRead(),
@@ -211,18 +277,22 @@ class CloudTransferService {
       onSendProgress: onProgress,
       cancelToken: cancel,
     );
-    // Upload returns a flat body: {success, code, rawCode, expiresAt, deleteToken}.
-    final body = res.data ?? const {};
-    final code = body['code'] as String?;
-    final rawCode = body['rawCode'] as String?;
+    return _uploadResult(res.data, oneTime);
+  }
+
+  /// Both upload flows return the same flat body:
+  /// {success, code, rawCode, expiresAt, deleteToken, ...}.
+  CloudUploadResult _uploadResult(Map<String, dynamic>? body, bool oneTime) {
+    final code = body?['code'] as String?;
+    final rawCode = body?['rawCode'] as String?;
     if (code == null || rawCode == null) {
       throw const CloudDownloadException('Upload failed. Please try again.');
     }
     return CloudUploadResult(
       code: code,
       rawCode: rawCode,
-      deleteToken: (body['deleteToken'] as String?) ?? '',
-      expiresAt: DateTime.tryParse(body['expiresAt'] as String? ?? ''),
+      deleteToken: (body?['deleteToken'] as String?) ?? '',
+      expiresAt: DateTime.tryParse(body?['expiresAt'] as String? ?? ''),
       oneTime: oneTime,
     );
   }

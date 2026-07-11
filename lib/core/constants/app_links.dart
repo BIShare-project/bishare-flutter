@@ -26,10 +26,9 @@ class AppLinks {
   static const String playStore =
       'https://play.google.com/store/apps/details?id=$androidPackage';
 
-  /// App Store listing. No per-store iOS listing exists yet, so this falls back
-  /// to the website; swap in `https://apps.apple.com/app/id<APP_ID>` on release.
-  // TODO(store-listing): point at the real App Store URL once published.
-  static const String appStore = website;
+  /// App Store listing (iOS + macOS).
+  static const String appStore =
+      'https://apps.apple.com/us/app/bishare-file-transfer/id6760924092';
 
   /// A pre-filled `mailto:` for the support inbox.
   static Uri get supportMailto =>
@@ -41,6 +40,8 @@ class AppLinks {
   /// to the website until per-store listings exist.
   static String get rateUrl => Platform.isAndroid
       ? 'https://play.google.com/store/apps/details?id=$androidPackage'
+      : (Platform.isIOS || Platform.isMacOS)
+      ? appStore
       : website;
 
   /// The message shared by "Share BIShare".

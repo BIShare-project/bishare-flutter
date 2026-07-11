@@ -32,6 +32,9 @@ class CloudConfig {
   // ---- REST paths (relative to [apiBase]) ----
   /// 24h one-time cloud transfer upload (raw body + `X-File-Name` headers).
   static const String transferUpload = '/api/v1/transfer/upload';
+
+  /// Presigned direct-to-R2 upload (bypasses the Worker body cap; >200MB ok).
+  static const String transferUploadUrl = '/api/v1/transfer/upload-url';
   static String transferDownload(String code) => '/api/v1/transfer/download/$code';
   static String transferStatus(String code) => '/api/v1/transfer/status/$code';
   static String transferDelete(String code) => '/api/v1/transfer/delete/$code';
