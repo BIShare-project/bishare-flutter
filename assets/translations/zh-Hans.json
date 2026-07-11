@@ -4,6 +4,7 @@
       "one": "已添加 {} 个文件待发送",
       "other": "已添加 {} 个文件待发送"
     },
+    "error_processing_link": "处理链接时出错",
     "live_transfer": "实时传输",
     "shared_file": "共享文件",
     "tab_history": "历史记录",
@@ -35,6 +36,7 @@
     "hidden": "隐藏",
     "hidden_not_discoverable": "已隐藏 - 不可发现",
     "host_version": "{host} · v{version}",
+    "invite_device": "邀请设备",
     "looking_for_devices": "正在查找设备...",
     "message_optional": "消息（可选）",
     "nearby_devices": "附近设备",
@@ -120,11 +122,24 @@
     },
     "wants_to_send": "想要发送"
   },
+  "invite": {
+    "title": "邀请设备",
+    "subtitle": "在另一台设备上获取 BIShare",
+    "scan_hint": "用手机相机扫描此二维码即可下载 BIShare",
+    "app_store": "从 App Store 下载",
+    "google_play": "在 Google Play 上获取",
+    "share": "分享下载链接"
+  },
   "inbox": {
     "address_copied": "地址已复制",
     "all": "全部",
     "browser_access": "浏览器访问",
     "browser_access_subtitle": "通过网页浏览器访问您的文件",
+    "web_tab_lan": "局域网",
+    "web_tab_cloud": "云链接",
+    "web_cloud_hint": "上传文件即可获得一个有效期 24 小时的链接和二维码，随时随地都能用，无需连接同一网络。",
+    "web_cloud_pick": "选择文件",
+    "web_ios_note": "分享时请保持 BIShare 处于打开状态，应用退到后台后地址将失效。",
     "cannot_open": "无法打开：{message}",
     "clear_inbox": "清空收件箱",
     "could_not_save": "无法保存",
@@ -188,6 +203,78 @@
     },
     "yes": "是"
   },
+  "devices": {
+    "add_favorite": "添加到收藏",
+    "auto_accept_on": "已开启自动接收",
+    "days_ago": {
+      "one": "{} 天前",
+      "other": "{} 天前"
+    },
+    "device_name": "设备名称",
+    "device_removed": "已移除设备",
+    "devices_count": {
+      "one": "{} 台设备",
+      "other": "{} 台设备"
+    },
+    "empty_no_matches_message": "没有符合搜索条件的设备",
+    "empty_no_matches_title": "无匹配结果",
+    "empty_none_message": "你发现或与之传输过的设备会显示在这里",
+    "empty_none_title": "暂无设备",
+    "files_count": {
+      "one": "{} 个文件",
+      "other": "{} 个文件"
+    },
+    "hours_ago": {
+      "one": "{} 小时前",
+      "other": "{} 小时前"
+    },
+    "just_now": "刚刚",
+    "known": "已知设备",
+    "last_seen": "最后在线 {when}",
+    "last_transfer": "上次传输",
+    "minutes_ago": {
+      "one": "{} 分钟前",
+      "other": "{} 分钟前"
+    },
+    "no_transfers": "尚未与此设备传输过文件",
+    "online": "在线",
+    "online_now": "当前在线",
+    "remove_device": "忘记此设备",
+    "remove_favorite": "取消收藏",
+    "rename": "重命名",
+    "rename_device": "重命名设备",
+    "save": "保存",
+    "search_placeholder": "搜索设备…",
+    "see_all": "查看所有设备",
+    "settings_subtitle": "已知设备、在线状态和传输统计",
+    "sort_last_seen": "最后在线",
+    "sort_name": "名称",
+    "sort_online_first": "在线优先",
+    "stat_received": "已接收",
+    "stat_sent": "已发送",
+    "title": "设备",
+    "turn_on_auto_accept": "开启自动接收"
+  },
+  "clipboard": {
+    "clear_all": "清除历史记录",
+    "copied": "已复制到剪贴板",
+    "copy_failed": "无法复制此项",
+    "empty_message": "同步开启期间复制的文本和图片会显示在这里",
+    "empty_title": "暂无剪贴板内容",
+    "image_label": "图片",
+    "items_count": {
+      "one": "{} 项",
+      "other": "{} 项"
+    },
+    "row_subtitle": "{from} · {time}",
+    "save": "保存到文件",
+    "save_failed": "无法保存此项",
+    "saved": "已保存到接收的文件",
+    "sync_active": "正在与附近设备同步",
+    "sync_paused": "已暂停，未共享任何内容",
+    "title": "剪贴板",
+    "you": "你"
+  },
   "nearby": {
     "devices_nearby": {
       "one": "附近 {} 台设备 · 点击发送",
@@ -226,8 +313,14 @@
     "uploading_to_secure_link": "正在上传至安全链接..."
   },
   "room": {
+    "connecting_create_local": "正在创建本地房间",
+    "connecting_create_remote": "正在创建房间",
+    "connecting_finding": "正在查找房间",
     "downloading": "正在下载 {name}…",
     "enter_code_hint": "输入代码",
+    "error_create": "无法创建房间，请重试。",
+    "error_join": "无法加入房间。",
+    "error_not_found": "找不到该代码对应的房间。",
     "failed_to_add": "添加 {name} 失败：{error}",
     "files": "文件",
     "host": "主机",
@@ -264,6 +357,15 @@
     "auto_ask": "始终询问",
     "auto_favorites": "仅收藏",
     "choose_folder": "选择文件夹…",
+    "clipboard_cloud": "通过云同步",
+    "clipboard_cloud_soon": "即将推出，可跨不同网络同步",
+    "clipboard_cloud_subtitle": "在不同网络的设备之间中转剪贴板内容",
+    "clipboard_history": "剪贴板历史",
+    "clipboard_history_subtitle": "最近同步的内容",
+    "clipboard_images": "包含图片",
+    "clipboard_images_subtitle": "同步复制的图片和截图",
+    "clipboard_max_size": "图片大小上限",
+    "clipboard_mb": "{mb} MB",
     "clipboard_subtitle": "与附近 BIShare 设备共享复制的文本",
     "contact_support": "联系支持",
     "device_name": "设备名称",
@@ -272,6 +374,8 @@
     "enable": "启用",
     "help_support": "帮助与支持",
     "language": "语言",
+    "launch_at_login": "登录时启动",
+    "launch_at_login_subtitle": "登录后自动启动 BIShare",
     "media_quality": "媒体质量",
     "open_folder": "打开文件夹",
     "pin_hint": "数字 PIN 码",
@@ -289,6 +393,11 @@
     "save_default": "默认 (Documents/BIShare)",
     "save_location": "保存位置",
     "save_location_subtitle": "接收的文件将保存在此处。",
+    "browser_upload": "浏览器上传",
+    "browser_upload_subtitle": "允许网页浏览器向此设备发送文件",
+    "browser_upload_limit": "上传大小上限",
+    "browser_upload_unlimited": "无限制",
+    "browser_upload_gb": "{gb} GB",
     "send_accent": "发送强调色",
     "sending": "发送",
     "set_pin": "设置 PIN 码",
@@ -308,6 +417,9 @@
     "visible_subtitle": "关闭 = 隐藏，不可发现"
   },
   "notification": {
+    "clipboard_from": "已从 {sender} 复制",
+    "clipboard_image_from": "已从 {sender} 复制图片",
+    "clipboard_synced": "剪贴板已同步",
     "file_received": "文件已接收",
     "from": "{file} · 来自 {sender}"
   },
@@ -315,6 +427,7 @@
     "cancel": "取消",
     "copy": "复制",
     "delete": "删除",
+    "download": "下载",
     "link_copied": "链接已复制",
     "no_app_open": "没有应用可以打开此文件",
     "open": "打开",
@@ -352,5 +465,11 @@
     "slide4_title": "私密且安全",
     "slide5_body": "从同一网络的任意浏览器接收，或扫描二维码一键连接。",
     "slide5_title": "浏览器 & 二维码"
+  },
+  "tray": {
+    "pause": "暂停接收",
+    "quit": "退出",
+    "resume": "恢复接收",
+    "show": "显示 BIShare"
   }
 }

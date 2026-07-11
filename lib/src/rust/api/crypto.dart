@@ -51,6 +51,25 @@ Future<Uint8List?> decryptChunk({
   baseNonce: baseNonce,
 );
 
+/// Wrap a 32-byte content key under a KEK (v2.4 broadcast) → 60-byte envelope
+/// `nonce(12) | ciphertext(32) | tag(16)`. KEK = `derive_shared_key(peer_pub)`.
+/// **Async on purpose** — see [`encrypt_chunk`]; broadcast wraps one key per
+/// recipient, so N AES-GCM ops stay off the Dart event loop.
+Future<Uint8List> wrapContentKey({
+  required List<int> ck,
+  required List<int> kek,
+}) => RustLib.instance.api.crateApiCryptoWrapContentKey(ck: ck, kek: kek);
+
+/// Unwrap a 60-byte envelope back into the 32-byte content key. **Async on
+/// purpose** — see [`wrap_content_key`].
+Future<Uint8List> unwrapContentKey({
+  required List<int> envelope,
+  required List<int> kek,
+}) => RustLib.instance.api.crateApiCryptoUnwrapContentKey(
+  envelope: envelope,
+  kek: kek,
+);
+
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<EncryptionEngine>>
 abstract class EncryptionEngine implements RustOpaqueInterface {
   /// Derive the shared AES-256 key from a peer's base64 public key.
@@ -72,4 +91,12 @@ abstract class EncryptionEngine implements RustOpaqueInterface {
 
   /// Base64 of the raw 32-byte public key (goes into `DeviceInfo.publicKey`).
   String publicKeyBase64();
+
+  /// Wrap a broadcast content key for one recipient: KEK = shared key with
+  /// `peer_public_key_base64`, envelope = [`wrap_content_key`]. **Async on
+  /// purpose** — see [`encrypt_chunk`].
+  Future<Uint8List> wrapFor({
+    required String peerPublicKeyBase64,
+    required List<int> contentKey,
+  });
 }

@@ -4,6 +4,7 @@
       "one": "Adicionado {} ficheiro para enviar",
       "other": "Adicionados {} ficheiros para enviar"
     },
+    "error_processing_link": "Erro ao processar o link",
     "live_transfer": "Transferência em Direto",
     "shared_file": "Ficheiro Partilhado",
     "tab_history": "Histórico",
@@ -35,6 +36,7 @@
     "hidden": "Oculto",
     "hidden_not_discoverable": "Oculto - não detectável",
     "host_version": "{host} · v{version}",
+    "invite_device": "Convidar um dispositivo",
     "looking_for_devices": "A procurar dispositivos...",
     "message_optional": "Mensagem (opcional)",
     "nearby_devices": "Dispositivos Próximos",
@@ -120,11 +122,24 @@
     },
     "wants_to_send": "quer enviar"
   },
+  "invite": {
+    "title": "Convidar um dispositivo",
+    "subtitle": "Instale o BIShare em outro dispositivo",
+    "scan_hint": "Escaneie este código com a câmera do celular para baixar o BIShare",
+    "app_store": "Baixar na App Store",
+    "google_play": "Disponível no Google Play",
+    "share": "Compartilhar link de download"
+  },
   "inbox": {
     "address_copied": "Endereço copiado",
     "all": "Tudo",
     "browser_access": "Acesso via browser",
     "browser_access_subtitle": "Aceda aos seus ficheiros a partir de um browser",
+    "web_tab_lan": "LAN",
+    "web_tab_cloud": "Link na nuvem",
+    "web_cloud_hint": "Envie um arquivo para receber um link e um QR code válidos por 24 horas que funcionam de qualquer lugar — sem precisar de uma rede compartilhada.",
+    "web_cloud_pick": "Escolher um arquivo",
+    "web_ios_note": "Mantenha o BIShare aberto durante o compartilhamento — o endereço para de funcionar quando o app vai para segundo plano.",
     "cannot_open": "Não foi possível abrir: {message}",
     "clear_inbox": "Limpar caixa de entrada",
     "could_not_save": "Não foi possível guardar",
@@ -188,6 +203,78 @@
     },
     "yes": "Sim"
   },
+  "devices": {
+    "add_favorite": "Adicionar aos favoritos",
+    "auto_accept_on": "Aceitação automática ativada",
+    "days_ago": {
+      "one": "há {} dia",
+      "other": "há {} dias"
+    },
+    "device_name": "Nome do dispositivo",
+    "device_removed": "Dispositivo removido",
+    "devices_count": {
+      "one": "{} dispositivo",
+      "other": "{} dispositivos"
+    },
+    "empty_no_matches_message": "Nenhum dispositivo corresponde à sua busca",
+    "empty_no_matches_title": "Nenhum resultado",
+    "empty_none_message": "Os dispositivos que você descobrir ou com os quais transferir aparecerão aqui",
+    "empty_none_title": "Nenhum dispositivo ainda",
+    "files_count": {
+      "one": "{} arquivo",
+      "other": "{} arquivos"
+    },
+    "hours_ago": {
+      "one": "há {} hora",
+      "other": "há {} horas"
+    },
+    "just_now": "agora mesmo",
+    "known": "Dispositivos conhecidos",
+    "last_seen": "Visto por último {when}",
+    "last_transfer": "Última transferência",
+    "minutes_ago": {
+      "one": "há {} minuto",
+      "other": "há {} minutos"
+    },
+    "no_transfers": "Ainda não há transferências com este dispositivo",
+    "online": "Online",
+    "online_now": "Online agora",
+    "remove_device": "Esquecer este dispositivo",
+    "remove_favorite": "Remover dos favoritos",
+    "rename": "Renomear",
+    "rename_device": "Renomear dispositivo",
+    "save": "Salvar",
+    "search_placeholder": "Buscar dispositivos...",
+    "see_all": "Ver todos os dispositivos",
+    "settings_subtitle": "Dispositivos conhecidos, presença e estatísticas de transferência",
+    "sort_last_seen": "Visto por último",
+    "sort_name": "Nome",
+    "sort_online_first": "Online primeiro",
+    "stat_received": "Recebidos",
+    "stat_sent": "Enviados",
+    "title": "Dispositivos",
+    "turn_on_auto_accept": "Ativar aceitação automática"
+  },
+  "clipboard": {
+    "clear_all": "Limpar histórico",
+    "copied": "Copiado para a área de transferência",
+    "copy_failed": "Não foi possível copiar este item",
+    "empty_message": "Textos e imagens que você copiar enquanto a sincronização estiver ativa aparecerão aqui",
+    "empty_title": "Nenhum item na área de transferência",
+    "image_label": "Imagem",
+    "items_count": {
+      "one": "{} item",
+      "other": "{} itens"
+    },
+    "row_subtitle": "{from} · {time}",
+    "save": "Salvar nos arquivos",
+    "save_failed": "Não foi possível salvar este item",
+    "saved": "Salvo nos arquivos recebidos",
+    "sync_active": "Sincronizando com dispositivos próximos",
+    "sync_paused": "Pausado — nada está sendo compartilhado",
+    "title": "Área de transferência",
+    "you": "Você"
+  },
   "nearby": {
     "devices_nearby": {
       "one": "{} dispositivo próximo · toque para enviar",
@@ -226,8 +313,14 @@
     "uploading_to_secure_link": "A carregar para o link seguro..."
   },
   "room": {
+    "connecting_create_local": "Criando uma sala local",
+    "connecting_create_remote": "Criando uma sala",
+    "connecting_finding": "Procurando sala",
     "downloading": "A descarregar {name}…",
     "enter_code_hint": "Introduzir código",
+    "error_create": "Não foi possível criar a sala. Tente novamente.",
+    "error_join": "Não foi possível entrar na sala.",
+    "error_not_found": "Nenhuma sala com esse código.",
     "failed_to_add": "Falha ao adicionar {name}: {error}",
     "files": "Ficheiros",
     "host": "Anfitrião",
@@ -264,6 +357,15 @@
     "auto_ask": "Perguntar sempre",
     "auto_favorites": "Apenas favoritos",
     "choose_folder": "Escolher pasta…",
+    "clipboard_cloud": "Sincronizar via nuvem",
+    "clipboard_cloud_soon": "Em breve — sincronize entre redes diferentes",
+    "clipboard_cloud_subtitle": "Transmita sua área de transferência entre dispositivos em redes diferentes",
+    "clipboard_history": "Histórico da área de transferência",
+    "clipboard_history_subtitle": "Itens sincronizados recentemente",
+    "clipboard_images": "Incluir imagens",
+    "clipboard_images_subtitle": "Sincronizar imagens e capturas de tela copiadas",
+    "clipboard_max_size": "Tamanho máximo da imagem",
+    "clipboard_mb": "{mb} MB",
     "clipboard_subtitle": "Partilhar texto copiado com dispositivos BIShare próximos",
     "contact_support": "Contatar Suporte",
     "device_name": "Nome do dispositivo",
@@ -272,6 +374,8 @@
     "enable": "Ativar",
     "help_support": "Ajuda e Suporte",
     "language": "Idioma",
+    "launch_at_login": "Iniciar ao fazer login",
+    "launch_at_login_subtitle": "Iniciar o BIShare automaticamente ao entrar",
     "media_quality": "Qualidade dos media",
     "open_folder": "Abrir pasta",
     "pin_hint": "PIN numérico",
@@ -289,6 +393,11 @@
     "save_default": "Padrão (Documents/BIShare)",
     "save_location": "Local de guarda",
     "save_location_subtitle": "Onde os ficheiros recebidos são guardados.",
+    "browser_upload": "Envios pelo navegador",
+    "browser_upload_subtitle": "Permitir que navegadores enviem arquivos para este dispositivo",
+    "browser_upload_limit": "Tamanho máximo de envio",
+    "browser_upload_unlimited": "Ilimitado",
+    "browser_upload_gb": "{gb} GB",
     "send_accent": "Cor de destaque para envio",
     "sending": "A enviar",
     "set_pin": "Definir PIN",
@@ -308,6 +417,9 @@
     "visible_subtitle": "Desligado = oculto, não detetável"
   },
   "notification": {
+    "clipboard_from": "Copiado de {sender}",
+    "clipboard_image_from": "Imagem copiada de {sender}",
+    "clipboard_synced": "Área de transferência sincronizada",
     "file_received": "Ficheiro recebido",
     "from": "{file} · de {sender}"
   },
@@ -315,6 +427,7 @@
     "cancel": "Cancelar",
     "copy": "Copiar",
     "delete": "Eliminar",
+    "download": "Baixar",
     "link_copied": "Link copiado",
     "no_app_open": "Nenhuma aplicação consegue abrir este ficheiro",
     "open": "Abrir",
@@ -352,5 +465,11 @@
     "slide4_title": "Privado e Seguro",
     "slide5_body": "Receba de qualquer browser na mesma rede ou digitalize um QR para ligar com um toque.",
     "slide5_title": "Browser e QR"
+  },
+  "tray": {
+    "pause": "Pausar recebimento",
+    "quit": "Sair",
+    "resume": "Retomar recebimento",
+    "show": "Mostrar BIShare"
   }
 }

@@ -29,7 +29,12 @@ class AppListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
-    return InkWell(
+    // ShadApp provides no Material ancestor, so a bare InkWell throws
+    // `Material.of` on mouse hover (desktop). A transparent Material gives it the
+    // ancestor it needs without changing the visuals.
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
       onTap: onTap == null
           ? null
           : () {
@@ -76,6 +81,7 @@ class AppListTile extends StatelessWidget {
             ?trailing,
           ],
         ),
+      ),
       ),
     );
   }

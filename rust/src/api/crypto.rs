@@ -51,6 +51,21 @@ impl EncryptionEngine {
             .derive_shared_key(&peer_public_key_base64)
             .map(|k| k.to_vec())
     }
+
+    /// Wrap a broadcast content key for one recipient: KEK = shared key with
+    /// `peer_public_key_base64`, envelope = [`wrap_content_key`]. **Async on
+    /// purpose** — see [`encrypt_chunk`].
+    pub fn wrap_for(
+        &self,
+        peer_public_key_base64: String,
+        content_key: Vec<u8>,
+    ) -> Result<Vec<u8>, String> {
+        let kek = self
+            .inner
+            .derive_shared_key(&peer_public_key_base64)
+            .ok_or_else(|| "invalid peer public key".to_string())?;
+        wrap_content_key(content_key, kek.to_vec())
+    }
 }
 
 /// Fingerprint of a peer's base64 public key (no key exchange needed).
@@ -100,4 +115,30 @@ pub fn decrypt_chunk(
     let k: [u8; 32] = key.try_into().ok()?;
     let n: [u8; 12] = base_nonce.try_into().ok()?;
     Encryption::decrypt_chunk(&data, &k, chunk_index, &n)
+}
+
+/// Wrap a 32-byte content key under a KEK (v2.4 broadcast) → 60-byte envelope
+/// `nonce(12) | ciphertext(32) | tag(16)`. KEK = `derive_shared_key(peer_pub)`.
+/// **Async on purpose** — see [`encrypt_chunk`]; broadcast wraps one key per
+/// recipient, so N AES-GCM ops stay off the Dart event loop.
+pub fn wrap_content_key(ck: Vec<u8>, kek: Vec<u8>) -> Result<Vec<u8>, String> {
+    let ck: [u8; 32] = ck
+        .try_into()
+        .map_err(|_| "content key must be 32 bytes".to_string())?;
+    let kek: [u8; 32] = kek
+        .try_into()
+        .map_err(|_| "KEK must be 32 bytes".to_string())?;
+    bishare_protocol::crypto::wrap_content_key(&ck, &kek)
+        .ok_or_else(|| "content-key wrap failed".to_string())
+}
+
+/// Unwrap a 60-byte envelope back into the 32-byte content key. **Async on
+/// purpose** — see [`wrap_content_key`].
+pub fn unwrap_content_key(envelope: Vec<u8>, kek: Vec<u8>) -> Result<Vec<u8>, String> {
+    let kek: [u8; 32] = kek
+        .try_into()
+        .map_err(|_| "KEK must be 32 bytes".to_string())?;
+    bishare_protocol::crypto::unwrap_content_key(&envelope, &kek)
+        .map(|ck| ck.to_vec())
+        .ok_or_else(|| "content-key unwrap failed (wrong KEK or malformed envelope)".to_string())
 }

@@ -73,6 +73,16 @@ class ReceiveCubit extends Cubit<ReceiveState> {
     });
     _prog = _server.progress.listen((pr) {
       if (pr.isComplete) {
+        // Record every session that reaches a terminal state — even one whose
+        // clear is skipped just below — so ANY later straggler for it (terminal
+        // OR live) is recognised as belonging to a finished transfer.
+        _markSessionEnded(pr.sessionId);
+        // Ignore a terminal event for a session that isn't the one on screen — a
+        // straggler QUIC Error (control + up to S data streams each emit one,
+        // seconds apart) for an old/cancelled session must not clobber a newer
+        // session's live card.
+        final current = state.progress?.sessionId ?? _swSession;
+        if (current != null && current != pr.sessionId) return;
         _sw
           ..stop()
           ..reset();
@@ -80,6 +90,16 @@ class ReceiveCubit extends Cubit<ReceiveState> {
         emit(state.copyWith(clearProgress: true, speed: 0));
         return;
       }
+      // Safety net: a LIVE (non-terminal) progress event for a session that has
+      // already finished must never RESURRECT the card. The server drops a
+      // session the instant it completes/cancels/errors, so no terminal would
+      // ever follow such a straggler — without this guard it re-shows the
+      // floating receive card and wedges it at a stale percentage until the app
+      // is restarted (the reported "stuck receive card" bug; the idle reaper
+      // can't recover it because the session is already gone). Terminal
+      // stragglers are handled above; this covers the non-terminal ones that the
+      // sessionId guard alone lets through.
+      if (_endedSessions.contains(pr.sessionId)) return;
       // Restart the clock on a new transfer so speed/ETA measure THIS one.
       if (_swSession != pr.sessionId) {
         _swSession = pr.sessionId;
@@ -101,6 +121,23 @@ class ReceiveCubit extends Cubit<ReceiveState> {
   // session so a new transfer restarts the measurement.
   final _sw = Stopwatch();
   String? _swSession;
+
+  /// Sessions that have reached a terminal state, kept as a small bounded set
+  /// (sessionIds are v4 UUIDs, so this never false-matches a fresh transfer).
+  /// Used to drop late stragglers so a finished transfer can neither resurrect
+  /// nor clobber the floating receive card. See the progress listener.
+  final _endedSessions = <String>{};
+  final _endedOrder = <String>[];
+
+  void _markSessionEnded(String sessionId) {
+    if (_endedSessions.add(sessionId)) {
+      _endedOrder.add(sessionId);
+      if (_endedOrder.length > 64) {
+        _endedSessions.remove(_endedOrder.removeAt(0));
+      }
+    }
+  }
+
   late final StreamSubscription<PendingTransfer> _incoming;
   late final StreamSubscription<PendingFileRequest> _incomingReq;
   late final StreamSubscription<ReceiveProgress> _prog;

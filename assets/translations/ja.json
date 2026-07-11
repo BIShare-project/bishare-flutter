@@ -4,6 +4,7 @@
       "one": "{} 個のファイルを送信に追加しました",
       "other": "{} 個のファイルを送信に追加しました"
     },
+    "error_processing_link": "リンクの処理中にエラーが発生しました",
     "live_transfer": "ライブ転送",
     "shared_file": "共有ファイル",
     "tab_history": "履歴",
@@ -35,6 +36,7 @@
     "hidden": "非表示",
     "hidden_not_discoverable": "非表示 - 検出不可",
     "host_version": "{host} · v{version}",
+    "invite_device": "デバイスを招待",
     "looking_for_devices": "デバイスを探しています...",
     "message_optional": "メッセージ（任意）",
     "nearby_devices": "近くのデバイス",
@@ -120,11 +122,24 @@
     },
     "wants_to_send": "送信したい"
   },
+  "invite": {
+    "title": "デバイスを招待",
+    "subtitle": "別のデバイスにBIShareを入手",
+    "scan_hint": "スマートフォンのカメラでこのコードをスキャンしてBIShareをダウンロード",
+    "app_store": "App Storeからダウンロード",
+    "google_play": "Google Playで手に入れよう",
+    "share": "ダウンロードリンクを共有"
+  },
   "inbox": {
     "address_copied": "アドレスをコピーしました",
     "all": "すべて",
     "browser_access": "ブラウザアクセス",
     "browser_access_subtitle": "ウェブブラウザからファイルをアクセス",
+    "web_tab_lan": "LAN",
+    "web_tab_cloud": "クラウドリンク",
+    "web_cloud_hint": "ファイルをアップロードすると、どこからでも使える24時間有効なリンクとQRコードを取得できます。共有ネットワークは不要です。",
+    "web_cloud_pick": "ファイルを選択",
+    "web_ios_note": "共有中はBIShareを開いたままにしてください。アプリがバックグラウンドに移動すると、アドレスは使用できなくなります。",
     "cannot_open": "開けません: {message}",
     "clear_inbox": "受信トレイをクリア",
     "could_not_save": "保存できませんでした",
@@ -188,6 +203,78 @@
     },
     "yes": "はい"
   },
+  "devices": {
+    "add_favorite": "お気に入りに追加",
+    "auto_accept_on": "自動承認がオンです",
+    "days_ago": {
+      "one": "{}日前",
+      "other": "{}日前"
+    },
+    "device_name": "デバイス名",
+    "device_removed": "デバイスを削除しました",
+    "devices_count": {
+      "one": "{}台のデバイス",
+      "other": "{}台のデバイス"
+    },
+    "empty_no_matches_message": "検索に一致するデバイスはありません",
+    "empty_no_matches_title": "一致なし",
+    "empty_none_message": "検出したデバイスや転送したデバイスがここに表示されます",
+    "empty_none_title": "デバイスがまだありません",
+    "files_count": {
+      "one": "{}個のファイル",
+      "other": "{}個のファイル"
+    },
+    "hours_ago": {
+      "one": "{}時間前",
+      "other": "{}時間前"
+    },
+    "just_now": "たった今",
+    "known": "既知のデバイス",
+    "last_seen": "最終オンライン {when}",
+    "last_transfer": "最後の転送",
+    "minutes_ago": {
+      "one": "{}分前",
+      "other": "{}分前"
+    },
+    "no_transfers": "このデバイスとの転送はまだありません",
+    "online": "オンライン",
+    "online_now": "現在オンライン",
+    "remove_device": "このデバイスを削除",
+    "remove_favorite": "お気に入りから削除",
+    "rename": "名前を変更",
+    "rename_device": "デバイス名を変更",
+    "save": "保存",
+    "search_placeholder": "デバイスを検索...",
+    "see_all": "すべてのデバイスを表示",
+    "settings_subtitle": "既知のデバイス、オンライン状況、転送統計",
+    "sort_last_seen": "最終オンライン",
+    "sort_name": "名前",
+    "sort_online_first": "オンライン順",
+    "stat_received": "受信",
+    "stat_sent": "送信",
+    "title": "デバイス",
+    "turn_on_auto_accept": "自動承認をオンにする"
+  },
+  "clipboard": {
+    "clear_all": "履歴を消去",
+    "copied": "クリップボードにコピーしました",
+    "copy_failed": "この項目をコピーできませんでした",
+    "empty_message": "同期がオンの間にコピーしたテキストや画像がここに表示されます",
+    "empty_title": "クリップボードの項目はありません",
+    "image_label": "画像",
+    "items_count": {
+      "one": "{}個の項目",
+      "other": "{}個の項目"
+    },
+    "row_subtitle": "{from} · {time}",
+    "save": "ファイルに保存",
+    "save_failed": "この項目を保存できませんでした",
+    "saved": "受信ファイルに保存しました",
+    "sync_active": "近くのデバイスと同期中",
+    "sync_paused": "一時停止中 — 何も共有されていません",
+    "title": "クリップボード",
+    "you": "自分"
+  },
   "nearby": {
     "devices_nearby": {
       "one": "{} 台の近くのデバイス · タップして送信",
@@ -226,8 +313,14 @@
     "uploading_to_secure_link": "安全なリンクにアップロード中..."
   },
   "room": {
+    "connecting_create_local": "ローカルルームを作成中",
+    "connecting_create_remote": "ルームを作成中",
+    "connecting_finding": "ルームを検索中",
     "downloading": "{name} をダウンロード中…",
     "enter_code_hint": "コードを入力",
+    "error_create": "ルームを作成できませんでした。もう一度お試しください。",
+    "error_join": "ルームに参加できませんでした。",
+    "error_not_found": "そのコードのルームは見つかりません。",
     "failed_to_add": "{name} の追加に失敗: {error}",
     "files": "ファイル",
     "host": "ホスト",
@@ -264,6 +357,15 @@
     "auto_ask": "常に確認",
     "auto_favorites": "お気に入りのみ",
     "choose_folder": "フォルダを選択…",
+    "clipboard_cloud": "クラウド経由で同期",
+    "clipboard_cloud_soon": "近日公開 — 異なるネットワーク間で同期",
+    "clipboard_cloud_subtitle": "異なるネットワーク上のデバイス間でクリップボードを中継します",
+    "clipboard_history": "クリップボード履歴",
+    "clipboard_history_subtitle": "最近同期した項目",
+    "clipboard_images": "画像を含める",
+    "clipboard_images_subtitle": "コピーした画像やスクリーンショットを同期",
+    "clipboard_max_size": "画像の最大サイズ",
+    "clipboard_mb": "{mb} MB",
     "clipboard_subtitle": "近くのBIShareデバイスとコピーしたテキストを共有",
     "contact_support": "サポートに連絡",
     "device_name": "デバイス名",
@@ -272,6 +374,8 @@
     "enable": "有効化",
     "help_support": "ヘルプとサポート",
     "language": "言語",
+    "launch_at_login": "ログイン時に起動",
+    "launch_at_login_subtitle": "サインイン時にBIShareを自動的に起動します",
     "media_quality": "メディア品質",
     "open_folder": "フォルダを開く",
     "pin_hint": "数字のPIN",
@@ -289,6 +393,11 @@
     "save_default": "デフォルト (Documents/BIShare)",
     "save_location": "保存場所",
     "save_location_subtitle": "受信したファイルの保存場所",
+    "browser_upload": "ブラウザからのアップロード",
+    "browser_upload_subtitle": "ウェブブラウザからこのデバイスにファイルを送信できるようにします",
+    "browser_upload_limit": "最大アップロードサイズ",
+    "browser_upload_unlimited": "無制限",
+    "browser_upload_gb": "{gb} GB",
     "send_accent": "送信アクセントカラー",
     "sending": "送信",
     "set_pin": "PINを設定",
@@ -308,6 +417,9 @@
     "visible_subtitle": "オフ = 非表示・検出不可"
   },
   "notification": {
+    "clipboard_from": "{sender}からコピーしました",
+    "clipboard_image_from": "{sender}から画像をコピーしました",
+    "clipboard_synced": "クリップボードを同期しました",
     "file_received": "ファイルを受信しました",
     "from": "{file} · {sender} から"
   },
@@ -353,5 +465,11 @@
     "slide4_title": "プライベート＆セキュア",
     "slide5_body": "同じネットワーク上の任意のブラウザから受信、またはQRをスキャンしてワンタップで接続。",
     "slide5_title": "ブラウザ＆QR"
+  },
+  "tray": {
+    "pause": "受信を一時停止",
+    "quit": "終了",
+    "resume": "受信を再開",
+    "show": "BIShareを表示"
   }
 }

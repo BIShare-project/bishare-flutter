@@ -26,6 +26,18 @@ class FavoritesCubit extends Cubit<Map<String, FavoriteDevice>> {
   Future<void> setCustomName(String fingerprint, String? name) =>
       _repo.setCustomName(fingerprint, name);
 
+  // Fingerprint-based variants (Devices dashboard): also valid for peers that
+  // are not currently discovered.
+  Future<void> toggleFingerprint(String fingerprint, {String? name}) =>
+      _repo.toggleFingerprint(fingerprint, name: name);
+  Future<void> rename(String fingerprint, String name) =>
+      _repo.rename(fingerprint, name);
+  Future<void> setAutoAcceptFingerprint(
+    String fingerprint,
+    bool v, {
+    String? name,
+  }) => _repo.setAutoAcceptFingerprint(fingerprint, v, name: name);
+
   @override
   Future<void> close() async {
     await _sub.cancel();

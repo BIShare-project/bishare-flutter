@@ -31,6 +31,7 @@ PrepareResponse _$PrepareResponseFromJson(Map<String, dynamic> json) =>
       supportsCompression: json['supportsCompression'] as bool?,
       keepAlive: json['keepAlive'] as bool?,
       streamsPerFile: (json['streamsPerFile'] as num?)?.toInt(),
+      supportsResume: json['supportsResume'] as bool?,
     );
 
 Map<String, dynamic> _$PrepareResponseToJson(PrepareResponse instance) =>
@@ -44,4 +45,5 @@ Map<String, dynamic> _$PrepareResponseToJson(PrepareResponse instance) =>
       'supportsCompression': ?instance.supportsCompression,
       'keepAlive': ?instance.keepAlive,
       'streamsPerFile': ?instance.streamsPerFile,
+      'supportsResume': ?instance.supportsResume,
     };

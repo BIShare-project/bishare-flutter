@@ -5,4 +5,5 @@
 //! crypto logic is therefore identical to the iOS/Android/desktop apps.
 
 mod api;
+mod engine;
 mod frb_generated;

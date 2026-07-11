@@ -28,6 +28,9 @@ class ReceiveBanner extends StatelessWidget {
           fraction: p.fraction,
           speed: state.speed,
           etaSeconds: state.etaSeconds,
+          // Mirror the sender's live badge: show the transport actually
+          // delivering this session (QUIC receives used to mislabel as "TCP").
+          transport: p.transport,
           accentColor: AccentColors.of(
             context.read<SettingsCubit>().state.receiveAccent,
             Theme.of(context).brightness,

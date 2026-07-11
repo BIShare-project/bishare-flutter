@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
@@ -216,115 +215,243 @@ class TransferClient {
         ? _identity.deriveKey(receiverPub)
         : null;
 
-    // Step 2: upload each file (sequential in P0; bounded parallelism is P1).
+    // Step 2: upload. Phase 2b: QUIC-eligible files run CONCURRENTLY over the
+    // single reused connection, bounded by the receiver-advertised maxConcurrent
+    // (finally honoring the negotiation instead of ignoring it); failures and
+    // QUIC-ineligible files then run sequentially over TCP.
     final totalBytes = files.fold<int>(0, (s, f) => s + f.size);
-    var overallSent = 0;
-    for (var i = 0; i < files.length; i++) {
-      final f = files[i];
-      final token = prepare.files[f.id];
-      if (token == null) {
+    // Per-file byte counters — with concurrent sends the overall progress is the
+    // SUM across files, not a running scalar.
+    final sentPerFile = List<int>.filled(files.length, 0);
+    void emitOverall(int i) {
+      var sum = 0;
+      for (final s in sentPerFile) {
+        sum += s;
+      }
+      onProgress?.call(
+        i,
+        files.length,
+        files[i].name,
+        sum > totalBytes ? totalBytes : sum,
+        totalBytes,
+      );
+    }
+
+    // Every file needs a token — fail before any bytes move.
+    for (final f in files) {
+      if (prepare.files[f.id] == null) {
         throw TransferHttpException(
           BIShareStatus.serverError,
           'no token for ${f.name}',
         );
       }
-      final base = overallSent;
+    }
 
-      // Prefer QUIC when the peer advertises it and the setting allows it (TLS 1.3
-      // transport encryption, no app-layer E2E — mirrors native). Fall back to the
-      // HTTP/TCP path on any QUIC failure so a transfer never dead-ends.
-      if (_shouldUseQuic() && f.size > 0 && device.quicPort != null) {
-        onTransport?.call('QUIC'); // reflect the transport DURING the transfer
-        try {
-          await _uploadViaQuic(
-            f,
-            device,
-            prepare.sessionId,
-            info,
-            onProgress: onProgress,
-            index: i,
-            count: files.length,
-            base: base,
-            total: totalBytes,
-          );
-          overallSent += f.size;
-          onProgress?.call(i, files.length, f.name, overallSent, totalBytes);
-          continue;
-        } on Object catch (e) {
-          debugPrint('[Client] QUIC upload failed ($e) — falling back to TCP');
-        }
+    // Phase 1a: open ONE persistent QUIC connection for the whole session (a
+    // single handshake reused for every file) instead of a handshake per file.
+    // On any failure we fall back to the HTTP/TCP path for all files.
+    var quicReady = false;
+    if (_shouldUseQuic() && device.quicPort != null) {
+      try {
+        await quic.quicConnect(
+          host: device.host,
+          port: device.quicPort!,
+          sessionId: prepare.sessionId,
+        );
+        quicReady = true;
+        debugPrint(
+          '[Client] QUIC connected ${device.host}:${device.quicPort} — '
+          'ONE handshake reused for ${files.length} file(s)',
+        );
+      } on Object catch (e) {
+        debugPrint(
+          '[Client] QUIC connect failed ($e) — using TCP this session',
+        );
       }
-      onTransport?.call('TCP');
+    }
 
-      // Upload with bounded retry/backoff. A retry re-uploads the whole file (no
-      // Range resume — the receiver Range gap is deferred), and each attempt calls
-      // _encryptedBody fresh so it gets a NEW baseNonce — reusing a nonce across
-      // attempts would be catastrophic for AES-GCM. 5xx / transport errors are
-      // retryable; 4xx (bad token, rejected) is terminal and fails immediately.
-      for (var attempt = 1; ; attempt++) {
-        final Stream<List<int>> body;
-        final headers = <String, dynamic>{};
-        if (key != null) {
-          final chunkCount = f.size == 0
-              ? 0
-              : (f.size + _chunkSize - 1) ~/ _chunkSize;
-          headers[Headers.contentLengthHeader] =
-              f.size + chunkCount * (4 + BIShareCrypto.gcmOverheadPerChunk);
-          headers['X-Encrypted'] = 'chunked';
-          body = _encryptedBody(f, key); // fresh baseNonce per attempt
-        } else {
-          headers[Headers.contentLengthHeader] = f.size;
-          body = f.file.openRead();
+    try {
+      // ── Phase A: concurrent QUIC ────────────────────────────────────────────
+      // Files that fail QUIC (or can't use it) land in tcpQueue for Phase B.
+      final tcpQueue = <int>[];
+      if (quicReady) {
+        final quicIdx = <int>[];
+        for (var i = 0; i < files.length; i++) {
+          (files[i].size > 0 ? quicIdx : tcpQueue).add(i);
         }
-
-        try {
-          final res = await dio.post<Map<String, dynamic>>(
-            BIShareApi.upload,
-            queryParameters: {
-              'sessionId': prepare.sessionId,
-              'fileId': f.id,
-              'token': token,
-            },
-            data: body,
-            options: Options(
-              headers: headers,
-              contentType: 'application/octet-stream',
-            ),
-            cancelToken: cancelToken,
-            // `sent` counts wire bytes (encrypted ≈ plaintext); clamp per file so
-            // overall progress stays monotonic against the plaintext total.
-            onSendProgress: (sent, _) => onProgress?.call(
-              i,
-              files.length,
-              f.name,
-              base + (sent > f.size ? f.size : sent),
-              totalBytes,
-            ),
+        // Clamp to the Rust-side MAX_STREAMS (8) so the envelope math below is
+        // computed with the value that will actually be used.
+        final streams = (prepare.streamsPerFile ?? 1).clamp(1, 8);
+        final chunkSize = prepare.chunkSize ?? BIShareConfig.defaultChunkSize;
+        // Receiver-authoritative concurrency, ENFORCED against the slab-pool
+        // envelope: files × streams must stay ≤ 16 slabs per direction, whatever
+        // a peer advertises (a peer pushing streamsPerFile=8 gets 2 concurrent
+        // files, not 4 × 8 = 32 slab waiters and spurious pool timeouts).
+        final envelopeCap = streams > 0 ? (16 ~/ streams).clamp(1, 8) : 1;
+        final concurrency = (prepare.maxConcurrent ?? 1).clamp(
+          1,
+          _maxConcurrentQuicFiles < envelopeCap
+              ? _maxConcurrentQuicFiles
+              : envelopeCap,
+        );
+        if (quicIdx.isNotEmpty) {
+          onTransport?.call('QUIC');
+          debugPrint(
+            '[Client] QUIC phase: ${quicIdx.length} file(s), '
+            'concurrency $concurrency',
           );
-          final status = res.statusCode ?? 0;
-          if (status >= 500 && attempt < _maxUploadAttempts) {
-            await _backoff(attempt);
-            continue; // retryable server error
-          }
-          if (status != BIShareStatus.ok) {
-            throw TransferHttpException(status); // terminal
-          }
-          break; // uploaded
-        } on DioException catch (e) {
-          if (CancelToken.isCancel(e)) rethrow;
-          if (attempt < _maxUploadAttempts) {
-            await _backoff(attempt); // transport error — retryable
-            continue;
-          }
-          throw TransferHttpException(0, e.message);
         }
+        // Single-threaded event loop: the next/++ below is race-free.
+        var next = 0;
+        Future<void> worker() async {
+          while (next < quicIdx.length) {
+            // A user cancel must stop workers from STARTING new files too — the
+            // Rust poison only fails sends already in flight.
+            final ct = cancelToken;
+            if (ct != null && ct.isCancelled) {
+              throw ct.cancelError ??
+                  DioException.requestCancelled(
+                    requestOptions: RequestOptions(),
+                    reason: 'cancelled',
+                  );
+            }
+            final i = quicIdx[next++];
+            final f = files[i];
+            try {
+              await _uploadViaQuic(
+                f,
+                prepare.sessionId,
+                info,
+                // Receiver-authoritative multi-stream geometry (Phase 1b).
+                streams: streams,
+                chunkSize: chunkSize,
+                // Phase 4: resume if the receiver keeps a ledger — a reconnect
+                // after a drop then skips already-received chunks.
+                resume: prepare.supportsResume ?? false,
+                onBytes: (sent) {
+                  sentPerFile[i] = sent > f.size ? f.size : sent;
+                  emitOverall(i);
+                },
+              );
+              sentPerFile[i] = f.size;
+              emitOverall(i);
+            } on Object catch (e) {
+              // A USER cancel surfaces here too (the Rust send errors
+              // "cancelled") — abort everything, don't re-send over TCP.
+              final ct = cancelToken;
+              if (ct != null && ct.isCancelled) {
+                throw ct.cancelError ??
+                    DioException.requestCancelled(
+                      requestOptions: RequestOptions(),
+                      reason: 'cancelled',
+                    );
+              }
+              debugPrint(
+                '[Client] QUIC upload of "${f.name}" failed ($e) — '
+                'queued for TCP',
+              );
+              sentPerFile[i] = 0; // restart from zero on the TCP pass
+              tcpQueue.add(i);
+            }
+          }
+        }
+
+        await Future.wait([
+          for (var k = 0; k < concurrency; k++) worker(),
+        ]);
+        tcpQueue.sort(); // keep the TCP pass in the user's file order
+      } else {
+        tcpQueue.addAll([for (var i = 0; i < files.length; i++) i]);
       }
-      overallSent += f.size;
-      onProgress?.call(i, files.length, f.name, overallSent, totalBytes);
+
+      // ── Phase B: sequential TCP (fallbacks + zero-size files) ───────────────
+      if (tcpQueue.isNotEmpty) {
+        onTransport?.call('TCP');
+      }
+      for (final i in tcpQueue) {
+        final f = files[i];
+        final token = prepare.files[f.id]!; // pre-validated above
+
+        // Upload with bounded retry/backoff. A retry re-uploads the whole file (no
+        // Range resume — the receiver Range gap is deferred), and each attempt calls
+        // _encryptedBody fresh so it gets a NEW baseNonce — reusing a nonce across
+        // attempts would be catastrophic for AES-GCM. 5xx / transport errors are
+        // retryable; 4xx (bad token, rejected) is terminal and fails immediately.
+        for (var attempt = 1; ; attempt++) {
+          final Stream<List<int>> body;
+          final headers = <String, dynamic>{};
+          if (key != null) {
+            final chunkCount = f.size == 0
+                ? 0
+                : (f.size + _chunkSize - 1) ~/ _chunkSize;
+            headers[Headers.contentLengthHeader] =
+                f.size + chunkCount * (4 + BIShareCrypto.gcmOverheadPerChunk);
+            headers['X-Encrypted'] = 'chunked';
+            body = _encryptedBody(f, key); // fresh baseNonce per attempt
+          } else {
+            headers[Headers.contentLengthHeader] = f.size;
+            body = f.file.openRead();
+          }
+
+          try {
+            final res = await dio.post<Map<String, dynamic>>(
+              BIShareApi.upload,
+              queryParameters: {
+                'sessionId': prepare.sessionId,
+                'fileId': f.id,
+                'token': token,
+              },
+              data: body,
+              options: Options(
+                headers: headers,
+                contentType: 'application/octet-stream',
+              ),
+              cancelToken: cancelToken,
+              // `sent` counts wire bytes (encrypted ≈ plaintext); clamp per file
+              // so overall progress stays monotonic against the plaintext total.
+              onSendProgress: (sent, _) {
+                sentPerFile[i] = sent > f.size ? f.size : sent;
+                emitOverall(i);
+              },
+            );
+            final status = res.statusCode ?? 0;
+            if (status >= 500 && attempt < _maxUploadAttempts) {
+              await _backoff(attempt);
+              continue; // retryable server error
+            }
+            if (status != BIShareStatus.ok) {
+              throw TransferHttpException(status); // terminal
+            }
+            break; // uploaded
+          } on DioException catch (e) {
+            if (CancelToken.isCancel(e)) rethrow;
+            if (attempt < _maxUploadAttempts) {
+              await _backoff(attempt); // transport error — retryable
+              continue;
+            }
+            throw TransferHttpException(0, e.message);
+          }
+        }
+        sentPerFile[i] = f.size;
+        emitOverall(i);
+      }
+    } finally {
+      // Always tear down the session's QUIC connection (success, TCP-fallback, or
+      // exception) so it can't leak the endpoint/socket in Rust.
+      if (_shouldUseQuic() && device.quicPort != null) {
+        try {
+          await quic.quicDisconnect(sessionId: prepare.sessionId);
+        } on Object catch (_) {}
+      }
     }
   }
 
   static const int _maxUploadAttempts = 3;
+
+  /// Cap on concurrently-sending QUIC files (Phase 2b). 4 files × up to 4
+  /// streams each = 16 in-flight chunk slabs — exactly the Rust slab-pool
+  /// envelope, so heavier concurrency would only queue on the pool semaphore.
+  static const int _maxConcurrentQuicFiles = 4;
 
   /// Files at or below this size are hashed upfront (SHA-256 in prepare, cheap +
   /// verified); larger files skip it to keep "Preparing" instant.
@@ -335,21 +462,26 @@ class TransferClient {
 
   /// Upload one file over QUIC, forwarding the Rust send stream's byte progress.
   /// Throws on any failure so [send] can fall back to the HTTP/TCP path.
+  /// Upload one file over the session's already-established QUIC connection (see
+  /// [quic.quicConnect] in [send]). No host/port here — the Rust side reuses the
+  /// persistent connection keyed by [sessionId] and opens streams per file.
+  /// Reports this FILE's cumulative bytes via [onBytes]; the caller aggregates
+  /// across concurrently-sending files.
   Future<void> _uploadViaQuic(
     SendableFile f,
-    DiscoveredDevice device,
     String sessionId,
     DeviceInfo info, {
-    SendProgress? onProgress,
-    required int index,
-    required int count,
-    required int base,
-    required int total,
+    required int streams,
+    required int chunkSize,
+    required bool resume,
+    required void Function(int sentBytes) onBytes,
   }) async {
+    debugPrint(
+      '[Client] QUIC sending "${f.name}" (${f.size}B) via '
+      '$streams stream(s), chunk ${chunkSize ~/ 1024}KB',
+    );
+    final sw = Stopwatch()..start();
     final stream = quic.quicSendFile(
-      host: device.host,
-      port: device.quicPort!,
-      cancelId: sessionId, // one cancel token per transfer
       sessionId: sessionId,
       fileId: f.id,
       senderAlias: info.alias,
@@ -357,10 +489,24 @@ class TransferClient {
       filePath: f.path,
       fileName: f.name,
       fileType: f.mimeType,
+      streams: streams,
+      chunkSize: chunkSize,
+      resume: resume,
     );
     await for (final sent in stream) {
-      onProgress?.call(index, count, f.name, base + sent.toInt(), total);
+      onBytes(sent.toInt());
     }
+    sw.stop();
+    // Phase 3 metrics: per-file speed + the connection's live path stats (real
+    // RTT / DPLPMTUD MTU / cwnd / loss / datagram counts) for attribution.
+    final secs = sw.elapsedMilliseconds / 1000;
+    final mbps = secs > 0 ? f.size / (1024 * 1024) / secs : 0;
+    debugPrint(
+      '[Client] QUIC sent "${f.name}" '
+      '${(f.size / (1024 * 1024)).toStringAsFixed(1)}MB in '
+      '${sw.elapsedMilliseconds}ms = ${mbps.toStringAsFixed(1)} MB/s '
+      '| ${quic.quicSessionStats(sessionId: sessionId)}',
+    );
   }
 
   static const int _chunkSize = BIShareConfig.defaultChunkSize;
@@ -393,7 +539,9 @@ class TransferClient {
       }
     }
     if (acc.length > 0) {
-      yield _frame((await Rust.encryptChunk(acc.toBytes(), key, index, baseNonce))!);
+      yield _frame(
+        (await Rust.encryptChunk(acc.toBytes(), key, index, baseNonce))!,
+      );
     }
   }
 

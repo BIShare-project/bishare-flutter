@@ -36,6 +36,7 @@
     "hidden": "Hidden",
     "hidden_not_discoverable": "Hidden - not discoverable",
     "host_version": "{host} · v{version}",
+    "invite_device": "Invite a device",
     "looking_for_devices": "Looking for devices...",
     "message_optional": "Message (optional)",
     "nearby_devices": "Nearby Devices",
@@ -121,11 +122,24 @@
     },
     "wants_to_send": "wants to send"
   },
+  "invite": {
+    "title": "Invite a device",
+    "subtitle": "Get BIShare on another device",
+    "scan_hint": "Scan this code with a phone camera to download BIShare",
+    "app_store": "Download on the App Store",
+    "google_play": "Get it on Google Play",
+    "share": "Share download link"
+  },
   "inbox": {
     "address_copied": "Address copied",
     "all": "All",
     "browser_access": "Browser access",
     "browser_access_subtitle": "Access your files from a web browser",
+    "web_tab_lan": "LAN",
+    "web_tab_cloud": "Cloud link",
+    "web_cloud_hint": "Upload a file to get a 24-hour link and QR code that works from anywhere — no shared network needed.",
+    "web_cloud_pick": "Choose a file",
+    "web_ios_note": "Keep BIShare open while sharing — the address stops working when the app goes to the background.",
     "cannot_open": "Cannot open: {message}",
     "clear_inbox": "Clear inbox",
     "could_not_save": "Could not save",
@@ -189,6 +203,78 @@
     },
     "yes": "Yes"
   },
+  "devices": {
+    "add_favorite": "Add to favorites",
+    "auto_accept_on": "Auto-accept is on",
+    "days_ago": {
+      "one": "{} day ago",
+      "other": "{} days ago"
+    },
+    "device_name": "Device name",
+    "device_removed": "Device removed",
+    "devices_count": {
+      "one": "{} device",
+      "other": "{} devices"
+    },
+    "empty_no_matches_message": "No devices match your search",
+    "empty_no_matches_title": "No matches",
+    "empty_none_message": "Devices you discover or transfer with will appear here",
+    "empty_none_title": "No devices yet",
+    "files_count": {
+      "one": "{} file",
+      "other": "{} files"
+    },
+    "hours_ago": {
+      "one": "{} hour ago",
+      "other": "{} hours ago"
+    },
+    "just_now": "just now",
+    "known": "Known devices",
+    "last_seen": "Last seen {when}",
+    "last_transfer": "Last transfer",
+    "minutes_ago": {
+      "one": "{} minute ago",
+      "other": "{} minutes ago"
+    },
+    "no_transfers": "No transfers with this device yet",
+    "online": "Online",
+    "online_now": "Online now",
+    "remove_device": "Forget this device",
+    "remove_favorite": "Remove from favorites",
+    "rename": "Rename",
+    "rename_device": "Rename device",
+    "save": "Save",
+    "search_placeholder": "Search devices...",
+    "see_all": "See all devices",
+    "settings_subtitle": "Known devices, presence and transfer stats",
+    "sort_last_seen": "Last seen",
+    "sort_name": "Name",
+    "sort_online_first": "Online first",
+    "stat_received": "Received",
+    "stat_sent": "Sent",
+    "title": "Devices",
+    "turn_on_auto_accept": "Turn on auto-accept"
+  },
+  "clipboard": {
+    "clear_all": "Clear history",
+    "copied": "Copied to clipboard",
+    "copy_failed": "Couldn't copy this item",
+    "empty_message": "Text and images you copy while sync is on will appear here",
+    "empty_title": "No clipboard items",
+    "image_label": "Image",
+    "items_count": {
+      "one": "{} item",
+      "other": "{} items"
+    },
+    "row_subtitle": "{from} · {time}",
+    "save": "Save to files",
+    "save_failed": "Couldn't save this item",
+    "saved": "Saved to received files",
+    "sync_active": "Syncing with nearby devices",
+    "sync_paused": "Paused — nothing is shared",
+    "title": "Clipboard",
+    "you": "You"
+  },
   "nearby": {
     "devices_nearby": {
       "one": "{} device nearby · tap to send",
@@ -227,8 +313,14 @@
     "uploading_to_secure_link": "Uploading to secure link..."
   },
   "room": {
+    "connecting_create_local": "Creating a local room",
+    "connecting_create_remote": "Creating a room",
+    "connecting_finding": "Finding room",
     "downloading": "Downloading {name}…",
     "enter_code_hint": "Enter code",
+    "error_create": "Could not create the room. Please try again.",
+    "error_join": "Could not join the room.",
+    "error_not_found": "No room with that code.",
     "failed_to_add": "Failed to add {name}: {error}",
     "files": "Files",
     "host": "Host",
@@ -265,6 +357,15 @@
     "auto_ask": "Always ask",
     "auto_favorites": "Favorites only",
     "choose_folder": "Choose folder…",
+    "clipboard_cloud": "Sync via cloud",
+    "clipboard_cloud_soon": "Coming soon — sync across different networks",
+    "clipboard_cloud_subtitle": "Relay your clipboard between devices on different networks",
+    "clipboard_history": "Clipboard history",
+    "clipboard_history_subtitle": "Recent synced items",
+    "clipboard_images": "Include images",
+    "clipboard_images_subtitle": "Sync copied images and screenshots",
+    "clipboard_max_size": "Max image size",
+    "clipboard_mb": "{mb} MB",
     "clipboard_subtitle": "Share copied text with nearby BIShare devices",
     "contact_support": "Contact Support",
     "device_name": "Device name",
@@ -292,6 +393,11 @@
     "save_default": "Default (Documents/BIShare)",
     "save_location": "Save location",
     "save_location_subtitle": "Where received files are stored.",
+    "browser_upload": "Browser uploads",
+    "browser_upload_subtitle": "Let web browsers send files to this device",
+    "browser_upload_limit": "Max upload size",
+    "browser_upload_unlimited": "Unlimited",
+    "browser_upload_gb": "{gb} GB",
     "send_accent": "Send accent color",
     "sending": "Sending",
     "set_pin": "Set a PIN",
@@ -311,6 +417,9 @@
     "visible_subtitle": "Off = hidden, not discoverable"
   },
   "notification": {
+    "clipboard_from": "Copied from {sender}",
+    "clipboard_image_from": "Image copied from {sender}",
+    "clipboard_synced": "Clipboard synced",
     "file_received": "File received",
     "from": "{file} · from {sender}"
   },

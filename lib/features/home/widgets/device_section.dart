@@ -1,12 +1,15 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/ui/app_ui.dart';
 import '../../discovery/domain/discovered_device.dart';
 import '../../discovery/presentation/discovery_cubit.dart';
 import 'device_grid.dart';
 import 'device_row.dart';
+import 'invite_device_sheet.dart';
 
 class DeviceSection extends StatelessWidget {
   const DeviceSection({super.key});
@@ -15,21 +18,33 @@ class DeviceSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<DiscoveryCubit, List<DiscoveredDevice>>(
       builder: (context, devices) {
-        if (devices.isEmpty) {
-          return AppEmptyState(
-            icon: AppIcons.wifi,
-            title: 'home.looking_for_devices'.tr(),
-            message: 'home.no_devices_message'.tr(),
-          );
-        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // The header (with the Devices dashboard entry) stays visible even
+            // while nothing is discovered — known devices persist over there.
             AppSectionHeader(
               'home.nearby_devices'.tr(),
-              trailing: Text('${devices.length}'),
+              trailing: const _SeeAllDevicesLink(),
             ),
-            if (context.isWideLayout)
+            if (devices.isEmpty) ...[
+              AppEmptyState(
+                icon: AppIcons.wifi,
+                title: 'home.looking_for_devices'.tr(),
+                message: 'home.no_devices_message'.tr(),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 8),
+                child: Center(
+                  child: ShadButton.outline(
+                    onPressed: () => showInviteDeviceSheet(context),
+                    leading: const AppSvgIcon(AppIcons.qrShare, size: 16),
+                    child: Text('home.invite_device'.tr()),
+                  ),
+                ),
+              ),
+            ]
+            else if (context.isWideLayout)
               DeviceGrid(devices: devices)
             else
               AppGroup(
@@ -45,6 +60,38 @@ class DeviceSection extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// "See all devices" — opens the Devices dashboard (full roster + last-seen).
+class _SeeAllDevicesLink extends StatelessWidget {
+  const _SeeAllDevicesLink();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = ShadTheme.of(context).colorScheme;
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: () {
+          tapHaptic();
+          context.push('/devices');
+        },
+        borderRadius: BorderRadius.circular(6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('devices.see_all'.tr()),
+            const SizedBox(width: 2),
+            AppSvgIcon(
+              AppIcons.chevronRight,
+              size: 12,
+              color: cs.mutedForeground,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -4,6 +4,7 @@
       "one": " {} Datei zum Senden hinzugefügt",
       "other": "{} Dateien zum Senden hinzugefügt"
     },
+    "error_processing_link": "Fehler beim Verarbeiten des Links",
     "live_transfer": "Live-Übertragung",
     "shared_file": "Geteilte Datei",
     "tab_history": "Verlauf",
@@ -35,6 +36,7 @@
     "hidden": "Versteckt",
     "hidden_not_discoverable": "Versteckt – nicht auffindbar",
     "host_version": "{host} · v{version}",
+    "invite_device": "Gerät einladen",
     "looking_for_devices": "Suche nach Geräten...",
     "message_optional": "Nachricht (optional)",
     "nearby_devices": "Geräte in der Nähe",
@@ -120,11 +122,24 @@
     },
     "wants_to_send": "möchte senden"
   },
+  "invite": {
+    "title": "Gerät einladen",
+    "subtitle": "BIShare auf einem anderen Gerät installieren",
+    "scan_hint": "Scannen Sie diesen Code mit einer Handykamera, um BIShare herunterzuladen",
+    "app_store": "Laden im App Store",
+    "google_play": "Jetzt bei Google Play",
+    "share": "Download-Link teilen"
+  },
   "inbox": {
     "address_copied": "Adresse kopiert",
     "all": "Alle",
     "browser_access": "Browser-Zugriff",
     "browser_access_subtitle": "Zugriff auf deine Dateien über einen Webbrowser",
+    "web_tab_lan": "LAN",
+    "web_tab_cloud": "Cloud-Link",
+    "web_cloud_hint": "Laden Sie eine Datei hoch, um einen 24-Stunden-Link und einen QR-Code zu erhalten, die von überall funktionieren — kein gemeinsames Netzwerk erforderlich.",
+    "web_cloud_pick": "Datei auswählen",
+    "web_ios_note": "Lassen Sie BIShare während des Teilens geöffnet — die Adresse funktioniert nicht mehr, wenn die App in den Hintergrund wechselt.",
     "cannot_open": "Kann nicht geöffnet werden: {message}",
     "clear_inbox": "Posteingang leeren",
     "could_not_save": "Konnte nicht speichern",
@@ -188,6 +203,78 @@
     },
     "yes": "Ja"
   },
+  "devices": {
+    "add_favorite": "Zu Favoriten hinzufügen",
+    "auto_accept_on": "Automatisches Annehmen ist aktiviert",
+    "days_ago": {
+      "one": "vor {} Tag",
+      "other": "vor {} Tagen"
+    },
+    "device_name": "Gerätename",
+    "device_removed": "Gerät entfernt",
+    "devices_count": {
+      "one": "{} Gerät",
+      "other": "{} Geräte"
+    },
+    "empty_no_matches_message": "Keine Geräte entsprechen Ihrer Suche",
+    "empty_no_matches_title": "Keine Treffer",
+    "empty_none_message": "Geräte, die Sie entdecken oder mit denen Sie Dateien übertragen, erscheinen hier",
+    "empty_none_title": "Noch keine Geräte",
+    "files_count": {
+      "one": "{} Datei",
+      "other": "{} Dateien"
+    },
+    "hours_ago": {
+      "one": "vor {} Stunde",
+      "other": "vor {} Stunden"
+    },
+    "just_now": "gerade eben",
+    "known": "Bekannte Geräte",
+    "last_seen": "Zuletzt gesehen {when}",
+    "last_transfer": "Letzte Übertragung",
+    "minutes_ago": {
+      "one": "vor {} Minute",
+      "other": "vor {} Minuten"
+    },
+    "no_transfers": "Noch keine Übertragungen mit diesem Gerät",
+    "online": "Online",
+    "online_now": "Jetzt online",
+    "remove_device": "Dieses Gerät ignorieren",
+    "remove_favorite": "Aus Favoriten entfernen",
+    "rename": "Umbenennen",
+    "rename_device": "Gerät umbenennen",
+    "save": "Speichern",
+    "search_placeholder": "Geräte suchen …",
+    "see_all": "Alle Geräte anzeigen",
+    "settings_subtitle": "Bekannte Geräte, Status und Übertragungsstatistiken",
+    "sort_last_seen": "Zuletzt gesehen",
+    "sort_name": "Name",
+    "sort_online_first": "Online zuerst",
+    "stat_received": "Empfangen",
+    "stat_sent": "Gesendet",
+    "title": "Geräte",
+    "turn_on_auto_accept": "Automatisches Annehmen aktivieren"
+  },
+  "clipboard": {
+    "clear_all": "Verlauf löschen",
+    "copied": "In die Zwischenablage kopiert",
+    "copy_failed": "Element konnte nicht kopiert werden",
+    "empty_message": "Text und Bilder, die Sie bei aktivierter Synchronisierung kopieren, erscheinen hier",
+    "empty_title": "Keine Elemente in der Zwischenablage",
+    "image_label": "Bild",
+    "items_count": {
+      "one": "{} Element",
+      "other": "{} Elemente"
+    },
+    "row_subtitle": "{from} · {time}",
+    "save": "In Dateien speichern",
+    "save_failed": "Element konnte nicht gespeichert werden",
+    "saved": "In empfangenen Dateien gespeichert",
+    "sync_active": "Synchronisierung mit Geräten in der Nähe",
+    "sync_paused": "Pausiert — nichts wird geteilt",
+    "title": "Zwischenablage",
+    "you": "Sie"
+  },
   "nearby": {
     "devices_nearby": {
       "one": "{} Gerät in der Nähe · tippen zum Senden",
@@ -226,8 +313,14 @@
     "uploading_to_secure_link": "Hochladen zum sicheren Link..."
   },
   "room": {
+    "connecting_create_local": "Lokaler Raum wird erstellt",
+    "connecting_create_remote": "Raum wird erstellt",
+    "connecting_finding": "Raum wird gesucht",
     "downloading": "Lade {name} herunter…",
     "enter_code_hint": "Code eingeben",
+    "error_create": "Der Raum konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+    "error_join": "Dem Raum konnte nicht beigetreten werden.",
+    "error_not_found": "Kein Raum mit diesem Code.",
     "failed_to_add": "Hinzufügen von {name} fehlgeschlagen: {error}",
     "files": "Dateien",
     "host": "Host",
@@ -264,6 +357,15 @@
     "auto_ask": "Immer fragen",
     "auto_favorites": "Nur Favoriten",
     "choose_folder": "Ordner auswählen…",
+    "clipboard_cloud": "Über Cloud synchronisieren",
+    "clipboard_cloud_soon": "Demnächst verfügbar — Synchronisierung über verschiedene Netzwerke",
+    "clipboard_cloud_subtitle": "Übertragen Sie Ihre Zwischenablage zwischen Geräten in verschiedenen Netzwerken",
+    "clipboard_history": "Verlauf der Zwischenablage",
+    "clipboard_history_subtitle": "Kürzlich synchronisierte Elemente",
+    "clipboard_images": "Bilder einbeziehen",
+    "clipboard_images_subtitle": "Kopierte Bilder und Screenshots synchronisieren",
+    "clipboard_max_size": "Maximale Bildgröße",
+    "clipboard_mb": "{mb} MB",
     "clipboard_subtitle": "Kopierten Text mit BIShare-Geräten in der Nähe teilen",
     "contact_support": "Support kontaktieren",
     "device_name": "Gerätename",
@@ -272,6 +374,8 @@
     "enable": "Aktivieren",
     "help_support": "Hilfe & Support",
     "language": "Sprache",
+    "launch_at_login": "Beim Anmelden starten",
+    "launch_at_login_subtitle": "BIShare automatisch beim Anmelden starten",
     "media_quality": "Medienqualität",
     "open_folder": "Ordner öffnen",
     "pin_hint": "Numerische PIN",
@@ -289,6 +393,11 @@
     "save_default": "Standard (Dokumente/BIShare)",
     "save_location": "Speicherort",
     "save_location_subtitle": "Wo empfangene Dateien gespeichert werden.",
+    "browser_upload": "Browser-Uploads",
+    "browser_upload_subtitle": "Webbrowsern erlauben, Dateien an dieses Gerät zu senden",
+    "browser_upload_limit": "Maximale Upload-Größe",
+    "browser_upload_unlimited": "Unbegrenzt",
+    "browser_upload_gb": "{gb} GB",
     "send_accent": "Akzentfarbe für Senden",
     "sending": "Senden",
     "set_pin": "PIN festlegen",
@@ -308,6 +417,9 @@
     "visible_subtitle": "Aus = versteckt, nicht auffindbar"
   },
   "notification": {
+    "clipboard_from": "Kopiert von {sender}",
+    "clipboard_image_from": "Bild kopiert von {sender}",
+    "clipboard_synced": "Zwischenablage synchronisiert",
     "file_received": "Datei empfangen",
     "from": "{file} · von {sender}"
   },
@@ -353,5 +465,11 @@
     "slide4_title": "Privat & Sicher",
     "slide5_body": "Von jedem Browser im selben Netzwerk empfangen oder QR-Code scannen, um mit einem Tippen zu verbinden.",
     "slide5_title": "Browser & QR"
+  },
+  "tray": {
+    "pause": "Empfang pausieren",
+    "quit": "Beenden",
+    "resume": "Empfang fortsetzen",
+    "show": "BIShare anzeigen"
   }
 }

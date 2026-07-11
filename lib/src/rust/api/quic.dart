@@ -8,9 +8,10 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'quic.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `cancels`, `clear_cancel`, `client_config`, `drain_to_file`, `is_cancelled`, `read_str`, `ring_provider`, `runtime`, `self_signed`, `server_config`, `servers`, `stream_recv`, `stream_send`, `transport_config`, `write_str`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `SkipServerVerify`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`, `supported_verify_schemes`, `verify_server_cert`, `verify_tls12_signature`, `verify_tls13_signature`
+// These functions are ignored because they are not marked as `pub`: `active_resume_keys`, `authorized_sessions`, `clear_control`, `client_config`, `connections`, `control_for`, `control_recv`, `control_wait`, `controls`, `data_recv`, `data_send_task`, `derive_resume_key`, `drain_to_file`, `fail`, `from_bits`, `has`, `has`, `idle`, `is_complete`, `is_failed`, `is_session_authorized`, `make_udp_socket`, `merkle_root`, `new`, `part_name`, `persist_ledger`, `quic_send_file_inner`, `read_exact_at`, `read_frame_offset`, `read_str_body`, `read_str`, `read_trailer`, `recv_files`, `rehash_have_chunks`, `resume_part_name`, `ring_provider`, `runtime`, `self_signed`, `server_config`, `servers`, `set`, `set`, `sha256_leaf`, `snapshot`, `stream_dispatch`, `stream_recv`, `stream_send_multi`, `stream_send`, `sweep_stale_resume_parts`, `transport_config`, `tuned_client_endpoint`, `tuned_server_endpoint`, `validate_chunk`, `wait_for_state`, `with_ctx`, `write_all_at`, `write_all_bounded`, `write_str`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `ActiveKeyGuard`, `ChunkBitmap`, `ControlState`, `RecvFailure`, `RecvFileState`, `SessionConn`, `SkipServerVerify`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `drop`, `fmt`, `fmt`, `from`, `supported_verify_schemes`, `verify_server_cert`, `verify_tls12_signature`, `verify_tls13_signature`
+// These functions are ignored (category: IgnoreBecauseOwnerTyShouldIgnore): `default`
 
 /// Stop the QUIC server on [port], if one is running.
 void quicStop({required int port}) =>
@@ -20,21 +21,92 @@ void quicStop({required int port}) =>
 void quicCancel({required String cancelId}) =>
     RustLib.instance.api.crateApiQuicQuicCancel(cancelId: cancelId);
 
-/// Start a QUIC server on `[::]:port`, staging received files as `.part` files in
-/// `save_dir`. Emits [QuicServerEvent]s to Dart; the first is `Ready` (or `Error`
-/// on bind failure). Stop it with [quic_stop].
+/// Transfer buffer-pool stats (Phase 1c hard RAM ceiling), for field diagnostics:
+/// `"slabs=<cap> allocated=<n> in_use=<n> peak=<n> acquires=<n>"`. `allocated`
+/// never exceeding `slabs` — no matter how much data has moved — is the proof
+/// that data-plane RAM is independent of file size.
+String quicBufferPoolStats() =>
+    RustLib.instance.api.crateApiQuicQuicBufferPoolStats();
+
+/// Live path/transport stats for the session's connection as compact JSON
+/// (Phase 3 metrics): RTT, cwnd, the ACTUAL DPLPMTUD-negotiated MTU, congestion
+/// events, loss, UDP datagram/syscall counts, pool counters, HW-AES flag.
+/// Returns "{}" if the session has no live connection.
+String quicSessionStats({required String sessionId}) =>
+    RustLib.instance.api.crateApiQuicQuicSessionStats(sessionId: sessionId);
+
+/// Loopback benchmark (Phase 3): pushes `size_mb` of generated data through the
+/// FULL multi-stream pipeline — pread → CRC32C → SHA-256 leaves → framing →
+/// quinn TLS 1.3 over 127.0.0.1 → validate → CRC → pwrite → Merkle verify → ACK
+/// — entirely in-process, and returns one JSON line. This measures this
+/// device's CPU/pipeline CEILING (no real network): the honest upper bound any
+/// LAN transfer could reach on this hardware (hte-architecture.md §18 Phase 3
+/// exit: "loopback figure labeled as the CPU/pipeline ceiling").
+Future<String> quicBenchmark({
+  required int sizeMb,
+  required int streams,
+  required int chunkKb,
+}) => RustLib.instance.api.crateApiQuicQuicBenchmark(
+  sizeMb: sizeMb,
+  streams: streams,
+  chunkKb: chunkKb,
+);
+
+/// Authorize [session_id] for QUIC receipt — call when a `prepare` is accepted.
+void quicAuthorizeSession({required String sessionId}) =>
+    RustLib.instance.api.crateApiQuicQuicAuthorizeSession(sessionId: sessionId);
+
+/// Revoke [session_id] — call when the session completes / is cancelled / removed.
+void quicRevokeSession({required String sessionId}) =>
+    RustLib.instance.api.crateApiQuicQuicRevokeSession(sessionId: sessionId);
+
+/// Establish ONE persistent QUIC connection to `host:port` for `session_id` — a
+/// single QUIC/TLS handshake that every subsequent [quic_send_file] reuses
+/// (`open_bi` per file). This is the fix for the per-file-handshake throughput
+/// blocker. Idempotent: a re-connect replaces (and closes) any prior connection.
+Future<void> quicConnect({
+  required String host,
+  required int port,
+  required String sessionId,
+}) => RustLib.instance.api.crateApiQuicQuicConnect(
+  host: host,
+  port: port,
+  sessionId: sessionId,
+);
+
+/// Close and drop the persistent connection for `session_id` (call when the whole
+/// session is done / cancelled / errored). Also clears the session's control state.
+///
+/// Teardown is paced in the background: after the close drains, the endpoint's
+/// SOCKET is held open past the peer's keep-alive interval (5 s). If the single
+/// CONNECTION_CLOSE datagram is lost (WiFi), the peer's next ping then hits the
+/// still-open socket and gets a stateless reset — killing its connection
+/// instantly. Dropping the socket immediately instead left the peer discovering
+/// the death only via its 20 s per-read idle timeouts (observed on Android as
+/// "idle timeout" ×streams, ~20 s after a sender cancel).
+Future<void> quicDisconnect({required String sessionId}) =>
+    RustLib.instance.api.crateApiQuicQuicDisconnect(sessionId: sessionId);
+
 Stream<QuicServerEvent> quicServe({
   required int port,
   required String saveDir,
 }) => RustLib.instance.api.crateApiQuicQuicServe(port: port, saveDir: saveDir);
 
-/// Send one file to `host:port` over QUIC, reporting bytes-sent progress. Returns
-/// total bytes sent once the receiver ACKs. `session_id`/`file_id` correlate the
-/// transfer with the TCP `prepare` the sender did first.
+/// Send one file over the persistent QUIC connection established by [quic_connect]
+/// for this `session_id` — NO per-file handshake (Phase 1a). `streams` > 1 selects
+/// the offset-framed multi-stream format (Phase 1b) and must only be passed when
+/// the receiver advertised `streamsPerFile` in its PrepareResponse; `streams` ≤ 1
+/// sends the byte-identical legacy single-stream body. Reports bytes-sent
+/// progress; the receiver ACKs on completion. Any error propagates so the caller
+/// can fall back to TCP. The connection is NOT closed here — it is reused for the
+/// next file and torn down by [quic_disconnect] at session end.
+/// NOTE on error delivery: FRB drops the return value of a function that also
+/// takes a `StreamSink` (the generated Dart `unawaited()`s it — an `Err` there
+/// surfaces as an UNHANDLED zone exception and never reaches the progress
+/// stream, so Dart's `await for` would hang and the TCP fallback never fire).
+/// Errors are therefore delivered INTO the sink via `add_error`, which makes
+/// the Dart stream throw — exactly what the caller's try/catch expects.
 Stream<BigInt> quicSendFile({
-  required String host,
-  required int port,
-  required String cancelId,
   required String sessionId,
   required String fileId,
   required String senderAlias,
@@ -42,10 +114,10 @@ Stream<BigInt> quicSendFile({
   required String filePath,
   required String fileName,
   required String fileType,
+  required int streams,
+  required int chunkSize,
+  required bool resume,
 }) => RustLib.instance.api.crateApiQuicQuicSendFile(
-  host: host,
-  port: port,
-  cancelId: cancelId,
   sessionId: sessionId,
   fileId: fileId,
   senderAlias: senderAlias,
@@ -53,6 +125,9 @@ Stream<BigInt> quicSendFile({
   filePath: filePath,
   fileName: fileName,
   fileType: fileType,
+  streams: streams,
+  chunkSize: chunkSize,
+  resume: resume,
 );
 
 @freezed
@@ -72,6 +147,12 @@ sealed class QuicServerEvent with _$QuicServerEvent {
     required String fileType,
     required String tempPath,
     required BigInt size,
+
+    /// Phase 1d: the received bytes were integrity-verified against the
+    /// sender's whole-file hash (Merkle root on multi-stream, streaming
+    /// SHA-256 on legacy). Replaces the old hardcoded flag — Dart records
+    /// this as the real `verified` result.
+    required bool verified,
   }) = QuicServerEvent_Received;
 
   /// Incremental receive progress, emitted while the body streams in so the
@@ -84,7 +165,14 @@ sealed class QuicServerEvent with _$QuicServerEvent {
     required BigInt total,
   }) = QuicServerEvent_Progress;
 
-  /// A non-fatal receive error.
-  const factory QuicServerEvent.error({required String message}) =
-      QuicServerEvent_Error;
+  /// A non-fatal receive error. `session_id`/`file_id` are set when the
+  /// failure happened after the stream identified itself — Dart uses them to
+  /// clear the session's progress card (e.g. when the SENDER cancels
+  /// mid-transfer, the stream reset lands here and must not leave a stale
+  /// floating card on the receiver).
+  const factory QuicServerEvent.error({
+    required String message,
+    String? sessionId,
+    String? fileId,
+  }) = QuicServerEvent_Error;
 }

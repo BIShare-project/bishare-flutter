@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/desktop/desktop_service.dart';
@@ -48,6 +49,20 @@ class SettingsPage extends StatelessWidget {
                         ProfileCard(
                           alias: state.alias,
                           onTap: () => _editAlias(context, cubit, state.alias),
+                        ),
+                        // Devices dashboard: the full known-devices roster with
+                        // presence, stats, and per-device actions.
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: AppGroup(
+                            child: AppListTile(
+                              leading: const Glyph(AppIcons.smartphone),
+                              title: Text('devices.title'.tr()),
+                              subtitle: Text('devices.settings_subtitle'.tr()),
+                              trailing: _chevron(cs),
+                              onTap: () => context.push('/devices'),
+                            ),
+                          ),
                         ),
                         AppSectionHeader('settings.appearance'.tr()),
                         AppGroup(
@@ -158,13 +173,45 @@ class SettingsPage extends StatelessWidget {
                                     : cubit.setPin(enabled: false),
                               ),
                               const AppRowDivider(indent: 58),
+                              // Web-Share browser uploads (feature #11): allow
+                              // toggle + per-upload size cap.
+                              SwitchRow(
+                                icon: AppIcons.uploadFile,
+                                title: 'settings.browser_upload'.tr(),
+                                subtitle:
+                                    'settings.browser_upload_subtitle'.tr(),
+                                value: state.browserUpload,
+                                onChanged: cubit.setBrowserUpload,
+                              ),
+                              if (state.browserUpload) ...[
+                                const AppRowDivider(indent: 58),
+                                SelectRow<int>(
+                                  icon: AppIcons.storageUsage,
+                                  title: 'settings.browser_upload_limit'.tr(),
+                                  value: state.browserUploadMaxGb,
+                                  values: s.Settings.browserUploadLimitsGb,
+                                  label: (gb) => gb == 0
+                                      ? 'settings.browser_upload_unlimited'
+                                            .tr()
+                                      : 'settings.browser_upload_gb'.tr(
+                                          namedArgs: {'gb': '$gb'},
+                                        ),
+                                  onChanged: cubit.setBrowserUploadMaxGb,
+                                ),
+                              ],
+                              const AppRowDivider(indent: 58),
                               AppListTile(
                                 leading: const Glyph(AppIcons.folder),
                                 title: Text('settings.save_location'.tr()),
                                 subtitle: Text(
-                                  state.saveLocation.isEmpty
+                                  // The ACTUAL folder files land in (single
+                                  // source of truth) — not the persisted base
+                                  // path, which is empty/stale on macOS. Fall
+                                  // back to the default label only before the
+                                  // first resolve.
+                                  state.resolvedSaveDir.isEmpty
                                       ? 'settings.save_default'.tr()
-                                      : state.saveLocation,
+                                      : _tidySaveDir(state.resolvedSaveDir),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -185,6 +232,65 @@ class SettingsPage extends StatelessWidget {
                                 value: state.clipboardSync,
                                 onChanged: cubit.setClipboardSync,
                               ),
+                              // Clipboard sub-options (v2.4 Universal
+                              // Clipboard) — only while sync is on.
+                              if (state.clipboardSync) ...[
+                                if (cubit.clipboardImagesSupported) ...[
+                                  const AppRowDivider(indent: 58),
+                                  SwitchRow(
+                                    icon: AppIcons.image,
+                                    title:
+                                        'settings.clipboard_images'.tr(),
+                                    subtitle:
+                                        'settings.clipboard_images_subtitle'
+                                            .tr(),
+                                    value: state.clipboardImages,
+                                    onChanged: cubit.setClipboardImages,
+                                  ),
+                                  const AppRowDivider(indent: 58),
+                                  SelectRow<int>(
+                                    icon: AppIcons.storageUsage,
+                                    title:
+                                        'settings.clipboard_max_size'.tr(),
+                                    value: state.clipboardMaxSizeMb,
+                                    values: s.Settings.clipboardSizesMb,
+                                    label: (mb) => 'settings.clipboard_mb'
+                                        .tr(namedArgs: {'mb': '$mb'}),
+                                    onChanged: cubit.setClipboardMaxSizeMb,
+                                  ),
+                                ],
+                                const AppRowDivider(indent: 58),
+                                // Cloud relay is not shippable yet (per-device
+                                // placeholder channel + backend deferred), so the
+                                // toggle is disabled with a "coming soon" hint —
+                                // it must never turn the relay on (it would
+                                // reconnect forever). Re-enable when the Workers
+                                // sync backend + account pairing ship.
+                                AppListTile(
+                                  leading: const Glyph(AppIcons.cloudSync),
+                                  title: Text('settings.clipboard_cloud'.tr()),
+                                  subtitle: Text(
+                                    'settings.clipboard_cloud_soon'.tr(),
+                                  ),
+                                  trailing: const ShadSwitch(
+                                    value: false,
+                                    enabled: false,
+                                  ),
+                                ),
+                                const AppRowDivider(indent: 58),
+                                AppListTile(
+                                  leading:
+                                      const Glyph(AppIcons.clipboardPaste),
+                                  title: Text(
+                                    'settings.clipboard_history'.tr(),
+                                  ),
+                                  subtitle: Text(
+                                    'settings.clipboard_history_subtitle'.tr(),
+                                  ),
+                                  trailing: _chevron(cs),
+                                  onTap: () => context.push('/clipboard'),
+                                ),
+                              ],
                               // Desktop: launch BIShare automatically at login.
                               if (isDesktop) ...[
                                 const AppRowDivider(indent: 58),
@@ -218,6 +324,20 @@ class SettingsPage extends StatelessWidget {
     AutoAcceptMode.acceptAll => 'settings.auto_accept_all'.tr(),
     AutoAcceptMode.favoritesOnly => 'settings.auto_favorites'.tr(),
   };
+
+  /// Tidy an absolute save-dir path down to its meaningful tail (e.g.
+  /// "…/Desktop/BIShare") so the row surfaces where files land — the leading
+  /// container/Documents prefix is long and, under single-line ellipsis, would
+  /// otherwise be all that shows before "BIShare" gets truncated. Splits on both
+  /// separators so it reads the same on Windows.
+  static String _tidySaveDir(String path) {
+    final parts = path
+        .split(RegExp(r'[\\/]+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (parts.length <= 2) return path;
+    return '…/${parts[parts.length - 2]}/${parts.last}';
+  }
 
   Future<void> _pickSaveLocation(
     BuildContext context,

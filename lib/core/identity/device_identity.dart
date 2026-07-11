@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../src/rust/api/crypto.dart' as rc;
+import '../clipboard/clipboard_channel.dart';
 import '../constants/protocol.dart';
 import '../crypto/e2e_crypto.dart';
 import '../network/local_ip.dart';
@@ -136,6 +137,12 @@ class DeviceIdentity {
       supportsBinary: true,
       supportsCompression: true,
       supportsKeepAlive: true,
+      // v2.4 capability flags are advertised only once the feature actually
+      // ships (PeerCapabilities gates every use on the sender side). Binary
+      // clipboard requires a native image-clipboard handler, which only exists
+      // on macOS/iOS/Android — advertise it ONLY there (null → the field stays
+      // off the wire on Windows/Linux, so peers never announce images to us).
+      supportsClipboardBinary: ClipboardImageChannel.isSupported ? true : null,
       ip: ip,
     );
   }

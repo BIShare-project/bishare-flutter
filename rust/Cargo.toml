@@ -12,14 +12,31 @@ crate-type = ["cdylib", "staticlib", "lib"]
 flutter_rust_bridge = "=2.12.0"
 # Re-use the existing, test-vector-covered protocol crate (crypto/binary/utils).
 bishare-protocol = { path = "../../bishare-protocol/rust" }
+# v2.4 frame payloads cross the FFI as JSON strings (cheap; avoids mirroring the
+# protocol structs into FRB) — parsed/re-framed here with the same serde_json the
+# protocol crate serializes with.
+serde_json = "1"
 
 # QUIC transport (Flutter↔Flutter, cross-platform). rustls-ring is chosen over
 # aws-lc-rs because `ring` cross-compiles cleanly for iOS/Android/Windows/Linux
 # via cargokit; aws-lc-sys' C/cmake build is fragile on those targets.
 quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls-ring", "log"] }
+# Per-chunk CRC32C on the multi-stream QUIC data frames (HW-accelerated on
+# aarch64/x86_64). NOT wire integrity — QUIC AEAD already guarantees that — but a
+# storage/pipeline-bug assertion per hte-architecture.md §7.1, and the wire field
+# Phase 1d's Merkle verification builds on.
+crc32c = "0.6"
+# UDP socket buffer sizing (Phase 3 tuning): OS defaults (macOS ~64 KB) overflow
+# at ~100k datagrams/s bursts — measured 7% packet loss ON LOOPBACK. 4 MB
+# buffers absorb the bursts; set best-effort before handing the socket to quinn.
+socket2 = "0.5"
+# Whole-file integrity (Phase 1d): per-chunk SHA-256 leaves → Merkle root on the
+# multi-stream path (order-independent, computed on arrival — no 100 GB re-read),
+# streaming SHA-256 on the legacy path. Replaces the hardcoded `verified` flag.
+sha2 = "0.10"
 rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
 rcgen = { version = "0.13", default-features = false, features = ["ring", "pem"] }
-tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "sync", "time", "fs"] }
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "sync", "time", "fs", "macros"] }
 
 # cargokit builds the FFI crate matching the Flutter build mode, so a debug app
 # would otherwise get an UNOPTIMISED AES-GCM (~2 MB/s). Optimise dependencies even

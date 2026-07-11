@@ -17,6 +17,20 @@ class AppLinks {
   /// Android application id — used to build the Play Store rating link.
   static const String androidPackage = 'com.bishare.app';
 
+  /// The URL a QR/invite points at so a peer without the app can install it.
+  /// Points at the marketing site, which is the smart landing page that (once
+  /// live) detects the visitor's OS and forwards to the right store.
+  static const String download = website;
+
+  /// Google Play listing.
+  static const String playStore =
+      'https://play.google.com/store/apps/details?id=$androidPackage';
+
+  /// App Store listing. No per-store iOS listing exists yet, so this falls back
+  /// to the website; swap in `https://apps.apple.com/app/id<APP_ID>` on release.
+  // TODO(store-listing): point at the real App Store URL once published.
+  static const String appStore = website;
+
   /// A pre-filled `mailto:` for the support inbox.
   static Uri get supportMailto =>
       Uri(scheme: 'mailto', path: supportEmail, query: 'subject=BIShare Support');

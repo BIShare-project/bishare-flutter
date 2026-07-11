@@ -7,6 +7,8 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../core/di/locator.dart';
 import '../core/theme/app_theme.dart';
+import '../features/clipboard/presentation/clipboard_cubit.dart';
+import '../features/devices/presentation/devices_cubit.dart';
 import '../features/discovery/data/discovery_service.dart';
 import '../features/discovery/presentation/discovery_cubit.dart';
 import '../features/favorites/presentation/favorites_cubit.dart';
@@ -76,6 +78,8 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
         BlocProvider(create: (_) => SendCubit(getIt(), getIt())),
         BlocProvider(create: (_) => TrayCubit(getIt())),
         BlocProvider(create: (_) => FavoritesCubit(getIt())),
+        BlocProvider(create: (_) => DevicesCubit(getIt(), getIt(), getIt())),
+        BlocProvider(create: (_) => ClipboardCubit(getIt(), getIt())),
         BlocProvider(create: (_) => InboxCubit(getIt())),
         BlocProvider(create: (_) => HistoryCubit(getIt())),
         BlocProvider(create: (_) => RoomCubit(getIt(), getIt())),

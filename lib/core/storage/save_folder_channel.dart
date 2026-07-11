@@ -21,6 +21,22 @@ class SaveFolderChannel {
   static bool get isSupported =>
       Platform.isMacOS || Platform.isWindows || Platform.isLinux;
 
+  /// The received-files directory for a user-CHOSEN base folder: always a
+  /// `BIShare/` subfolder of it, created if missing. Received files never land
+  /// loose in the picked folder (e.g. straight onto the Desktop) — the picked
+  /// location is treated as a base, exactly like the default/Android/iOS paths.
+  /// Returns the base itself if the `BIShare/` subfolder can't be created (e.g.
+  /// a permission edge) so a save target always exists.
+  static Directory bishareSubdir(String basePath) {
+    final dir = Directory('$basePath${Platform.pathSeparator}BIShare');
+    try {
+      if (!dir.existsSync()) dir.createSync(recursive: true);
+      return dir;
+    } on FileSystemException {
+      return Directory(basePath);
+    }
+  }
+
   /// Re-open a previously chosen folder from its macOS security-scoped bookmark,
   /// granting write access for this app session. Returns the path, or null if
   /// none was set or it no longer resolves.
@@ -55,6 +71,19 @@ class SaveFolderChannel {
       );
     }
     return null;
+  }
+
+  /// Forget a previously-picked custom folder (macOS: drop the security-scoped
+  /// bookmark) so "Use default" actually sticks across restarts. No-op elsewhere.
+  static Future<void> clear() async {
+    if (!Platform.isMacOS) return;
+    try {
+      await _channel.invokeMethod('clear');
+    } on PlatformException {
+      // best-effort
+    } on MissingPluginException {
+      // best-effort
+    }
   }
 
   /// Open [path] in the system file browser (Finder / Explorer / Files).

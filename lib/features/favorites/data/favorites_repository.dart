@@ -42,6 +42,56 @@ class FavoritesRepository {
     }
   }
 
+  /// Star/unstar by fingerprint — the Devices dashboard path, which must also
+  /// work for remembered peers that are not currently discovered. [name] seeds
+  /// the custom name when starring.
+  Future<void> toggleFingerprint(String fingerprint, {String? name}) async {
+    if (_cache.containsKey(fingerprint)) {
+      await _db.removeFavorite(fingerprint);
+    } else {
+      await _db.upsertFavorite(
+        FavoriteDevicesCompanion.insert(
+          fingerprint: fingerprint,
+          addedAt: DateTime.now(),
+          customName: Value(name),
+        ),
+      );
+    }
+  }
+
+  /// Rename by fingerprint. The custom name lives on the favorites row, so
+  /// renaming a peer that is not a favorite yet stars it.
+  Future<void> rename(String fingerprint, String name) async {
+    final f = _cache[fingerprint];
+    await _db.upsertFavorite(
+      FavoriteDevicesCompanion(
+        fingerprint: Value(fingerprint),
+        customName: Value(name),
+        autoAccept: Value(f?.autoAccept ?? false),
+        addedAt: Value(f?.addedAt ?? DateTime.now()),
+      ),
+    );
+  }
+
+  /// Set auto-accept by fingerprint. Auto-accept is stored on (and implies)
+  /// the trusted favorites row, so enabling it stars the peer first.
+  Future<void> setAutoAcceptFingerprint(
+    String fingerprint,
+    bool value, {
+    String? name,
+  }) async {
+    final f = _cache[fingerprint];
+    if (f == null && !value) return;
+    await _db.upsertFavorite(
+      FavoriteDevicesCompanion(
+        fingerprint: Value(fingerprint),
+        customName: Value(f?.customName ?? name),
+        autoAccept: Value(value),
+        addedAt: Value(f?.addedAt ?? DateTime.now()),
+      ),
+    );
+  }
+
   Future<void> setAutoAccept(String fingerprint, bool value) async {
     final f = _cache[fingerprint];
     if (f == null) return;

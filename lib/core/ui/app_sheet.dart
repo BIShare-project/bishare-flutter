@@ -86,7 +86,11 @@ class AppSheetAction extends StatelessWidget {
     final cs = ShadTheme.of(context).colorScheme;
     final color = destructive ? cs.destructive : cs.foreground;
     // (icon is an AppIcons name)
-    return InkWell(
+    // Transparent Material so the InkWell has a Material ancestor under ShadApp
+    // (a bare InkWell throws Material.of on desktop hover).
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
       onTap: () {
         tapHaptic();
         onTap();
@@ -108,6 +112,7 @@ class AppSheetAction extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

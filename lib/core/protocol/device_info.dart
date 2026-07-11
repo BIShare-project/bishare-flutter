@@ -19,6 +19,11 @@ class DeviceInfo {
     this.supportsBinary,
     this.supportsCompression,
     this.supportsKeepAlive,
+    this.supportsSync,
+    this.supportsBroadcast,
+    this.supportsMedia,
+    this.supportsResumeOffset,
+    this.supportsClipboardBinary,
     this.ip,
   });
 
@@ -40,6 +45,15 @@ class DeviceInfo {
   final bool? supportsBinary;
   final bool? supportsCompression;
   final bool? supportsKeepAlive;
+
+  // v2.4 premium-feature capability flags (null = legacy peer, feature off).
+  // Advertised only once the matching feature actually ships — see
+  // `PeerCapabilities` for the single gating helper.
+  final bool? supportsSync;
+  final bool? supportsBroadcast;
+  final bool? supportsMedia;
+  final bool? supportsResumeOffset;
+  final bool? supportsClipboardBinary;
 
   /// Self-reported LAN IPv4 — the fix that makes discovery reliable over
   /// Apple AWDL (peers must not rely on the transport-resolved IPv6 endpoint).

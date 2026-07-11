@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as ws_status;
 
@@ -107,15 +108,26 @@ class RoomService {
   Future<(RoomSession, List<RoomMember>, List<RoomFile>)> joinRemote(
     String code,
   ) async {
-    final res = await _dio.postUri<dynamic>(
+    final res = await _dio.postUri<String>(
       _api(CloudConfig.roomJoin(code)),
       data: {
         'fingerprint': _identity.fingerprint,
         'alias': _identity.alias,
         'deviceType': _identity.deviceType,
       },
+      options: Options(responseType: ResponseType.plain),
     );
-    final d = _data(res)!;
+    // The join response carries the room's file list with base64 thumbnails, so
+    // decode it off the UI isolate to keep the connecting spinner smooth.
+    final raw = res.data;
+    final decoded = raw == null || raw.isEmpty
+        ? const <String, dynamic>{}
+        : await compute<String, dynamic>(jsonDecode, raw);
+    final body = decoded is Map
+        ? decoded.cast<String, dynamic>()
+        : const <String, dynamic>{};
+    final d = (body['data'] is Map ? body['data'] as Map : body)
+        .cast<String, dynamic>();
     final room = (d['room'] as Map).cast<String, dynamic>();
     final members = [
       for (final m in (d['members'] as List? ?? []))

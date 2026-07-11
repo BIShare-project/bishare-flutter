@@ -1,5 +1,7 @@
 pub mod crypto;
+pub mod manifest;
 pub mod quic;
+pub mod signal;
 pub mod utils;
 
 /// Runs once when the Rust library is initialised from Dart (`RustLib.init()`).

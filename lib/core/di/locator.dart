@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:path_provider/path_provider.dart';
@@ -7,7 +9,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../storage/save_folder_channel.dart';
 import '../storage/android_downloads_channel.dart';
+import '../../features/clipboard/data/clipboard_history_store.dart';
+import '../../features/clipboard/data/clipboard_relay.dart';
 import '../../features/clipboard/data/clipboard_service.dart';
+import '../../features/clipboard/data/clipboard_token_store.dart';
 import '../../features/discovery/data/discovery_service.dart';
 import '../../features/favorites/data/favorites_repository.dart';
 import '../../features/history/data/history_repository.dart';
@@ -19,8 +24,10 @@ import '../../features/room/data/room_service.dart';
 import '../../features/send/data/transfer_client.dart';
 import '../deeplink/deep_link_service.dart';
 import '../desktop/desktop_service.dart';
+import '../devices/device_registry.dart';
 import '../identity/device_identity.dart';
 import '../notifications/notification_service.dart';
+import '../relay/relay_channel.dart';
 import '../server/browser_share.dart';
 import '../server/transfer_server.dart';
 import '../storage/app_database.dart';
@@ -38,6 +45,10 @@ Future<void> setupLocator() async {
 
   final server = TransferServer(identity: identity, saveDirectory: saveDir);
   final db = AppDatabase();
+  // Trim roster peers unseen for 90+ days (favorites are never purged) so the
+  // Devices list can't grow unbounded. Fire-and-forget: startup never waits on
+  // it, and a failure is harmless — the next launch retries.
+  unawaited(db.purgeOlderThan(90));
   final history = HistoryRepository(db)..attach(server);
   final favorites = FavoritesRepository(db);
 
@@ -66,13 +77,48 @@ Future<void> setupLocator() async {
   await notifications.init();
   notifications.attach(server);
 
-  final discovery = DiscoveryService(identity);
+  // Seed the advertise intent from persisted visibility so a device the user set
+  // to "Hidden" never leaks a cold-start advertisement before SettingsCubit
+  // applies. The 'visibility' pref stores Visibility.name ('everyone'|'hidden').
+  final discovery = DiscoveryService(
+    identity,
+    advertise: prefs.getString('visibility') != 'hidden',
+  );
 
-  // Universal-clipboard sync (opt-in via Settings). An incoming clipboard posts
-  // a best-effort local notification.
+  // Universal-clipboard sync (opt-in via Settings). Announced image bytes are
+  // staged in the token store the transfer server serves; synced items land in
+  // the drift-backed ring-buffer history; the cloud relay stays dormant until
+  // its (OFF-default) setting turns it on. Incoming clipboards post a
+  // best-effort local notification.
+  final clipboardTokens = ClipboardTokenStore();
+  server.clipboardTokens = clipboardTokens;
+  final supportDir = await getApplicationSupportDirectory();
+  final clipboardHistory = ClipboardHistoryStore(
+    db,
+    Directory('${supportDir.path}${Platform.pathSeparator}clipboard'),
+  );
   final clipboard = ClipboardService(identity, discovery)
-    ..onReceived = (sender, _) =>
-        notifications.notify('Clipboard synced', 'Copied from $sender');
+    ..tokenStore = clipboardTokens
+    ..history = clipboardHistory
+    // The factory keeps RelayChannelClient lazy (see its registration below):
+    // no Dio/socket until the cloud toggle actually turns the relay on.
+    ..relay = ClipboardRelay(() => getIt<RelayChannelClient>(), identity)
+    ..onReceived = (sender, _) {
+      notifications.notify(
+        'notification.clipboard_synced'.tr(),
+        'notification.clipboard_from'.tr(namedArgs: {'sender': sender}),
+      );
+    }
+    ..onReceivedImage = (sender) {
+      notifications.notify(
+        'notification.clipboard_synced'.tr(),
+        'notification.clipboard_image_from'.tr(namedArgs: {'sender': sender}),
+      );
+    };
+
+  // Unified device roster (discovery ∪ favorites ∪ drift KnownDevices) with
+  // presence, plus the sighting writer that keeps lastSeen/lastIp fresh.
+  final deviceRegistry = PresenceDeviceRegistry(db, discovery, favorites);
 
   getIt
     ..registerSingleton<SharedPreferences>(prefs)
@@ -81,9 +127,11 @@ Future<void> setupLocator() async {
     ..registerSingleton<HistoryRepository>(history)
     ..registerSingleton<FavoritesRepository>(favorites)
     ..registerSingleton<DiscoveryService>(discovery)
+    ..registerSingleton<PresenceDeviceRegistry>(deviceRegistry)
     ..registerSingleton<TransferServer>(server)
     ..registerSingleton<NotificationService>(notifications)
     ..registerSingleton<ClipboardService>(clipboard)
+    ..registerSingleton<ClipboardHistoryStore>(clipboardHistory)
     ..registerSingleton<CloudTransferService>(
       CloudTransferService(server, history),
     )
@@ -97,7 +145,10 @@ Future<void> setupLocator() async {
     ..registerSingleton<DeepLinkService>(DeepLinkService())
     ..registerSingleton<TransferClient>(TransferClient(identity))
     ..registerSingleton<NearbyService>(NearbyService())
-    ..registerSingleton<DesktopService>(DesktopService(server));
+    ..registerSingleton<DesktopService>(DesktopService(server))
+    // Cloud relay WS+REST client (v2.4 premium features). Lazy: it stays
+    // dormant — no socket, not even a Dio — until a feature calls connect().
+    ..registerLazySingleton<RelayChannelClient>(RelayChannelClient.new);
 }
 
 /// Where received files land.
@@ -110,14 +161,14 @@ Future<void> setupLocator() async {
 /// * **iOS**: the app Documents dir (iOS surfaces it in the Files app).
 /// * **Android**: public Downloads directory (visible in Files app + Gallery).
 ///
-/// Always kept in a `BIShare/` subfolder for the default location so it doesn't
-/// clutter Documents; a user-picked folder is used directly.
+/// Files always land in a `BIShare/` subfolder — of the default location AND of
+/// any user-picked folder — so a chosen folder (e.g. the Desktop) isn't
+/// cluttered with loose received files (mirrors Android/iOS).
 Future<Directory> _resolveSaveDirectory() async {
   if (Platform.isMacOS) {
     final picked = await SaveFolderChannel.restore();
-    if (picked != null && picked.isNotEmpty) {
-      final dir = Directory(picked);
-      if (dir.existsSync()) return dir;
+    if (picked != null && picked.isNotEmpty && Directory(picked).existsSync()) {
+      return SaveFolderChannel.bishareSubdir(picked);
     }
   }
   if (Platform.isAndroid) {

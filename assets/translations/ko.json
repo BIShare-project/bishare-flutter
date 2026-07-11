@@ -4,6 +4,7 @@
       "one": "전송할 파일 {}개 추가됨",
       "other": "전송할 파일 {}개 추가됨"
     },
+    "error_processing_link": "링크를 처리하는 중 오류가 발생했습니다",
     "live_transfer": "실시간 전송",
     "shared_file": "공유 파일",
     "tab_history": "기록",
@@ -35,6 +36,7 @@
     "hidden": "숨김",
     "hidden_not_discoverable": "숨김 - 검색 불가",
     "host_version": "{host} · v{version}",
+    "invite_device": "기기 초대",
     "looking_for_devices": "기기를 찾는 중...",
     "message_optional": "메시지 (선택사항)",
     "nearby_devices": "주변 기기",
@@ -120,11 +122,24 @@
     },
     "wants_to_send": "보내기를 원함"
   },
+  "invite": {
+    "title": "기기 초대",
+    "subtitle": "다른 기기에서 BIShare 받기",
+    "scan_hint": "휴대폰 카메라로 이 코드를 스캔해 BIShare를 다운로드하세요",
+    "app_store": "App Store에서 다운로드",
+    "google_play": "Google Play에서 다운로드",
+    "share": "다운로드 링크 공유"
+  },
   "inbox": {
     "address_copied": "주소 복사됨",
     "all": "전체",
     "browser_access": "브라우저 접근",
     "browser_access_subtitle": "웹 브라우저에서 파일 접근하기",
+    "web_tab_lan": "LAN",
+    "web_tab_cloud": "클라우드 링크",
+    "web_cloud_hint": "파일을 업로드하면 어디서나 사용할 수 있는 24시간 링크와 QR 코드가 생성됩니다. 같은 네트워크가 필요 없습니다.",
+    "web_cloud_pick": "파일 선택",
+    "web_ios_note": "공유하는 동안 BIShare를 열어 두세요. 앱이 백그라운드로 전환되면 주소가 작동하지 않습니다.",
     "cannot_open": "열 수 없음: {message}",
     "clear_inbox": "받은 파일 비우기",
     "could_not_save": "저장할 수 없음",
@@ -188,6 +203,78 @@
     },
     "yes": "예"
   },
+  "devices": {
+    "add_favorite": "즐겨찾기에 추가",
+    "auto_accept_on": "자동 수락이 켜져 있습니다",
+    "days_ago": {
+      "one": "{}일 전",
+      "other": "{}일 전"
+    },
+    "device_name": "기기 이름",
+    "device_removed": "기기를 삭제했습니다",
+    "devices_count": {
+      "one": "기기 {}대",
+      "other": "기기 {}대"
+    },
+    "empty_no_matches_message": "검색과 일치하는 기기가 없습니다",
+    "empty_no_matches_title": "검색 결과 없음",
+    "empty_none_message": "검색하거나 전송한 기기가 여기에 표시됩니다",
+    "empty_none_title": "아직 기기가 없습니다",
+    "files_count": {
+      "one": "파일 {}개",
+      "other": "파일 {}개"
+    },
+    "hours_ago": {
+      "one": "{}시간 전",
+      "other": "{}시간 전"
+    },
+    "just_now": "방금 전",
+    "known": "알려진 기기",
+    "last_seen": "마지막 접속 {when}",
+    "last_transfer": "마지막 전송",
+    "minutes_ago": {
+      "one": "{}분 전",
+      "other": "{}분 전"
+    },
+    "no_transfers": "이 기기와 아직 전송한 내역이 없습니다",
+    "online": "온라인",
+    "online_now": "지금 온라인",
+    "remove_device": "이 기기 삭제",
+    "remove_favorite": "즐겨찾기에서 제거",
+    "rename": "이름 변경",
+    "rename_device": "기기 이름 변경",
+    "save": "저장",
+    "search_placeholder": "기기 검색...",
+    "see_all": "모든 기기 보기",
+    "settings_subtitle": "알려진 기기, 접속 상태 및 전송 통계",
+    "sort_last_seen": "마지막 접속",
+    "sort_name": "이름",
+    "sort_online_first": "온라인 우선",
+    "stat_received": "받음",
+    "stat_sent": "보냄",
+    "title": "기기",
+    "turn_on_auto_accept": "자동 수락 켜기"
+  },
+  "clipboard": {
+    "clear_all": "기록 지우기",
+    "copied": "클립보드에 복사했습니다",
+    "copy_failed": "이 항목을 복사하지 못했습니다",
+    "empty_message": "동기화가 켜져 있을 때 복사한 텍스트와 이미지가 여기에 표시됩니다",
+    "empty_title": "클립보드 항목 없음",
+    "image_label": "이미지",
+    "items_count": {
+      "one": "{}개 항목",
+      "other": "{}개 항목"
+    },
+    "row_subtitle": "{from} · {time}",
+    "save": "파일에 저장",
+    "save_failed": "이 항목을 저장하지 못했습니다",
+    "saved": "받은 파일에 저장했습니다",
+    "sync_active": "주변 기기와 동기화 중",
+    "sync_paused": "일시 중지됨 — 공유되는 항목 없음",
+    "title": "클립보드",
+    "you": "나"
+  },
   "nearby": {
     "devices_nearby": {
       "one": "주변 기기 {}대 · 탭하여 보내기",
@@ -226,8 +313,14 @@
     "uploading_to_secure_link": "안전한 링크에 업로드 중..."
   },
   "room": {
+    "connecting_create_local": "로컬 방을 만드는 중",
+    "connecting_create_remote": "방을 만드는 중",
+    "connecting_finding": "방 찾는 중",
     "downloading": "{name} 다운로드 중…",
     "enter_code_hint": "코드 입력",
+    "error_create": "방을 만들 수 없습니다. 다시 시도해 주세요.",
+    "error_join": "방에 참여할 수 없습니다.",
+    "error_not_found": "해당 코드의 방이 없습니다.",
     "failed_to_add": "{name} 추가 실패: {error}",
     "files": "파일",
     "host": "호스트",
@@ -264,6 +357,15 @@
     "auto_ask": "항상 확인",
     "auto_favorites": "즐겨찾기만",
     "choose_folder": "폴더 선택…",
+    "clipboard_cloud": "클라우드로 동기화",
+    "clipboard_cloud_soon": "출시 예정 — 다른 네트워크 간 동기화",
+    "clipboard_cloud_subtitle": "다른 네트워크에 있는 기기 간에 클립보드를 중계합니다",
+    "clipboard_history": "클립보드 기록",
+    "clipboard_history_subtitle": "최근 동기화된 항목",
+    "clipboard_images": "이미지 포함",
+    "clipboard_images_subtitle": "복사한 이미지와 스크린샷을 동기화합니다",
+    "clipboard_max_size": "최대 이미지 크기",
+    "clipboard_mb": "{mb} MB",
     "clipboard_subtitle": "주변 BIShare 기기와 복사한 텍스트 공유",
     "contact_support": "지원 문의",
     "device_name": "기기 이름",
@@ -272,6 +374,8 @@
     "enable": "사용",
     "help_support": "도움말 및 지원",
     "language": "언어",
+    "launch_at_login": "로그인 시 실행",
+    "launch_at_login_subtitle": "로그인할 때 BIShare를 자동으로 시작합니다",
     "media_quality": "미디어 화질",
     "open_folder": "폴더 열기",
     "pin_hint": "숫자 PIN",
@@ -289,6 +393,11 @@
     "save_default": "기본 (Documents/BIShare)",
     "save_location": "저장 위치",
     "save_location_subtitle": "수신된 파일이 저장되는 위치입니다.",
+    "browser_upload": "브라우저 업로드",
+    "browser_upload_subtitle": "웹 브라우저에서 이 기기로 파일을 보낼 수 있도록 허용합니다",
+    "browser_upload_limit": "최대 업로드 크기",
+    "browser_upload_unlimited": "무제한",
+    "browser_upload_gb": "{gb} GB",
     "send_accent": "전송 강조 색상",
     "sending": "전송",
     "set_pin": "PIN 설정",
@@ -308,6 +417,9 @@
     "visible_subtitle": "끄기 = 숨김, 검색 불가"
   },
   "notification": {
+    "clipboard_from": "{sender}에서 복사됨",
+    "clipboard_image_from": "{sender}에서 이미지 복사됨",
+    "clipboard_synced": "클립보드 동기화됨",
     "file_received": "파일 수신됨",
     "from": "{file} · {sender}로부터"
   },
@@ -315,6 +427,7 @@
     "cancel": "취소",
     "copy": "복사",
     "delete": "삭제",
+    "download": "다운로드",
     "link_copied": "링크 복사됨",
     "no_app_open": "이 파일을 열 수 있는 앱이 없습니다",
     "open": "열기",
@@ -352,5 +465,11 @@
     "slide4_title": "개인적이고 안전함",
     "slide5_body": "같은 네트워크의 어떤 브라우저에서든 받거나, QR을 스캔하여 한 번 탭으로 연결하세요.",
     "slide5_title": "브라우저 & QR"
+  },
+  "tray": {
+    "pause": "받기 일시 중지",
+    "quit": "종료",
+    "resume": "받기 다시 시작",
+    "show": "BIShare 표시"
   }
 }

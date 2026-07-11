@@ -26,6 +26,12 @@ class SettingsCubit extends Cubit<Settings> {
     this._client,
   ) : super(_load(_prefs, _identity)) {
     _apply(state); // apply persisted settings to services at startup
+    // The ACTUAL save dir is only known after _apply resolves it — and on macOS
+    // after the startup security-scoped bookmark restore in the locator (which
+    // runs before this cubit). Surface _server.saveDirectory.path so the
+    // "Save location" row shows where files really land, not the (possibly
+    // empty/stale) persisted base path.
+    emit(state.copyWith(resolvedSaveDir: _server.saveDirectory.path));
   }
 
   final SharedPreferences _prefs;
@@ -45,7 +51,12 @@ class SettingsCubit extends Cubit<Settings> {
   static const _kMediaQuality = 'mediaQuality';
   static const _kTransport = 'transport';
   static const _kSaveLocation = 'saveLocation';
+  static const _kBrowserUpload = 'browserUpload';
+  static const _kBrowserUploadMaxGb = 'browserUploadMaxGb';
   static const _kClipboardSync = 'clipboardSync';
+  static const _kClipboardImages = 'clipboardImages';
+  static const _kClipboardMaxSizeMb = 'clipboardMaxSizeMb';
+  static const _kClipboardCloud = 'clipboardCloud';
 
   static Settings _load(SharedPreferences p, DeviceIdentity id) => Settings(
     alias: id.alias,
@@ -68,7 +79,12 @@ class SettingsCubit extends Cubit<Settings> {
         TransportMode.values.asNameMap()[p.getString(_kTransport)] ??
         TransportMode.auto,
     saveLocation: p.getString(_kSaveLocation) ?? '',
+    browserUpload: p.getBool(_kBrowserUpload) ?? true,
+    browserUploadMaxGb: p.getInt(_kBrowserUploadMaxGb) ?? 0,
     clipboardSync: p.getBool(_kClipboardSync) ?? false,
+    clipboardImages: p.getBool(_kClipboardImages) ?? true,
+    clipboardMaxSizeMb: p.getInt(_kClipboardMaxSizeMb) ?? 5,
+    clipboardCloud: p.getBool(_kClipboardCloud) ?? false,
   );
 
   void _apply(Settings s) {
@@ -76,14 +92,23 @@ class SettingsCubit extends Cubit<Settings> {
     _server.autoAccept = s.autoAccept;
     _server.pin = s.pinEnabled && s.pinCode.isNotEmpty ? s.pinCode : null;
     _server.hidden = s.visibility == Visibility.hidden;
+    _server.browserUploadEnabled = s.browserUpload;
+    _server.browserUploadMaxBytes = s.browserUploadMaxGb * 1024 * 1024 * 1024;
     _discovery.setAdvertising(s.visibility == Visibility.everyone);
     // On macOS the save dir is resolved at startup via the security-scoped
     // bookmark (see _resolveSaveDirectory) — re-applying the bare prefs path here
     // would point at a folder we no longer hold write access to.
     if (!Platform.isMacOS && s.saveLocation.isNotEmpty) {
-      _server.saveDirectory = Directory(s.saveLocation);
+      // Files go into a BIShare/ subfolder of the chosen folder (not loose in it).
+      _server.saveDirectory = SaveFolderChannel.bishareSubdir(s.saveLocation);
     }
-    _clipboard.setEnabled(s.clipboardSync);
+    _clipboard
+      ..configure(
+        includeImages: s.clipboardImages,
+        maxImageBytes: s.clipboardMaxSizeMb * 1024 * 1024,
+        cloudSync: s.clipboardCloud,
+      )
+      ..setEnabled(s.clipboardSync);
     _client.preferredTransport = s.transport;
   }
 
@@ -142,20 +167,71 @@ class SettingsCubit extends Cubit<Settings> {
     emit(state.copyWith(transport: t));
   }
 
+  Future<void> setBrowserUpload(bool on) async {
+    await _prefs.setBool(_kBrowserUpload, on);
+    _server.browserUploadEnabled = on;
+    emit(state.copyWith(browserUpload: on));
+  }
+
+  Future<void> setBrowserUploadMaxGb(int gb) async {
+    await _prefs.setInt(_kBrowserUploadMaxGb, gb);
+    _server.browserUploadMaxBytes = gb * 1024 * 1024 * 1024;
+    emit(state.copyWith(browserUploadMaxGb: gb));
+  }
+
   Future<void> setClipboardSync(bool on) async {
     await _prefs.setBool(_kClipboardSync, on);
     await _clipboard.setEnabled(on);
     emit(state.copyWith(clipboardSync: on));
   }
 
+  Future<void> setClipboardImages(bool on) async {
+    await _prefs.setBool(_kClipboardImages, on);
+    _applyClipboardConfig(state.copyWith(clipboardImages: on));
+  }
+
+  Future<void> setClipboardMaxSizeMb(int mb) async {
+    await _prefs.setInt(_kClipboardMaxSizeMb, mb);
+    _applyClipboardConfig(state.copyWith(clipboardMaxSizeMb: mb));
+  }
+
+  Future<void> setClipboardCloud(bool on) async {
+    await _prefs.setBool(_kClipboardCloud, on);
+    _applyClipboardConfig(state.copyWith(clipboardCloud: on));
+  }
+
+  /// Whether this platform can sync clipboard images (drives the sub-option
+  /// rows' visibility).
+  bool get clipboardImagesSupported => ClipboardService.imagesSupported;
+
+  void _applyClipboardConfig(Settings s) {
+    _clipboard.configure(
+      includeImages: s.clipboardImages,
+      maxImageBytes: s.clipboardMaxSizeMb * 1024 * 1024,
+      cloudSync: s.clipboardCloud,
+    );
+    emit(s);
+  }
+
   Future<void> setSaveLocation(String path) async {
     await _prefs.setString(_kSaveLocation, path);
     if (path.isNotEmpty) {
-      _server.saveDirectory = Directory(path);
+      // Save into a BIShare/ subfolder of the picked folder, not loose in it.
+      _server.saveDirectory = SaveFolderChannel.bishareSubdir(path);
     } else {
+      // "Use default": also forget the macOS security-scoped bookmark, else the
+      // old custom folder is silently restored on the next launch.
+      await SaveFolderChannel.clear();
       _server.resetSaveDirectory();
     }
-    emit(state.copyWith(saveLocation: path));
+    // Keep resolvedSaveDir in lockstep with the actual server dir (the base path
+    // alone is unreliable on macOS, and both branches above just changed it).
+    emit(
+      state.copyWith(
+        saveLocation: path,
+        resolvedSaveDir: _server.saveDirectory.path,
+      ),
+    );
   }
 
   /// Whether a custom save folder can be chosen on this platform (desktop only).

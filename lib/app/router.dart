@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/di/locator.dart';
 import '../core/storage/app_database.dart';
+import '../features/clipboard/presentation/clipboard_history_page.dart';
+import '../features/devices/presentation/devices_page.dart';
 import '../features/file_manager/presentation/file_manager_page.dart';
 import '../features/inbox/presentation/image_gallery_page.dart';
 import '../features/nearby/presentation/nearby_page.dart';
@@ -73,6 +75,14 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: 'nearby',
           builder: (context, state) => const NearbyPage(),
+        ),
+        GoRoute(
+          path: 'devices',
+          builder: (context, state) => const DevicesPage(),
+        ),
+        GoRoute(
+          path: 'clipboard',
+          builder: (context, state) => const ClipboardHistoryPage(),
         ),
       ],
     ),

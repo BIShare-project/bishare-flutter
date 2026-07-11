@@ -36,6 +36,7 @@
     "hidden": "Tersembunyi",
     "hidden_not_discoverable": "Tersembunyi - tidak dapat ditemukan",
     "host_version": "{host} · v{version}",
+    "invite_device": "Undang perangkat",
     "looking_for_devices": "Mencari perangkat...",
     "message_optional": "Pesan (opsional)",
     "nearby_devices": "Perangkat Terdekat",
@@ -121,11 +122,24 @@
     },
     "wants_to_send": "ingin mengirim"
   },
+  "invite": {
+    "title": "Undang perangkat",
+    "subtitle": "Dapatkan BIShare di perangkat lain",
+    "scan_hint": "Pindai kode ini dengan kamera ponsel untuk mengunduh BIShare",
+    "app_store": "Unduh di App Store",
+    "google_play": "Dapatkan di Google Play",
+    "share": "Bagikan tautan unduh"
+  },
   "inbox": {
     "address_copied": "Alamat disalin",
     "all": "Semua",
     "browser_access": "Akses browser",
     "browser_access_subtitle": "Akses file Anda dari browser web",
+    "web_tab_lan": "LAN",
+    "web_tab_cloud": "Tautan cloud",
+    "web_cloud_hint": "Unggah file untuk mendapatkan tautan 24 jam dan kode QR yang berfungsi dari mana saja — tanpa perlu jaringan yang sama.",
+    "web_cloud_pick": "Pilih file",
+    "web_ios_note": "Biarkan BIShare tetap terbuka saat berbagi — alamat berhenti berfungsi saat aplikasi berada di latar belakang.",
     "cannot_open": "Tidak dapat membuka: {message}",
     "clear_inbox": "Bersihkan kotak masuk",
     "could_not_save": "Tidak dapat menyimpan",
@@ -189,6 +203,78 @@
     },
     "yes": "Ya"
   },
+  "devices": {
+    "add_favorite": "Tambah ke favorit",
+    "auto_accept_on": "Terima otomatis aktif",
+    "days_ago": {
+      "one": "{} hari lalu",
+      "other": "{} hari lalu"
+    },
+    "device_name": "Nama perangkat",
+    "device_removed": "Perangkat dihapus",
+    "devices_count": {
+      "one": "{} perangkat",
+      "other": "{} perangkat"
+    },
+    "empty_no_matches_message": "Tidak ada perangkat yang cocok dengan pencarian Anda",
+    "empty_no_matches_title": "Tidak ada yang cocok",
+    "empty_none_message": "Perangkat yang Anda temukan atau ajak transfer akan muncul di sini",
+    "empty_none_title": "Belum ada perangkat",
+    "files_count": {
+      "one": "{} file",
+      "other": "{} file"
+    },
+    "hours_ago": {
+      "one": "{} jam lalu",
+      "other": "{} jam lalu"
+    },
+    "just_now": "baru saja",
+    "known": "Perangkat dikenal",
+    "last_seen": "Terakhir terlihat {when}",
+    "last_transfer": "Transfer terakhir",
+    "minutes_ago": {
+      "one": "{} menit lalu",
+      "other": "{} menit lalu"
+    },
+    "no_transfers": "Belum ada transfer dengan perangkat ini",
+    "online": "Online",
+    "online_now": "Online sekarang",
+    "remove_device": "Lupakan perangkat ini",
+    "remove_favorite": "Hapus dari favorit",
+    "rename": "Ubah nama",
+    "rename_device": "Ubah nama perangkat",
+    "save": "Simpan",
+    "search_placeholder": "Cari perangkat...",
+    "see_all": "Lihat semua perangkat",
+    "settings_subtitle": "Perangkat dikenal, status online, dan statistik transfer",
+    "sort_last_seen": "Terakhir terlihat",
+    "sort_name": "Nama",
+    "sort_online_first": "Online dulu",
+    "stat_received": "Diterima",
+    "stat_sent": "Terkirim",
+    "title": "Perangkat",
+    "turn_on_auto_accept": "Aktifkan terima otomatis"
+  },
+  "clipboard": {
+    "clear_all": "Hapus riwayat",
+    "copied": "Disalin ke papan klip",
+    "copy_failed": "Tidak dapat menyalin item ini",
+    "empty_message": "Teks dan gambar yang Anda salin saat sinkron aktif akan muncul di sini",
+    "empty_title": "Belum ada item papan klip",
+    "image_label": "Gambar",
+    "items_count": {
+      "one": "{} item",
+      "other": "{} item"
+    },
+    "row_subtitle": "{from} · {time}",
+    "save": "Simpan ke file",
+    "save_failed": "Tidak dapat menyimpan item ini",
+    "saved": "Disimpan ke file diterima",
+    "sync_active": "Menyinkron dengan perangkat terdekat",
+    "sync_paused": "Dijeda — tidak ada yang dibagikan",
+    "title": "Papan klip",
+    "you": "Anda"
+  },
   "nearby": {
     "devices_nearby": {
       "one": "{} perangkat terdekat · ketuk untuk mengirim",
@@ -227,8 +313,14 @@
     "uploading_to_secure_link": "Mengunggah ke tautan aman..."
   },
   "room": {
+    "connecting_create_local": "Membuat ruangan lokal",
+    "connecting_create_remote": "Membuat ruangan",
+    "connecting_finding": "Mencari ruangan",
     "downloading": "Mengunduh {name}…",
     "enter_code_hint": "Masukkan kode",
+    "error_create": "Tidak dapat membuat ruangan. Silakan coba lagi.",
+    "error_join": "Tidak dapat bergabung ke ruangan.",
+    "error_not_found": "Tidak ada ruangan dengan kode itu.",
     "failed_to_add": "Gagal menambahkan {name}: {error}",
     "files": "File",
     "host": "Penyedia",
@@ -265,6 +357,15 @@
     "auto_ask": "Selalu tanya",
     "auto_favorites": "Hanya favorit",
     "choose_folder": "Pilih folder…",
+    "clipboard_cloud": "Sinkron via cloud",
+    "clipboard_cloud_soon": "Segera hadir — sinkron lintas jaringan berbeda",
+    "clipboard_cloud_subtitle": "Teruskan papan klip antar perangkat di jaringan berbeda",
+    "clipboard_history": "Riwayat papan klip",
+    "clipboard_history_subtitle": "Item tersinkron terbaru",
+    "clipboard_images": "Sertakan gambar",
+    "clipboard_images_subtitle": "Sinkronkan gambar dan tangkapan layar yang disalin",
+    "clipboard_max_size": "Ukuran gambar maksimum",
+    "clipboard_mb": "{mb} MB",
     "clipboard_subtitle": "Bagikan teks yang disalin dengan perangkat BIShare terdekat",
     "contact_support": "Hubungi Dukungan",
     "device_name": "Nama perangkat",
@@ -273,6 +374,8 @@
     "enable": "Aktifkan",
     "help_support": "Bantuan & Dukungan",
     "language": "Bahasa",
+    "launch_at_login": "Jalankan saat masuk",
+    "launch_at_login_subtitle": "Mulai BIShare secara otomatis saat Anda masuk",
     "media_quality": "Kualitas media",
     "open_folder": "Buka folder",
     "pin_hint": "PIN numerik",
@@ -290,6 +393,11 @@
     "save_default": "Default (Documents/BIShare)",
     "save_location": "Lokasi penyimpanan",
     "save_location_subtitle": "Di mana file yang diterima disimpan.",
+    "browser_upload": "Unggahan browser",
+    "browser_upload_subtitle": "Izinkan browser web mengirim file ke perangkat ini",
+    "browser_upload_limit": "Ukuran unggahan maksimum",
+    "browser_upload_unlimited": "Tanpa batas",
+    "browser_upload_gb": "{gb} GB",
     "send_accent": "Warna aksen kirim",
     "sending": "Mengirim",
     "set_pin": "Atur PIN",
@@ -309,6 +417,9 @@
     "visible_subtitle": "Mati = tersembunyi, tidak dapat ditemukan"
   },
   "notification": {
+    "clipboard_from": "Disalin dari {sender}",
+    "clipboard_image_from": "Gambar disalin dari {sender}",
+    "clipboard_synced": "Papan klip tersinkron",
     "file_received": "File diterima",
     "from": "{file} · dari {sender}"
   },
@@ -354,5 +465,11 @@
     "slide4_title": "Pribadi & Aman",
     "slide5_body": "Terima dari browser apa pun di jaringan yang sama, atau pindai QR untuk terhubung dengan sekali ketuk.",
     "slide5_title": "Browser & QR"
+  },
+  "tray": {
+    "pause": "Jeda penerimaan",
+    "quit": "Keluar",
+    "resume": "Lanjutkan penerimaan",
+    "show": "Tampilkan BIShare"
   }
 }

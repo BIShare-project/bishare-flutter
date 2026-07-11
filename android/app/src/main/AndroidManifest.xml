@@ -81,6 +81,17 @@
                 <data android:mimeType="*/*"/>
             </intent-filter>
         </activity>
+        <!-- Image-clipboard channel (app.bishare/clipboard): setImage() stages
+             bytes in cache/clipboard/ and clips a content:// URI from here. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.clipboard"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/clipboard_paths" />
+        </provider>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

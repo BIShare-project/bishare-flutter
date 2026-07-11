@@ -67,7 +67,13 @@ class Settings extends Equatable {
     this.mediaQuality = MediaQuality.original,
     this.transport = TransportMode.auto,
     this.saveLocation = '',
+    this.resolvedSaveDir = '',
+    this.browserUpload = true,
+    this.browserUploadMaxGb = 0,
     this.clipboardSync = false,
+    this.clipboardImages = true,
+    this.clipboardMaxSizeMb = 5,
+    this.clipboardCloud = false,
   });
 
   final String alias;
@@ -85,11 +91,41 @@ class Settings extends Equatable {
   final MediaQuality mediaQuality;
   final TransportMode transport;
 
-  /// Custom save directory ('' = app default Documents/BIShare).
+  /// Custom save directory ('' = app default Documents/BIShare). This is only
+  /// the persisted BASE path; on macOS it can be empty/stale because the real
+  /// dir is restored from a security-scoped bookmark at startup.
   final String saveLocation;
+
+  /// The ACTUAL directory received files land in — mirrors
+  /// `_server.saveDirectory.path` (the `BIShare/` subfolder of the default or
+  /// picked base, and on macOS the bookmark-restored dir). This is the single
+  /// source of truth the "Save location" row shows; [saveLocation] alone is
+  /// unreliable on macOS. '' only before the first resolve.
+  final String resolvedSaveDir;
+
+  /// Whether web browsers may upload files to this device (Web-Share).
+  final bool browserUpload;
+
+  /// Per-upload size cap for browser uploads, in GB. 0 = unlimited.
+  final int browserUploadMaxGb;
 
   /// Universal-clipboard sync over the LAN (opt-in).
   final bool clipboardSync;
+
+  /// Clipboard sync includes images (v2.4 binary clipboard) — sub-option.
+  final bool clipboardImages;
+
+  /// Largest clipboard image that is synced, in MB.
+  final int clipboardMaxSizeMb;
+
+  /// Clipboard sync via the cloud relay (OFF by default — privacy).
+  final bool clipboardCloud;
+
+  /// The selectable [clipboardMaxSizeMb] values.
+  static const List<int> clipboardSizesMb = [1, 5, 10, 25];
+
+  /// The selectable [browserUploadMaxGb] values (0 = unlimited).
+  static const List<int> browserUploadLimitsGb = [0, 1, 5, 20];
 
   Settings copyWith({
     String? alias,
@@ -103,7 +139,13 @@ class Settings extends Equatable {
     MediaQuality? mediaQuality,
     TransportMode? transport,
     String? saveLocation,
+    String? resolvedSaveDir,
+    bool? browserUpload,
+    int? browserUploadMaxGb,
     bool? clipboardSync,
+    bool? clipboardImages,
+    int? clipboardMaxSizeMb,
+    bool? clipboardCloud,
   }) => Settings(
     alias: alias ?? this.alias,
     themeMode: themeMode ?? this.themeMode,
@@ -116,7 +158,13 @@ class Settings extends Equatable {
     mediaQuality: mediaQuality ?? this.mediaQuality,
     transport: transport ?? this.transport,
     saveLocation: saveLocation ?? this.saveLocation,
+    resolvedSaveDir: resolvedSaveDir ?? this.resolvedSaveDir,
+    browserUpload: browserUpload ?? this.browserUpload,
+    browserUploadMaxGb: browserUploadMaxGb ?? this.browserUploadMaxGb,
     clipboardSync: clipboardSync ?? this.clipboardSync,
+    clipboardImages: clipboardImages ?? this.clipboardImages,
+    clipboardMaxSizeMb: clipboardMaxSizeMb ?? this.clipboardMaxSizeMb,
+    clipboardCloud: clipboardCloud ?? this.clipboardCloud,
   );
 
   @override
@@ -132,7 +180,13 @@ class Settings extends Equatable {
     mediaQuality,
     transport,
     saveLocation,
+    resolvedSaveDir,
+    browserUpload,
+    browserUploadMaxGb,
     clipboardSync,
+    clipboardImages,
+    clipboardMaxSizeMb,
+    clipboardCloud,
   ];
 }
 

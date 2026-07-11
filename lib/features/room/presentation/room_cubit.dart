@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../remote/data/cloud_transfer_service.dart' show CloudDownloadException;
@@ -80,8 +81,14 @@ class RoomCubit extends Cubit<RoomState> {
   Future<void> createRoom({bool local = false}) async {
     emit(state.copyWith(
       status: RoomStatus.connecting,
-      connectingLabel: local ? 'Creating a local room…' : 'Creating a room…',
+      connectingLabel: local
+          ? 'room.connecting_create_local'.tr()
+          : 'room.connecting_create_remote'.tr(),
     ));
+    // Yield one turn so the connecting spinner actually paints before we touch
+    // Bonjour / the relay — otherwise the synchronous run-up plus first-use
+    // native hitch can make the lobby look frozen until the room appears.
+    await Future<void>.delayed(Duration.zero);
     try {
       _isLocal = local;
       final session =
@@ -98,34 +105,81 @@ class RoomCubit extends Cubit<RoomState> {
       emit(
         state.copyWith(
           status: RoomStatus.error,
-          error: 'Could not create the room. Please try again.',
+          error: 'room.error_create'.tr(),
         ),
       );
     }
   }
 
-  /// Join by code — tries a local Bonjour room first (same Wi-Fi), then falls
-  /// back to the relay (mirrors native local-first behaviour).
+  /// Join by code. Local Bonjour rooms take priority (same-Wi-Fi, private),
+  /// but we race local discovery against the relay join instead of waiting out
+  /// the full local timeout first: a room code lives in exactly one realm (a
+  /// host makes EITHER a local OR a remote room), so the realm that doesn't
+  /// have the code always fails cleanly and the other wins. This keeps
+  /// local-first behaviour while a remote-only code no longer sits on the
+  /// "looking for a local room" spinner for the whole discovery window.
   Future<void> joinRoom(String code) async {
     final trimmed = code.trim().toUpperCase();
     if (trimmed.length < 4) return;
     emit(state.copyWith(
       status: RoomStatus.connecting,
-      connectingLabel: 'Looking for a local room',
+      connectingLabel: 'room.connecting_finding'.tr(),
     ));
-    try {
-      // Try a local Bonjour room first; any local failure must NOT block the
-      // remote fallback, so swallow it and treat as "no local room".
-      (RoomSession, List<RoomMember>, List<RoomFile>)? localResult;
-      try {
-        localResult =
-            await _local.joinLocal(trimmed, timeout: const Duration(seconds: 4));
-      } on Object {
-        localResult = null;
+    // Yield one turn so the spinner paints before discovery / the relay call.
+    await Future<void>.delayed(Duration.zero);
+
+    final done = Completer<void>();
+    var localMissed = false;
+    Object? remoteError;
+
+    // Only surface an error once BOTH realms have given up; prefer the remote
+    // error message (a genuine local-only room fails remote with 404, and a
+    // genuine remote room is what the user most likely meant).
+    void failIfBothDone() {
+      if (done.isCompleted) return;
+      if (localMissed && remoteError != null) {
+        done.completeError(remoteError!);
       }
-      if (localResult != null) {
-        _isLocal = true;
-        final (session, members, files) = localResult;
+    }
+
+    // Local-first: a resolved local room wins immediately.
+    unawaited(
+      _local
+          .joinLocal(trimmed, timeout: const Duration(seconds: 4))
+          .then((local) {
+        if (done.isCompleted) return;
+        if (local != null) {
+          _isLocal = true;
+          final (session, members, files) = local;
+          emit(
+            RoomState(
+              status: RoomStatus.inRoom,
+              session: session,
+              members: members,
+              files: files,
+            ),
+          );
+          done.complete();
+        } else {
+          localMissed = true;
+          failIfBothDone();
+        }
+      }).catchError((Object _) {
+        // joinLocal is self-guarding and shouldn't throw; treat any escape as
+        // "no local room" so the remote result can still win.
+        if (done.isCompleted) return;
+        localMissed = true;
+        failIfBothDone();
+      }),
+    );
+
+    // Remote runs concurrently so a remote-only code resolves as fast as the
+    // relay answers rather than after the local discovery timeout.
+    unawaited(
+      _remote.joinRemote(trimmed).then((remote) {
+        if (done.isCompleted) return;
+        _isLocal = false;
+        final (session, members, files) = remote;
         emit(
           RoomState(
             status: RoomStatus.inRoom,
@@ -134,32 +188,31 @@ class RoomCubit extends Cubit<RoomState> {
             files: files,
           ),
         );
-        return;
-      }
-      _isLocal = false;
-      emit(state.copyWith(connectingLabel: 'Joining room'));
-      final (session, members, files) = await _remote.joinRemote(trimmed);
-      emit(
-        RoomState(
-          status: RoomStatus.inRoom,
-          session: session,
-          members: members,
-          files: files,
-        ),
-      );
+        done.complete();
+      }).catchError((Object e) {
+        if (done.isCompleted) return;
+        remoteError = e;
+        failIfBothDone();
+      }),
+    );
+
+    try {
+      await done.future;
     } on DioException catch (e) {
       final notFound = e.response?.statusCode == 404;
       emit(
         state.copyWith(
           status: RoomStatus.error,
-          error: notFound ? 'No room with that code.' : 'Could not join the room.',
+          error: notFound
+              ? 'room.error_not_found'.tr()
+              : 'room.error_join'.tr(),
         ),
       );
     } on Object {
       emit(
         state.copyWith(
           status: RoomStatus.error,
-          error: 'Could not join the room.',
+          error: 'room.error_join'.tr(),
         ),
       );
     }

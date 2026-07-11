@@ -4,6 +4,7 @@
       "one": "{} fichier ajouté pour envoyer",
       "other": "{} fichiers ajoutés pour envoyer"
     },
+    "error_processing_link": "लिंक प्रोसेस करने में त्रुटि",
     "live_transfer": "Transfert en direct",
     "shared_file": "Fichier partagé",
     "tab_history": "Historique",
@@ -35,6 +36,7 @@
     "hidden": "Masqué",
     "hidden_not_discoverable": "Masqué - non détectable",
     "host_version": "{host} · v{version}",
+    "invite_device": "किसी डिवाइस को आमंत्रित करें",
     "looking_for_devices": "Recherche d'appareils...",
     "message_optional": "Message (optionnel)",
     "nearby_devices": "Appareils à proximité",
@@ -120,11 +122,24 @@
     },
     "wants_to_send": "veut envoyer"
   },
+  "invite": {
+    "title": "किसी डिवाइस को आमंत्रित करें",
+    "subtitle": "किसी दूसरे डिवाइस पर BIShare पाएँ",
+    "scan_hint": "BIShare डाउनलोड करने के लिए इस कोड को फ़ोन कैमरे से स्कैन करें",
+    "app_store": "App Store पर डाउनलोड करें",
+    "google_play": "Google Play पर पाएँ",
+    "share": "डाउनलोड लिंक शेयर करें"
+  },
   "inbox": {
     "address_copied": "Adresse copiée",
     "all": "Tout",
     "browser_access": "Accès navigateur",
     "browser_access_subtitle": "Accédez à vos fichiers depuis un navigateur web",
+    "web_tab_lan": "LAN",
+    "web_tab_cloud": "क्लाउड लिंक",
+    "web_cloud_hint": "24 घंटे का लिंक और QR कोड पाने के लिए कोई फ़ाइल अपलोड करें, जो कहीं से भी काम करता है — किसी साझा नेटवर्क की ज़रूरत नहीं।",
+    "web_cloud_pick": "कोई फ़ाइल चुनें",
+    "web_ios_note": "शेयर करते समय BIShare को खुला रखें — ऐप के बैकग्राउंड में जाने पर पता काम करना बंद कर देता है।",
     "cannot_open": "Impossible d'ouvrir : {message}",
     "clear_inbox": "Vider la boîte de réception",
     "could_not_save": "Impossible d'enregistrer",
@@ -188,6 +203,78 @@
     },
     "yes": "Oui"
   },
+  "devices": {
+    "add_favorite": "पसंदीदा में जोड़ें",
+    "auto_accept_on": "ऑटो-एक्सेप्ट चालू है",
+    "days_ago": {
+      "one": "{} दिन पहले",
+      "other": "{} दिन पहले"
+    },
+    "device_name": "डिवाइस का नाम",
+    "device_removed": "डिवाइस हटा दिया गया",
+    "devices_count": {
+      "one": "{} डिवाइस",
+      "other": "{} डिवाइस"
+    },
+    "empty_no_matches_message": "आपकी खोज से कोई डिवाइस मेल नहीं खाता",
+    "empty_no_matches_title": "कोई मेल नहीं",
+    "empty_none_message": "जिन डिवाइसों को आप खोजते हैं या जिनके साथ ट्रांसफ़र करते हैं, वे यहाँ दिखाई देंगे",
+    "empty_none_title": "अभी कोई डिवाइस नहीं",
+    "files_count": {
+      "one": "{} फ़ाइल",
+      "other": "{} फ़ाइलें"
+    },
+    "hours_ago": {
+      "one": "{} घंटा पहले",
+      "other": "{} घंटे पहले"
+    },
+    "just_now": "अभी-अभी",
+    "known": "ज्ञात डिवाइस",
+    "last_seen": "आख़िरी बार देखा गया {when}",
+    "last_transfer": "आख़िरी ट्रांसफ़र",
+    "minutes_ago": {
+      "one": "{} मिनट पहले",
+      "other": "{} मिनट पहले"
+    },
+    "no_transfers": "इस डिवाइस के साथ अभी तक कोई ट्रांसफ़र नहीं",
+    "online": "ऑनलाइन",
+    "online_now": "अभी ऑनलाइन",
+    "remove_device": "इस डिवाइस को भूल जाएँ",
+    "remove_favorite": "पसंदीदा से हटाएँ",
+    "rename": "नाम बदलें",
+    "rename_device": "डिवाइस का नाम बदलें",
+    "save": "सहेजें",
+    "search_placeholder": "डिवाइस खोजें...",
+    "see_all": "सभी डिवाइस देखें",
+    "settings_subtitle": "ज्ञात डिवाइस, उपस्थिति और ट्रांसफ़र आँकड़े",
+    "sort_last_seen": "आख़िरी बार देखा गया",
+    "sort_name": "नाम",
+    "sort_online_first": "पहले ऑनलाइन",
+    "stat_received": "प्राप्त",
+    "stat_sent": "भेजा गया",
+    "title": "डिवाइस",
+    "turn_on_auto_accept": "ऑटो-एक्सेप्ट चालू करें"
+  },
+  "clipboard": {
+    "clear_all": "इतिहास साफ़ करें",
+    "copied": "क्लिपबोर्ड पर कॉपी किया गया",
+    "copy_failed": "इस आइटम को कॉपी नहीं कर सके",
+    "empty_message": "सिंक चालू रहने के दौरान आप जो टेक्स्ट और इमेज कॉपी करेंगे, वे यहाँ दिखाई देंगी",
+    "empty_title": "कोई क्लिपबोर्ड आइटम नहीं",
+    "image_label": "इमेज",
+    "items_count": {
+      "one": "{} आइटम",
+      "other": "{} आइटम"
+    },
+    "row_subtitle": "{from} · {time}",
+    "save": "फ़ाइलों में सहेजें",
+    "save_failed": "इस आइटम को सहेज नहीं सके",
+    "saved": "प्राप्त फ़ाइलों में सहेजा गया",
+    "sync_active": "आस-पास के डिवाइसों के साथ सिंक हो रहा है",
+    "sync_paused": "रुका हुआ — कुछ भी साझा नहीं किया जा रहा",
+    "title": "क्लिपबोर्ड",
+    "you": "आप"
+  },
   "nearby": {
     "devices_nearby": {
       "one": "{} appareil à proximité · touchez pour envoyer",
@@ -226,8 +313,14 @@
     "uploading_to_secure_link": "Téléversement vers le lien sécurisé..."
   },
   "room": {
+    "connecting_create_local": "लोकल रूम बनाया जा रहा है",
+    "connecting_create_remote": "रूम बनाया जा रहा है",
+    "connecting_finding": "रूम खोजा जा रहा है",
     "downloading": "Téléchargement de {name}…",
     "enter_code_hint": "Saisir le code",
+    "error_create": "रूम नहीं बनाया जा सका। कृपया फिर से प्रयास करें।",
+    "error_join": "रूम में शामिल नहीं हो सके।",
+    "error_not_found": "उस कोड वाला कोई रूम नहीं है।",
     "failed_to_add": "Échec de l'ajout de {name} : {error}",
     "files": "Fichiers",
     "host": "Hôte",
@@ -264,6 +357,15 @@
     "auto_ask": "Toujours demander",
     "auto_favorites": "Favoris uniquement",
     "choose_folder": "Choisir un dossier…",
+    "clipboard_cloud": "क्लाउड के ज़रिए सिंक करें",
+    "clipboard_cloud_soon": "जल्द आ रहा है — अलग-अलग नेटवर्क पर सिंक",
+    "clipboard_cloud_subtitle": "अलग-अलग नेटवर्क के डिवाइसों के बीच अपना क्लिपबोर्ड रिले करें",
+    "clipboard_history": "क्लिपबोर्ड इतिहास",
+    "clipboard_history_subtitle": "हाल ही में सिंक किए गए आइटम",
+    "clipboard_images": "इमेज शामिल करें",
+    "clipboard_images_subtitle": "कॉपी की गई इमेज और स्क्रीनशॉट सिंक करें",
+    "clipboard_max_size": "अधिकतम इमेज आकार",
+    "clipboard_mb": "{mb} MB",
     "clipboard_subtitle": "Partager le texte copié avec les appareils BIShare à proximité",
     "contact_support": "समर्थन से संपर्क करें",
     "device_name": "Nom de l'appareil",
@@ -272,6 +374,8 @@
     "enable": "Activer",
     "help_support": "सहायता और समर्थन",
     "language": "Langue",
+    "launch_at_login": "लॉगिन पर लॉन्च करें",
+    "launch_at_login_subtitle": "साइन इन करने पर BIShare स्वचालित रूप से शुरू करें",
     "media_quality": "Qualité des médias",
     "open_folder": "Ouvrir le dossier",
     "pin_hint": "PIN numérique",
@@ -289,6 +393,11 @@
     "save_default": "Par défaut (Documents/BIShare)",
     "save_location": "Emplacement de sauvegarde",
     "save_location_subtitle": "Où les fichiers reçus sont stockés.",
+    "browser_upload": "ब्राउज़र अपलोड",
+    "browser_upload_subtitle": "वेब ब्राउज़र को इस डिवाइस पर फ़ाइलें भेजने दें",
+    "browser_upload_limit": "अधिकतम अपलोड आकार",
+    "browser_upload_unlimited": "असीमित",
+    "browser_upload_gb": "{gb} GB",
     "send_accent": "Couleur d'accent pour l'envoi",
     "sending": "Envoi",
     "set_pin": "Définir un PIN",
@@ -308,6 +417,9 @@
     "visible_subtitle": "Désactivé = masqué, non détectable"
   },
   "notification": {
+    "clipboard_from": "{sender} से कॉपी किया गया",
+    "clipboard_image_from": "{sender} से इमेज कॉपी की गई",
+    "clipboard_synced": "क्लिपबोर्ड सिंक हो गया",
     "file_received": "Fichier reçu",
     "from": "{file} · de {sender}"
   },
@@ -315,6 +427,7 @@
     "cancel": "Annuler",
     "copy": "Copier",
     "delete": "Supprimer",
+    "download": "डाउनलोड",
     "link_copied": "Lien copié",
     "no_app_open": "Aucune application ne peut ouvrir ce fichier",
     "open": "Ouvrir",
@@ -352,5 +465,11 @@
     "slide4_title": "Privé et sécurisé",
     "slide5_body": "Recevez depuis n'importe quel navigateur sur le même réseau, ou scannez un QR pour vous connecter en un tap.",
     "slide5_title": "Navigateur et QR"
+  },
+  "tray": {
+    "pause": "प्राप्त करना रोकें",
+    "quit": "बंद करें",
+    "resume": "प्राप्त करना फिर से शुरू करें",
+    "show": "BIShare दिखाएँ"
   }
 }

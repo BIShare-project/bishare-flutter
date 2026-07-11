@@ -33,6 +33,7 @@ class PrepareResponse {
     this.supportsCompression,
     this.keepAlive,
     this.streamsPerFile,
+    this.supportsResume,
   });
 
   factory PrepareResponse.fromJson(Map<String, dynamic> json) =>
@@ -47,6 +48,11 @@ class PrepareResponse {
   final bool? supportsCompression;
   final bool? keepAlive;
   final int? streamsPerFile;
+
+  /// Phase 4: this receiver keeps a durable resume ledger, so a v2.3+ QUIC
+  /// sender may use the resume (V2) control protocol to skip already-received
+  /// chunks after a reconnect. Absent/false → sender uses the non-resume path.
+  final bool? supportsResume;
 
   Map<String, dynamic> toJson() => _$PrepareResponseToJson(this);
 }

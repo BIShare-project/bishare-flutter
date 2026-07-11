@@ -1,10 +1,14 @@
 package com.bishare.app
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.OpenableColumns
+import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -25,8 +29,17 @@ import java.io.File
 class MainActivity : FlutterActivity() {
     private val shareChannelName = "app.bishare/share"
     private val downloadsChannelName = "app.bishare/android_downloads"
+    private val clipboardChannelName = "app.bishare/clipboard"
     private var shareChannel: MethodChannel? = null
     private var downloadsChannel: MethodChannel? = null
+    private var clipboardChannel: MethodChannel? = null
+
+    /// Cheap clipboard generation counter for the Dart poll loop (mirrors
+    /// NSPasteboard.changeCount). Bumped by the primary-clip listener; note
+    /// Android 10+ only delivers clip events while the app has focus, so the
+    /// counter (like clipboard reads themselves) is foreground-only.
+    private var clipChanges = 0
+    private var clipListener: ClipboardManager.OnPrimaryClipChangedListener? = null
     private var pending: List<String>? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -55,8 +68,98 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+        // Image clipboard for Universal Clipboard sync (Flutter's Clipboard API
+        // is text-only). See ClipboardImageChannel on the Dart side.
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        if (clipListener == null) {
+            clipListener = ClipboardManager.OnPrimaryClipChangedListener { clipChanges++ }
+            clipboard.addPrimaryClipChangedListener(clipListener)
+        }
+        clipboardChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, clipboardChannelName)
+        clipboardChannel!!.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getImage" -> result.success(clipboardImage(clipboard))
+                "setImage" -> {
+                    val bytes = call.argument<ByteArray>("bytes")
+                    val mime = call.argument<String>("mime") ?: "image/png"
+                    result.success(setClipboardImage(clipboard, bytes, mime))
+                }
+                "changeCount" -> result.success(clipChanges)
+                else -> result.notImplemented()
+            }
+        }
         // The intent that launched us (cold start) may be a share.
         handleShareIntent(intent, initial = true)
+    }
+
+    /** Read the primary clip's image (a content:// item) as `{bytes, mime}`, or null. */
+    private fun clipboardImage(clipboard: ClipboardManager): Map<String, Any>? {
+        return try {
+            val clip = clipboard.primaryClip ?: return null
+            val description = clip.description
+            var mime: String? = null
+            for (i in 0 until description.mimeTypeCount) {
+                val t = description.getMimeType(i)
+                if (t.startsWith("image/")) { mime = t; break }
+            }
+            for (i in 0 until clip.itemCount) {
+                val uri = clip.getItemAt(i).uri ?: continue
+                val resolvedMime = contentResolver.getType(uri) ?: mime ?: continue
+                if (!resolvedMime.startsWith("image/")) continue
+                val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: continue
+                if (bytes.isEmpty()) continue
+                return mapOf("bytes" to bytes, "mime" to resolvedMime)
+            }
+            null
+        } catch (e: Exception) {
+            null // no permission / provider gone — clipboard reads are best-effort
+        }
+    }
+
+    /**
+     * Put encoded image bytes on the clipboard: stage them in cache/clipboard/
+     * and clip a FileProvider content:// URI (the system clipboard grants the
+     * pasting app read access to clip URIs).
+     */
+    private fun setClipboardImage(clipboard: ClipboardManager, bytes: ByteArray?, mime: String): Boolean {
+        if (bytes == null || bytes.isEmpty()) return false
+        return try {
+            val dir = File(cacheDir, "clipboard").apply { mkdirs() }
+            // A single rotating name keeps stale staged clips from accumulating.
+            val ext = when (mime) {
+                "image/jpeg" -> "jpg"
+                "image/gif" -> "gif"
+                "image/webp" -> "webp"
+                else -> "png"
+            }
+            val file = File(dir, "clip.$ext")
+            file.writeBytes(bytes)
+            val uri = FileProvider.getUriForFile(this, "$packageName.clipboard", file)
+            clipboard.setPrimaryClip(ClipData.newUri(contentResolver, "image", uri))
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Android 10+ only delivers OnPrimaryClipChanged while the app has focus, so
+     * an image copied in another app while we were backgrounded never bumps
+     * [clipChanges] and the Dart poll skips it. Bump once on focus-gain so exactly
+     * one clipboard re-read happens on resume, catching that missed copy.
+     */
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) clipChanges++
+    }
+
+    override fun onDestroy() {
+        clipListener?.let {
+            (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
+                .removePrimaryClipChangedListener(it)
+        }
+        clipListener = null
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {

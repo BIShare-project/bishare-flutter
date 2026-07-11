@@ -17,6 +17,27 @@ jobs:
         run: |
           cargo build --release --manifest-path bishare-flutter/rust/Cargo.toml
           cargo run --example golden --manifest-path bishare-flutter/rust/Cargo.toml
+      - name: FFI crate unit tests (QUIC loopback + stalled-sender timeout)
+        run: cargo test --manifest-path bishare-flutter/rust/Cargo.toml
+      # Phase 0 HW-AES guard. cargokit sets CARGO_ENCODED_RUSTFLAGS, which cargo
+      # does NOT merge with .cargo/config.toml rustflags — so the aes_armv8/
+      # polyval_armv8 cfgs are injected by a vendored patch in cargokit's
+      # android_environment.dart. A cargokit bump would silently overwrite that
+      # file and drop the patch, regressing Android AES-256-GCM ~11x (software
+      # AES) with no build error. Fail loudly if the injection disappears.
+      # NOTE: this guards that the cfg is INJECTED; asserting HW-AES is actually
+      # ACTIVE (via a build_flags field in the benchmark JSON) is a Phase 3 gate.
+      - name: HW-AES cfg guard (cargokit must still inject aes_armv8 on Android)
+        run: |
+          f=bishare-flutter/rust_builder/cargokit/build_tool/lib/src/android_environment.dart
+          if grep -q 'CARGO_ENCODED_RUSTFLAGS' "$f" \
+             && grep -q 'aes_armv8' "$f" \
+             && grep -q 'polyval_armv8' "$f"; then
+            echo "OK: cargokit injects aes_armv8/polyval_armv8 into CARGO_ENCODED_RUSTFLAGS"
+          else
+            echo "::error file=$f::HW-AES cfg injection missing — a cargokit bump likely dropped the [BIShare speed fix]. Android AES-256-GCM would run ~11x slower (software). Re-apply the aes_armv8/polyval_armv8 append to CARGO_ENCODED_RUSTFLAGS."
+            exit 1
+          fi
 
   flutter:
     needs: rust-vectors # Dart is skipped if the vectors are red

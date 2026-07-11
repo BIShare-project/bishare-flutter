@@ -12,7 +12,8 @@ class BISharePort {
   /// Main transfer server — TCP HTTP.
   static const int main = 58317;
 
-  /// QUIC transport + clipboard sync — UDP.
+  /// QUIC transport — UDP. Always-on (the Rust HTE engine owns this socket), so
+  /// the Dart clipboard datagram channel must NOT reuse it — see [clipboard].
   static const int quic = 58318;
 
   /// Transfer Rooms — TCP HTTP.
@@ -20,6 +21,13 @@ class BISharePort {
 
   /// WebDAV server — TCP.
   static const int webdav = 58320;
+
+  /// Universal-clipboard sync — UDP. Its OWN port (not [quic], which the
+  /// always-on Rust QUIC endpoint already binds — a shared port made the Dart
+  /// clipboard socket fail to bind). Advertised in the mDNS TXT (`clipPort`) so
+  /// 2.4 peers announce here; the value is a fixed constant across builds, so
+  /// senders can also target it directly without reading the TXT.
+  static const int clipboard = 58321;
 }
 
 /// Bonjour/mDNS service types and ALPN identifiers.
@@ -63,6 +71,30 @@ class BIShareApi {
   static const String verifyPin = '/api/v1/verify-pin';
   static const String goodbye = '/api/v1/goodbye';
 
+  /// Binary-clipboard pull (v2.4, mirrors Rust `ApiPath::CLIPBOARD`) — a
+  /// receiver GETs the announced image with `?token=` (one-shot, 60s TTL).
+  static const String clipboard = '/api/v1/clipboard';
+
+  // Browser Web-Share extensions (feature #11). Served only to web browsers,
+  // never to app peers, so they need no protocol mirror — an older server
+  // simply 404s, which the page treats as "feature unavailable" (natural
+  // fallback per F.1.a).
+  /// Folder listing for the browser's tree view (`?path=<rel>`).
+  static const String browse = '/api/v1/browse';
+
+  /// Streaming zip of a folder under the share root (`?path=<rel>`).
+  static const String downloadFolder = '/download-folder';
+
+  /// Single-file download by validated relative path (`?path=<rel>`).
+  static const String downloadFile = '/api/v1/download-file';
+
+  /// Chunked resumable browser upload (headers `X-Upload-Id`,
+  /// `X-Chunk-Offset`, final chunk `X-Upload-Complete: 1`).
+  static const String browserUploadChunk = '/api/v1/browser-upload-chunk';
+
+  /// Resume probe: `?id=` → `{offset}` (the `.part` length on disk).
+  static const String browserUploadStatus = '/api/v1/browser-upload-status';
+
   // Room endpoints (port [BISharePort.room]).
   static const String roomInfo = '/api/v1/room/info';
   static const String roomJoin = '/api/v1/room/join';
@@ -79,7 +111,7 @@ class BIShareConfig {
   BIShareConfig._();
 
   /// Protocol version advertised in `DeviceInfo`.
-  static const String version = '2.3';
+  static const String version = '2.4';
 
   /// Default protocol scheme.
   static const String protocolScheme = 'https';
@@ -111,6 +143,14 @@ class BIShareConfig {
   static const String binaryProtocolMinVersion = '2.1';
   static const String speedProtocolMinVersion = '2.2';
   static const String p2pProtocolMinVersion = '2.3';
+  // v2.4 premium-feature gates. Frames 0x0C+ / new fields must never reach a
+  // peer below these (old decoders drop the connection on an unknown byte) —
+  // gate every emission via PeerCapabilities, not by version string alone.
+  static const String syncProtocolMinVersion = '2.4';
+  static const String broadcastProtocolMinVersion = '2.4';
+  static const String mediaProtocolMinVersion = '2.4';
+  static const String clipboardBinaryMinVersion = '2.4';
+  static const String resumeOffsetMinVersion = '2.4';
 
   // Chunking (v2.2 speed protocol). 1 MB chunks (was 256 KB) → 4× fewer per-chunk
   // AES-GCM/FFI/framing ops on the (main-isolate) crypto path, lifting encrypted
@@ -179,6 +219,7 @@ class BIShareStatus {
   BIShareStatus._();
 
   static const int ok = 200;
+  static const int badRequest = 400; // malformed client input (e.g. bad upload id)
   static const int pinRequired = 401;
   static const int forbidden = 403; // wrong PIN / rejected / hidden
   static const int notFound = 404; // session or file not found

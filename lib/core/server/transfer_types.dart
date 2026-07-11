@@ -29,6 +29,12 @@ class TransferSession {
   DateTime lastActivity = DateTime.now();
   final Set<String> completedFileIds = {};
 
+  /// Live byte counters of QUIC files currently in flight (fileId → received).
+  /// Phase 2b senders stream several files CONCURRENTLY over one connection, so
+  /// session progress is completed-bytes + the SUM of these, not a single
+  /// "current file" counter.
+  final Map<String, int> quicInFlight = {};
+
   bool get isComplete => completedFileIds.length >= files.length;
 }
 
@@ -84,6 +90,7 @@ class ReceiveProgress {
     required this.bytesReceived,
     required this.totalBytes,
     this.isComplete = false,
+    this.transport = 'TCP',
   });
 
   final String sessionId;
@@ -94,6 +101,10 @@ class ReceiveProgress {
   final int bytesReceived;
   final int totalBytes;
   final bool isComplete;
+
+  /// Which transport is delivering this session ('TCP' | 'QUIC') — drives the
+  /// receiver card's transport badge, mirroring the sender's live badge.
+  final String transport;
 
   double get fraction => totalBytes == 0 ? 0 : bytesReceived / totalBytes;
 }

@@ -5,6 +5,7 @@ import 'dart:math';
 
 import 'package:bonsoir/bonsoir.dart';
 import 'package:dio/dio.dart' as dio;
+import 'package:flutter/foundation.dart' show compute;
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_router/shelf_router.dart';
@@ -106,37 +107,41 @@ class LocalRoomService {
     String code, {
     Duration timeout = const Duration(seconds: 6),
   }) async {
-    _code = code.toUpperCase();
+    // Per-call locals: the join race abandons the losing realm with an unawaited
+    // joinLocal, so a still-running search must NEVER tear down a LATER call's
+    // discovery via shared fields. This call owns its discovery + subscription +
+    // target code; the shared fields exist only for dispose()'s force-stop and
+    // are cleared identity-guarded (see [_stopJoinDiscovery]).
+    final targetCode = code.toUpperCase();
+    final found = Completer<BonsoirService?>();
+    final discovery = BonsoirDiscovery(type: BIShareService.room);
+    StreamSubscription<BonsoirDiscoveryEvent>? sub;
     try {
-      final found = Completer<BonsoirService?>();
-
-      final discovery = BonsoirDiscovery(type: BIShareService.room);
-      _discovery = discovery;
       await discovery.initialize();
-      _discoverySub = discovery.eventStream?.listen((event) {
+      sub = discovery.eventStream?.listen((event) {
         switch (event) {
           case BonsoirDiscoveryServiceFoundEvent(:final service):
-            if (service.name == 'room-$_code') {
+            if (service.name == 'room-$targetCode') {
               discovery.serviceResolver.resolveService(service);
             }
           case BonsoirDiscoveryServiceResolvedEvent(:final service):
-            if (service.name == 'room-$_code' && !found.isCompleted) {
+            if (service.name == 'room-$targetCode' && !found.isCompleted) {
               found.complete(service);
             }
           default:
             break;
         }
       });
+      _discovery = discovery;
+      _discoverySub = sub;
       await discovery.start();
 
       final service =
           await found.future.timeout(timeout, onTimeout: () => null);
-      await _discoverySub?.cancel();
-      _discoverySub = null;
-      await _discovery?.stop();
-      _discovery = null;
+      await _stopJoinDiscovery(discovery, sub);
       if (service == null) return null; // no local room — caller falls back
 
+    _code = targetCode;
     final attrs = service.attributes;
     final hostIp = attrs['hostIP'] ??
         (service.hostAddresses.isNotEmpty ? service.hostAddresses.first : '');
@@ -151,15 +156,24 @@ class LocalRoomService {
     await _startServer();
     final myIp = await LocalIp.resolve();
 
-    final res = await _dio.postUri<dynamic>(
+    final res = await _dio.postUri<String>(
       Uri.parse(
         'http://$hostIp:$_port${BIShareApi.roomJoin}'
         '?alias=${Uri.encodeComponent(_identity.alias)}'
         '&fingerprint=${_identity.fingerprint}'
         '&host=$myIp&port=$_port&deviceType=${_identity.deviceType}',
       ),
+      options: dio.Options(responseType: dio.ResponseType.plain),
     );
-    final body = _asMap(res.data);
+    // The join response embeds every shared file's base64 thumbnail, so the
+    // payload can be large. Decode it on a background isolate to keep the UI
+    // thread free while the cubit is showing the connecting spinner.
+    final raw = res.data;
+    final body = _asMap(
+      raw == null || raw.isEmpty
+          ? const <String, dynamic>{}
+          : await compute<String, dynamic>(jsonDecode, raw),
+    );
     final members = [
       for (final m in (body['members'] as List? ?? []))
         RoomMember.fromJson((m as Map).cast<String, dynamic>()),
@@ -192,13 +206,27 @@ class LocalRoomService {
     } on Object {
       // Local join failed (Bonjour unavailable / host unreachable) — clean up
       // and let the caller fall back to a remote room.
-      await _discoverySub?.cancel();
-      _discoverySub = null;
-      await _discovery?.stop();
-      _discovery = null;
+      await _stopJoinDiscovery(discovery, sub);
       _teardown();
       return null;
     }
+  }
+
+  /// Stops THIS join call's discovery + subscription, then clears the shared
+  /// fields only if they still point at these objects — a concurrent joinLocal
+  /// may have replaced them with its own, which must be left running. Idempotent.
+  Future<void> _stopJoinDiscovery(
+    BonsoirDiscovery discovery,
+    StreamSubscription<BonsoirDiscoveryEvent>? sub,
+  ) async {
+    try {
+      await sub?.cancel();
+    } on Object catch (_) {}
+    try {
+      await discovery.stop();
+    } on Object catch (_) {}
+    if (identical(_discoverySub, sub)) _discoverySub = null;
+    if (identical(_discovery, discovery)) _discovery = null;
   }
 
   // ---- Server (both host + members run it) ----

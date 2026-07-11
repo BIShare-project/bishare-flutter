@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider paths for the image-clipboard channel: setImage() stages the
+     image in cache/clipboard/ and puts a content:// clip on the clipboard
+     (the system clipboard grants the pasting app read access). -->
+<paths>
+    <cache-path name="clipboard" path="clipboard/" />
+</paths>

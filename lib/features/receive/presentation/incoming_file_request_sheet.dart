@@ -71,6 +71,7 @@ class _RequestContentState extends State<_RequestContent> {
       host: r.requesterHost,
       port: r.requesterPort,
       lastSeen: DateTime.now(),
+      firstSeen: DateTime.now(),
     );
     try {
       await getIt<TransferClient>().send(_selected, device);

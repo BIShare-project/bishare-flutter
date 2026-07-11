@@ -4,6 +4,7 @@
       "one": "تمت إضافة {} ملف للإرسال",
       "other": "تمت إضافة {} ملفات للإرسال"
     },
+    "error_processing_link": "تعذّر معالجة الرابط",
     "live_transfer": "نقل مباشر",
     "shared_file": "ملف مشترك",
     "tab_history": "السجل",
@@ -35,6 +36,7 @@
     "hidden": "مخفي",
     "hidden_not_discoverable": "مخفي - غير قابل للاكتشاف",
     "host_version": "{host} · v{version}",
+    "invite_device": "دعوة جهاز",
     "looking_for_devices": "جاري البحث عن الأجهزة...",
     "message_optional": "رسالة (اختياري)",
     "nearby_devices": "الأجهزة القريبة",
@@ -120,11 +122,24 @@
     },
     "wants_to_send": "يريد الإرسال"
   },
+  "invite": {
+    "title": "دعوة جهاز",
+    "subtitle": "احصل على BIShare على جهاز آخر",
+    "scan_hint": "امسح هذا الرمز بكاميرا الهاتف لتنزيل BIShare",
+    "app_store": "التنزيل من App Store",
+    "google_play": "احصل عليه من Google Play",
+    "share": "مشاركة رابط التنزيل"
+  },
   "inbox": {
     "address_copied": "تم نسخ العنوان",
     "all": "الكل",
     "browser_access": "الوصول عبر المتصفح",
     "browser_access_subtitle": "الوصول إلى ملفاتك من متصفح ويب",
+    "web_tab_lan": "الشبكة المحلية",
+    "web_tab_cloud": "رابط سحابي",
+    "web_cloud_hint": "ارفع ملفًا للحصول على رابط ورمز QR صالحين لمدة 24 ساعة يعملان من أي مكان — دون الحاجة إلى شبكة مشتركة.",
+    "web_cloud_pick": "اختر ملفًا",
+    "web_ios_note": "أبقِ BIShare مفتوحًا أثناء المشاركة — يتوقف العنوان عن العمل عندما ينتقل التطبيق إلى الخلفية.",
     "cannot_open": "لا يمكن فتح: {message}",
     "clear_inbox": "مسح الوارد",
     "could_not_save": "تعذر الحفظ",
@@ -188,6 +203,78 @@
     },
     "yes": "نعم"
   },
+  "devices": {
+    "add_favorite": "إضافة إلى المفضلة",
+    "auto_accept_on": "القبول التلقائي مُفعّل",
+    "days_ago": {
+      "one": "منذ {} يوم",
+      "other": "منذ {} أيام"
+    },
+    "device_name": "اسم الجهاز",
+    "device_removed": "تمت إزالة الجهاز",
+    "devices_count": {
+      "one": "{} جهاز",
+      "other": "{} أجهزة"
+    },
+    "empty_no_matches_message": "لا توجد أجهزة تطابق بحثك",
+    "empty_no_matches_title": "لا توجد نتائج",
+    "empty_none_message": "ستظهر هنا الأجهزة التي تكتشفها أو تنقل الملفات معها",
+    "empty_none_title": "لا توجد أجهزة بعد",
+    "files_count": {
+      "one": "{} ملف",
+      "other": "{} ملفات"
+    },
+    "hours_ago": {
+      "one": "منذ {} ساعة",
+      "other": "منذ {} ساعات"
+    },
+    "just_now": "الآن",
+    "known": "الأجهزة المعروفة",
+    "last_seen": "آخر ظهور {when}",
+    "last_transfer": "آخر عملية نقل",
+    "minutes_ago": {
+      "one": "منذ {} دقيقة",
+      "other": "منذ {} دقائق"
+    },
+    "no_transfers": "لا توجد عمليات نقل مع هذا الجهاز بعد",
+    "online": "متصل",
+    "online_now": "متصل الآن",
+    "remove_device": "نسيان هذا الجهاز",
+    "remove_favorite": "إزالة من المفضلة",
+    "rename": "إعادة تسمية",
+    "rename_device": "إعادة تسمية الجهاز",
+    "save": "حفظ",
+    "search_placeholder": "البحث عن الأجهزة...",
+    "see_all": "عرض كل الأجهزة",
+    "settings_subtitle": "الأجهزة المعروفة والحضور وإحصائيات النقل",
+    "sort_last_seen": "آخر ظهور",
+    "sort_name": "الاسم",
+    "sort_online_first": "المتصلة أولًا",
+    "stat_received": "المُستلمة",
+    "stat_sent": "المُرسلة",
+    "title": "الأجهزة",
+    "turn_on_auto_accept": "تشغيل القبول التلقائي"
+  },
+  "clipboard": {
+    "clear_all": "مسح السجل",
+    "copied": "تم النسخ إلى الحافظة",
+    "copy_failed": "تعذّر نسخ هذا العنصر",
+    "empty_message": "سيظهر هنا النص والصور التي تنسخها أثناء تشغيل المزامنة",
+    "empty_title": "لا توجد عناصر في الحافظة",
+    "image_label": "صورة",
+    "items_count": {
+      "one": "{} عنصر",
+      "other": "{} عناصر"
+    },
+    "row_subtitle": "{from} · {time}",
+    "save": "حفظ في الملفات",
+    "save_failed": "تعذّر حفظ هذا العنصر",
+    "saved": "تم الحفظ في الملفات المُستلمة",
+    "sync_active": "جارٍ المزامنة مع الأجهزة القريبة",
+    "sync_paused": "متوقف مؤقتًا — لا تتم مشاركة أي شيء",
+    "title": "الحافظة",
+    "you": "أنت"
+  },
   "nearby": {
     "devices_nearby": {
       "one": "{} جهاز قريب · اضغط للإرسال",
@@ -226,8 +313,14 @@
     "uploading_to_secure_link": "جاري الرفع إلى الرابط الآمن..."
   },
   "room": {
+    "connecting_create_local": "جارٍ إنشاء غرفة محلية",
+    "connecting_create_remote": "جارٍ إنشاء غرفة",
+    "connecting_finding": "جارٍ البحث عن الغرفة",
     "downloading": "جاري تنزيل {name}…",
     "enter_code_hint": "أدخل الرمز",
+    "error_create": "تعذّر إنشاء الغرفة. يُرجى المحاولة مرة أخرى.",
+    "error_join": "تعذّر الانضمام إلى الغرفة.",
+    "error_not_found": "لا توجد غرفة بهذا الرمز.",
     "failed_to_add": "فشل إضافة {name}: {error}",
     "files": "الملفات",
     "host": "المضيف",
@@ -264,6 +357,15 @@
     "auto_ask": "السؤال دائماً",
     "auto_favorites": "المفضلة فقط",
     "choose_folder": "اختر مجلد…",
+    "clipboard_cloud": "المزامنة عبر السحابة",
+    "clipboard_cloud_soon": "قريبًا — المزامنة عبر شبكات مختلفة",
+    "clipboard_cloud_subtitle": "نقل الحافظة بين الأجهزة على شبكات مختلفة",
+    "clipboard_history": "سجل الحافظة",
+    "clipboard_history_subtitle": "العناصر المتزامنة الأخيرة",
+    "clipboard_images": "تضمين الصور",
+    "clipboard_images_subtitle": "مزامنة الصور ولقطات الشاشة المنسوخة",
+    "clipboard_max_size": "الحد الأقصى لحجم الصورة",
+    "clipboard_mb": "{mb} ميغابايت",
     "clipboard_subtitle": "مشاركة النص المنسوخ مع أجهزة BIShare القريبة",
     "contact_support": "اتصل بالدعم",
     "device_name": "اسم الجهاز",
@@ -272,6 +374,8 @@
     "enable": "تفعيل",
     "help_support": "المساعدة والدعم",
     "language": "اللغة",
+    "launch_at_login": "التشغيل عند تسجيل الدخول",
+    "launch_at_login_subtitle": "بدء تشغيل BIShare تلقائيًا عند تسجيل الدخول",
     "media_quality": "جودة الوسائط",
     "open_folder": "فتح المجلد",
     "pin_hint": "رمز PIN رقمي",
@@ -289,6 +393,11 @@
     "save_default": "افتراضي (Documents/BIShare)",
     "save_location": "موقع الحفظ",
     "save_location_subtitle": "مكان حفظ الملفات المستلمة.",
+    "browser_upload": "التحميل من المتصفح",
+    "browser_upload_subtitle": "السماح لمتصفحات الويب بإرسال الملفات إلى هذا الجهاز",
+    "browser_upload_limit": "الحد الأقصى لحجم التحميل",
+    "browser_upload_unlimited": "غير محدود",
+    "browser_upload_gb": "{gb} غيغابايت",
     "send_accent": "لون تمييز الإرسال",
     "sending": "الإرسال",
     "set_pin": "تعيين رمز PIN",
@@ -308,6 +417,9 @@
     "visible_subtitle": "إيقاف = مخفي، غير قابل للاكتشاف"
   },
   "notification": {
+    "clipboard_from": "تم النسخ من {sender}",
+    "clipboard_image_from": "تم نسخ صورة من {sender}",
+    "clipboard_synced": "تمت مزامنة الحافظة",
     "file_received": "تم استلام ملف",
     "from": "{file} · من {sender}"
   },
@@ -315,6 +427,7 @@
     "cancel": "إلغاء",
     "copy": "نسخ",
     "delete": "حذف",
+    "download": "تنزيل",
     "link_copied": "تم نسخ الرابط",
     "no_app_open": "لا توجد تطبيق يمكنه فتح هذا الملف",
     "open": "فتح",
@@ -352,5 +465,11 @@
     "slide4_title": "خاص وآمن",
     "slide5_body": "استلم من أي متصفح على نفس الشبكة، أو امسح رمز QR للاتصال بنقرة واحدة.",
     "slide5_title": "المتصفح ورمز QR"
+  },
+  "tray": {
+    "pause": "إيقاف الاستقبال مؤقتًا",
+    "quit": "إنهاء",
+    "resume": "استئناف الاستقبال",
+    "show": "إظهار BIShare"
   }
 }

@@ -19,6 +19,11 @@ DeviceInfo _$DeviceInfoFromJson(Map<String, dynamic> json) => DeviceInfo(
   supportsBinary: json['supportsBinary'] as bool?,
   supportsCompression: json['supportsCompression'] as bool?,
   supportsKeepAlive: json['supportsKeepAlive'] as bool?,
+  supportsSync: json['supportsSync'] as bool?,
+  supportsBroadcast: json['supportsBroadcast'] as bool?,
+  supportsMedia: json['supportsMedia'] as bool?,
+  supportsResumeOffset: json['supportsResumeOffset'] as bool?,
+  supportsClipboardBinary: json['supportsClipboardBinary'] as bool?,
   ip: json['ip'] as String?,
 );
 
@@ -36,5 +41,10 @@ Map<String, dynamic> _$DeviceInfoToJson(DeviceInfo instance) =>
       'supportsBinary': ?instance.supportsBinary,
       'supportsCompression': ?instance.supportsCompression,
       'supportsKeepAlive': ?instance.supportsKeepAlive,
+      'supportsSync': ?instance.supportsSync,
+      'supportsBroadcast': ?instance.supportsBroadcast,
+      'supportsMedia': ?instance.supportsMedia,
+      'supportsResumeOffset': ?instance.supportsResumeOffset,
+      'supportsClipboardBinary': ?instance.supportsClipboardBinary,
       'ip': ?instance.ip,
     };
