@@ -11,6 +11,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/identity/device_identity.dart';
 import '../../../core/ui/app_ui.dart';
+import '../data/cloud_config_service.dart';
 import '../data/cloud_transfer_service.dart';
 import '../data/stream_relay_service.dart';
 import 'widgets/done_view.dart';
@@ -114,6 +115,27 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
       _pickedName = name;
       _pickedSize = file.existsSync() ? file.lengthSync() : 0;
     });
+    // FREE-tier size gate (no login yet, so everyone is FREE): backend rejects
+    // oversized uploads anyway — catch it here before any bytes leave.
+    final config = getIt<CloudConfigService>();
+    final freeLimit = await config.freeTransferLimit();
+    if (_pickedSize > freeLimit) {
+      final proLimit = await config.proTransferLimit();
+      if (!mounted) return;
+      toast(
+        context,
+        'remote.free_limit_exceeded'.tr(
+          namedArgs: {
+            'limit': formatBytes(freeLimit),
+            'pro_limit': formatBytes(proLimit),
+          },
+        ),
+        type: ToastType.warning,
+      );
+      setState(() => _phase = _Phase.pick);
+      return;
+    }
+    if (!mounted) return;
     try {
       final result = await getIt<CloudTransferService>().uploadTransfer(
         file: file,

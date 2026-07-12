@@ -30,6 +30,9 @@ class CloudConfig {
   static const String schemeStream = 'bishare-stream';
 
   // ---- REST paths (relative to [apiBase]) ----
+  /// Server config: tier limits at `data.limits.transfer_max_file_size_*`.
+  static const String config = '/api/v1/config';
+
   /// 24h one-time cloud transfer upload (raw body + `X-File-Name` headers).
   static const String transferUpload = '/api/v1/transfer/upload';
 

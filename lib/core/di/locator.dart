@@ -17,6 +17,7 @@ import '../../features/discovery/data/discovery_service.dart';
 import '../../features/favorites/data/favorites_repository.dart';
 import '../../features/history/data/history_repository.dart';
 import '../../features/nearby/data/nearby_service.dart';
+import '../../features/remote/data/cloud_config_service.dart';
 import '../../features/remote/data/cloud_transfer_service.dart';
 import '../../features/remote/data/stream_relay_service.dart';
 import '../../features/room/data/local_room_service.dart';
@@ -135,6 +136,9 @@ Future<void> setupLocator() async {
     ..registerSingleton<CloudTransferService>(
       CloudTransferService(server, history),
     )
+    // Tier limits from GET /api/v1/config, cached per run (1 GiB fallback).
+    // Lazy: no Dio until the remote-share flow first checks the limit.
+    ..registerLazySingleton<CloudConfigService>(CloudConfigService.new)
     ..registerSingleton<RoomService>(RoomService(identity, server, history))
     ..registerSingleton<LocalRoomService>(
       LocalRoomService(identity, server, history),
