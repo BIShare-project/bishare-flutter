@@ -168,6 +168,16 @@ class RustBuilder {
         '--target-dir',
         environment.targetTempDir,
       ],
+      // Run cargo from the crate's manifest dir so it discovers
+      // `<manifestDir>/.cargo/config.toml`. Cargo searches for config.toml by
+      // walking UP from the process CWD, NOT from --manifest-path; on Apple
+      // (iOS/macOS) builds cargokit's CWD is inside Xcode DerivedData, outside
+      // the project tree, so without this the `[target.'cfg(target_arch =
+      // "aarch64")'] rustflags = --cfg aes_armv8 --cfg polyval_armv8` flags were
+      // silently dropped and the shipped binaries ran SOFTWARE AES-256-GCM
+      // (~11× slower). Android is unaffected (it injects the cfgs via
+      // CARGO_ENCODED_RUSTFLAGS in AndroidEnvironment, which wins over config).
+      workingDirectory: environment.manifestDir,
       environment: await _buildEnvironment(),
     );
     return path.join(

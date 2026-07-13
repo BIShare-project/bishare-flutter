@@ -176,13 +176,41 @@ class TransferClient {
       );
     }
 
-    // Step 1: prepare.
-    final prepareRes = await dio.post<Map<String, dynamic>>(
-      BIShareApi.prepare,
-      queryParameters: pin != null ? {'pin': pin} : null,
-      data: PrepareRequest(info: info, files: metas).toJson(),
-      cancelToken: cancelToken,
-    );
+    // Step 1: prepare. A fresh install's FIRST outbound LAN connection can be
+    // silently dropped by iOS/macOS until the Local Network permission grant
+    // lands, so a single connect failure must not doom the whole send — retry
+    // the CONNECT a few times with backoff. Only connection-establishment
+    // failures are retried: a slow *accept* surfaces as a receiveTimeout (the
+    // receiver holds the response up to `acceptRejectTimeout`), and retrying
+    // that would re-prompt the receiver. The response window is also widened
+    // past the receiver's 30 s accept timeout so a last-second accept never
+    // loses a dead-heat race with the sender's timeout.
+    late final Response<Map<String, dynamic>> prepareRes;
+    for (var attempt = 1; ; attempt++) {
+      try {
+        prepareRes = await dio.post<Map<String, dynamic>>(
+          BIShareApi.prepare,
+          queryParameters: pin != null ? {'pin': pin} : null,
+          data: PrepareRequest(info: info, files: metas).toJson(),
+          cancelToken: cancelToken,
+          options: Options(
+            receiveTimeout:
+                BIShareConfig.acceptRejectTimeout + const Duration(seconds: 15),
+          ),
+        );
+        break;
+      } on DioException catch (e) {
+        if (CancelToken.isCancel(e)) rethrow;
+        final isConnectFailure =
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.connectionError;
+        if (isConnectFailure && attempt < _maxPrepareAttempts) {
+          await _backoff(attempt);
+          continue; // first-connection stall (e.g. LAN permission) — retry
+        }
+        throw TransferHttpException(0, e.message);
+      }
+    }
     switch (prepareRes.statusCode) {
       case BIShareStatus.ok:
         break;
@@ -447,6 +475,10 @@ class TransferClient {
   }
 
   static const int _maxUploadAttempts = 3;
+
+  /// Connect-retry budget for the initial `prepare` (fresh-install first-LAN-
+  /// connection can be dropped until the OS Local Network grant lands).
+  static const int _maxPrepareAttempts = 3;
 
   /// Cap on concurrently-sending QUIC files (Phase 2b). 4 files × up to 4
   /// streams each = 16 in-flight chunk slabs — exactly the Rust slab-pool

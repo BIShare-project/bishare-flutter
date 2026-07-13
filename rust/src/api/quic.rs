@@ -2816,6 +2816,26 @@ mod tests {
         assert!(json.contains("\"aes_armv8\":"), "has build flag: {json}");
     }
 
+    /// HW-AES MUST be compiled in on aarch64 (Apple silicon, modern ARM). A build
+    /// that lost the `aes_armv8` cfg runs AES-256-GCM ~11× slower (constant-time
+    /// software) with NO build error — exactly the 2026-07-13 Apple regression
+    /// (cargo didn't find `rust/.cargo/config.toml` because cargokit ran it from a
+    /// CWD outside the project; fixed by running cargo with
+    /// `workingDirectory=manifestDir`). Unlike `quic_benchmark_smoke` this is NOT
+    /// `#[ignore]`, so a normal `cargo test` on any aarch64 host (dev Macs, an
+    /// aarch64 CI runner) fails loudly if the flag ever drops again. x86 reaches
+    /// AES-NI via a different cfg, so this guard is aarch64-scoped.
+    #[test]
+    #[cfg(target_arch = "aarch64")]
+    fn hw_aes_active_on_aarch64() {
+        assert!(
+            crate::engine::metrics::hw_aes_active(),
+            "aes_armv8 cfg is OFF on aarch64 — AES-256-GCM would run ~11× slower (software). \
+             On Apple this means cargo did not pick up rust/.cargo/config.toml; cargokit must run \
+             cargo with workingDirectory=manifestDir (see builder.dart)."
+        );
+    }
+
     /// Phase 2b: TWO files stream CONCURRENTLY over ONE connection (interleaved
     /// control+data streams for different fileIds) — the receiver's per-(session,
     /// file) registry must reassemble and verify both.

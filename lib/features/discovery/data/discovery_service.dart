@@ -65,10 +65,12 @@ class DiscoveryService {
 
   final Map<String, DiscoveredDevice> _devices = {};
 
-  /// Consecutive failed keep-alive probes per fingerprint; a device is dropped
-  /// after [_maxMisses] so a brief Wi-Fi hiccup doesn't evict a live peer.
+  /// Consecutive failed keep-alive probes (or lost mDNS announces) per
+  /// fingerprint; a device is dropped after [_maxMisses] so a brief Wi-Fi hiccup
+  /// — or a multicast packet dropped under heavy transfer load — doesn't evict a
+  /// live peer (the "nearby flicker" bug). A successful probe resets the count.
   final Map<String, int> _misses = {};
-  static const _maxMisses = 3;
+  static const _maxMisses = 4;
   final StreamController<List<DiscoveredDevice>> _controller =
       StreamController<List<DiscoveredDevice>>.broadcast();
 
@@ -323,7 +325,16 @@ class DiscoveryService {
           BonsoirDiscoveryServiceUpdatedEvent(:final service):
         _upsert(service);
       case BonsoirDiscoveryServiceLostEvent(:final service):
-        _remove(service);
+        // One lost mDNS announce is NOT proof the peer left — multicast is
+        // routinely dropped under heavy transfer load, which used to evict the
+        // (still-live) peer instantly and cause the "nearby flicker". Count it
+        // as a single miss and let the keep-alive `/api/v1/info` probe confirm
+        // death; a genuine goodbye still removes immediately via
+        // [removeByFingerprint].
+        {
+          final fingerprint = service.attributes['fingerprint'] ?? service.name;
+          if (_devices.containsKey(fingerprint)) _registerMiss(fingerprint);
+        }
       default:
         break;
     }
@@ -366,11 +377,6 @@ class DiscoveryService {
       '[Discovery] peer "$alias" @ $host:$port (v${attrs['version']}, ip-src=${attrs.containsKey('ip') ? 'txt' : 'resolved'})',
     );
     _emit();
-  }
-
-  void _remove(BonsoirService service) {
-    final fingerprint = service.attributes['fingerprint'] ?? service.name;
-    if (_devices.remove(fingerprint) != null) _emit();
   }
 
   /// Remove a peer by fingerprint (used when a peer sends `goodbye`).
@@ -500,8 +506,13 @@ class DiscoveryService {
     _refreshing = true;
     final dio = Dio(
       BaseOptions(
-        connectTimeout: const Duration(milliseconds: 900),
-        receiveTimeout: const Duration(milliseconds: 900),
+        // Generous vs a plain reachability ping: a live peer that is busy
+        // transferring can take >1 s to answer `/api/v1/info` (its CPU/radio is
+        // saturated), and a too-tight timeout counts that as a miss → the peer
+        // flickers out of the grid mid-transfer. 2 s tolerates the busy case
+        // while still evicting a genuinely dead peer within [_maxMisses] cycles.
+        connectTimeout: const Duration(seconds: 2),
+        receiveTimeout: const Duration(seconds: 2),
         responseType: ResponseType.json,
         validateStatus: (_) => true,
       ),

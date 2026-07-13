@@ -38,6 +38,23 @@ jobs:
             echo "::error file=$f::HW-AES cfg injection missing — a cargokit bump likely dropped the [BIShare speed fix]. Android AES-256-GCM would run ~11x slower (software). Re-apply the aes_armv8/polyval_armv8 append to CARGO_ENCODED_RUSTFLAGS."
             exit 1
           fi
+      # The SAME HW-AES trap on APPLE (iOS/macOS), via a DIFFERENT mechanism: cargo
+      # discovers .cargo/config.toml by walking UP from the process CWD, not from
+      # --manifest-path. cargokit runs cargo from a temp dir inside Xcode DerivedData
+      # (outside the project), so the [target.cfg(aarch64)] rustflags in
+      # rust/.cargo/config.toml were never found → iOS/macOS shipped SOFTWARE AES
+      # (~11x slower) with NO build error (2026-07-13 regression, App Store archive
+      # confirmed affected). Fix: run cargo from the crate's manifest dir. A cargokit
+      # bump that overwrites builder.dart would drop it and silently regress Apple.
+      - name: HW-AES cfg guard (cargokit must run cargo from the manifest dir on Apple)
+        run: |
+          f=bishare-flutter/rust_builder/cargokit/build_tool/lib/src/builder.dart
+          if grep -q 'workingDirectory: environment.manifestDir' "$f"; then
+            echo "OK: cargokit runs cargo from the manifest dir → rust/.cargo/config.toml aes_armv8 is found on iOS/macOS"
+          else
+            echo "::error file=$f::Apple HW-AES fix missing — cargo must run with workingDirectory=environment.manifestDir so it discovers rust/.cargo/config.toml (aes_armv8/polyval_armv8). Without it iOS/macOS AES-256-GCM runs ~11x slower (software) with no build error. Re-apply the workingDirectory arg in Builder.build()."
+            exit 1
+          fi
 
   flutter:
     needs: rust-vectors # Dart is skipped if the vectors are red
