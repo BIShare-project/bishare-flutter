@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/apps/installed_apps_channel.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../send/presentation/tray_cubit.dart';
 import '../../send/presentation/voice_recorder_sheet.dart';
+import 'app_picker_sheet.dart';
 
 /// The native-style share source grid: 6 tinted pills in 2 rows × 3 columns
 /// (Photos · Files · Text / Contacts · Voice · Paste). Long-press Files → folder.
+/// Android adds an Apps pill (share installed apps as APKs) to the first row.
 class SourceGrid extends StatelessWidget {
   const SourceGrid({super.key});
 
@@ -49,6 +52,15 @@ class SourceGrid extends StatelessWidget {
               tray.pickFiles,
               onLongPress: tray.pickFolder,
             ),
+            if (InstalledAppsChannel.isSupported) ...[
+              const SizedBox(width: 8),
+              pill(
+                AppIcons.gridView,
+                'home.apps'.tr(),
+                kOnlineGreen,
+                () => showAppPicker(context, tray),
+              ),
+            ],
             const SizedBox(width: 8),
             pill(
               AppIcons.note,

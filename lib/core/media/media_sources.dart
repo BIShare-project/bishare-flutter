@@ -58,6 +58,27 @@ class MediaSources {
     return file.path;
   }
 
+  /// Copies an installed app's APK to a temp `<App>_<version>.apk` and returns
+  /// its path. The tray then holds a stable copy with a receiver-friendly name
+  /// (not `/data/app/…/base.apk`, which changes on update and reads as noise).
+  static Future<String> stageApk(
+    String apkPath, {
+    required String appName,
+    required String version,
+  }) async {
+    final tmp = await getTemporaryDirectory();
+    final base = _safe(appName).replaceAll(' ', '_');
+    // Keep dots in versions ("2.24.1"), unlike [_safe].
+    final ver = version.replaceAll(RegExp(r'[^\w.\-]'), '_');
+    final name = [
+      if (base.isNotEmpty) base else 'app',
+      if (ver.isNotEmpty) ver,
+    ].join('_');
+    final out = p.join(tmp.path, '$name.apk');
+    await File(apkPath).copy(out);
+    return out;
+  }
+
   /// Re-encodes the image at [path] to JPEG capped at [maxDimension] px (long
   /// edge) and [quality]. Returns a temp path, or the original path when the
   /// file isn't a decodable raster image or [maxDimension] is 0.

@@ -32,7 +32,7 @@ class ComposeTray extends StatelessWidget {
                       Text(
                         'home.tray_summary'.plural(
                           items.length,
-                          namedArgs: {'bytes': formatBytes(tray.totalBytes)},
+                          namedArgs: {'size': formatBytes(tray.totalBytes)},
                         ),
                         style: TextStyle(
                           fontSize: 12.5,

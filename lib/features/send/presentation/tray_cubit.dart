@@ -8,6 +8,7 @@ import 'package:mime/mime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/apps/installed_apps_channel.dart';
 import '../../../core/media/media_sources.dart';
 import '../../settings/domain/settings.dart';
 import '../domain/sendable_file.dart';
@@ -62,6 +63,27 @@ class TrayCubit extends Cubit<List<SendableFile>> {
     final dir = await FilePicker.platform.getDirectoryPath();
     if (dir == null) return;
     _addPaths([await MediaSources.zipDirectory(dir)]);
+  }
+
+  /// Stage installed apps' base APKs (Android "App Share"). Each APK is copied
+  /// out of `/data/app` first: that path vanishes if the app updates or
+  /// uninstalls mid-transfer, and the copy carries a receiver-friendly name.
+  Future<void> stageApks(List<InstalledApp> apps) async {
+    final resolved = <String>[];
+    for (final app in apps) {
+      try {
+        resolved.add(
+          await MediaSources.stageApk(
+            app.apkPath,
+            appName: app.name,
+            version: app.version,
+          ),
+        );
+      } on FileSystemException {
+        // App uninstalled/updated between listing and staging — skip it.
+      }
+    }
+    _addPaths(resolved);
   }
 
   /// Stage a typed note as a `.txt`.
