@@ -2161,6 +2161,3141 @@ class ClipboardHistoryCompanion extends UpdateCompanion<ClipboardHistoryData> {
   }
 }
 
+class $SyncPairsTable extends SyncPairs
+    with TableInfo<$SyncPairsTable, SyncPair> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncPairsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rootPathMeta = const VerificationMeta(
+    'rootPath',
+  );
+  @override
+  late final GeneratedColumn<String> rootPath = GeneratedColumn<String>(
+    'root_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _peerFingerprintMeta = const VerificationMeta(
+    'peerFingerprint',
+  );
+  @override
+  late final GeneratedColumn<String> peerFingerprint = GeneratedColumn<String>(
+    'peer_fingerprint',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _directionMeta = const VerificationMeta(
+    'direction',
+  );
+  @override
+  late final GeneratedColumn<String> direction = GeneratedColumn<String>(
+    'direction',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('twoWay'),
+  );
+  static const VerificationMeta _modeMeta = const VerificationMeta('mode');
+  @override
+  late final GeneratedColumn<String> mode = GeneratedColumn<String>(
+    'mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('lanOnly'),
+  );
+  static const VerificationMeta _pausedMeta = const VerificationMeta('paused');
+  @override
+  late final GeneratedColumn<bool> paused = GeneratedColumn<bool>(
+    'paused',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("paused" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _selectiveRootsMeta = const VerificationMeta(
+    'selectiveRoots',
+  );
+  @override
+  late final GeneratedColumn<String> selectiveRoots = GeneratedColumn<String>(
+    'selective_roots',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _encryptionMeta = const VerificationMeta(
+    'encryption',
+  );
+  @override
+  late final GeneratedColumn<String> encryption = GeneratedColumn<String>(
+    'encryption',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('aesgcm-x25519'),
+  );
+  static const VerificationMeta _cloudFolderIdMeta = const VerificationMeta(
+    'cloudFolderId',
+  );
+  @override
+  late final GeneratedColumn<String> cloudFolderId = GeneratedColumn<String>(
+    'cloud_folder_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastSyncAtMeta = const VerificationMeta(
+    'lastSyncAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSyncAt = GeneratedColumn<DateTime>(
+    'last_sync_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    rootPath,
+    peerFingerprint,
+    direction,
+    mode,
+    paused,
+    selectiveRoots,
+    encryption,
+    cloudFolderId,
+    createdAt,
+    lastSyncAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_pairs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncPair> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('root_path')) {
+      context.handle(
+        _rootPathMeta,
+        rootPath.isAcceptableOrUnknown(data['root_path']!, _rootPathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_rootPathMeta);
+    }
+    if (data.containsKey('peer_fingerprint')) {
+      context.handle(
+        _peerFingerprintMeta,
+        peerFingerprint.isAcceptableOrUnknown(
+          data['peer_fingerprint']!,
+          _peerFingerprintMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_peerFingerprintMeta);
+    }
+    if (data.containsKey('direction')) {
+      context.handle(
+        _directionMeta,
+        direction.isAcceptableOrUnknown(data['direction']!, _directionMeta),
+      );
+    }
+    if (data.containsKey('mode')) {
+      context.handle(
+        _modeMeta,
+        mode.isAcceptableOrUnknown(data['mode']!, _modeMeta),
+      );
+    }
+    if (data.containsKey('paused')) {
+      context.handle(
+        _pausedMeta,
+        paused.isAcceptableOrUnknown(data['paused']!, _pausedMeta),
+      );
+    }
+    if (data.containsKey('selective_roots')) {
+      context.handle(
+        _selectiveRootsMeta,
+        selectiveRoots.isAcceptableOrUnknown(
+          data['selective_roots']!,
+          _selectiveRootsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('encryption')) {
+      context.handle(
+        _encryptionMeta,
+        encryption.isAcceptableOrUnknown(data['encryption']!, _encryptionMeta),
+      );
+    }
+    if (data.containsKey('cloud_folder_id')) {
+      context.handle(
+        _cloudFolderIdMeta,
+        cloudFolderId.isAcceptableOrUnknown(
+          data['cloud_folder_id']!,
+          _cloudFolderIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('last_sync_at')) {
+      context.handle(
+        _lastSyncAtMeta,
+        lastSyncAt.isAcceptableOrUnknown(
+          data['last_sync_at']!,
+          _lastSyncAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SyncPair map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncPair(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      rootPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}root_path'],
+      )!,
+      peerFingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}peer_fingerprint'],
+      )!,
+      direction: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}direction'],
+      )!,
+      mode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mode'],
+      )!,
+      paused: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}paused'],
+      )!,
+      selectiveRoots: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}selective_roots'],
+      ),
+      encryption: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}encryption'],
+      )!,
+      cloudFolderId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cloud_folder_id'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      lastSyncAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_sync_at'],
+      ),
+    );
+  }
+
+  @override
+  $SyncPairsTable createAlias(String alias) {
+    return $SyncPairsTable(attachedDatabase, alias);
+  }
+}
+
+class SyncPair extends DataClass implements Insertable<SyncPair> {
+  /// UUID (not autoincrement) — stable across DB resets and referenced by every
+  /// other sync table + the cloud manifest.
+  final String id;
+  final String rootPath;
+  final String peerFingerprint;
+
+  /// 'twoWay' (v1) | 'pushOnly' | 'pullOnly' — enum ready, only twoWay in v1.
+  final String direction;
+
+  /// 'lanOnly' | 'lanCloud'. lanOnly NEVER touches api.bishare.app for content
+  /// (positioning claim). lanCloud enables the Pro-gated store-and-forward (M3).
+  final String mode;
+  final bool paused;
+
+  /// JSON array of included subtree path prefixes (§8.2); null = whole root.
+  final String? selectiveRoots;
+
+  /// Cloud-blob encryption scheme (§7.1). Forward-compat field so a future
+  /// scheme migrates cleanly; v1 is always 'aesgcm-x25519'.
+  final String encryption;
+
+  /// Backend `folder_id` holding this pair's content-addressed store (M3).
+  final String? cloudFolderId;
+  final DateTime createdAt;
+  final DateTime? lastSyncAt;
+  const SyncPair({
+    required this.id,
+    required this.rootPath,
+    required this.peerFingerprint,
+    required this.direction,
+    required this.mode,
+    required this.paused,
+    this.selectiveRoots,
+    required this.encryption,
+    this.cloudFolderId,
+    required this.createdAt,
+    this.lastSyncAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['root_path'] = Variable<String>(rootPath);
+    map['peer_fingerprint'] = Variable<String>(peerFingerprint);
+    map['direction'] = Variable<String>(direction);
+    map['mode'] = Variable<String>(mode);
+    map['paused'] = Variable<bool>(paused);
+    if (!nullToAbsent || selectiveRoots != null) {
+      map['selective_roots'] = Variable<String>(selectiveRoots);
+    }
+    map['encryption'] = Variable<String>(encryption);
+    if (!nullToAbsent || cloudFolderId != null) {
+      map['cloud_folder_id'] = Variable<String>(cloudFolderId);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || lastSyncAt != null) {
+      map['last_sync_at'] = Variable<DateTime>(lastSyncAt);
+    }
+    return map;
+  }
+
+  SyncPairsCompanion toCompanion(bool nullToAbsent) {
+    return SyncPairsCompanion(
+      id: Value(id),
+      rootPath: Value(rootPath),
+      peerFingerprint: Value(peerFingerprint),
+      direction: Value(direction),
+      mode: Value(mode),
+      paused: Value(paused),
+      selectiveRoots: selectiveRoots == null && nullToAbsent
+          ? const Value.absent()
+          : Value(selectiveRoots),
+      encryption: Value(encryption),
+      cloudFolderId: cloudFolderId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cloudFolderId),
+      createdAt: Value(createdAt),
+      lastSyncAt: lastSyncAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncAt),
+    );
+  }
+
+  factory SyncPair.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncPair(
+      id: serializer.fromJson<String>(json['id']),
+      rootPath: serializer.fromJson<String>(json['rootPath']),
+      peerFingerprint: serializer.fromJson<String>(json['peerFingerprint']),
+      direction: serializer.fromJson<String>(json['direction']),
+      mode: serializer.fromJson<String>(json['mode']),
+      paused: serializer.fromJson<bool>(json['paused']),
+      selectiveRoots: serializer.fromJson<String?>(json['selectiveRoots']),
+      encryption: serializer.fromJson<String>(json['encryption']),
+      cloudFolderId: serializer.fromJson<String?>(json['cloudFolderId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      lastSyncAt: serializer.fromJson<DateTime?>(json['lastSyncAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'rootPath': serializer.toJson<String>(rootPath),
+      'peerFingerprint': serializer.toJson<String>(peerFingerprint),
+      'direction': serializer.toJson<String>(direction),
+      'mode': serializer.toJson<String>(mode),
+      'paused': serializer.toJson<bool>(paused),
+      'selectiveRoots': serializer.toJson<String?>(selectiveRoots),
+      'encryption': serializer.toJson<String>(encryption),
+      'cloudFolderId': serializer.toJson<String?>(cloudFolderId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'lastSyncAt': serializer.toJson<DateTime?>(lastSyncAt),
+    };
+  }
+
+  SyncPair copyWith({
+    String? id,
+    String? rootPath,
+    String? peerFingerprint,
+    String? direction,
+    String? mode,
+    bool? paused,
+    Value<String?> selectiveRoots = const Value.absent(),
+    String? encryption,
+    Value<String?> cloudFolderId = const Value.absent(),
+    DateTime? createdAt,
+    Value<DateTime?> lastSyncAt = const Value.absent(),
+  }) => SyncPair(
+    id: id ?? this.id,
+    rootPath: rootPath ?? this.rootPath,
+    peerFingerprint: peerFingerprint ?? this.peerFingerprint,
+    direction: direction ?? this.direction,
+    mode: mode ?? this.mode,
+    paused: paused ?? this.paused,
+    selectiveRoots: selectiveRoots.present
+        ? selectiveRoots.value
+        : this.selectiveRoots,
+    encryption: encryption ?? this.encryption,
+    cloudFolderId: cloudFolderId.present
+        ? cloudFolderId.value
+        : this.cloudFolderId,
+    createdAt: createdAt ?? this.createdAt,
+    lastSyncAt: lastSyncAt.present ? lastSyncAt.value : this.lastSyncAt,
+  );
+  SyncPair copyWithCompanion(SyncPairsCompanion data) {
+    return SyncPair(
+      id: data.id.present ? data.id.value : this.id,
+      rootPath: data.rootPath.present ? data.rootPath.value : this.rootPath,
+      peerFingerprint: data.peerFingerprint.present
+          ? data.peerFingerprint.value
+          : this.peerFingerprint,
+      direction: data.direction.present ? data.direction.value : this.direction,
+      mode: data.mode.present ? data.mode.value : this.mode,
+      paused: data.paused.present ? data.paused.value : this.paused,
+      selectiveRoots: data.selectiveRoots.present
+          ? data.selectiveRoots.value
+          : this.selectiveRoots,
+      encryption: data.encryption.present
+          ? data.encryption.value
+          : this.encryption,
+      cloudFolderId: data.cloudFolderId.present
+          ? data.cloudFolderId.value
+          : this.cloudFolderId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      lastSyncAt: data.lastSyncAt.present
+          ? data.lastSyncAt.value
+          : this.lastSyncAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncPair(')
+          ..write('id: $id, ')
+          ..write('rootPath: $rootPath, ')
+          ..write('peerFingerprint: $peerFingerprint, ')
+          ..write('direction: $direction, ')
+          ..write('mode: $mode, ')
+          ..write('paused: $paused, ')
+          ..write('selectiveRoots: $selectiveRoots, ')
+          ..write('encryption: $encryption, ')
+          ..write('cloudFolderId: $cloudFolderId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('lastSyncAt: $lastSyncAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    rootPath,
+    peerFingerprint,
+    direction,
+    mode,
+    paused,
+    selectiveRoots,
+    encryption,
+    cloudFolderId,
+    createdAt,
+    lastSyncAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncPair &&
+          other.id == this.id &&
+          other.rootPath == this.rootPath &&
+          other.peerFingerprint == this.peerFingerprint &&
+          other.direction == this.direction &&
+          other.mode == this.mode &&
+          other.paused == this.paused &&
+          other.selectiveRoots == this.selectiveRoots &&
+          other.encryption == this.encryption &&
+          other.cloudFolderId == this.cloudFolderId &&
+          other.createdAt == this.createdAt &&
+          other.lastSyncAt == this.lastSyncAt);
+}
+
+class SyncPairsCompanion extends UpdateCompanion<SyncPair> {
+  final Value<String> id;
+  final Value<String> rootPath;
+  final Value<String> peerFingerprint;
+  final Value<String> direction;
+  final Value<String> mode;
+  final Value<bool> paused;
+  final Value<String?> selectiveRoots;
+  final Value<String> encryption;
+  final Value<String?> cloudFolderId;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> lastSyncAt;
+  final Value<int> rowid;
+  const SyncPairsCompanion({
+    this.id = const Value.absent(),
+    this.rootPath = const Value.absent(),
+    this.peerFingerprint = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.mode = const Value.absent(),
+    this.paused = const Value.absent(),
+    this.selectiveRoots = const Value.absent(),
+    this.encryption = const Value.absent(),
+    this.cloudFolderId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.lastSyncAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncPairsCompanion.insert({
+    required String id,
+    required String rootPath,
+    required String peerFingerprint,
+    this.direction = const Value.absent(),
+    this.mode = const Value.absent(),
+    this.paused = const Value.absent(),
+    this.selectiveRoots = const Value.absent(),
+    this.encryption = const Value.absent(),
+    this.cloudFolderId = const Value.absent(),
+    required DateTime createdAt,
+    this.lastSyncAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       rootPath = Value(rootPath),
+       peerFingerprint = Value(peerFingerprint),
+       createdAt = Value(createdAt);
+  static Insertable<SyncPair> custom({
+    Expression<String>? id,
+    Expression<String>? rootPath,
+    Expression<String>? peerFingerprint,
+    Expression<String>? direction,
+    Expression<String>? mode,
+    Expression<bool>? paused,
+    Expression<String>? selectiveRoots,
+    Expression<String>? encryption,
+    Expression<String>? cloudFolderId,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? lastSyncAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (rootPath != null) 'root_path': rootPath,
+      if (peerFingerprint != null) 'peer_fingerprint': peerFingerprint,
+      if (direction != null) 'direction': direction,
+      if (mode != null) 'mode': mode,
+      if (paused != null) 'paused': paused,
+      if (selectiveRoots != null) 'selective_roots': selectiveRoots,
+      if (encryption != null) 'encryption': encryption,
+      if (cloudFolderId != null) 'cloud_folder_id': cloudFolderId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (lastSyncAt != null) 'last_sync_at': lastSyncAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncPairsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? rootPath,
+    Value<String>? peerFingerprint,
+    Value<String>? direction,
+    Value<String>? mode,
+    Value<bool>? paused,
+    Value<String?>? selectiveRoots,
+    Value<String>? encryption,
+    Value<String?>? cloudFolderId,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? lastSyncAt,
+    Value<int>? rowid,
+  }) {
+    return SyncPairsCompanion(
+      id: id ?? this.id,
+      rootPath: rootPath ?? this.rootPath,
+      peerFingerprint: peerFingerprint ?? this.peerFingerprint,
+      direction: direction ?? this.direction,
+      mode: mode ?? this.mode,
+      paused: paused ?? this.paused,
+      selectiveRoots: selectiveRoots ?? this.selectiveRoots,
+      encryption: encryption ?? this.encryption,
+      cloudFolderId: cloudFolderId ?? this.cloudFolderId,
+      createdAt: createdAt ?? this.createdAt,
+      lastSyncAt: lastSyncAt ?? this.lastSyncAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (rootPath.present) {
+      map['root_path'] = Variable<String>(rootPath.value);
+    }
+    if (peerFingerprint.present) {
+      map['peer_fingerprint'] = Variable<String>(peerFingerprint.value);
+    }
+    if (direction.present) {
+      map['direction'] = Variable<String>(direction.value);
+    }
+    if (mode.present) {
+      map['mode'] = Variable<String>(mode.value);
+    }
+    if (paused.present) {
+      map['paused'] = Variable<bool>(paused.value);
+    }
+    if (selectiveRoots.present) {
+      map['selective_roots'] = Variable<String>(selectiveRoots.value);
+    }
+    if (encryption.present) {
+      map['encryption'] = Variable<String>(encryption.value);
+    }
+    if (cloudFolderId.present) {
+      map['cloud_folder_id'] = Variable<String>(cloudFolderId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (lastSyncAt.present) {
+      map['last_sync_at'] = Variable<DateTime>(lastSyncAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncPairsCompanion(')
+          ..write('id: $id, ')
+          ..write('rootPath: $rootPath, ')
+          ..write('peerFingerprint: $peerFingerprint, ')
+          ..write('direction: $direction, ')
+          ..write('mode: $mode, ')
+          ..write('paused: $paused, ')
+          ..write('selectiveRoots: $selectiveRoots, ')
+          ..write('encryption: $encryption, ')
+          ..write('cloudFolderId: $cloudFolderId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('lastSyncAt: $lastSyncAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SyncEntriesTable extends SyncEntries
+    with TableInfo<$SyncEntriesTable, SyncEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _pairIdMeta = const VerificationMeta('pairId');
+  @override
+  late final GeneratedColumn<String> pairId = GeneratedColumn<String>(
+    'pair_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pathMeta = const VerificationMeta('path');
+  @override
+  late final GeneratedColumn<String> path = GeneratedColumn<String>(
+    'path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeMeta = const VerificationMeta('size');
+  @override
+  late final GeneratedColumn<int> size = GeneratedColumn<int>(
+    'size',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mtimeMsMeta = const VerificationMeta(
+    'mtimeMs',
+  );
+  @override
+  late final GeneratedColumn<int> mtimeMs = GeneratedColumn<int>(
+    'mtime_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sha256Meta = const VerificationMeta('sha256');
+  @override
+  late final GeneratedColumn<String> sha256 = GeneratedColumn<String>(
+    'sha256',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isDirMeta = const VerificationMeta('isDir');
+  @override
+  late final GeneratedColumn<bool> isDir = GeneratedColumn<bool>(
+    'is_dir',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_dir" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _originFpMeta = const VerificationMeta(
+    'originFp',
+  );
+  @override
+  late final GeneratedColumn<String> originFp = GeneratedColumn<String>(
+    'origin_fp',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _opCursorMeta = const VerificationMeta(
+    'opCursor',
+  );
+  @override
+  late final GeneratedColumn<int> opCursor = GeneratedColumn<int>(
+    'op_cursor',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    pairId,
+    path,
+    size,
+    mtimeMs,
+    sha256,
+    isDir,
+    originFp,
+    opCursor,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('pair_id')) {
+      context.handle(
+        _pairIdMeta,
+        pairId.isAcceptableOrUnknown(data['pair_id']!, _pairIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pairIdMeta);
+    }
+    if (data.containsKey('path')) {
+      context.handle(
+        _pathMeta,
+        path.isAcceptableOrUnknown(data['path']!, _pathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pathMeta);
+    }
+    if (data.containsKey('size')) {
+      context.handle(
+        _sizeMeta,
+        size.isAcceptableOrUnknown(data['size']!, _sizeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeMeta);
+    }
+    if (data.containsKey('mtime_ms')) {
+      context.handle(
+        _mtimeMsMeta,
+        mtimeMs.isAcceptableOrUnknown(data['mtime_ms']!, _mtimeMsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mtimeMsMeta);
+    }
+    if (data.containsKey('sha256')) {
+      context.handle(
+        _sha256Meta,
+        sha256.isAcceptableOrUnknown(data['sha256']!, _sha256Meta),
+      );
+    }
+    if (data.containsKey('is_dir')) {
+      context.handle(
+        _isDirMeta,
+        isDir.isAcceptableOrUnknown(data['is_dir']!, _isDirMeta),
+      );
+    }
+    if (data.containsKey('origin_fp')) {
+      context.handle(
+        _originFpMeta,
+        originFp.isAcceptableOrUnknown(data['origin_fp']!, _originFpMeta),
+      );
+    }
+    if (data.containsKey('op_cursor')) {
+      context.handle(
+        _opCursorMeta,
+        opCursor.isAcceptableOrUnknown(data['op_cursor']!, _opCursorMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {pairId, path};
+  @override
+  SyncEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncEntry(
+      pairId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pair_id'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      )!,
+      size: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size'],
+      )!,
+      mtimeMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}mtime_ms'],
+      )!,
+      sha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sha256'],
+      ),
+      isDir: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_dir'],
+      )!,
+      originFp: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}origin_fp'],
+      ),
+      opCursor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}op_cursor'],
+      )!,
+    );
+  }
+
+  @override
+  $SyncEntriesTable createAlias(String alias) {
+    return $SyncEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class SyncEntry extends DataClass implements Insertable<SyncEntry> {
+  final String pairId;
+  final String path;
+  final int size;
+  final int mtimeMs;
+  final String? sha256;
+  final bool isDir;
+
+  /// Fingerprint of the device that last authored this entry — feeds
+  /// loop-prevention (`originFp`, §4.4).
+  final String? originFp;
+
+  /// Monotonic u64 op cursor (per pair per device) this entry was written at.
+  final int opCursor;
+  const SyncEntry({
+    required this.pairId,
+    required this.path,
+    required this.size,
+    required this.mtimeMs,
+    this.sha256,
+    required this.isDir,
+    this.originFp,
+    required this.opCursor,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['pair_id'] = Variable<String>(pairId);
+    map['path'] = Variable<String>(path);
+    map['size'] = Variable<int>(size);
+    map['mtime_ms'] = Variable<int>(mtimeMs);
+    if (!nullToAbsent || sha256 != null) {
+      map['sha256'] = Variable<String>(sha256);
+    }
+    map['is_dir'] = Variable<bool>(isDir);
+    if (!nullToAbsent || originFp != null) {
+      map['origin_fp'] = Variable<String>(originFp);
+    }
+    map['op_cursor'] = Variable<int>(opCursor);
+    return map;
+  }
+
+  SyncEntriesCompanion toCompanion(bool nullToAbsent) {
+    return SyncEntriesCompanion(
+      pairId: Value(pairId),
+      path: Value(path),
+      size: Value(size),
+      mtimeMs: Value(mtimeMs),
+      sha256: sha256 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sha256),
+      isDir: Value(isDir),
+      originFp: originFp == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originFp),
+      opCursor: Value(opCursor),
+    );
+  }
+
+  factory SyncEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncEntry(
+      pairId: serializer.fromJson<String>(json['pairId']),
+      path: serializer.fromJson<String>(json['path']),
+      size: serializer.fromJson<int>(json['size']),
+      mtimeMs: serializer.fromJson<int>(json['mtimeMs']),
+      sha256: serializer.fromJson<String?>(json['sha256']),
+      isDir: serializer.fromJson<bool>(json['isDir']),
+      originFp: serializer.fromJson<String?>(json['originFp']),
+      opCursor: serializer.fromJson<int>(json['opCursor']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'pairId': serializer.toJson<String>(pairId),
+      'path': serializer.toJson<String>(path),
+      'size': serializer.toJson<int>(size),
+      'mtimeMs': serializer.toJson<int>(mtimeMs),
+      'sha256': serializer.toJson<String?>(sha256),
+      'isDir': serializer.toJson<bool>(isDir),
+      'originFp': serializer.toJson<String?>(originFp),
+      'opCursor': serializer.toJson<int>(opCursor),
+    };
+  }
+
+  SyncEntry copyWith({
+    String? pairId,
+    String? path,
+    int? size,
+    int? mtimeMs,
+    Value<String?> sha256 = const Value.absent(),
+    bool? isDir,
+    Value<String?> originFp = const Value.absent(),
+    int? opCursor,
+  }) => SyncEntry(
+    pairId: pairId ?? this.pairId,
+    path: path ?? this.path,
+    size: size ?? this.size,
+    mtimeMs: mtimeMs ?? this.mtimeMs,
+    sha256: sha256.present ? sha256.value : this.sha256,
+    isDir: isDir ?? this.isDir,
+    originFp: originFp.present ? originFp.value : this.originFp,
+    opCursor: opCursor ?? this.opCursor,
+  );
+  SyncEntry copyWithCompanion(SyncEntriesCompanion data) {
+    return SyncEntry(
+      pairId: data.pairId.present ? data.pairId.value : this.pairId,
+      path: data.path.present ? data.path.value : this.path,
+      size: data.size.present ? data.size.value : this.size,
+      mtimeMs: data.mtimeMs.present ? data.mtimeMs.value : this.mtimeMs,
+      sha256: data.sha256.present ? data.sha256.value : this.sha256,
+      isDir: data.isDir.present ? data.isDir.value : this.isDir,
+      originFp: data.originFp.present ? data.originFp.value : this.originFp,
+      opCursor: data.opCursor.present ? data.opCursor.value : this.opCursor,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncEntry(')
+          ..write('pairId: $pairId, ')
+          ..write('path: $path, ')
+          ..write('size: $size, ')
+          ..write('mtimeMs: $mtimeMs, ')
+          ..write('sha256: $sha256, ')
+          ..write('isDir: $isDir, ')
+          ..write('originFp: $originFp, ')
+          ..write('opCursor: $opCursor')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    pairId,
+    path,
+    size,
+    mtimeMs,
+    sha256,
+    isDir,
+    originFp,
+    opCursor,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncEntry &&
+          other.pairId == this.pairId &&
+          other.path == this.path &&
+          other.size == this.size &&
+          other.mtimeMs == this.mtimeMs &&
+          other.sha256 == this.sha256 &&
+          other.isDir == this.isDir &&
+          other.originFp == this.originFp &&
+          other.opCursor == this.opCursor);
+}
+
+class SyncEntriesCompanion extends UpdateCompanion<SyncEntry> {
+  final Value<String> pairId;
+  final Value<String> path;
+  final Value<int> size;
+  final Value<int> mtimeMs;
+  final Value<String?> sha256;
+  final Value<bool> isDir;
+  final Value<String?> originFp;
+  final Value<int> opCursor;
+  final Value<int> rowid;
+  const SyncEntriesCompanion({
+    this.pairId = const Value.absent(),
+    this.path = const Value.absent(),
+    this.size = const Value.absent(),
+    this.mtimeMs = const Value.absent(),
+    this.sha256 = const Value.absent(),
+    this.isDir = const Value.absent(),
+    this.originFp = const Value.absent(),
+    this.opCursor = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncEntriesCompanion.insert({
+    required String pairId,
+    required String path,
+    required int size,
+    required int mtimeMs,
+    this.sha256 = const Value.absent(),
+    this.isDir = const Value.absent(),
+    this.originFp = const Value.absent(),
+    this.opCursor = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : pairId = Value(pairId),
+       path = Value(path),
+       size = Value(size),
+       mtimeMs = Value(mtimeMs);
+  static Insertable<SyncEntry> custom({
+    Expression<String>? pairId,
+    Expression<String>? path,
+    Expression<int>? size,
+    Expression<int>? mtimeMs,
+    Expression<String>? sha256,
+    Expression<bool>? isDir,
+    Expression<String>? originFp,
+    Expression<int>? opCursor,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (pairId != null) 'pair_id': pairId,
+      if (path != null) 'path': path,
+      if (size != null) 'size': size,
+      if (mtimeMs != null) 'mtime_ms': mtimeMs,
+      if (sha256 != null) 'sha256': sha256,
+      if (isDir != null) 'is_dir': isDir,
+      if (originFp != null) 'origin_fp': originFp,
+      if (opCursor != null) 'op_cursor': opCursor,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncEntriesCompanion copyWith({
+    Value<String>? pairId,
+    Value<String>? path,
+    Value<int>? size,
+    Value<int>? mtimeMs,
+    Value<String?>? sha256,
+    Value<bool>? isDir,
+    Value<String?>? originFp,
+    Value<int>? opCursor,
+    Value<int>? rowid,
+  }) {
+    return SyncEntriesCompanion(
+      pairId: pairId ?? this.pairId,
+      path: path ?? this.path,
+      size: size ?? this.size,
+      mtimeMs: mtimeMs ?? this.mtimeMs,
+      sha256: sha256 ?? this.sha256,
+      isDir: isDir ?? this.isDir,
+      originFp: originFp ?? this.originFp,
+      opCursor: opCursor ?? this.opCursor,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (pairId.present) {
+      map['pair_id'] = Variable<String>(pairId.value);
+    }
+    if (path.present) {
+      map['path'] = Variable<String>(path.value);
+    }
+    if (size.present) {
+      map['size'] = Variable<int>(size.value);
+    }
+    if (mtimeMs.present) {
+      map['mtime_ms'] = Variable<int>(mtimeMs.value);
+    }
+    if (sha256.present) {
+      map['sha256'] = Variable<String>(sha256.value);
+    }
+    if (isDir.present) {
+      map['is_dir'] = Variable<bool>(isDir.value);
+    }
+    if (originFp.present) {
+      map['origin_fp'] = Variable<String>(originFp.value);
+    }
+    if (opCursor.present) {
+      map['op_cursor'] = Variable<int>(opCursor.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncEntriesCompanion(')
+          ..write('pairId: $pairId, ')
+          ..write('path: $path, ')
+          ..write('size: $size, ')
+          ..write('mtimeMs: $mtimeMs, ')
+          ..write('sha256: $sha256, ')
+          ..write('isDir: $isDir, ')
+          ..write('originFp: $originFp, ')
+          ..write('opCursor: $opCursor, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SyncTombstonesTable extends SyncTombstones
+    with TableInfo<$SyncTombstonesTable, SyncTombstone> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncTombstonesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _pairIdMeta = const VerificationMeta('pairId');
+  @override
+  late final GeneratedColumn<String> pairId = GeneratedColumn<String>(
+    'pair_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pathMeta = const VerificationMeta('path');
+  @override
+  late final GeneratedColumn<String> path = GeneratedColumn<String>(
+    'path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMsMeta = const VerificationMeta(
+    'deletedAtMs',
+  );
+  @override
+  late final GeneratedColumn<int> deletedAtMs = GeneratedColumn<int>(
+    'deleted_at_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _originFpMeta = const VerificationMeta(
+    'originFp',
+  );
+  @override
+  late final GeneratedColumn<String> originFp = GeneratedColumn<String>(
+    'origin_fp',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [pairId, path, deletedAtMs, originFp];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_tombstones';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncTombstone> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('pair_id')) {
+      context.handle(
+        _pairIdMeta,
+        pairId.isAcceptableOrUnknown(data['pair_id']!, _pairIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pairIdMeta);
+    }
+    if (data.containsKey('path')) {
+      context.handle(
+        _pathMeta,
+        path.isAcceptableOrUnknown(data['path']!, _pathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pathMeta);
+    }
+    if (data.containsKey('deleted_at_ms')) {
+      context.handle(
+        _deletedAtMsMeta,
+        deletedAtMs.isAcceptableOrUnknown(
+          data['deleted_at_ms']!,
+          _deletedAtMsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_deletedAtMsMeta);
+    }
+    if (data.containsKey('origin_fp')) {
+      context.handle(
+        _originFpMeta,
+        originFp.isAcceptableOrUnknown(data['origin_fp']!, _originFpMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {pairId, path};
+  @override
+  SyncTombstone map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncTombstone(
+      pairId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pair_id'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      )!,
+      deletedAtMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deleted_at_ms'],
+      )!,
+      originFp: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}origin_fp'],
+      ),
+    );
+  }
+
+  @override
+  $SyncTombstonesTable createAlias(String alias) {
+    return $SyncTombstonesTable(attachedDatabase, alias);
+  }
+}
+
+class SyncTombstone extends DataClass implements Insertable<SyncTombstone> {
+  final String pairId;
+  final String path;
+  final int deletedAtMs;
+  final String? originFp;
+  const SyncTombstone({
+    required this.pairId,
+    required this.path,
+    required this.deletedAtMs,
+    this.originFp,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['pair_id'] = Variable<String>(pairId);
+    map['path'] = Variable<String>(path);
+    map['deleted_at_ms'] = Variable<int>(deletedAtMs);
+    if (!nullToAbsent || originFp != null) {
+      map['origin_fp'] = Variable<String>(originFp);
+    }
+    return map;
+  }
+
+  SyncTombstonesCompanion toCompanion(bool nullToAbsent) {
+    return SyncTombstonesCompanion(
+      pairId: Value(pairId),
+      path: Value(path),
+      deletedAtMs: Value(deletedAtMs),
+      originFp: originFp == null && nullToAbsent
+          ? const Value.absent()
+          : Value(originFp),
+    );
+  }
+
+  factory SyncTombstone.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncTombstone(
+      pairId: serializer.fromJson<String>(json['pairId']),
+      path: serializer.fromJson<String>(json['path']),
+      deletedAtMs: serializer.fromJson<int>(json['deletedAtMs']),
+      originFp: serializer.fromJson<String?>(json['originFp']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'pairId': serializer.toJson<String>(pairId),
+      'path': serializer.toJson<String>(path),
+      'deletedAtMs': serializer.toJson<int>(deletedAtMs),
+      'originFp': serializer.toJson<String?>(originFp),
+    };
+  }
+
+  SyncTombstone copyWith({
+    String? pairId,
+    String? path,
+    int? deletedAtMs,
+    Value<String?> originFp = const Value.absent(),
+  }) => SyncTombstone(
+    pairId: pairId ?? this.pairId,
+    path: path ?? this.path,
+    deletedAtMs: deletedAtMs ?? this.deletedAtMs,
+    originFp: originFp.present ? originFp.value : this.originFp,
+  );
+  SyncTombstone copyWithCompanion(SyncTombstonesCompanion data) {
+    return SyncTombstone(
+      pairId: data.pairId.present ? data.pairId.value : this.pairId,
+      path: data.path.present ? data.path.value : this.path,
+      deletedAtMs: data.deletedAtMs.present
+          ? data.deletedAtMs.value
+          : this.deletedAtMs,
+      originFp: data.originFp.present ? data.originFp.value : this.originFp,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncTombstone(')
+          ..write('pairId: $pairId, ')
+          ..write('path: $path, ')
+          ..write('deletedAtMs: $deletedAtMs, ')
+          ..write('originFp: $originFp')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(pairId, path, deletedAtMs, originFp);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncTombstone &&
+          other.pairId == this.pairId &&
+          other.path == this.path &&
+          other.deletedAtMs == this.deletedAtMs &&
+          other.originFp == this.originFp);
+}
+
+class SyncTombstonesCompanion extends UpdateCompanion<SyncTombstone> {
+  final Value<String> pairId;
+  final Value<String> path;
+  final Value<int> deletedAtMs;
+  final Value<String?> originFp;
+  final Value<int> rowid;
+  const SyncTombstonesCompanion({
+    this.pairId = const Value.absent(),
+    this.path = const Value.absent(),
+    this.deletedAtMs = const Value.absent(),
+    this.originFp = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncTombstonesCompanion.insert({
+    required String pairId,
+    required String path,
+    required int deletedAtMs,
+    this.originFp = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : pairId = Value(pairId),
+       path = Value(path),
+       deletedAtMs = Value(deletedAtMs);
+  static Insertable<SyncTombstone> custom({
+    Expression<String>? pairId,
+    Expression<String>? path,
+    Expression<int>? deletedAtMs,
+    Expression<String>? originFp,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (pairId != null) 'pair_id': pairId,
+      if (path != null) 'path': path,
+      if (deletedAtMs != null) 'deleted_at_ms': deletedAtMs,
+      if (originFp != null) 'origin_fp': originFp,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncTombstonesCompanion copyWith({
+    Value<String>? pairId,
+    Value<String>? path,
+    Value<int>? deletedAtMs,
+    Value<String?>? originFp,
+    Value<int>? rowid,
+  }) {
+    return SyncTombstonesCompanion(
+      pairId: pairId ?? this.pairId,
+      path: path ?? this.path,
+      deletedAtMs: deletedAtMs ?? this.deletedAtMs,
+      originFp: originFp ?? this.originFp,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (pairId.present) {
+      map['pair_id'] = Variable<String>(pairId.value);
+    }
+    if (path.present) {
+      map['path'] = Variable<String>(path.value);
+    }
+    if (deletedAtMs.present) {
+      map['deleted_at_ms'] = Variable<int>(deletedAtMs.value);
+    }
+    if (originFp.present) {
+      map['origin_fp'] = Variable<String>(originFp.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncTombstonesCompanion(')
+          ..write('pairId: $pairId, ')
+          ..write('path: $path, ')
+          ..write('deletedAtMs: $deletedAtMs, ')
+          ..write('originFp: $originFp, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SyncConflictsTable extends SyncConflicts
+    with TableInfo<$SyncConflictsTable, SyncConflict> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncConflictsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pairIdMeta = const VerificationMeta('pairId');
+  @override
+  late final GeneratedColumn<String> pairId = GeneratedColumn<String>(
+    'pair_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pathMeta = const VerificationMeta('path');
+  @override
+  late final GeneratedColumn<String> path = GeneratedColumn<String>(
+    'path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _loserCopyPathMeta = const VerificationMeta(
+    'loserCopyPath',
+  );
+  @override
+  late final GeneratedColumn<String> loserCopyPath = GeneratedColumn<String>(
+    'loser_copy_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _winnerFpMeta = const VerificationMeta(
+    'winnerFp',
+  );
+  @override
+  late final GeneratedColumn<String> winnerFp = GeneratedColumn<String>(
+    'winner_fp',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _resolvedAtMeta = const VerificationMeta(
+    'resolvedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> resolvedAt = GeneratedColumn<DateTime>(
+    'resolved_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    pairId,
+    path,
+    loserCopyPath,
+    winnerFp,
+    createdAt,
+    resolvedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_conflicts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncConflict> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('pair_id')) {
+      context.handle(
+        _pairIdMeta,
+        pairId.isAcceptableOrUnknown(data['pair_id']!, _pairIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pairIdMeta);
+    }
+    if (data.containsKey('path')) {
+      context.handle(
+        _pathMeta,
+        path.isAcceptableOrUnknown(data['path']!, _pathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pathMeta);
+    }
+    if (data.containsKey('loser_copy_path')) {
+      context.handle(
+        _loserCopyPathMeta,
+        loserCopyPath.isAcceptableOrUnknown(
+          data['loser_copy_path']!,
+          _loserCopyPathMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_loserCopyPathMeta);
+    }
+    if (data.containsKey('winner_fp')) {
+      context.handle(
+        _winnerFpMeta,
+        winnerFp.isAcceptableOrUnknown(data['winner_fp']!, _winnerFpMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('resolved_at')) {
+      context.handle(
+        _resolvedAtMeta,
+        resolvedAt.isAcceptableOrUnknown(data['resolved_at']!, _resolvedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SyncConflict map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncConflict(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      pairId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pair_id'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      )!,
+      loserCopyPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}loser_copy_path'],
+      )!,
+      winnerFp: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}winner_fp'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      resolvedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}resolved_at'],
+      ),
+    );
+  }
+
+  @override
+  $SyncConflictsTable createAlias(String alias) {
+    return $SyncConflictsTable(attachedDatabase, alias);
+  }
+}
+
+class SyncConflict extends DataClass implements Insertable<SyncConflict> {
+  final String id;
+  final String pairId;
+  final String path;
+  final String loserCopyPath;
+  final String? winnerFp;
+  final DateTime createdAt;
+  final DateTime? resolvedAt;
+  const SyncConflict({
+    required this.id,
+    required this.pairId,
+    required this.path,
+    required this.loserCopyPath,
+    this.winnerFp,
+    required this.createdAt,
+    this.resolvedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['pair_id'] = Variable<String>(pairId);
+    map['path'] = Variable<String>(path);
+    map['loser_copy_path'] = Variable<String>(loserCopyPath);
+    if (!nullToAbsent || winnerFp != null) {
+      map['winner_fp'] = Variable<String>(winnerFp);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || resolvedAt != null) {
+      map['resolved_at'] = Variable<DateTime>(resolvedAt);
+    }
+    return map;
+  }
+
+  SyncConflictsCompanion toCompanion(bool nullToAbsent) {
+    return SyncConflictsCompanion(
+      id: Value(id),
+      pairId: Value(pairId),
+      path: Value(path),
+      loserCopyPath: Value(loserCopyPath),
+      winnerFp: winnerFp == null && nullToAbsent
+          ? const Value.absent()
+          : Value(winnerFp),
+      createdAt: Value(createdAt),
+      resolvedAt: resolvedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resolvedAt),
+    );
+  }
+
+  factory SyncConflict.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncConflict(
+      id: serializer.fromJson<String>(json['id']),
+      pairId: serializer.fromJson<String>(json['pairId']),
+      path: serializer.fromJson<String>(json['path']),
+      loserCopyPath: serializer.fromJson<String>(json['loserCopyPath']),
+      winnerFp: serializer.fromJson<String?>(json['winnerFp']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      resolvedAt: serializer.fromJson<DateTime?>(json['resolvedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'pairId': serializer.toJson<String>(pairId),
+      'path': serializer.toJson<String>(path),
+      'loserCopyPath': serializer.toJson<String>(loserCopyPath),
+      'winnerFp': serializer.toJson<String?>(winnerFp),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'resolvedAt': serializer.toJson<DateTime?>(resolvedAt),
+    };
+  }
+
+  SyncConflict copyWith({
+    String? id,
+    String? pairId,
+    String? path,
+    String? loserCopyPath,
+    Value<String?> winnerFp = const Value.absent(),
+    DateTime? createdAt,
+    Value<DateTime?> resolvedAt = const Value.absent(),
+  }) => SyncConflict(
+    id: id ?? this.id,
+    pairId: pairId ?? this.pairId,
+    path: path ?? this.path,
+    loserCopyPath: loserCopyPath ?? this.loserCopyPath,
+    winnerFp: winnerFp.present ? winnerFp.value : this.winnerFp,
+    createdAt: createdAt ?? this.createdAt,
+    resolvedAt: resolvedAt.present ? resolvedAt.value : this.resolvedAt,
+  );
+  SyncConflict copyWithCompanion(SyncConflictsCompanion data) {
+    return SyncConflict(
+      id: data.id.present ? data.id.value : this.id,
+      pairId: data.pairId.present ? data.pairId.value : this.pairId,
+      path: data.path.present ? data.path.value : this.path,
+      loserCopyPath: data.loserCopyPath.present
+          ? data.loserCopyPath.value
+          : this.loserCopyPath,
+      winnerFp: data.winnerFp.present ? data.winnerFp.value : this.winnerFp,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      resolvedAt: data.resolvedAt.present
+          ? data.resolvedAt.value
+          : this.resolvedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncConflict(')
+          ..write('id: $id, ')
+          ..write('pairId: $pairId, ')
+          ..write('path: $path, ')
+          ..write('loserCopyPath: $loserCopyPath, ')
+          ..write('winnerFp: $winnerFp, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('resolvedAt: $resolvedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    pairId,
+    path,
+    loserCopyPath,
+    winnerFp,
+    createdAt,
+    resolvedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncConflict &&
+          other.id == this.id &&
+          other.pairId == this.pairId &&
+          other.path == this.path &&
+          other.loserCopyPath == this.loserCopyPath &&
+          other.winnerFp == this.winnerFp &&
+          other.createdAt == this.createdAt &&
+          other.resolvedAt == this.resolvedAt);
+}
+
+class SyncConflictsCompanion extends UpdateCompanion<SyncConflict> {
+  final Value<String> id;
+  final Value<String> pairId;
+  final Value<String> path;
+  final Value<String> loserCopyPath;
+  final Value<String?> winnerFp;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> resolvedAt;
+  final Value<int> rowid;
+  const SyncConflictsCompanion({
+    this.id = const Value.absent(),
+    this.pairId = const Value.absent(),
+    this.path = const Value.absent(),
+    this.loserCopyPath = const Value.absent(),
+    this.winnerFp = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.resolvedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncConflictsCompanion.insert({
+    required String id,
+    required String pairId,
+    required String path,
+    required String loserCopyPath,
+    this.winnerFp = const Value.absent(),
+    required DateTime createdAt,
+    this.resolvedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       pairId = Value(pairId),
+       path = Value(path),
+       loserCopyPath = Value(loserCopyPath),
+       createdAt = Value(createdAt);
+  static Insertable<SyncConflict> custom({
+    Expression<String>? id,
+    Expression<String>? pairId,
+    Expression<String>? path,
+    Expression<String>? loserCopyPath,
+    Expression<String>? winnerFp,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? resolvedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (pairId != null) 'pair_id': pairId,
+      if (path != null) 'path': path,
+      if (loserCopyPath != null) 'loser_copy_path': loserCopyPath,
+      if (winnerFp != null) 'winner_fp': winnerFp,
+      if (createdAt != null) 'created_at': createdAt,
+      if (resolvedAt != null) 'resolved_at': resolvedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncConflictsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? pairId,
+    Value<String>? path,
+    Value<String>? loserCopyPath,
+    Value<String?>? winnerFp,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? resolvedAt,
+    Value<int>? rowid,
+  }) {
+    return SyncConflictsCompanion(
+      id: id ?? this.id,
+      pairId: pairId ?? this.pairId,
+      path: path ?? this.path,
+      loserCopyPath: loserCopyPath ?? this.loserCopyPath,
+      winnerFp: winnerFp ?? this.winnerFp,
+      createdAt: createdAt ?? this.createdAt,
+      resolvedAt: resolvedAt ?? this.resolvedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (pairId.present) {
+      map['pair_id'] = Variable<String>(pairId.value);
+    }
+    if (path.present) {
+      map['path'] = Variable<String>(path.value);
+    }
+    if (loserCopyPath.present) {
+      map['loser_copy_path'] = Variable<String>(loserCopyPath.value);
+    }
+    if (winnerFp.present) {
+      map['winner_fp'] = Variable<String>(winnerFp.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (resolvedAt.present) {
+      map['resolved_at'] = Variable<DateTime>(resolvedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncConflictsCompanion(')
+          ..write('id: $id, ')
+          ..write('pairId: $pairId, ')
+          ..write('path: $path, ')
+          ..write('loserCopyPath: $loserCopyPath, ')
+          ..write('winnerFp: $winnerFp, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('resolvedAt: $resolvedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SyncPeerStateTable extends SyncPeerState
+    with TableInfo<$SyncPeerStateTable, SyncPeerStateData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncPeerStateTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _pairIdMeta = const VerificationMeta('pairId');
+  @override
+  late final GeneratedColumn<String> pairId = GeneratedColumn<String>(
+    'pair_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ownCursorMeta = const VerificationMeta(
+    'ownCursor',
+  );
+  @override
+  late final GeneratedColumn<int> ownCursor = GeneratedColumn<int>(
+    'own_cursor',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _peerCursorMeta = const VerificationMeta(
+    'peerCursor',
+  );
+  @override
+  late final GeneratedColumn<int> peerCursor = GeneratedColumn<int>(
+    'peer_cursor',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _lastLanSyncAtMeta = const VerificationMeta(
+    'lastLanSyncAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastLanSyncAt =
+      GeneratedColumn<DateTime>(
+        'last_lan_sync_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _lastCloudPushAtMeta = const VerificationMeta(
+    'lastCloudPushAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastCloudPushAt =
+      GeneratedColumn<DateTime>(
+        'last_cloud_push_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _cloudFingerprintMeta = const VerificationMeta(
+    'cloudFingerprint',
+  );
+  @override
+  late final GeneratedColumn<String> cloudFingerprint = GeneratedColumn<String>(
+    'cloud_fingerprint',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    pairId,
+    ownCursor,
+    peerCursor,
+    lastLanSyncAt,
+    lastCloudPushAt,
+    cloudFingerprint,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_peer_state';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncPeerStateData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('pair_id')) {
+      context.handle(
+        _pairIdMeta,
+        pairId.isAcceptableOrUnknown(data['pair_id']!, _pairIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pairIdMeta);
+    }
+    if (data.containsKey('own_cursor')) {
+      context.handle(
+        _ownCursorMeta,
+        ownCursor.isAcceptableOrUnknown(data['own_cursor']!, _ownCursorMeta),
+      );
+    }
+    if (data.containsKey('peer_cursor')) {
+      context.handle(
+        _peerCursorMeta,
+        peerCursor.isAcceptableOrUnknown(data['peer_cursor']!, _peerCursorMeta),
+      );
+    }
+    if (data.containsKey('last_lan_sync_at')) {
+      context.handle(
+        _lastLanSyncAtMeta,
+        lastLanSyncAt.isAcceptableOrUnknown(
+          data['last_lan_sync_at']!,
+          _lastLanSyncAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_cloud_push_at')) {
+      context.handle(
+        _lastCloudPushAtMeta,
+        lastCloudPushAt.isAcceptableOrUnknown(
+          data['last_cloud_push_at']!,
+          _lastCloudPushAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cloud_fingerprint')) {
+      context.handle(
+        _cloudFingerprintMeta,
+        cloudFingerprint.isAcceptableOrUnknown(
+          data['cloud_fingerprint']!,
+          _cloudFingerprintMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {pairId};
+  @override
+  SyncPeerStateData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncPeerStateData(
+      pairId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pair_id'],
+      )!,
+      ownCursor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}own_cursor'],
+      )!,
+      peerCursor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}peer_cursor'],
+      )!,
+      lastLanSyncAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_lan_sync_at'],
+      ),
+      lastCloudPushAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_cloud_push_at'],
+      ),
+      cloudFingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cloud_fingerprint'],
+      ),
+    );
+  }
+
+  @override
+  $SyncPeerStateTable createAlias(String alias) {
+    return $SyncPeerStateTable(attachedDatabase, alias);
+  }
+}
+
+class SyncPeerStateData extends DataClass
+    implements Insertable<SyncPeerStateData> {
+  final String pairId;
+
+  /// This device's monotonic op cursor (bumped on every local change applied).
+  final int ownCursor;
+
+  /// Highest peer cursor we've fully reconciled (LAN delta handshake, §4.4).
+  final int peerCursor;
+  final DateTime? lastLanSyncAt;
+  final DateTime? lastCloudPushAt;
+
+  /// Last observed cloud beacon `(last_sync_at,total_files,total_size)` triple
+  /// (§5.2) — a change means "pull the manifest". Serialized string.
+  final String? cloudFingerprint;
+  const SyncPeerStateData({
+    required this.pairId,
+    required this.ownCursor,
+    required this.peerCursor,
+    this.lastLanSyncAt,
+    this.lastCloudPushAt,
+    this.cloudFingerprint,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['pair_id'] = Variable<String>(pairId);
+    map['own_cursor'] = Variable<int>(ownCursor);
+    map['peer_cursor'] = Variable<int>(peerCursor);
+    if (!nullToAbsent || lastLanSyncAt != null) {
+      map['last_lan_sync_at'] = Variable<DateTime>(lastLanSyncAt);
+    }
+    if (!nullToAbsent || lastCloudPushAt != null) {
+      map['last_cloud_push_at'] = Variable<DateTime>(lastCloudPushAt);
+    }
+    if (!nullToAbsent || cloudFingerprint != null) {
+      map['cloud_fingerprint'] = Variable<String>(cloudFingerprint);
+    }
+    return map;
+  }
+
+  SyncPeerStateCompanion toCompanion(bool nullToAbsent) {
+    return SyncPeerStateCompanion(
+      pairId: Value(pairId),
+      ownCursor: Value(ownCursor),
+      peerCursor: Value(peerCursor),
+      lastLanSyncAt: lastLanSyncAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastLanSyncAt),
+      lastCloudPushAt: lastCloudPushAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastCloudPushAt),
+      cloudFingerprint: cloudFingerprint == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cloudFingerprint),
+    );
+  }
+
+  factory SyncPeerStateData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncPeerStateData(
+      pairId: serializer.fromJson<String>(json['pairId']),
+      ownCursor: serializer.fromJson<int>(json['ownCursor']),
+      peerCursor: serializer.fromJson<int>(json['peerCursor']),
+      lastLanSyncAt: serializer.fromJson<DateTime?>(json['lastLanSyncAt']),
+      lastCloudPushAt: serializer.fromJson<DateTime?>(json['lastCloudPushAt']),
+      cloudFingerprint: serializer.fromJson<String?>(json['cloudFingerprint']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'pairId': serializer.toJson<String>(pairId),
+      'ownCursor': serializer.toJson<int>(ownCursor),
+      'peerCursor': serializer.toJson<int>(peerCursor),
+      'lastLanSyncAt': serializer.toJson<DateTime?>(lastLanSyncAt),
+      'lastCloudPushAt': serializer.toJson<DateTime?>(lastCloudPushAt),
+      'cloudFingerprint': serializer.toJson<String?>(cloudFingerprint),
+    };
+  }
+
+  SyncPeerStateData copyWith({
+    String? pairId,
+    int? ownCursor,
+    int? peerCursor,
+    Value<DateTime?> lastLanSyncAt = const Value.absent(),
+    Value<DateTime?> lastCloudPushAt = const Value.absent(),
+    Value<String?> cloudFingerprint = const Value.absent(),
+  }) => SyncPeerStateData(
+    pairId: pairId ?? this.pairId,
+    ownCursor: ownCursor ?? this.ownCursor,
+    peerCursor: peerCursor ?? this.peerCursor,
+    lastLanSyncAt: lastLanSyncAt.present
+        ? lastLanSyncAt.value
+        : this.lastLanSyncAt,
+    lastCloudPushAt: lastCloudPushAt.present
+        ? lastCloudPushAt.value
+        : this.lastCloudPushAt,
+    cloudFingerprint: cloudFingerprint.present
+        ? cloudFingerprint.value
+        : this.cloudFingerprint,
+  );
+  SyncPeerStateData copyWithCompanion(SyncPeerStateCompanion data) {
+    return SyncPeerStateData(
+      pairId: data.pairId.present ? data.pairId.value : this.pairId,
+      ownCursor: data.ownCursor.present ? data.ownCursor.value : this.ownCursor,
+      peerCursor: data.peerCursor.present
+          ? data.peerCursor.value
+          : this.peerCursor,
+      lastLanSyncAt: data.lastLanSyncAt.present
+          ? data.lastLanSyncAt.value
+          : this.lastLanSyncAt,
+      lastCloudPushAt: data.lastCloudPushAt.present
+          ? data.lastCloudPushAt.value
+          : this.lastCloudPushAt,
+      cloudFingerprint: data.cloudFingerprint.present
+          ? data.cloudFingerprint.value
+          : this.cloudFingerprint,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncPeerStateData(')
+          ..write('pairId: $pairId, ')
+          ..write('ownCursor: $ownCursor, ')
+          ..write('peerCursor: $peerCursor, ')
+          ..write('lastLanSyncAt: $lastLanSyncAt, ')
+          ..write('lastCloudPushAt: $lastCloudPushAt, ')
+          ..write('cloudFingerprint: $cloudFingerprint')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    pairId,
+    ownCursor,
+    peerCursor,
+    lastLanSyncAt,
+    lastCloudPushAt,
+    cloudFingerprint,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncPeerStateData &&
+          other.pairId == this.pairId &&
+          other.ownCursor == this.ownCursor &&
+          other.peerCursor == this.peerCursor &&
+          other.lastLanSyncAt == this.lastLanSyncAt &&
+          other.lastCloudPushAt == this.lastCloudPushAt &&
+          other.cloudFingerprint == this.cloudFingerprint);
+}
+
+class SyncPeerStateCompanion extends UpdateCompanion<SyncPeerStateData> {
+  final Value<String> pairId;
+  final Value<int> ownCursor;
+  final Value<int> peerCursor;
+  final Value<DateTime?> lastLanSyncAt;
+  final Value<DateTime?> lastCloudPushAt;
+  final Value<String?> cloudFingerprint;
+  final Value<int> rowid;
+  const SyncPeerStateCompanion({
+    this.pairId = const Value.absent(),
+    this.ownCursor = const Value.absent(),
+    this.peerCursor = const Value.absent(),
+    this.lastLanSyncAt = const Value.absent(),
+    this.lastCloudPushAt = const Value.absent(),
+    this.cloudFingerprint = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncPeerStateCompanion.insert({
+    required String pairId,
+    this.ownCursor = const Value.absent(),
+    this.peerCursor = const Value.absent(),
+    this.lastLanSyncAt = const Value.absent(),
+    this.lastCloudPushAt = const Value.absent(),
+    this.cloudFingerprint = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : pairId = Value(pairId);
+  static Insertable<SyncPeerStateData> custom({
+    Expression<String>? pairId,
+    Expression<int>? ownCursor,
+    Expression<int>? peerCursor,
+    Expression<DateTime>? lastLanSyncAt,
+    Expression<DateTime>? lastCloudPushAt,
+    Expression<String>? cloudFingerprint,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (pairId != null) 'pair_id': pairId,
+      if (ownCursor != null) 'own_cursor': ownCursor,
+      if (peerCursor != null) 'peer_cursor': peerCursor,
+      if (lastLanSyncAt != null) 'last_lan_sync_at': lastLanSyncAt,
+      if (lastCloudPushAt != null) 'last_cloud_push_at': lastCloudPushAt,
+      if (cloudFingerprint != null) 'cloud_fingerprint': cloudFingerprint,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncPeerStateCompanion copyWith({
+    Value<String>? pairId,
+    Value<int>? ownCursor,
+    Value<int>? peerCursor,
+    Value<DateTime?>? lastLanSyncAt,
+    Value<DateTime?>? lastCloudPushAt,
+    Value<String?>? cloudFingerprint,
+    Value<int>? rowid,
+  }) {
+    return SyncPeerStateCompanion(
+      pairId: pairId ?? this.pairId,
+      ownCursor: ownCursor ?? this.ownCursor,
+      peerCursor: peerCursor ?? this.peerCursor,
+      lastLanSyncAt: lastLanSyncAt ?? this.lastLanSyncAt,
+      lastCloudPushAt: lastCloudPushAt ?? this.lastCloudPushAt,
+      cloudFingerprint: cloudFingerprint ?? this.cloudFingerprint,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (pairId.present) {
+      map['pair_id'] = Variable<String>(pairId.value);
+    }
+    if (ownCursor.present) {
+      map['own_cursor'] = Variable<int>(ownCursor.value);
+    }
+    if (peerCursor.present) {
+      map['peer_cursor'] = Variable<int>(peerCursor.value);
+    }
+    if (lastLanSyncAt.present) {
+      map['last_lan_sync_at'] = Variable<DateTime>(lastLanSyncAt.value);
+    }
+    if (lastCloudPushAt.present) {
+      map['last_cloud_push_at'] = Variable<DateTime>(lastCloudPushAt.value);
+    }
+    if (cloudFingerprint.present) {
+      map['cloud_fingerprint'] = Variable<String>(cloudFingerprint.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncPeerStateCompanion(')
+          ..write('pairId: $pairId, ')
+          ..write('ownCursor: $ownCursor, ')
+          ..write('peerCursor: $peerCursor, ')
+          ..write('lastLanSyncAt: $lastLanSyncAt, ')
+          ..write('lastCloudPushAt: $lastCloudPushAt, ')
+          ..write('cloudFingerprint: $cloudFingerprint, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ExpectedChangesTable extends ExpectedChanges
+    with TableInfo<$ExpectedChangesTable, ExpectedChange> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ExpectedChangesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _pairIdMeta = const VerificationMeta('pairId');
+  @override
+  late final GeneratedColumn<String> pairId = GeneratedColumn<String>(
+    'pair_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pathMeta = const VerificationMeta('path');
+  @override
+  late final GeneratedColumn<String> path = GeneratedColumn<String>(
+    'path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _expectedSha256Meta = const VerificationMeta(
+    'expectedSha256',
+  );
+  @override
+  late final GeneratedColumn<String> expectedSha256 = GeneratedColumn<String>(
+    'expected_sha256',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _expiresAtMeta = const VerificationMeta(
+    'expiresAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> expiresAt = GeneratedColumn<DateTime>(
+    'expires_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    pairId,
+    path,
+    expectedSha256,
+    expiresAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'expected_changes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ExpectedChange> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('pair_id')) {
+      context.handle(
+        _pairIdMeta,
+        pairId.isAcceptableOrUnknown(data['pair_id']!, _pairIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pairIdMeta);
+    }
+    if (data.containsKey('path')) {
+      context.handle(
+        _pathMeta,
+        path.isAcceptableOrUnknown(data['path']!, _pathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pathMeta);
+    }
+    if (data.containsKey('expected_sha256')) {
+      context.handle(
+        _expectedSha256Meta,
+        expectedSha256.isAcceptableOrUnknown(
+          data['expected_sha256']!,
+          _expectedSha256Meta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_expectedSha256Meta);
+    }
+    if (data.containsKey('expires_at')) {
+      context.handle(
+        _expiresAtMeta,
+        expiresAt.isAcceptableOrUnknown(data['expires_at']!, _expiresAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_expiresAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {pairId, path};
+  @override
+  ExpectedChange map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ExpectedChange(
+      pairId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pair_id'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      )!,
+      expectedSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}expected_sha256'],
+      )!,
+      expiresAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}expires_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ExpectedChangesTable createAlias(String alias) {
+    return $ExpectedChangesTable(attachedDatabase, alias);
+  }
+}
+
+class ExpectedChange extends DataClass implements Insertable<ExpectedChange> {
+  final String pairId;
+  final String path;
+  final String expectedSha256;
+  final DateTime expiresAt;
+  const ExpectedChange({
+    required this.pairId,
+    required this.path,
+    required this.expectedSha256,
+    required this.expiresAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['pair_id'] = Variable<String>(pairId);
+    map['path'] = Variable<String>(path);
+    map['expected_sha256'] = Variable<String>(expectedSha256);
+    map['expires_at'] = Variable<DateTime>(expiresAt);
+    return map;
+  }
+
+  ExpectedChangesCompanion toCompanion(bool nullToAbsent) {
+    return ExpectedChangesCompanion(
+      pairId: Value(pairId),
+      path: Value(path),
+      expectedSha256: Value(expectedSha256),
+      expiresAt: Value(expiresAt),
+    );
+  }
+
+  factory ExpectedChange.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ExpectedChange(
+      pairId: serializer.fromJson<String>(json['pairId']),
+      path: serializer.fromJson<String>(json['path']),
+      expectedSha256: serializer.fromJson<String>(json['expectedSha256']),
+      expiresAt: serializer.fromJson<DateTime>(json['expiresAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'pairId': serializer.toJson<String>(pairId),
+      'path': serializer.toJson<String>(path),
+      'expectedSha256': serializer.toJson<String>(expectedSha256),
+      'expiresAt': serializer.toJson<DateTime>(expiresAt),
+    };
+  }
+
+  ExpectedChange copyWith({
+    String? pairId,
+    String? path,
+    String? expectedSha256,
+    DateTime? expiresAt,
+  }) => ExpectedChange(
+    pairId: pairId ?? this.pairId,
+    path: path ?? this.path,
+    expectedSha256: expectedSha256 ?? this.expectedSha256,
+    expiresAt: expiresAt ?? this.expiresAt,
+  );
+  ExpectedChange copyWithCompanion(ExpectedChangesCompanion data) {
+    return ExpectedChange(
+      pairId: data.pairId.present ? data.pairId.value : this.pairId,
+      path: data.path.present ? data.path.value : this.path,
+      expectedSha256: data.expectedSha256.present
+          ? data.expectedSha256.value
+          : this.expectedSha256,
+      expiresAt: data.expiresAt.present ? data.expiresAt.value : this.expiresAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExpectedChange(')
+          ..write('pairId: $pairId, ')
+          ..write('path: $path, ')
+          ..write('expectedSha256: $expectedSha256, ')
+          ..write('expiresAt: $expiresAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(pairId, path, expectedSha256, expiresAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ExpectedChange &&
+          other.pairId == this.pairId &&
+          other.path == this.path &&
+          other.expectedSha256 == this.expectedSha256 &&
+          other.expiresAt == this.expiresAt);
+}
+
+class ExpectedChangesCompanion extends UpdateCompanion<ExpectedChange> {
+  final Value<String> pairId;
+  final Value<String> path;
+  final Value<String> expectedSha256;
+  final Value<DateTime> expiresAt;
+  final Value<int> rowid;
+  const ExpectedChangesCompanion({
+    this.pairId = const Value.absent(),
+    this.path = const Value.absent(),
+    this.expectedSha256 = const Value.absent(),
+    this.expiresAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ExpectedChangesCompanion.insert({
+    required String pairId,
+    required String path,
+    required String expectedSha256,
+    required DateTime expiresAt,
+    this.rowid = const Value.absent(),
+  }) : pairId = Value(pairId),
+       path = Value(path),
+       expectedSha256 = Value(expectedSha256),
+       expiresAt = Value(expiresAt);
+  static Insertable<ExpectedChange> custom({
+    Expression<String>? pairId,
+    Expression<String>? path,
+    Expression<String>? expectedSha256,
+    Expression<DateTime>? expiresAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (pairId != null) 'pair_id': pairId,
+      if (path != null) 'path': path,
+      if (expectedSha256 != null) 'expected_sha256': expectedSha256,
+      if (expiresAt != null) 'expires_at': expiresAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ExpectedChangesCompanion copyWith({
+    Value<String>? pairId,
+    Value<String>? path,
+    Value<String>? expectedSha256,
+    Value<DateTime>? expiresAt,
+    Value<int>? rowid,
+  }) {
+    return ExpectedChangesCompanion(
+      pairId: pairId ?? this.pairId,
+      path: path ?? this.path,
+      expectedSha256: expectedSha256 ?? this.expectedSha256,
+      expiresAt: expiresAt ?? this.expiresAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (pairId.present) {
+      map['pair_id'] = Variable<String>(pairId.value);
+    }
+    if (path.present) {
+      map['path'] = Variable<String>(path.value);
+    }
+    if (expectedSha256.present) {
+      map['expected_sha256'] = Variable<String>(expectedSha256.value);
+    }
+    if (expiresAt.present) {
+      map['expires_at'] = Variable<DateTime>(expiresAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ExpectedChangesCompanion(')
+          ..write('pairId: $pairId, ')
+          ..write('path: $path, ')
+          ..write('expectedSha256: $expectedSha256, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $SyncCloudBlobsTable extends SyncCloudBlobs
+    with TableInfo<$SyncCloudBlobsTable, SyncCloudBlob> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncCloudBlobsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _pairIdMeta = const VerificationMeta('pairId');
+  @override
+  late final GeneratedColumn<String> pairId = GeneratedColumn<String>(
+    'pair_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _plaintextSha256Meta = const VerificationMeta(
+    'plaintextSha256',
+  );
+  @override
+  late final GeneratedColumn<String> plaintextSha256 = GeneratedColumn<String>(
+    'plaintext_sha256',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cloudBlobSha256Meta = const VerificationMeta(
+    'cloudBlobSha256',
+  );
+  @override
+  late final GeneratedColumn<String> cloudBlobSha256 = GeneratedColumn<String>(
+    'cloud_blob_sha256',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
+  @override
+  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+    'file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeCipherMeta = const VerificationMeta(
+    'sizeCipher',
+  );
+  @override
+  late final GeneratedColumn<int> sizeCipher = GeneratedColumn<int>(
+    'size_cipher',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    pairId,
+    plaintextSha256,
+    cloudBlobSha256,
+    fileId,
+    sizeCipher,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_cloud_blobs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncCloudBlob> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('pair_id')) {
+      context.handle(
+        _pairIdMeta,
+        pairId.isAcceptableOrUnknown(data['pair_id']!, _pairIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pairIdMeta);
+    }
+    if (data.containsKey('plaintext_sha256')) {
+      context.handle(
+        _plaintextSha256Meta,
+        plaintextSha256.isAcceptableOrUnknown(
+          data['plaintext_sha256']!,
+          _plaintextSha256Meta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_plaintextSha256Meta);
+    }
+    if (data.containsKey('cloud_blob_sha256')) {
+      context.handle(
+        _cloudBlobSha256Meta,
+        cloudBlobSha256.isAcceptableOrUnknown(
+          data['cloud_blob_sha256']!,
+          _cloudBlobSha256Meta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_cloudBlobSha256Meta);
+    }
+    if (data.containsKey('file_id')) {
+      context.handle(
+        _fileIdMeta,
+        fileId.isAcceptableOrUnknown(data['file_id']!, _fileIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileIdMeta);
+    }
+    if (data.containsKey('size_cipher')) {
+      context.handle(
+        _sizeCipherMeta,
+        sizeCipher.isAcceptableOrUnknown(data['size_cipher']!, _sizeCipherMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {pairId, plaintextSha256};
+  @override
+  SyncCloudBlob map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncCloudBlob(
+      pairId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pair_id'],
+      )!,
+      plaintextSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}plaintext_sha256'],
+      )!,
+      cloudBlobSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cloud_blob_sha256'],
+      )!,
+      fileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_id'],
+      )!,
+      sizeCipher: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size_cipher'],
+      )!,
+    );
+  }
+
+  @override
+  $SyncCloudBlobsTable createAlias(String alias) {
+    return $SyncCloudBlobsTable(attachedDatabase, alias);
+  }
+}
+
+class SyncCloudBlob extends DataClass implements Insertable<SyncCloudBlob> {
+  final String pairId;
+  final String plaintextSha256;
+  final String cloudBlobSha256;
+  final String fileId;
+  final int sizeCipher;
+  const SyncCloudBlob({
+    required this.pairId,
+    required this.plaintextSha256,
+    required this.cloudBlobSha256,
+    required this.fileId,
+    required this.sizeCipher,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['pair_id'] = Variable<String>(pairId);
+    map['plaintext_sha256'] = Variable<String>(plaintextSha256);
+    map['cloud_blob_sha256'] = Variable<String>(cloudBlobSha256);
+    map['file_id'] = Variable<String>(fileId);
+    map['size_cipher'] = Variable<int>(sizeCipher);
+    return map;
+  }
+
+  SyncCloudBlobsCompanion toCompanion(bool nullToAbsent) {
+    return SyncCloudBlobsCompanion(
+      pairId: Value(pairId),
+      plaintextSha256: Value(plaintextSha256),
+      cloudBlobSha256: Value(cloudBlobSha256),
+      fileId: Value(fileId),
+      sizeCipher: Value(sizeCipher),
+    );
+  }
+
+  factory SyncCloudBlob.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncCloudBlob(
+      pairId: serializer.fromJson<String>(json['pairId']),
+      plaintextSha256: serializer.fromJson<String>(json['plaintextSha256']),
+      cloudBlobSha256: serializer.fromJson<String>(json['cloudBlobSha256']),
+      fileId: serializer.fromJson<String>(json['fileId']),
+      sizeCipher: serializer.fromJson<int>(json['sizeCipher']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'pairId': serializer.toJson<String>(pairId),
+      'plaintextSha256': serializer.toJson<String>(plaintextSha256),
+      'cloudBlobSha256': serializer.toJson<String>(cloudBlobSha256),
+      'fileId': serializer.toJson<String>(fileId),
+      'sizeCipher': serializer.toJson<int>(sizeCipher),
+    };
+  }
+
+  SyncCloudBlob copyWith({
+    String? pairId,
+    String? plaintextSha256,
+    String? cloudBlobSha256,
+    String? fileId,
+    int? sizeCipher,
+  }) => SyncCloudBlob(
+    pairId: pairId ?? this.pairId,
+    plaintextSha256: plaintextSha256 ?? this.plaintextSha256,
+    cloudBlobSha256: cloudBlobSha256 ?? this.cloudBlobSha256,
+    fileId: fileId ?? this.fileId,
+    sizeCipher: sizeCipher ?? this.sizeCipher,
+  );
+  SyncCloudBlob copyWithCompanion(SyncCloudBlobsCompanion data) {
+    return SyncCloudBlob(
+      pairId: data.pairId.present ? data.pairId.value : this.pairId,
+      plaintextSha256: data.plaintextSha256.present
+          ? data.plaintextSha256.value
+          : this.plaintextSha256,
+      cloudBlobSha256: data.cloudBlobSha256.present
+          ? data.cloudBlobSha256.value
+          : this.cloudBlobSha256,
+      fileId: data.fileId.present ? data.fileId.value : this.fileId,
+      sizeCipher: data.sizeCipher.present
+          ? data.sizeCipher.value
+          : this.sizeCipher,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncCloudBlob(')
+          ..write('pairId: $pairId, ')
+          ..write('plaintextSha256: $plaintextSha256, ')
+          ..write('cloudBlobSha256: $cloudBlobSha256, ')
+          ..write('fileId: $fileId, ')
+          ..write('sizeCipher: $sizeCipher')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(pairId, plaintextSha256, cloudBlobSha256, fileId, sizeCipher);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncCloudBlob &&
+          other.pairId == this.pairId &&
+          other.plaintextSha256 == this.plaintextSha256 &&
+          other.cloudBlobSha256 == this.cloudBlobSha256 &&
+          other.fileId == this.fileId &&
+          other.sizeCipher == this.sizeCipher);
+}
+
+class SyncCloudBlobsCompanion extends UpdateCompanion<SyncCloudBlob> {
+  final Value<String> pairId;
+  final Value<String> plaintextSha256;
+  final Value<String> cloudBlobSha256;
+  final Value<String> fileId;
+  final Value<int> sizeCipher;
+  final Value<int> rowid;
+  const SyncCloudBlobsCompanion({
+    this.pairId = const Value.absent(),
+    this.plaintextSha256 = const Value.absent(),
+    this.cloudBlobSha256 = const Value.absent(),
+    this.fileId = const Value.absent(),
+    this.sizeCipher = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncCloudBlobsCompanion.insert({
+    required String pairId,
+    required String plaintextSha256,
+    required String cloudBlobSha256,
+    required String fileId,
+    this.sizeCipher = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : pairId = Value(pairId),
+       plaintextSha256 = Value(plaintextSha256),
+       cloudBlobSha256 = Value(cloudBlobSha256),
+       fileId = Value(fileId);
+  static Insertable<SyncCloudBlob> custom({
+    Expression<String>? pairId,
+    Expression<String>? plaintextSha256,
+    Expression<String>? cloudBlobSha256,
+    Expression<String>? fileId,
+    Expression<int>? sizeCipher,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (pairId != null) 'pair_id': pairId,
+      if (plaintextSha256 != null) 'plaintext_sha256': plaintextSha256,
+      if (cloudBlobSha256 != null) 'cloud_blob_sha256': cloudBlobSha256,
+      if (fileId != null) 'file_id': fileId,
+      if (sizeCipher != null) 'size_cipher': sizeCipher,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncCloudBlobsCompanion copyWith({
+    Value<String>? pairId,
+    Value<String>? plaintextSha256,
+    Value<String>? cloudBlobSha256,
+    Value<String>? fileId,
+    Value<int>? sizeCipher,
+    Value<int>? rowid,
+  }) {
+    return SyncCloudBlobsCompanion(
+      pairId: pairId ?? this.pairId,
+      plaintextSha256: plaintextSha256 ?? this.plaintextSha256,
+      cloudBlobSha256: cloudBlobSha256 ?? this.cloudBlobSha256,
+      fileId: fileId ?? this.fileId,
+      sizeCipher: sizeCipher ?? this.sizeCipher,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (pairId.present) {
+      map['pair_id'] = Variable<String>(pairId.value);
+    }
+    if (plaintextSha256.present) {
+      map['plaintext_sha256'] = Variable<String>(plaintextSha256.value);
+    }
+    if (cloudBlobSha256.present) {
+      map['cloud_blob_sha256'] = Variable<String>(cloudBlobSha256.value);
+    }
+    if (fileId.present) {
+      map['file_id'] = Variable<String>(fileId.value);
+    }
+    if (sizeCipher.present) {
+      map['size_cipher'] = Variable<int>(sizeCipher.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncCloudBlobsCompanion(')
+          ..write('pairId: $pairId, ')
+          ..write('plaintextSha256: $plaintextSha256, ')
+          ..write('cloudBlobSha256: $cloudBlobSha256, ')
+          ..write('fileId: $fileId, ')
+          ..write('sizeCipher: $sizeCipher, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2174,6 +5309,16 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ClipboardHistoryTable clipboardHistory = $ClipboardHistoryTable(
     this,
   );
+  late final $SyncPairsTable syncPairs = $SyncPairsTable(this);
+  late final $SyncEntriesTable syncEntries = $SyncEntriesTable(this);
+  late final $SyncTombstonesTable syncTombstones = $SyncTombstonesTable(this);
+  late final $SyncConflictsTable syncConflicts = $SyncConflictsTable(this);
+  late final $SyncPeerStateTable syncPeerState = $SyncPeerStateTable(this);
+  late final $ExpectedChangesTable expectedChanges = $ExpectedChangesTable(
+    this,
+  );
+  late final $SyncCloudBlobsTable syncCloudBlobs = $SyncCloudBlobsTable(this);
+  late final SyncDao syncDao = SyncDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2183,6 +5328,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     favoriteDevices,
     knownDevices,
     clipboardHistory,
+    syncPairs,
+    syncEntries,
+    syncTombstones,
+    syncConflicts,
+    syncPeerState,
+    expectedChanges,
+    syncCloudBlobs,
   ];
 }
 
@@ -3271,6 +6423,1633 @@ typedef $$ClipboardHistoryTableProcessedTableManager =
       ClipboardHistoryData,
       PrefetchHooks Function()
     >;
+typedef $$SyncPairsTableCreateCompanionBuilder =
+    SyncPairsCompanion Function({
+      required String id,
+      required String rootPath,
+      required String peerFingerprint,
+      Value<String> direction,
+      Value<String> mode,
+      Value<bool> paused,
+      Value<String?> selectiveRoots,
+      Value<String> encryption,
+      Value<String?> cloudFolderId,
+      required DateTime createdAt,
+      Value<DateTime?> lastSyncAt,
+      Value<int> rowid,
+    });
+typedef $$SyncPairsTableUpdateCompanionBuilder =
+    SyncPairsCompanion Function({
+      Value<String> id,
+      Value<String> rootPath,
+      Value<String> peerFingerprint,
+      Value<String> direction,
+      Value<String> mode,
+      Value<bool> paused,
+      Value<String?> selectiveRoots,
+      Value<String> encryption,
+      Value<String?> cloudFolderId,
+      Value<DateTime> createdAt,
+      Value<DateTime?> lastSyncAt,
+      Value<int> rowid,
+    });
+
+class $$SyncPairsTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncPairsTable> {
+  $$SyncPairsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rootPath => $composableBuilder(
+    column: $table.rootPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get peerFingerprint => $composableBuilder(
+    column: $table.peerFingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get paused => $composableBuilder(
+    column: $table.paused,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get selectiveRoots => $composableBuilder(
+    column: $table.selectiveRoots,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get encryption => $composableBuilder(
+    column: $table.encryption,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cloudFolderId => $composableBuilder(
+    column: $table.cloudFolderId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSyncAt => $composableBuilder(
+    column: $table.lastSyncAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncPairsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncPairsTable> {
+  $$SyncPairsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rootPath => $composableBuilder(
+    column: $table.rootPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get peerFingerprint => $composableBuilder(
+    column: $table.peerFingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mode => $composableBuilder(
+    column: $table.mode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get paused => $composableBuilder(
+    column: $table.paused,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get selectiveRoots => $composableBuilder(
+    column: $table.selectiveRoots,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get encryption => $composableBuilder(
+    column: $table.encryption,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cloudFolderId => $composableBuilder(
+    column: $table.cloudFolderId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastSyncAt => $composableBuilder(
+    column: $table.lastSyncAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncPairsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncPairsTable> {
+  $$SyncPairsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get rootPath =>
+      $composableBuilder(column: $table.rootPath, builder: (column) => column);
+
+  GeneratedColumn<String> get peerFingerprint => $composableBuilder(
+    column: $table.peerFingerprint,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
+
+  GeneratedColumn<String> get mode =>
+      $composableBuilder(column: $table.mode, builder: (column) => column);
+
+  GeneratedColumn<bool> get paused =>
+      $composableBuilder(column: $table.paused, builder: (column) => column);
+
+  GeneratedColumn<String> get selectiveRoots => $composableBuilder(
+    column: $table.selectiveRoots,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get encryption => $composableBuilder(
+    column: $table.encryption,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get cloudFolderId => $composableBuilder(
+    column: $table.cloudFolderId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastSyncAt => $composableBuilder(
+    column: $table.lastSyncAt,
+    builder: (column) => column,
+  );
+}
+
+class $$SyncPairsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SyncPairsTable,
+          SyncPair,
+          $$SyncPairsTableFilterComposer,
+          $$SyncPairsTableOrderingComposer,
+          $$SyncPairsTableAnnotationComposer,
+          $$SyncPairsTableCreateCompanionBuilder,
+          $$SyncPairsTableUpdateCompanionBuilder,
+          (SyncPair, BaseReferences<_$AppDatabase, $SyncPairsTable, SyncPair>),
+          SyncPair,
+          PrefetchHooks Function()
+        > {
+  $$SyncPairsTableTableManager(_$AppDatabase db, $SyncPairsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncPairsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncPairsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncPairsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> rootPath = const Value.absent(),
+                Value<String> peerFingerprint = const Value.absent(),
+                Value<String> direction = const Value.absent(),
+                Value<String> mode = const Value.absent(),
+                Value<bool> paused = const Value.absent(),
+                Value<String?> selectiveRoots = const Value.absent(),
+                Value<String> encryption = const Value.absent(),
+                Value<String?> cloudFolderId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> lastSyncAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncPairsCompanion(
+                id: id,
+                rootPath: rootPath,
+                peerFingerprint: peerFingerprint,
+                direction: direction,
+                mode: mode,
+                paused: paused,
+                selectiveRoots: selectiveRoots,
+                encryption: encryption,
+                cloudFolderId: cloudFolderId,
+                createdAt: createdAt,
+                lastSyncAt: lastSyncAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String rootPath,
+                required String peerFingerprint,
+                Value<String> direction = const Value.absent(),
+                Value<String> mode = const Value.absent(),
+                Value<bool> paused = const Value.absent(),
+                Value<String?> selectiveRoots = const Value.absent(),
+                Value<String> encryption = const Value.absent(),
+                Value<String?> cloudFolderId = const Value.absent(),
+                required DateTime createdAt,
+                Value<DateTime?> lastSyncAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncPairsCompanion.insert(
+                id: id,
+                rootPath: rootPath,
+                peerFingerprint: peerFingerprint,
+                direction: direction,
+                mode: mode,
+                paused: paused,
+                selectiveRoots: selectiveRoots,
+                encryption: encryption,
+                cloudFolderId: cloudFolderId,
+                createdAt: createdAt,
+                lastSyncAt: lastSyncAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncPairsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SyncPairsTable,
+      SyncPair,
+      $$SyncPairsTableFilterComposer,
+      $$SyncPairsTableOrderingComposer,
+      $$SyncPairsTableAnnotationComposer,
+      $$SyncPairsTableCreateCompanionBuilder,
+      $$SyncPairsTableUpdateCompanionBuilder,
+      (SyncPair, BaseReferences<_$AppDatabase, $SyncPairsTable, SyncPair>),
+      SyncPair,
+      PrefetchHooks Function()
+    >;
+typedef $$SyncEntriesTableCreateCompanionBuilder =
+    SyncEntriesCompanion Function({
+      required String pairId,
+      required String path,
+      required int size,
+      required int mtimeMs,
+      Value<String?> sha256,
+      Value<bool> isDir,
+      Value<String?> originFp,
+      Value<int> opCursor,
+      Value<int> rowid,
+    });
+typedef $$SyncEntriesTableUpdateCompanionBuilder =
+    SyncEntriesCompanion Function({
+      Value<String> pairId,
+      Value<String> path,
+      Value<int> size,
+      Value<int> mtimeMs,
+      Value<String?> sha256,
+      Value<bool> isDir,
+      Value<String?> originFp,
+      Value<int> opCursor,
+      Value<int> rowid,
+    });
+
+class $$SyncEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncEntriesTable> {
+  $$SyncEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get pairId => $composableBuilder(
+    column: $table.pairId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get mtimeMs => $composableBuilder(
+    column: $table.mtimeMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sha256 => $composableBuilder(
+    column: $table.sha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isDir => $composableBuilder(
+    column: $table.isDir,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originFp => $composableBuilder(
+    column: $table.originFp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get opCursor => $composableBuilder(
+    column: $table.opCursor,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncEntriesTable> {
+  $$SyncEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get pairId => $composableBuilder(
+    column: $table.pairId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get mtimeMs => $composableBuilder(
+    column: $table.mtimeMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sha256 => $composableBuilder(
+    column: $table.sha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isDir => $composableBuilder(
+    column: $table.isDir,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originFp => $composableBuilder(
+    column: $table.originFp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get opCursor => $composableBuilder(
+    column: $table.opCursor,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncEntriesTable> {
+  $$SyncEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get pairId =>
+      $composableBuilder(column: $table.pairId, builder: (column) => column);
+
+  GeneratedColumn<String> get path =>
+      $composableBuilder(column: $table.path, builder: (column) => column);
+
+  GeneratedColumn<int> get size =>
+      $composableBuilder(column: $table.size, builder: (column) => column);
+
+  GeneratedColumn<int> get mtimeMs =>
+      $composableBuilder(column: $table.mtimeMs, builder: (column) => column);
+
+  GeneratedColumn<String> get sha256 =>
+      $composableBuilder(column: $table.sha256, builder: (column) => column);
+
+  GeneratedColumn<bool> get isDir =>
+      $composableBuilder(column: $table.isDir, builder: (column) => column);
+
+  GeneratedColumn<String> get originFp =>
+      $composableBuilder(column: $table.originFp, builder: (column) => column);
+
+  GeneratedColumn<int> get opCursor =>
+      $composableBuilder(column: $table.opCursor, builder: (column) => column);
+}
+
+class $$SyncEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SyncEntriesTable,
+          SyncEntry,
+          $$SyncEntriesTableFilterComposer,
+          $$SyncEntriesTableOrderingComposer,
+          $$SyncEntriesTableAnnotationComposer,
+          $$SyncEntriesTableCreateCompanionBuilder,
+          $$SyncEntriesTableUpdateCompanionBuilder,
+          (
+            SyncEntry,
+            BaseReferences<_$AppDatabase, $SyncEntriesTable, SyncEntry>,
+          ),
+          SyncEntry,
+          PrefetchHooks Function()
+        > {
+  $$SyncEntriesTableTableManager(_$AppDatabase db, $SyncEntriesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> pairId = const Value.absent(),
+                Value<String> path = const Value.absent(),
+                Value<int> size = const Value.absent(),
+                Value<int> mtimeMs = const Value.absent(),
+                Value<String?> sha256 = const Value.absent(),
+                Value<bool> isDir = const Value.absent(),
+                Value<String?> originFp = const Value.absent(),
+                Value<int> opCursor = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncEntriesCompanion(
+                pairId: pairId,
+                path: path,
+                size: size,
+                mtimeMs: mtimeMs,
+                sha256: sha256,
+                isDir: isDir,
+                originFp: originFp,
+                opCursor: opCursor,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String pairId,
+                required String path,
+                required int size,
+                required int mtimeMs,
+                Value<String?> sha256 = const Value.absent(),
+                Value<bool> isDir = const Value.absent(),
+                Value<String?> originFp = const Value.absent(),
+                Value<int> opCursor = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncEntriesCompanion.insert(
+                pairId: pairId,
+                path: path,
+                size: size,
+                mtimeMs: mtimeMs,
+                sha256: sha256,
+                isDir: isDir,
+                originFp: originFp,
+                opCursor: opCursor,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SyncEntriesTable,
+      SyncEntry,
+      $$SyncEntriesTableFilterComposer,
+      $$SyncEntriesTableOrderingComposer,
+      $$SyncEntriesTableAnnotationComposer,
+      $$SyncEntriesTableCreateCompanionBuilder,
+      $$SyncEntriesTableUpdateCompanionBuilder,
+      (SyncEntry, BaseReferences<_$AppDatabase, $SyncEntriesTable, SyncEntry>),
+      SyncEntry,
+      PrefetchHooks Function()
+    >;
+typedef $$SyncTombstonesTableCreateCompanionBuilder =
+    SyncTombstonesCompanion Function({
+      required String pairId,
+      required String path,
+      required int deletedAtMs,
+      Value<String?> originFp,
+      Value<int> rowid,
+    });
+typedef $$SyncTombstonesTableUpdateCompanionBuilder =
+    SyncTombstonesCompanion Function({
+      Value<String> pairId,
+      Value<String> path,
+      Value<int> deletedAtMs,
+      Value<String?> originFp,
+      Value<int> rowid,
+    });
+
+class $$SyncTombstonesTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncTombstonesTable> {
+  $$SyncTombstonesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get pairId => $composableBuilder(
+    column: $table.pairId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deletedAtMs => $composableBuilder(
+    column: $table.deletedAtMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originFp => $composableBuilder(
+    column: $table.originFp,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncTombstonesTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncTombstonesTable> {
+  $$SyncTombstonesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get pairId => $composableBuilder(
+    column: $table.pairId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deletedAtMs => $composableBuilder(
+    column: $table.deletedAtMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originFp => $composableBuilder(
+    column: $table.originFp,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncTombstonesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncTombstonesTable> {
+  $$SyncTombstonesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get pairId =>
+      $composableBuilder(column: $table.pairId, builder: (column) => column);
+
+  GeneratedColumn<String> get path =>
+      $composableBuilder(column: $table.path, builder: (column) => column);
+
+  GeneratedColumn<int> get deletedAtMs => $composableBuilder(
+    column: $table.deletedAtMs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originFp =>
+      $composableBuilder(column: $table.originFp, builder: (column) => column);
+}
+
+class $$SyncTombstonesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SyncTombstonesTable,
+          SyncTombstone,
+          $$SyncTombstonesTableFilterComposer,
+          $$SyncTombstonesTableOrderingComposer,
+          $$SyncTombstonesTableAnnotationComposer,
+          $$SyncTombstonesTableCreateCompanionBuilder,
+          $$SyncTombstonesTableUpdateCompanionBuilder,
+          (
+            SyncTombstone,
+            BaseReferences<_$AppDatabase, $SyncTombstonesTable, SyncTombstone>,
+          ),
+          SyncTombstone,
+          PrefetchHooks Function()
+        > {
+  $$SyncTombstonesTableTableManager(
+    _$AppDatabase db,
+    $SyncTombstonesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncTombstonesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncTombstonesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncTombstonesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> pairId = const Value.absent(),
+                Value<String> path = const Value.absent(),
+                Value<int> deletedAtMs = const Value.absent(),
+                Value<String?> originFp = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncTombstonesCompanion(
+                pairId: pairId,
+                path: path,
+                deletedAtMs: deletedAtMs,
+                originFp: originFp,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String pairId,
+                required String path,
+                required int deletedAtMs,
+                Value<String?> originFp = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncTombstonesCompanion.insert(
+                pairId: pairId,
+                path: path,
+                deletedAtMs: deletedAtMs,
+                originFp: originFp,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncTombstonesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SyncTombstonesTable,
+      SyncTombstone,
+      $$SyncTombstonesTableFilterComposer,
+      $$SyncTombstonesTableOrderingComposer,
+      $$SyncTombstonesTableAnnotationComposer,
+      $$SyncTombstonesTableCreateCompanionBuilder,
+      $$SyncTombstonesTableUpdateCompanionBuilder,
+      (
+        SyncTombstone,
+        BaseReferences<_$AppDatabase, $SyncTombstonesTable, SyncTombstone>,
+      ),
+      SyncTombstone,
+      PrefetchHooks Function()
+    >;
+typedef $$SyncConflictsTableCreateCompanionBuilder =
+    SyncConflictsCompanion Function({
+      required String id,
+      required String pairId,
+      required String path,
+      required String loserCopyPath,
+      Value<String?> winnerFp,
+      required DateTime createdAt,
+      Value<DateTime?> resolvedAt,
+      Value<int> rowid,
+    });
+typedef $$SyncConflictsTableUpdateCompanionBuilder =
+    SyncConflictsCompanion Function({
+      Value<String> id,
+      Value<String> pairId,
+      Value<String> path,
+      Value<String> loserCopyPath,
+      Value<String?> winnerFp,
+      Value<DateTime> createdAt,
+      Value<DateTime?> resolvedAt,
+      Value<int> rowid,
+    });
+
+class $$SyncConflictsTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncConflictsTable> {
+  $$SyncConflictsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pairId => $composableBuilder(
+    column: $table.pairId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get loserCopyPath => $composableBuilder(
+    column: $table.loserCopyPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get winnerFp => $composableBuilder(
+    column: $table.winnerFp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncConflictsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncConflictsTable> {
+  $$SyncConflictsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pairId => $composableBuilder(
+    column: $table.pairId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get loserCopyPath => $composableBuilder(
+    column: $table.loserCopyPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get winnerFp => $composableBuilder(
+    column: $table.winnerFp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncConflictsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncConflictsTable> {
+  $$SyncConflictsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get pairId =>
+      $composableBuilder(column: $table.pairId, builder: (column) => column);
+
+  GeneratedColumn<String> get path =>
+      $composableBuilder(column: $table.path, builder: (column) => column);
+
+  GeneratedColumn<String> get loserCopyPath => $composableBuilder(
+    column: $table.loserCopyPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get winnerFp =>
+      $composableBuilder(column: $table.winnerFp, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$SyncConflictsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SyncConflictsTable,
+          SyncConflict,
+          $$SyncConflictsTableFilterComposer,
+          $$SyncConflictsTableOrderingComposer,
+          $$SyncConflictsTableAnnotationComposer,
+          $$SyncConflictsTableCreateCompanionBuilder,
+          $$SyncConflictsTableUpdateCompanionBuilder,
+          (
+            SyncConflict,
+            BaseReferences<_$AppDatabase, $SyncConflictsTable, SyncConflict>,
+          ),
+          SyncConflict,
+          PrefetchHooks Function()
+        > {
+  $$SyncConflictsTableTableManager(_$AppDatabase db, $SyncConflictsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncConflictsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncConflictsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncConflictsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> pairId = const Value.absent(),
+                Value<String> path = const Value.absent(),
+                Value<String> loserCopyPath = const Value.absent(),
+                Value<String?> winnerFp = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> resolvedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncConflictsCompanion(
+                id: id,
+                pairId: pairId,
+                path: path,
+                loserCopyPath: loserCopyPath,
+                winnerFp: winnerFp,
+                createdAt: createdAt,
+                resolvedAt: resolvedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String pairId,
+                required String path,
+                required String loserCopyPath,
+                Value<String?> winnerFp = const Value.absent(),
+                required DateTime createdAt,
+                Value<DateTime?> resolvedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncConflictsCompanion.insert(
+                id: id,
+                pairId: pairId,
+                path: path,
+                loserCopyPath: loserCopyPath,
+                winnerFp: winnerFp,
+                createdAt: createdAt,
+                resolvedAt: resolvedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncConflictsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SyncConflictsTable,
+      SyncConflict,
+      $$SyncConflictsTableFilterComposer,
+      $$SyncConflictsTableOrderingComposer,
+      $$SyncConflictsTableAnnotationComposer,
+      $$SyncConflictsTableCreateCompanionBuilder,
+      $$SyncConflictsTableUpdateCompanionBuilder,
+      (
+        SyncConflict,
+        BaseReferences<_$AppDatabase, $SyncConflictsTable, SyncConflict>,
+      ),
+      SyncConflict,
+      PrefetchHooks Function()
+    >;
+typedef $$SyncPeerStateTableCreateCompanionBuilder =
+    SyncPeerStateCompanion Function({
+      required String pairId,
+      Value<int> ownCursor,
+      Value<int> peerCursor,
+      Value<DateTime?> lastLanSyncAt,
+      Value<DateTime?> lastCloudPushAt,
+      Value<String?> cloudFingerprint,
+      Value<int> rowid,
+    });
+typedef $$SyncPeerStateTableUpdateCompanionBuilder =
+    SyncPeerStateCompanion Function({
+      Value<String> pairId,
+      Value<int> ownCursor,
+      Value<int> peerCursor,
+      Value<DateTime?> lastLanSyncAt,
+      Value<DateTime?> lastCloudPushAt,
+      Value<String?> cloudFingerprint,
+      Value<int> rowid,
+    });
+
+class $$SyncPeerStateTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncPeerStateTable> {
+  $$SyncPeerStateTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get pairId => $composableBuilder(
+    column: $table.pairId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get ownCursor => $composableBuilder(
+    column: $table.ownCursor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get peerCursor => $composableBuilder(
+    column: $table.peerCursor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastLanSyncAt => $composableBuilder(
+    column: $table.lastLanSyncAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastCloudPushAt => $composableBuilder(
+    column: $table.lastCloudPushAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cloudFingerprint => $composableBuilder(
+    column: $table.cloudFingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncPeerStateTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncPeerStateTable> {
+  $$SyncPeerStateTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get pairId => $composableBuilder(
+    column: $table.pairId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get ownCursor => $composableBuilder(
+    column: $table.ownCursor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get peerCursor => $composableBuilder(
+    column: $table.peerCursor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastLanSyncAt => $composableBuilder(
+    column: $table.lastLanSyncAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastCloudPushAt => $composableBuilder(
+    column: $table.lastCloudPushAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cloudFingerprint => $composableBuilder(
+    column: $table.cloudFingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncPeerStateTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncPeerStateTable> {
+  $$SyncPeerStateTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get pairId =>
+      $composableBuilder(column: $table.pairId, builder: (column) => column);
+
+  GeneratedColumn<int> get ownCursor =>
+      $composableBuilder(column: $table.ownCursor, builder: (column) => column);
+
+  GeneratedColumn<int> get peerCursor => $composableBuilder(
+    column: $table.peerCursor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastLanSyncAt => $composableBuilder(
+    column: $table.lastLanSyncAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastCloudPushAt => $composableBuilder(
+    column: $table.lastCloudPushAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get cloudFingerprint => $composableBuilder(
+    column: $table.cloudFingerprint,
+    builder: (column) => column,
+  );
+}
+
+class $$SyncPeerStateTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SyncPeerStateTable,
+          SyncPeerStateData,
+          $$SyncPeerStateTableFilterComposer,
+          $$SyncPeerStateTableOrderingComposer,
+          $$SyncPeerStateTableAnnotationComposer,
+          $$SyncPeerStateTableCreateCompanionBuilder,
+          $$SyncPeerStateTableUpdateCompanionBuilder,
+          (
+            SyncPeerStateData,
+            BaseReferences<
+              _$AppDatabase,
+              $SyncPeerStateTable,
+              SyncPeerStateData
+            >,
+          ),
+          SyncPeerStateData,
+          PrefetchHooks Function()
+        > {
+  $$SyncPeerStateTableTableManager(_$AppDatabase db, $SyncPeerStateTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncPeerStateTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncPeerStateTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncPeerStateTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> pairId = const Value.absent(),
+                Value<int> ownCursor = const Value.absent(),
+                Value<int> peerCursor = const Value.absent(),
+                Value<DateTime?> lastLanSyncAt = const Value.absent(),
+                Value<DateTime?> lastCloudPushAt = const Value.absent(),
+                Value<String?> cloudFingerprint = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncPeerStateCompanion(
+                pairId: pairId,
+                ownCursor: ownCursor,
+                peerCursor: peerCursor,
+                lastLanSyncAt: lastLanSyncAt,
+                lastCloudPushAt: lastCloudPushAt,
+                cloudFingerprint: cloudFingerprint,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String pairId,
+                Value<int> ownCursor = const Value.absent(),
+                Value<int> peerCursor = const Value.absent(),
+                Value<DateTime?> lastLanSyncAt = const Value.absent(),
+                Value<DateTime?> lastCloudPushAt = const Value.absent(),
+                Value<String?> cloudFingerprint = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncPeerStateCompanion.insert(
+                pairId: pairId,
+                ownCursor: ownCursor,
+                peerCursor: peerCursor,
+                lastLanSyncAt: lastLanSyncAt,
+                lastCloudPushAt: lastCloudPushAt,
+                cloudFingerprint: cloudFingerprint,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncPeerStateTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SyncPeerStateTable,
+      SyncPeerStateData,
+      $$SyncPeerStateTableFilterComposer,
+      $$SyncPeerStateTableOrderingComposer,
+      $$SyncPeerStateTableAnnotationComposer,
+      $$SyncPeerStateTableCreateCompanionBuilder,
+      $$SyncPeerStateTableUpdateCompanionBuilder,
+      (
+        SyncPeerStateData,
+        BaseReferences<_$AppDatabase, $SyncPeerStateTable, SyncPeerStateData>,
+      ),
+      SyncPeerStateData,
+      PrefetchHooks Function()
+    >;
+typedef $$ExpectedChangesTableCreateCompanionBuilder =
+    ExpectedChangesCompanion Function({
+      required String pairId,
+      required String path,
+      required String expectedSha256,
+      required DateTime expiresAt,
+      Value<int> rowid,
+    });
+typedef $$ExpectedChangesTableUpdateCompanionBuilder =
+    ExpectedChangesCompanion Function({
+      Value<String> pairId,
+      Value<String> path,
+      Value<String> expectedSha256,
+      Value<DateTime> expiresAt,
+      Value<int> rowid,
+    });
+
+class $$ExpectedChangesTableFilterComposer
+    extends Composer<_$AppDatabase, $ExpectedChangesTable> {
+  $$ExpectedChangesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get pairId => $composableBuilder(
+    column: $table.pairId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get expectedSha256 => $composableBuilder(
+    column: $table.expectedSha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get expiresAt => $composableBuilder(
+    column: $table.expiresAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ExpectedChangesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ExpectedChangesTable> {
+  $$ExpectedChangesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get pairId => $composableBuilder(
+    column: $table.pairId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get expectedSha256 => $composableBuilder(
+    column: $table.expectedSha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get expiresAt => $composableBuilder(
+    column: $table.expiresAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ExpectedChangesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ExpectedChangesTable> {
+  $$ExpectedChangesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get pairId =>
+      $composableBuilder(column: $table.pairId, builder: (column) => column);
+
+  GeneratedColumn<String> get path =>
+      $composableBuilder(column: $table.path, builder: (column) => column);
+
+  GeneratedColumn<String> get expectedSha256 => $composableBuilder(
+    column: $table.expectedSha256,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get expiresAt =>
+      $composableBuilder(column: $table.expiresAt, builder: (column) => column);
+}
+
+class $$ExpectedChangesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ExpectedChangesTable,
+          ExpectedChange,
+          $$ExpectedChangesTableFilterComposer,
+          $$ExpectedChangesTableOrderingComposer,
+          $$ExpectedChangesTableAnnotationComposer,
+          $$ExpectedChangesTableCreateCompanionBuilder,
+          $$ExpectedChangesTableUpdateCompanionBuilder,
+          (
+            ExpectedChange,
+            BaseReferences<
+              _$AppDatabase,
+              $ExpectedChangesTable,
+              ExpectedChange
+            >,
+          ),
+          ExpectedChange,
+          PrefetchHooks Function()
+        > {
+  $$ExpectedChangesTableTableManager(
+    _$AppDatabase db,
+    $ExpectedChangesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ExpectedChangesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ExpectedChangesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ExpectedChangesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> pairId = const Value.absent(),
+                Value<String> path = const Value.absent(),
+                Value<String> expectedSha256 = const Value.absent(),
+                Value<DateTime> expiresAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ExpectedChangesCompanion(
+                pairId: pairId,
+                path: path,
+                expectedSha256: expectedSha256,
+                expiresAt: expiresAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String pairId,
+                required String path,
+                required String expectedSha256,
+                required DateTime expiresAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ExpectedChangesCompanion.insert(
+                pairId: pairId,
+                path: path,
+                expectedSha256: expectedSha256,
+                expiresAt: expiresAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ExpectedChangesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ExpectedChangesTable,
+      ExpectedChange,
+      $$ExpectedChangesTableFilterComposer,
+      $$ExpectedChangesTableOrderingComposer,
+      $$ExpectedChangesTableAnnotationComposer,
+      $$ExpectedChangesTableCreateCompanionBuilder,
+      $$ExpectedChangesTableUpdateCompanionBuilder,
+      (
+        ExpectedChange,
+        BaseReferences<_$AppDatabase, $ExpectedChangesTable, ExpectedChange>,
+      ),
+      ExpectedChange,
+      PrefetchHooks Function()
+    >;
+typedef $$SyncCloudBlobsTableCreateCompanionBuilder =
+    SyncCloudBlobsCompanion Function({
+      required String pairId,
+      required String plaintextSha256,
+      required String cloudBlobSha256,
+      required String fileId,
+      Value<int> sizeCipher,
+      Value<int> rowid,
+    });
+typedef $$SyncCloudBlobsTableUpdateCompanionBuilder =
+    SyncCloudBlobsCompanion Function({
+      Value<String> pairId,
+      Value<String> plaintextSha256,
+      Value<String> cloudBlobSha256,
+      Value<String> fileId,
+      Value<int> sizeCipher,
+      Value<int> rowid,
+    });
+
+class $$SyncCloudBlobsTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncCloudBlobsTable> {
+  $$SyncCloudBlobsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get pairId => $composableBuilder(
+    column: $table.pairId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get plaintextSha256 => $composableBuilder(
+    column: $table.plaintextSha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cloudBlobSha256 => $composableBuilder(
+    column: $table.cloudBlobSha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sizeCipher => $composableBuilder(
+    column: $table.sizeCipher,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncCloudBlobsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncCloudBlobsTable> {
+  $$SyncCloudBlobsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get pairId => $composableBuilder(
+    column: $table.pairId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get plaintextSha256 => $composableBuilder(
+    column: $table.plaintextSha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cloudBlobSha256 => $composableBuilder(
+    column: $table.cloudBlobSha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fileId => $composableBuilder(
+    column: $table.fileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sizeCipher => $composableBuilder(
+    column: $table.sizeCipher,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncCloudBlobsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncCloudBlobsTable> {
+  $$SyncCloudBlobsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get pairId =>
+      $composableBuilder(column: $table.pairId, builder: (column) => column);
+
+  GeneratedColumn<String> get plaintextSha256 => $composableBuilder(
+    column: $table.plaintextSha256,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get cloudBlobSha256 => $composableBuilder(
+    column: $table.cloudBlobSha256,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get fileId =>
+      $composableBuilder(column: $table.fileId, builder: (column) => column);
+
+  GeneratedColumn<int> get sizeCipher => $composableBuilder(
+    column: $table.sizeCipher,
+    builder: (column) => column,
+  );
+}
+
+class $$SyncCloudBlobsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SyncCloudBlobsTable,
+          SyncCloudBlob,
+          $$SyncCloudBlobsTableFilterComposer,
+          $$SyncCloudBlobsTableOrderingComposer,
+          $$SyncCloudBlobsTableAnnotationComposer,
+          $$SyncCloudBlobsTableCreateCompanionBuilder,
+          $$SyncCloudBlobsTableUpdateCompanionBuilder,
+          (
+            SyncCloudBlob,
+            BaseReferences<_$AppDatabase, $SyncCloudBlobsTable, SyncCloudBlob>,
+          ),
+          SyncCloudBlob,
+          PrefetchHooks Function()
+        > {
+  $$SyncCloudBlobsTableTableManager(
+    _$AppDatabase db,
+    $SyncCloudBlobsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncCloudBlobsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncCloudBlobsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncCloudBlobsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> pairId = const Value.absent(),
+                Value<String> plaintextSha256 = const Value.absent(),
+                Value<String> cloudBlobSha256 = const Value.absent(),
+                Value<String> fileId = const Value.absent(),
+                Value<int> sizeCipher = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncCloudBlobsCompanion(
+                pairId: pairId,
+                plaintextSha256: plaintextSha256,
+                cloudBlobSha256: cloudBlobSha256,
+                fileId: fileId,
+                sizeCipher: sizeCipher,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String pairId,
+                required String plaintextSha256,
+                required String cloudBlobSha256,
+                required String fileId,
+                Value<int> sizeCipher = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncCloudBlobsCompanion.insert(
+                pairId: pairId,
+                plaintextSha256: plaintextSha256,
+                cloudBlobSha256: cloudBlobSha256,
+                fileId: fileId,
+                sizeCipher: sizeCipher,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncCloudBlobsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SyncCloudBlobsTable,
+      SyncCloudBlob,
+      $$SyncCloudBlobsTableFilterComposer,
+      $$SyncCloudBlobsTableOrderingComposer,
+      $$SyncCloudBlobsTableAnnotationComposer,
+      $$SyncCloudBlobsTableCreateCompanionBuilder,
+      $$SyncCloudBlobsTableUpdateCompanionBuilder,
+      (
+        SyncCloudBlob,
+        BaseReferences<_$AppDatabase, $SyncCloudBlobsTable, SyncCloudBlob>,
+      ),
+      SyncCloudBlob,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3283,4 +8062,18 @@ class $AppDatabaseManager {
       $$KnownDevicesTableTableManager(_db, _db.knownDevices);
   $$ClipboardHistoryTableTableManager get clipboardHistory =>
       $$ClipboardHistoryTableTableManager(_db, _db.clipboardHistory);
+  $$SyncPairsTableTableManager get syncPairs =>
+      $$SyncPairsTableTableManager(_db, _db.syncPairs);
+  $$SyncEntriesTableTableManager get syncEntries =>
+      $$SyncEntriesTableTableManager(_db, _db.syncEntries);
+  $$SyncTombstonesTableTableManager get syncTombstones =>
+      $$SyncTombstonesTableTableManager(_db, _db.syncTombstones);
+  $$SyncConflictsTableTableManager get syncConflicts =>
+      $$SyncConflictsTableTableManager(_db, _db.syncConflicts);
+  $$SyncPeerStateTableTableManager get syncPeerState =>
+      $$SyncPeerStateTableTableManager(_db, _db.syncPeerState);
+  $$ExpectedChangesTableTableManager get expectedChanges =>
+      $$ExpectedChangesTableTableManager(_db, _db.expectedChanges);
+  $$SyncCloudBlobsTableTableManager get syncCloudBlobs =>
+      $$SyncCloudBlobsTableTableManager(_db, _db.syncCloudBlobs);
 }

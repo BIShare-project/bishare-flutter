@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import 'sync_tables.dart';
+
 part 'app_database.g.dart';
 
 /// One row per completed file transfer (sent or received). The Inbox is simply a
@@ -69,7 +71,21 @@ class ClipboardHistory extends Table {
 }
 
 @DriftDatabase(
-  tables: [TransferRecords, FavoriteDevices, KnownDevices, ClipboardHistory],
+  tables: [
+    TransferRecords,
+    FavoriteDevices,
+    KnownDevices,
+    ClipboardHistory,
+    // Folder sync (Tahap 4, schemaVersion 4) — see sync_tables.dart.
+    SyncPairs,
+    SyncEntries,
+    SyncTombstones,
+    SyncConflicts,
+    SyncPeerState,
+    ExpectedChanges,
+    SyncCloudBlobs,
+  ],
+  daos: [SyncDao],
 )
 class AppDatabase extends _$AppDatabase {
   /// Pass a custom [executor] in tests (e.g. `NativeDatabase.memory()`); the app
@@ -78,7 +94,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'bishare'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   /// The ONE incremental upgrade path. Every future schema bump adds its own
   /// `if (from < N)` block below (from < 4, from < 5, …) — never edit or
@@ -92,6 +108,18 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.createTable(clipboardHistory);
+      }
+      if (from < 4) {
+        // Folder sync (Tahap 4). Additive — no existing table is touched.
+        // `syncDao` (and the sync table getters) are generated from the
+        // @DriftDatabase daos/tables registration above.
+        await m.createTable(syncPairs);
+        await m.createTable(syncEntries);
+        await m.createTable(syncTombstones);
+        await m.createTable(syncConflicts);
+        await m.createTable(syncPeerState);
+        await m.createTable(expectedChanges);
+        await m.createTable(syncCloudBlobs);
       }
     },
   );

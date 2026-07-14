@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bishare/core/storage/app_database.dart';
+import 'package:bishare/core/storage/sync_tables.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -203,6 +204,155 @@ void main() {
     ));
     final entries = await db.watchClipboard(20).first;
     expect(entries.single.textContent, 'hello');
+
+    await db.close();
+  });
+
+  test('sync (v4 fresh): pair lifecycle, entries, echo-suppression, cursor',
+      () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final dao = db.syncDao;
+
+    // createPair also seeds the peer-state row in one transaction.
+    await dao.createPair(
+      SyncPairsCompanion.insert(
+        id: 'pair1',
+        rootPath: '/Users/me/Docs',
+        peerFingerprint: 'peerFP',
+        createdAt: DateTime(2026, 1, 1),
+        mode: const Value('lanCloud'),
+      ),
+      'pair1',
+    );
+    final pair = await dao.pairById('pair1');
+    expect(pair!.mode, 'lanCloud');
+    expect(pair.encryption, 'aesgcm-x25519'); // §7.1 default
+    expect((await dao.peerState('pair1'))!.ownCursor, 0);
+
+    // Materialized manifest: batch upsert, then read back.
+    await dao.upsertEntries([
+      SyncEntriesCompanion.insert(
+        pairId: 'pair1',
+        path: 'a.txt',
+        size: 5,
+        mtimeMs: 1000,
+        sha256: const Value('abc'),
+      ),
+      SyncEntriesCompanion.insert(
+        pairId: 'pair1',
+        path: 'sub',
+        size: 0,
+        mtimeMs: 900,
+        isDir: const Value(true),
+      ),
+    ]);
+    expect((await dao.entriesFor('pair1')).length, 2);
+
+    // Cursor is monotonic and persisted.
+    expect(await dao.nextCursor('pair1'), 1);
+    expect(await dao.nextCursor('pair1'), 2);
+    expect((await dao.peerState('pair1'))!.ownCursor, 2);
+
+    // Echo-suppression: an expected write is consumed once (dropped), then gone.
+    await dao.expectChange(const SyncExpectedChangesRow(
+      pairId: 'pair1',
+      path: 'a.txt',
+      expectedSha256: 'abc',
+    ));
+    expect(await dao.consumeExpected('pair1', 'a.txt', 'abc'), isTrue);
+    expect(await dao.consumeExpected('pair1', 'a.txt', 'abc'), isFalse);
+    // A non-matching hash is never suppressed (a genuine local edit).
+    expect(await dao.consumeExpected('pair1', 'a.txt', 'zzz'), isFalse);
+
+    // Tombstone sweep keeps fresh, drops aged.
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await dao.putTombstone(SyncTombstonesCompanion.insert(
+      pairId: 'pair1',
+      path: 'old.txt',
+      deletedAtMs: now - const Duration(days: 100).inMilliseconds,
+    ));
+    await dao.putTombstone(SyncTombstonesCompanion.insert(
+      pairId: 'pair1',
+      path: 'recent.txt',
+      deletedAtMs: now,
+    ));
+    await dao.sweepTombstones('pair1');
+    expect((await dao.tombstonesFor('pair1')).map((t) => t.path), ['recent.txt']);
+
+    // Cloud blob ledger (M3) round-trips by content hash.
+    await dao.putBlob(SyncCloudBlobsCompanion.insert(
+      pairId: 'pair1',
+      plaintextSha256: 'abc',
+      cloudBlobSha256: 'cipherhash',
+      fileId: 'file_1',
+    ));
+    expect((await dao.blobForContent('pair1', 'abc'))!.fileId, 'file_1');
+
+    // deletePair cascades every dependent row.
+    await dao.deletePair('pair1');
+    expect(await dao.pairById('pair1'), isNull);
+    expect(await dao.entriesFor('pair1'), isEmpty);
+    expect(await dao.peerState('pair1'), isNull);
+    expect(await dao.blobsFor('pair1'), isEmpty);
+
+    await db.close();
+  });
+
+  test('migration v3→v4: creates sync tables, keeps v3 data', () async {
+    final dir = await Directory.systemTemp.createTemp('bishare_db_test');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/app.db');
+
+    // Seed a real v3 database (four tables) at userVersion 3 so AppDatabase runs
+    // onUpgrade(3 → 4) instead of onCreate.
+    final db = AppDatabase(NativeDatabase(file, setup: (raw) {
+      if (raw.userVersion != 0) return;
+      raw.execute('''
+        CREATE TABLE transfer_records (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, file_name TEXT NOT NULL,
+          saved_path TEXT NULL, file_size INTEGER NOT NULL, file_type TEXT NULL,
+          direction TEXT NOT NULL, device_alias TEXT NOT NULL,
+          device_fingerprint TEXT NULL, encrypted INTEGER NOT NULL DEFAULT 0,
+          verified INTEGER NOT NULL DEFAULT 1, timestamp INTEGER NOT NULL);
+      ''');
+      raw.execute('''
+        CREATE TABLE favorite_devices (fingerprint TEXT NOT NULL,
+          custom_name TEXT NULL, auto_accept INTEGER NOT NULL DEFAULT 0,
+          added_at INTEGER NOT NULL, PRIMARY KEY (fingerprint));
+      ''');
+      raw.execute('''
+        CREATE TABLE known_devices (fingerprint TEXT NOT NULL, alias TEXT NOT NULL,
+          device_model TEXT NULL, device_type TEXT NULL, last_seen INTEGER NOT NULL,
+          last_ip TEXT NULL, capabilities TEXT NULL, workspace_id TEXT NULL,
+          PRIMARY KEY (fingerprint));
+      ''');
+      raw.execute('''
+        CREATE TABLE clipboard_history (id INTEGER PRIMARY KEY AUTOINCREMENT,
+          kind TEXT NOT NULL, text TEXT NULL, mime TEXT NULL, file_name TEXT NULL,
+          file_path TEXT NULL, preview_path TEXT NULL, sender_alias TEXT NOT NULL,
+          sender_fingerprint TEXT NULL, created_at INTEGER NOT NULL);
+      ''');
+      raw.execute(
+        'INSERT INTO transfer_records (file_name, file_size, direction, device_alias, timestamp) '
+        "VALUES ('old.jpg', 5, 'received', 'x', 0);",
+      );
+      raw.userVersion = 3;
+    }));
+
+    // v3 rows survive the upgrade...
+    expect((await db.watchAll().first).single.fileName, 'old.jpg');
+
+    // ...and the new sync tables exist and are usable.
+    await db.syncDao.createPair(
+      SyncPairsCompanion.insert(
+        id: 'p',
+        rootPath: '/x',
+        peerFingerprint: 'fp',
+        createdAt: DateTime(2026, 1, 1),
+      ),
+      'p',
+    );
+    expect((await db.syncDao.allPairs()).single.rootPath, '/x');
 
     await db.close();
   });
