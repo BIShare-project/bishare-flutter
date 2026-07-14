@@ -80,6 +80,19 @@ pub fn generate_base_nonce() -> Vec<u8> {
     Encryption::generate_base_nonce().to_vec()
 }
 
+/// DETERMINISTIC 12-byte base nonce for a content-addressed E2E sync blob
+/// (Tahap 4 §7.1): `HKDF-SHA256(pair_key, plaintext_sha256_hex)`. Feed it to
+/// [`encrypt_chunk`]/[`decrypt_chunk`] as `base_nonce`. Unlike
+/// [`generate_base_nonce`] (random), this is stable in `(pair_key, content)` so
+/// the same file re-encrypts to identical ciphertext — keeping `check-exists`
+/// dedup + idempotent upload-retry alive on the cloud path. Returns `None` if
+/// `pair_key` is not exactly 32 bytes.
+#[flutter_rust_bridge::frb(sync)]
+pub fn derive_blob_base_nonce(pair_key: Vec<u8>, plaintext_sha256_hex: String) -> Option<Vec<u8>> {
+    let k: [u8; 32] = pair_key.try_into().ok()?;
+    Some(bishare_protocol::crypto::derive_blob_base_nonce(&k, &plaintext_sha256_hex).to_vec())
+}
+
 /// Lowercase hex SHA-256 of `data`.
 #[flutter_rust_bridge::frb(sync)]
 pub fn sha256_hex(data: Vec<u8>) -> String {
