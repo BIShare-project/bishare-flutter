@@ -5,3 +5,4 @@
 pub mod bufpool;
 pub mod metrics;
 pub mod resume;
+pub mod scanner;
