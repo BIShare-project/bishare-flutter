@@ -9,7 +9,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../storage/save_folder_channel.dart';
 import '../storage/android_downloads_channel.dart';
+import '../../features/auth/data/auth_service.dart';
+import '../../features/auth/data/authed_dio.dart';
+import '../../features/auth/data/oauth_service.dart';
+import '../../features/auth/data/token_store.dart';
 import '../../features/clipboard/data/clipboard_history_store.dart';
+import '../../features/drive/data/drive_service.dart';
 import '../../features/clipboard/data/clipboard_relay.dart';
 import '../../features/clipboard/data/clipboard_service.dart';
 import '../../features/clipboard/data/clipboard_token_store.dart';
@@ -121,9 +126,26 @@ Future<void> setupLocator() async {
   // presence, plus the sighting writer that keeps lastSeen/lastIp fresh.
   final deviceRegistry = PresenceDeviceRegistry(db, discovery, favorites);
 
+  // Magic-link auth + session. TokenStore holds the session in the secure
+  // store; AuthedDio (Bearer + silent refresh) is the client Fase B / Drive
+  // will make its authenticated calls through.
+  final tokenStore = TokenStore(secure);
+  final authService = AuthService();
+  final authedDio = AuthedDio(tokenStore, authService);
+  // Google/Apple sign-in — exchanges a provider id_token for the same session
+  // envelope as magic-link verify (see OauthService).
+  final oauthService = OauthService(identity);
+
   getIt
     ..registerSingleton<SharedPreferences>(prefs)
     ..registerSingleton<DeviceIdentity>(identity)
+    ..registerSingleton<TokenStore>(tokenStore)
+    ..registerSingleton<AuthService>(authService)
+    ..registerSingleton<OauthService>(oauthService)
+    ..registerSingleton<AuthedDio>(authedDio)
+    // Drive (Fase B): cloud file manager over the authenticated Dio (Bearer +
+    // silent refresh). Lazy — no work until the Drive tab is opened.
+    ..registerLazySingleton<DriveService>(() => DriveService(authedDio.dio))
     ..registerSingleton<AppDatabase>(db)
     ..registerSingleton<HistoryRepository>(history)
     ..registerSingleton<FavoritesRepository>(favorites)

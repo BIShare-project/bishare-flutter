@@ -17,6 +17,14 @@ class CloudDownloadException implements Exception {
   String toString() => message;
 }
 
+/// The looked-up 24h transfer does not exist (404 / empty status body). A
+/// dedicated type so callers can tell "no such stored transfer" (e.g. to fall
+/// back to a live stream) apart from other download failures without matching
+/// on the message text — the two sites can't silently drift.
+class TransferNotFoundException extends CloudDownloadException {
+  const TransferNotFoundException() : super('Transfer not found');
+}
+
 /// Turns any download/transfer error into a specific, honest message — so the
 /// UI never shows a misleading "check your connection" for a 404/410/server
 /// error or a file-write failure.
@@ -96,12 +104,17 @@ class CloudTransferService {
     ProgressCb? onProgress,
     CancelToken? cancel,
   }) async {
-    final meta = _data(
-      await _dio.getUri<Map<String, dynamic>>(
+    Response<Map<String, dynamic>> statusRes;
+    try {
+      statusRes = await _dio.getUri<Map<String, dynamic>>(
         _api(CloudConfig.transferStatus(code)),
-      ),
-    );
-    if (meta == null) throw const CloudDownloadException('Transfer not found');
+      );
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) throw const TransferNotFoundException();
+      rethrow;
+    }
+    final meta = _data(statusRes);
+    if (meta == null) throw const TransferNotFoundException();
     if (meta['isDownloaded'] == true) {
       throw const CloudDownloadException('This transfer was already downloaded');
     }
@@ -159,12 +172,14 @@ class CloudTransferService {
     return _record(target, info['mime_type'] as String?, 'Cloud share');
   }
 
-  /// A direct device instant-share URL (`bishare://download` or a raw
-  /// `.../api/v1/instant?token=…`). The filename comes from Content-Disposition.
+  /// A direct URL download (a device instant-share `bishare://download`, a raw
+  /// `.../api/v1/instant?token=…`, or a presigned Drive `download-url`). The
+  /// filename comes from Content-Disposition; [senderLabel] tags the Inbox row.
   Future<ReceivedFile> downloadDirect(
     Uri url, {
     ProgressCb? onProgress,
     CancelToken? cancel,
+    String senderLabel = 'Nearby device',
   }) async {
     final tmp = File(
       '${_server.saveDirectory.path}${Platform.pathSeparator}.bishare-dl-${DateTime.now().microsecondsSinceEpoch}',
@@ -180,7 +195,11 @@ class CloudTransferService {
     );
     final target = await _target(name ?? 'file');
     await tmp.rename(target.path);
-    return _record(target, res.headers.value(Headers.contentTypeHeader), 'Nearby device');
+    return _record(
+      target,
+      res.headers.value(Headers.contentTypeHeader),
+      senderLabel,
+    );
   }
 
   /// Upload [file] as a 24h one-time cloud transfer, the off-LAN "web share"

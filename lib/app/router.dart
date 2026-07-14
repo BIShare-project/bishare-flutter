@@ -4,8 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/di/locator.dart';
 import '../core/storage/app_database.dart';
+import '../features/auth/presentation/login_page.dart';
 import '../features/clipboard/presentation/clipboard_history_page.dart';
 import '../features/devices/presentation/devices_page.dart';
+import '../features/drive/presentation/drive_page.dart';
+import '../features/drive/presentation/shares_page.dart';
+import '../features/drive/presentation/trash_page.dart';
 import '../features/file_manager/presentation/file_manager_page.dart';
 import '../features/inbox/presentation/image_gallery_page.dart';
 import '../features/nearby/presentation/nearby_page.dart';
@@ -83,6 +87,24 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: 'clipboard',
           builder: (context, state) => const ClipboardHistoryPage(),
+        ),
+        GoRoute(
+          path: 'login',
+          builder: (context, state) => const LoginPage(),
+        ),
+        GoRoute(
+          path: 'drive',
+          builder: (context, state) => const DrivePage(),
+          routes: [
+            GoRoute(
+              path: 'trash',
+              builder: (context, state) => const TrashPage(),
+            ),
+            GoRoute(
+              path: 'shares',
+              builder: (context, state) => const SharesPage(),
+            ),
+          ],
         ),
       ],
     ),

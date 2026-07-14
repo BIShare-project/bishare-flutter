@@ -35,6 +35,16 @@ class StreamReceiveLink extends DeepLinkAction {
   final String code;
 }
 
+/// A bare code typed by hand (no scheme/host to say which kind it is). Ambiguous
+/// between a stored 24h cloud transfer and a live stream session, so it's
+/// resolved at receive time: try the stored transfer first, then a live stream
+/// with the same code. Produced only by manual entry — never by [DeepLink.parse]
+/// — so the QR camera's accept-filter never fires on short arbitrary text.
+class AmbiguousCodeLink extends DeepLinkAction {
+  const AmbiguousCodeLink(this.code);
+  final String code;
+}
+
 /// `https://bishare.app/request/<code>` — a web file-request page; opened in
 /// the system browser.
 class OpenExternalLink extends DeepLinkAction {

@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../../core/constants/cloud.dart';
 import '../../../core/deeplink/deep_link.dart';
 import '../../../core/deeplink/deep_link_service.dart';
 import '../../../core/di/locator.dart';
@@ -57,14 +56,21 @@ class _ScannerPageState extends State<ScannerPage> {
   }
 
   void _submitManual() {
-    final code = _manual.text.trim().toUpperCase();
-    if (code.length < 4) return;
-    // A pasted full link is dispatched as-is; a bare code is treated as a 24h
-    // cloud-transfer code (the receive path P3-A supports).
-    final payload = DeepLink.looksLikeBiShare(code)
-        ? code
-        : CloudConfig.transferWebUrl(code);
-    _accept(payload);
+    final raw = _manual.text.trim();
+    if (raw.length < 4 || _handled) return;
+    // Test the raw text (case preserved) so a pasted full link resolves to its
+    // exact action — its path segments are case-sensitive. A bare code is
+    // ambiguous (stored cloud transfer OR live stream), so dispatch it and let
+    // the receiver try both instead of guessing one and failing "not found";
+    // submitCode() normalizes it.
+    if (DeepLink.looksLikeBiShare(raw)) {
+      _accept(raw);
+    } else {
+      _handled = true;
+      tapHaptic();
+      context.pop();
+      getIt<DeepLinkService>().submitCode(raw);
+    }
   }
 
   @override

@@ -57,6 +57,16 @@ class DeepLinkService {
   /// Feed a raw QR-scanner payload through the same dispatch path.
   void submit(String raw) => _dispatch(raw);
 
+  /// Dispatch a manually-typed bare code. Unlike [submit] this bypasses
+  /// [DeepLink.parse] — a short code isn't a valid link — and resolves at
+  /// receive time (stored transfer first, then a live stream). See
+  /// [AmbiguousCodeLink].
+  void submitCode(String code) {
+    final normalized = code.replaceAll(RegExp(r'[-/\s]'), '').toUpperCase();
+    if (normalized.isEmpty) return;
+    _controller.add(AmbiguousCodeLink(normalized));
+  }
+
   void _dispatch(String payload) {
     final now = DateTime.now();
     // Drop an identical payload seen within a short window (the cold-start

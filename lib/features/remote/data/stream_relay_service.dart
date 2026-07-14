@@ -152,6 +152,10 @@ class StreamRelayService {
       final total = (info['totalSize'] as num?)?.toInt() ?? 0;
       final senderAlias = (info['senderAlias'] as String?) ?? 'Nearby device';
       conn.sendText({'type': 'accept'});
+      // Signal that a session was actually joined (file-info received) before any
+      // bytes flow — lets callers tell a real-but-failed session apart from a
+      // code that nothing answered.
+      onProgress?.call(0, total);
 
       target = await _uniquePath(fileName);
       sink = target.openWrite();

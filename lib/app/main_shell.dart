@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -122,6 +123,48 @@ class _MainShellState extends State<MainShell> {
             run: (p, c) =>
                 getIt<StreamRelayService>().receive(code, onProgress: p, cancel: c),
           );
+        case AmbiguousCodeLink(:final code):
+          // A hand-typed code carries no hint of its kind, so try both paths:
+          // the stored 24h transfer first (fails fast with a 404), then — only
+          // if there's genuinely no such transfer — a live stream with the same
+          // code. 410 (already downloaded), 403, cancels and network errors are
+          // surfaced as-is, never masked by the stream attempt.
+          showRemoteDownload(
+            context,
+            label: 'nav.transfer_code'.tr(namedArgs: {'code': code}),
+            run: (p, c) async {
+              try {
+                return await cloud.downloadTransfer(code, onProgress: p, cancel: c);
+              } on Object catch (e) {
+                if (!_isMissingTransfer(e)) rethrow;
+                // Not a stored transfer — try a live stream with the same code.
+                var streamStarted = false;
+                try {
+                  return await getIt<StreamRelayService>().receive(
+                    code,
+                    onProgress: (r, t) {
+                      // receive() fires this once on join (file-info) before any
+                      // bytes ⇒ a real session was reached.
+                      streamStarted = true;
+                      p(r, t);
+                    },
+                    cancel: c,
+                  );
+                } on Object catch (streamErr) {
+                  // A session that started and then failed (declined mid-way,
+                  // verification, stall) has a truthful message of its own —
+                  // surface it. Only "nothing answered this code" becomes the
+                  // friendly not-found hint.
+                  if (streamStarted) rethrow;
+                  if (streamErr is DioException &&
+                      CancelToken.isCancel(streamErr)) {
+                    rethrow; // user cancelled — keep it silent
+                  }
+                  throw CloudDownloadException('nav.code_not_found'.tr());
+                }
+              }
+            },
+          );
         case OpenExternalLink(:final url):
           launchUrl(url, mode: LaunchMode.externalApplication);
         case RescanSharedLink():
@@ -136,6 +179,12 @@ class _MainShellState extends State<MainShell> {
       }
     }
   }
+
+  /// True only when the transfer *lookup* found no such stored transfer — the
+  /// one case where falling back to a live stream is right. Anything else (410
+  /// already-downloaded, 403, a mid-download 404, a user cancel, a network
+  /// error) must surface instead of triggering the stream attempt.
+  static bool _isMissingTransfer(Object e) => e is TransferNotFoundException;
 
   List<AppNavItem> _items(int inboxCount) => [
     AppNavItem(icon: AppIcons.shareLink, label: 'nav.tab_share'.tr()),

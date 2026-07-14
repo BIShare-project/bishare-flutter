@@ -12,6 +12,7 @@ import '../domain/settings.dart' as s;
 import 'settings_cubit.dart';
 import 'widgets/about_section.dart';
 import 'widgets/accent_row.dart';
+import 'widgets/account_section.dart';
 import 'widgets/autostart_row.dart';
 import 'widgets/glyph.dart';
 import 'widgets/profile_card.dart';
@@ -50,6 +51,8 @@ class SettingsPage extends StatelessWidget {
                           alias: state.alias,
                           onTap: () => _editAlias(context, cubit, state.alias),
                         ),
+                        // Account: magic-link sign-in / signed-in identity.
+                        const AccountSection(),
                         // Devices dashboard: the full known-devices roster with
                         // presence, stats, and per-device actions.
                         Padding(
