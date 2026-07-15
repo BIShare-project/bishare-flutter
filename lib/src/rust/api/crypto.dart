@@ -14,6 +14,21 @@ String? peerFingerprint({required String base64Key}) =>
 Uint8List generateBaseNonce() =>
     RustLib.instance.api.crateApiCryptoGenerateBaseNonce();
 
+/// DETERMINISTIC 12-byte base nonce for a content-addressed E2E sync blob
+/// (Tahap 4 §7.1): `HKDF-SHA256(pair_key, plaintext_sha256_hex)`. Feed it to
+/// [`encrypt_chunk`]/[`decrypt_chunk`] as `base_nonce`. Unlike
+/// [`generate_base_nonce`] (random), this is stable in `(pair_key, content)` so
+/// the same file re-encrypts to identical ciphertext — keeping `check-exists`
+/// dedup + idempotent upload-retry alive on the cloud path. Returns `None` if
+/// `pair_key` is not exactly 32 bytes.
+Uint8List? deriveBlobBaseNonce({
+  required List<int> pairKey,
+  required String plaintextSha256Hex,
+}) => RustLib.instance.api.crateApiCryptoDeriveBlobBaseNonce(
+  pairKey: pairKey,
+  plaintextSha256Hex: plaintextSha256Hex,
+);
+
 /// Lowercase hex SHA-256 of `data`.
 String sha256Hex({required List<int> data}) =>
     RustLib.instance.api.crateApiCryptoSha256Hex(data: data);

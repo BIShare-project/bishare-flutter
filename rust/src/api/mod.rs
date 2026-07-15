@@ -1,6 +1,7 @@
 pub mod crypto;
 pub mod manifest;
 pub mod quic;
+pub mod scanner;
 pub mod signal;
 pub mod utils;
 
