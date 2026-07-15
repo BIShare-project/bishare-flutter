@@ -23,11 +23,11 @@ class SyncPairCard extends StatelessWidget {
   final VoidCallback onDelete;
 
   String get _folderName {
-    final parts = view.pair.rootPath
+    final parts = view.displayRoot
         .replaceAll('\\', '/')
         .split('/')
         .where((s) => s.isNotEmpty);
-    return parts.isEmpty ? view.pair.rootPath : parts.last;
+    return parts.isEmpty ? view.displayRoot : parts.last;
   }
 
   @override
@@ -77,7 +77,7 @@ class SyncPairCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      view.pair.rootPath,
+                      view.displayRoot,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(

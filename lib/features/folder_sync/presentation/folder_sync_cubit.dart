@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/di/locator.dart';
 import '../../../core/storage/app_database.dart';
 import '../../../core/storage/sync_tables.dart';
+import '../../../core/sync/sync_roots.dart';
 import '../../discovery/data/discovery_service.dart';
 import '../../discovery/domain/discovered_device.dart';
 import '../data/sync_engine.dart';
@@ -13,6 +15,7 @@ import '../data/sync_engine.dart';
 class SyncPairView extends Equatable {
   const SyncPairView({
     required this.pair,
+    required this.displayRoot,
     required this.phase,
     required this.peerOnline,
     this.pushedFiles = 0,
@@ -21,6 +24,9 @@ class SyncPairView extends Equatable {
   });
 
   final SyncPair pair;
+
+  /// The pair root as a real filesystem path (stored form may be portable).
+  final String displayRoot;
   final SyncPhase phase;
   final bool peerOnline;
   final int pushedFiles;
@@ -29,7 +35,7 @@ class SyncPairView extends Equatable {
 
   @override
   List<Object?> get props =>
-      [pair, phase, peerOnline, pushedFiles, totalFiles, errorMessage];
+      [pair, displayRoot, phase, peerOnline, pushedFiles, totalFiles, errorMessage];
 }
 
 class FolderSyncState extends Equatable {
@@ -105,6 +111,7 @@ class FolderSyncCubit extends Cubit<FolderSyncState> {
         for (final p in _pairs)
           SyncPairView(
             pair: p,
+            displayRoot: getIt<SyncRootResolver>().resolve(p.rootPath),
             phase: _live[p.id]?.phase ?? SyncPhase.idle,
             peerOnline: online.contains(p.peerFingerprint),
             pushedFiles: _live[p.id]?.pushedFiles ?? 0,

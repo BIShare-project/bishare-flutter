@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/di/locator.dart';
 import '../../../../core/server/transfer_server.dart';
+import '../../../../core/sync/sync_roots.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../../../discovery/data/discovery_service.dart';
 import '../../data/sync_engine.dart';
@@ -34,8 +35,9 @@ Future<void> showPairSetupSheet(
   }
   if (rootPath == null || rootPath.isEmpty) return;
   if (!context.mounted) return;
-  // A non-nullable copy: closure capture below blocks type promotion.
-  final root = rootPath;
+  // Portable store-form (@save/… survives the iOS container-UUID change on
+  // every install/update); external folders stay absolute.
+  final root = getIt<SyncRootResolver>().toPortable(rootPath);
 
   // Step 2 — an online device.
   await showAppSheet<void>(

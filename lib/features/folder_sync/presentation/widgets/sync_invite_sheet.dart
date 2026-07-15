@@ -7,6 +7,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/di/locator.dart';
 import '../../../../core/server/transfer_server.dart';
+import '../../../../core/sync/sync_roots.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../../data/sync_engine.dart';
 
@@ -56,7 +57,9 @@ Future<void> showSyncInviteSheet(
               '${saveDir.path}${Platform.pathSeparator}BIShare Sync'
               '${Platform.pathSeparator}${invite.rootName}',
             );
-            invite.accept(root.path);
+            // Stored portable so the pair survives reinstalls/updates (iOS
+            // container paths are per-install).
+            invite.accept(getIt<SyncRootResolver>().toPortable(root.path));
           },
         ),
         const SizedBox(height: 8),
@@ -73,7 +76,7 @@ Future<void> showSyncInviteSheet(
             if (picked == null || picked.isEmpty) {
               invite.reject();
             } else {
-              invite.accept(picked);
+              invite.accept(getIt<SyncRootResolver>().toPortable(picked));
             }
           },
         ),

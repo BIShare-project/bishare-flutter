@@ -142,6 +142,7 @@ class SyncEngine {
     ManifestFrameCodec? codec,
     SyncPoster? poster,
     SyncPayloadSender? payloadSender,
+    String Function(String stored)? resolveRoot,
     Duration inviteDecisionTimeout = const Duration(seconds: 30),
   }) : _ownPub = ownPublicKeyBase64,
        _ownFingerprint = ownFingerprint,
@@ -152,7 +153,10 @@ class SyncEngine {
        _codec = codec ?? ManifestFrameCodec.ffi(),
        _poster = poster,
        _payloadSender = payloadSender,
+       _resolveRoot = resolveRoot ?? _storedAsIs,
        _inviteTimeout = inviteDecisionTimeout;
+
+  static String _storedAsIs(String s) => s;
 
   final SyncDao _dao;
   final ManifestStore _store;
@@ -166,7 +170,11 @@ class SyncEngine {
   final ManifestFrameCodec _codec;
   final SyncPoster? _poster;
   final SyncPayloadSender? _payloadSender;
+  final String Function(String stored) _resolveRoot;
   final Duration _inviteTimeout;
+
+  /// Filesystem root of [pair] (stored form may be portable/legacy — §sync_roots).
+  String _rootOf(SyncPair pair) => _resolveRoot(pair.rootPath);
 
   final _status = StreamController<SyncPairStatus>.broadcast();
   Stream<SyncPairStatus> get status => _status.stream;
@@ -537,7 +545,7 @@ class SyncEngine {
     if (pair.peerPublicKey.isEmpty || pair.peerPublicKey != senderPublicKey) {
       return null;
     }
-    return pair.rootPath;
+    return _rootOf(pair);
   }
 
   /// Two-way reconciliation of the announced snapshot against the local tree
@@ -591,7 +599,7 @@ class SyncEngine {
 
     for (final add in remoteLive) {
       if (add.isDirectory) {
-        final dir = _safeDir(pair.rootPath, add.path);
+        final dir = _safeDir(_rootOf(pair), add.path);
         if (dir != null && !dir.existsSync()) {
           await dir.create(recursive: true);
           await _upsertEntryRow(pair.id, add, originFp: pair.peerFingerprint);
@@ -760,7 +768,7 @@ class SyncEngine {
   /// it in `SyncConflicts`. Conflict copies are default-ignored by the scanner,
   /// so they never sync back (§6.1).
   Future<void> _preserveConflictLoser(SyncPair pair, String relPath) async {
-    final src = _safeFile(pair.rootPath, relPath);
+    final src = _safeFile(_rootOf(pair), relPath);
     if (src == null || !await src.exists()) return;
     final now = DateTime.now();
     String two(int n) => n.toString().padLeft(2, '0');
@@ -778,7 +786,7 @@ class SyncEngine {
     final ext = dot <= 0 ? '' : name.substring(dot);
     final copyRel = '$dirPart$stem.sync-conflict-$stamp-$alias$ext';
 
-    final dst = _safeFile(pair.rootPath, copyRel);
+    final dst = _safeFile(_rootOf(pair), copyRel);
     if (dst == null) return;
     await src.copy(dst.path);
     await _dao.recordConflict(SyncConflictsCompanion.insert(
@@ -798,8 +806,9 @@ class SyncEngine {
   Future<bool> _applyRename(SyncPair pair, DeltaOp op) async {
     final to = op.newPath;
     if (to == null) return false;
-    final src = _safeFile(pair.rootPath, op.path);
-    final dst = _safeFile(pair.rootPath, to);
+    final root = _rootOf(pair);
+    final src = _safeFile(root, op.path);
+    final dst = _safeFile(root, to);
     if (src == null || dst == null) return false;
     if (!await src.exists()) return false;
     await Directory(dst.parent.path).create(recursive: true);
@@ -817,7 +826,7 @@ class SyncEngine {
   /// Delete = move into `<trash>/<pairId>/<relPath>` (30-day sweep lands in
   /// M2). NEVER unlinks — zero-permanent-loss is the non-negotiable (risk #9).
   Future<bool> _applyDelete(SyncPair pair, DeltaOp op) async {
-    final src = _safeFile(pair.rootPath, op.path);
+    final src = _safeFile(_rootOf(pair), op.path);
     if (src == null) return false;
     final srcDir = Directory(src.path);
     final isDir = await srcDir.exists() && (await src.exists()) == false;

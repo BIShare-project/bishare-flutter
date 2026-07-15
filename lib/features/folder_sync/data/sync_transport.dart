@@ -88,7 +88,11 @@ class SecureSyncKeyStore implements SyncKeyStore {
 /// Pushes needed files through the normal transfer pipeline (prepare/upload,
 /// E2E, TCP for M1) with the sync routing fields set — full reuse, zero new
 /// upload machinery.
-SyncPayloadSender transferPayloadSender(TransferClient client) {
+SyncPayloadSender transferPayloadSender(
+  TransferClient client, {
+  String Function(String stored)? resolveRoot,
+}) {
+  final resolve = resolveRoot ?? (s) => s;
   return (
     SyncPair pair,
     List<SyncNeededFile> needed,
@@ -98,9 +102,10 @@ SyncPayloadSender transferPayloadSender(TransferClient client) {
   }) async {
     final files = <SendableFile>[];
     final relPaths = <String, String>{};
+    final root = resolve(pair.rootPath);
     for (var i = 0; i < needed.length; i++) {
       final n = needed[i];
-      final abs = safeSyncJoin(pair.rootPath, n.path);
+      final abs = safeSyncJoin(root, n.path);
       if (abs == null || !File(abs).existsSync()) continue; // vanished mid-sync
       final id = 'sync-$i';
       files.add(SendableFile.fromPath(abs, id: id));

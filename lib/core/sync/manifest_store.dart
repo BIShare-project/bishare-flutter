@@ -39,13 +39,21 @@ class ManifestScanResult {
 /// `originFp = ownFp`: "this device authored the current version", the signal
 /// the conflict rules (§6.1) use to tell a local edit from a synced-in one.
 class ManifestStore {
-  ManifestStore(this._dao, {String ownFingerprint = '', ScanFn? scan})
-      : _ownFp = ownFingerprint,
-        _scan = scan ?? scanAndHash;
+  ManifestStore(
+    this._dao, {
+    String ownFingerprint = '',
+    ScanFn? scan,
+    String Function(String stored)? resolveRoot,
+  })  : _ownFp = ownFingerprint,
+        _scan = scan ?? scanAndHash,
+        _resolveRoot = resolveRoot ?? _identity;
+
+  static String _identity(String s) => s;
 
   final SyncDao _dao;
   final String _ownFp;
   final ScanFn _scan;
+  final String Function(String stored) _resolveRoot;
 
   /// Rescan [pair]'s root and reconcile `SyncEntries`. Unchanged files are never
   /// re-hashed (the scanner reuses the prior hash) and never re-written (we skip
@@ -68,7 +76,7 @@ class ManifestStore {
     final entries = <ManifestEntry>[];
     FfiScanStats? stats;
     await for (final ev in _scan(
-      root: pair.rootPath,
+      root: _resolveRoot(pair.rootPath),
       prior: prior,
       batchSize: 512,
       stabilityMs: 2000,

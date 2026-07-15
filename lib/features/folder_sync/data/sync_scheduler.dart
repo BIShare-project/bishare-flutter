@@ -29,8 +29,10 @@ class SyncScheduler {
     this.rescanEvery = const Duration(hours: 6),
     Duration watcherDebounce = const Duration(milliseconds: 500),
     FolderWatcher Function(String rootPath)? watcherFactory,
+    String Function(String stored)? resolveRoot,
   })  : _currentDevices = currentDevices,
         _deviceStream = deviceStream,
+        _resolveRoot = resolveRoot ?? ((s) => s),
         _watcherFactory = watcherFactory ??
             ((root) => FolderWatcher(root, debounce: watcherDebounce));
 
@@ -39,6 +41,7 @@ class SyncScheduler {
   final Stream<List<DiscoveredDevice>> _deviceStream;
   final List<DiscoveredDevice> Function() _currentDevices;
   final FolderWatcher Function(String rootPath) _watcherFactory;
+  final String Function(String stored) _resolveRoot;
   final Duration rescanEvery;
 
   final Map<String, FolderWatcher> _watchers = {}; // pairId → watcher
@@ -74,7 +77,7 @@ class SyncScheduler {
     // Start watchers for new/resumed pairs.
     for (final p in wanted.values) {
       if (_watchers.containsKey(p.id)) continue;
-      final w = _watcherFactory(p.rootPath);
+      final w = _watcherFactory(_resolveRoot(p.rootPath));
       _watchers[p.id] = w;
       _watcherSubs[p.id] =
           w.changes.listen((_) => _trigger(p, reason: 'folder changed'));

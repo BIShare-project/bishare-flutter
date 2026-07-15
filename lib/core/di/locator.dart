@@ -36,6 +36,7 @@ import '../desktop/desktop_service.dart';
 import '../devices/device_registry.dart';
 import '../identity/device_identity.dart';
 import '../sync/manifest_store.dart';
+import '../sync/sync_roots.dart';
 import '../notifications/notification_service.dart';
 import '../relay/relay_channel.dart';
 import '../server/browser_share.dart';
@@ -134,9 +135,20 @@ Future<void> setupLocator() async {
   // the transfer server stays transport-only via the two delegates. Payloads
   // ride the normal transfer pipeline (TCP, E2E) with sync routing fields.
   final transferClient = TransferClient(identity);
+  // Roots are stored portable (@save/...) and resolved live — iOS container
+  // paths change every install/update, so absolutes would break pairs.
+  final docsDir = await getApplicationDocumentsDirectory();
+  final syncRoots = SyncRootResolver(
+    saveDirPath: () => server.saveDirectory.path,
+    docsDirPath: () => docsDir.path,
+  );
   final syncEngine = SyncEngine(
     db.syncDao,
-    ManifestStore(db.syncDao, ownFingerprint: identity.fingerprint),
+    ManifestStore(
+      db.syncDao,
+      ownFingerprint: identity.fingerprint,
+      resolveRoot: syncRoots.resolve,
+    ),
     identity.crypto,
     ownPublicKeyBase64: identity.publicKeyBase64,
     ownFingerprint: identity.fingerprint,
@@ -147,7 +159,9 @@ Future<void> setupLocator() async {
     keyStore: SecureSyncKeyStore(secure),
     peerInfo: httpPeerInfoFetcher(),
     poster: httpSyncPoster(),
-    payloadSender: transferPayloadSender(transferClient),
+    payloadSender:
+        transferPayloadSender(transferClient, resolveRoot: syncRoots.resolve),
+    resolveRoot: syncRoots.resolve,
   );
   server
     ..onSyncFrame = syncEngine.handleSyncRequest
@@ -162,6 +176,7 @@ Future<void> setupLocator() async {
     db.syncDao,
     deviceStream: discovery.devices,
     currentDevices: () => discovery.current,
+    resolveRoot: syncRoots.resolve,
   )..start();
 
   // Magic-link auth + session. TokenStore holds the session in the secure
@@ -208,6 +223,7 @@ Future<void> setupLocator() async {
     )
     ..registerSingleton<DeepLinkService>(DeepLinkService())
     ..registerSingleton<TransferClient>(transferClient)
+    ..registerSingleton<SyncRootResolver>(syncRoots)
     ..registerSingleton<SyncEngine>(syncEngine)
     ..registerSingleton<SyncScheduler>(syncScheduler)
     ..registerSingleton<NearbyService>(NearbyService())

@@ -117,7 +117,7 @@ class _FolderSyncView extends StatelessWidget {
     await showAppSheet<void>(
       context,
       title: 'sync.delete_title'.tr(),
-      subtitle: v.pair.rootPath,
+      subtitle: v.displayRoot,
       icon: AppIcons.trashDelete,
       builder: (sheetContext) => Column(
         mainAxisSize: MainAxisSize.min,
