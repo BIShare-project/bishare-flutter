@@ -277,6 +277,10 @@ void main() {
     // B pushes back: both sides converge to the union.
     await b.engine.syncNow(pairId, host: 'l', port: 0);
     expect(File('${a.root.path}/from-b.txt').readAsStringSync(), 'B');
+
+    // BOTH sides consider themselves synced — the pure receiver too.
+    expect((await a.db.syncDao.pairById(pairId))!.lastSyncAt, isNotNull);
+    expect((await b.db.syncDao.pairById(pairId))!.lastSyncAt, isNotNull);
   });
 
   test('two-way conflict: LWW winner converges, loser kept as conflict copy',

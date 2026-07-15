@@ -695,6 +695,12 @@ class SyncEngine {
       peerCursor: Value(msg.newCursor),
       lastLanSyncAt: Value(DateTime.now()),
     ));
+    // The RECEIVER synced too — stamp the pair and tell its UI, so a device
+    // that only ever receives (e.g. a phone) still shows "Up to date".
+    await _dao.updatePair(
+      pair.toCompanion(true).copyWith(lastSyncAt: Value(DateTime.now())),
+    );
+    _emit(SyncPairStatus(pair.id, SyncPhase.done));
 
     return SyncAckMessage(
       pairId: pair.id,

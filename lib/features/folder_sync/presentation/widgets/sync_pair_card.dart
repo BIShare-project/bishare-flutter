@@ -162,7 +162,11 @@ class SyncPairCard extends StatelessWidget {
       SyncPhase.scanning || SyncPhase.exchanging =>
         AppBadge('sync.working'.tr()),
       SyncPhase.done => AppBadge('sync.up_to_date'.tr()),
-      _ => AppBadge('sync.ready'.tr()),
+      // Idle: a pair that has ever completed a sync (either direction — the
+      // receiver stamps lastSyncAt too) is up to date, not merely "ready".
+      _ => view.pair.lastSyncAt != null
+          ? AppBadge('sync.up_to_date'.tr())
+          : AppBadge('sync.ready'.tr()),
     };
   }
 }
