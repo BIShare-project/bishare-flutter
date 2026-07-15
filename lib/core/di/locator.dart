@@ -34,7 +34,6 @@ import '../deeplink/deep_link_service.dart';
 import '../desktop/desktop_service.dart';
 import '../devices/device_registry.dart';
 import '../identity/device_identity.dart';
-import '../sync/delta_engine.dart';
 import '../sync/manifest_store.dart';
 import '../notifications/notification_service.dart';
 import '../relay/relay_channel.dart';
@@ -136,8 +135,7 @@ Future<void> setupLocator() async {
   final transferClient = TransferClient(identity);
   final syncEngine = SyncEngine(
     db.syncDao,
-    ManifestStore(db.syncDao),
-    DeltaEngine(),
+    ManifestStore(db.syncDao, ownFingerprint: identity.fingerprint),
     identity.crypto,
     ownPublicKeyBase64: identity.publicKeyBase64,
     ownFingerprint: identity.fingerprint,

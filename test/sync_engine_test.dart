@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'package:bishare/core/crypto/e2e_crypto.dart';
 import 'package:bishare/core/storage/app_database.dart';
-import 'package:bishare/core/sync/delta_engine.dart';
 import 'package:bishare/core/sync/manifest_store.dart';
 import 'package:bishare/core/sync/sync_models.dart';
 import 'package:bishare/features/folder_sync/data/sync_engine.dart';
@@ -72,8 +71,9 @@ class MemKeyStore implements SyncKeyStore {
 
 /// One side (device) of a sync test: its DB, root dir, identity, and engine.
 class TestDevice {
-  TestDevice._(this.db, this.root, this.trash, this.crypto, this.keys);
+  TestDevice._(this.name, this.db, this.root, this.trash, this.crypto, this.keys);
 
+  final String name;
   final AppDatabase db;
   final Directory root;
   final Directory trash;
@@ -92,11 +92,14 @@ class TestDevice {
     final root = Directory('${base.path}/root')..createSync();
     final trash = Directory('${base.path}/trash')..createSync();
     final (crypto, _) = await E2ECrypto.create();
-    final dev = TestDevice._(db, root, trash, crypto, MemKeyStore());
+    final dev = TestDevice._(name, db, root, trash, crypto, MemKeyStore());
     dev.engine = SyncEngine(
       db.syncDao,
-      ManifestStore(db.syncDao, scan: dartScan()),
-      DeltaEngine(diff: _dartDiff),
+      ManifestStore(
+        db.syncDao,
+        ownFingerprint: 'fp-$name',
+        scan: dartScan(),
+      ),
       crypto,
       ownPublicKeyBase64: crypto.publicKeyBase64,
       ownFingerprint: 'fp-$name',
@@ -119,111 +122,59 @@ class TestDevice {
   }
 }
 
-/// A pure-Dart manifest diff with the SAME semantics as the Rust manifest_diff
-/// (add/modify/delete + sha256+size rename collapse) — keeps the loopback test
-/// native-free while the production path uses the shared FFI.
-Future<String> _dartDiff({
-  required String localJson,
-  required String remoteJson,
-}) async {
-  List<ManifestEntry> parse(String s) =>
-      (jsonDecodeList(s)).map(ManifestEntry.fromJson).toList();
-  final local = parse(localJson);
-  final remote = parse(remoteJson);
-  final lByPath = {for (final e in local) e.path: e};
-  final rByPath = {for (final e in remote) e.path: e};
-
-  final adds = <ManifestEntry>[];
-  final ops = <Map<String, dynamic>>[];
-  for (final r in remote) {
-    final l = lByPath[r.path];
-    if (l == null) {
-      adds.add(r);
-    } else if (l.size != r.size ||
-        l.sha256 != r.sha256 ||
-        l.mtimeMs != r.mtimeMs ||
-        l.isDir != r.isDir) {
-      ops.add(DeltaOp(
-        kind: SyncOpKind.modify,
-        path: r.path,
-        sha256: r.sha256,
-        size: r.size,
-        mtimeMs: r.mtimeMs,
-        isDir: r.isDir,
-      ).toJson());
-    }
-  }
-  final deletes = <ManifestEntry>[
-    for (final l in local)
-      if (!rByPath.containsKey(l.path)) l,
-  ];
-  // Rename collapse: a delete whose (sha256,size) reappears among the adds.
-  for (final d in List.of(deletes)) {
-    if (d.sha256 == null) continue;
-    final addIdx = adds.indexWhere(
-      (a) => a.sha256 == d.sha256 && a.size == d.size && !a.isDir,
-    );
-    if (addIdx >= 0) {
-      final a = adds.removeAt(addIdx);
-      deletes.remove(d);
-      ops.add(DeltaOp(
-        kind: SyncOpKind.rename,
-        path: d.path,
-        newPath: a.path,
-        sha256: a.sha256,
-        size: a.size,
-        mtimeMs: a.mtimeMs,
-        isDir: a.isDir,
-      ).toJson());
-    }
-  }
-  for (final a in adds) {
-    ops.add(DeltaOp(
-      kind: SyncOpKind.add,
-      path: a.path,
-      sha256: a.sha256,
-      size: a.size,
-      mtimeMs: a.mtimeMs,
-      isDir: a.isDir,
-    ).toJson());
-  }
-  for (final d in deletes) {
-    ops.add(DeltaOp(kind: SyncOpKind.delete, path: d.path, isDir: d.isDir)
-        .toJson());
-  }
-  return jsonEncodeList(ops);
-}
-
 void main() {
   late TestDevice a; // sender
   late TestDevice b; // receiver
   const pairId = 'pair-test';
 
-  /// Wire A→B: A's poster calls B's handler directly; A's payload sender
-  /// copies bytes into B's root (standing in for the TCP transfer leg).
+  /// Cross-wire [x] to talk to [y]: poster → y's handler; payload sender →
+  /// copies bytes into y's root for the pair (standing in for the TCP leg,
+  /// which — like the real transfer — does NOT preserve mtimes).
+  SyncEngine buildEngine(TestDevice x, TestDevice y) => SyncEngine(
+        x.db.syncDao,
+        ManifestStore(
+          x.db.syncDao,
+          ownFingerprint: 'fp-${x.name}',
+          scan: dartScan(),
+        ),
+        x.crypto,
+        ownPublicKeyBase64: x.crypto.publicKeyBase64,
+        ownFingerprint: 'fp-${x.name}',
+        ownAlias: x.name,
+        trashRoot: x.trash,
+        keyStore: x.keys,
+        peerInfo: (host, port) async =>
+            (publicKey: y.crypto.publicKeyBase64, fingerprint: 'fp-${y.name}'),
+        codec: ManifestFrameCodec.json(),
+        poster: (url, body, headers) async {
+          final reply = await y.engine.handleSyncRequest(
+            headers['x-sync-sender-pub']!,
+            body,
+          );
+          if (reply == null) throw const HttpException('403');
+          return Uint8List.fromList(reply);
+        },
+        payloadSender: (pair, needed, host, port, {onFile}) async {
+          final peerPair = await y.db.syncDao.pairById(pair.id);
+          var done = 0;
+          for (final n in needed) {
+            final src = File('${pair.rootPath}/${n.path}');
+            if (!src.existsSync()) continue;
+            final dst = File('${peerPair!.rootPath}/${n.path}');
+            dst.parent.createSync(recursive: true);
+            src.copySync(dst.path);
+            onFile?.call(++done, needed.length);
+          }
+        },
+        inviteDecisionTimeout: const Duration(seconds: 2),
+      );
+
+  /// Two devices, one pair, BOTH directions wired (A⇄B).
   Future<void> setUpPair() async {
     b = await TestDevice.create('b');
-    a = await TestDevice.create(
-      'a',
-      poster: (url, body, headers) async {
-        final reply = await b.engine.handleSyncRequest(
-          headers['x-sync-sender-pub']!,
-          body,
-        );
-        if (reply == null) throw const HttpException('403');
-        return Uint8List.fromList(reply);
-      },
-      payloadSender: (pair, needed, host, port, {onFile}) async {
-        var done = 0;
-        for (final n in needed) {
-          final src = File('${a.root.path}/${n.path}');
-          final dst = File('${b.root.path}/${n.path}');
-          dst.parent.createSync(recursive: true);
-          src.copySync(dst.path);
-          onFile?.call(++done, needed.length);
-        }
-      },
-    );
+    a = await TestDevice.create('a');
+    a.engine = buildEngine(a, b);
+    b.engine = buildEngine(b, a);
 
     final now = DateTime(2026, 1, 1);
     // A's view of the pair (peer = B).
@@ -312,6 +263,107 @@ void main() {
     expect(trashed.readAsStringSync(), 'keep me safe');
   });
 
+  test('two-way: a push never deletes the peer\'s own new files', () async {
+    await setUpPair();
+    File('${a.root.path}/from-a.txt').writeAsStringSync('A');
+    File('${b.root.path}/from-b.txt').writeAsStringSync('B');
+
+    // A pushes: under M1 mirror semantics B's own file would be trashed.
+    await a.engine.syncNow(pairId, host: 'l', port: 0);
+    expect(File('${b.root.path}/from-b.txt').existsSync(), isTrue,
+        reason: 'absence from a snapshot must never delete');
+    expect(File('${b.root.path}/from-a.txt').existsSync(), isTrue);
+
+    // B pushes back: both sides converge to the union.
+    await b.engine.syncNow(pairId, host: 'l', port: 0);
+    expect(File('${a.root.path}/from-b.txt').readAsStringSync(), 'B');
+  });
+
+  test('two-way conflict: LWW winner converges, loser kept as conflict copy',
+      () async {
+    await setUpPair();
+    final fileA = File('${a.root.path}/doc.txt')..writeAsStringSync('base');
+    await a.engine.syncNow(pairId, host: 'l', port: 0);
+    final fileB = File('${b.root.path}/doc.txt');
+    expect(fileB.existsSync(), isTrue);
+
+    // Both edit: A first, B later (B is the LWW winner).
+    fileA.writeAsStringSync('edit from A');
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    fileB.writeAsStringSync('edit from B — newer');
+
+    // A push → B: B's version is newer, B keeps it (no overwrite, no copy).
+    await a.engine.syncNow(pairId, host: 'l', port: 0);
+    expect(fileB.readAsStringSync(), 'edit from B — newer');
+
+    // B push → A: B wins; A's locally-authored loser is preserved first.
+    await b.engine.syncNow(pairId, host: 'l', port: 0);
+    expect(fileA.readAsStringSync(), 'edit from B — newer',
+        reason: 'both sides converge on the LWW winner');
+    final copies = a.root
+        .listSync()
+        .whereType<File>()
+        .where((f) => f.path.contains('.sync-conflict-'))
+        .toList();
+    expect(copies, hasLength(1), reason: 'loser preserved as a sibling copy');
+    expect(copies.single.readAsStringSync(), 'edit from A');
+
+    // The conflict copy is default-ignored: another A push must not spread it.
+    await a.engine.syncNow(pairId, host: 'l', port: 0);
+    expect(
+      b.root
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.contains('.sync-conflict-')),
+      isEmpty,
+    );
+  });
+
+  test('two-way: a newer local edit beats an older remote delete', () async {
+    await setUpPair();
+    File('${a.root.path}/keep.txt').writeAsStringSync('v1');
+    await a.engine.syncNow(pairId, host: 'l', port: 0);
+
+    // A deletes; B edits AFTER the deletion moment.
+    File('${a.root.path}/keep.txt').deleteSync();
+    await a.engine.syncNow(pairId, host: 'l', port: 0); // tombstone minted now
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    File('${b.root.path}/keep.txt').writeAsStringSync('v2 — survived');
+
+    // A pushes its tombstone again: B's newer edit must survive (§6.3).
+    await a.engine.syncNow(pairId, host: 'l', port: 0);
+    expect(File('${b.root.path}/keep.txt').existsSync(), isTrue);
+
+    // B pushes back: the file is restored on A (tombstone cleared).
+    await b.engine.syncNow(pairId, host: 'l', port: 0);
+    expect(
+      File('${a.root.path}/keep.txt').readAsStringSync(),
+      'v2 — survived',
+    );
+  });
+
+  test('two-way: a stale peer cannot resurrect a newer delete', () async {
+    await setUpPair();
+    final f = File('${a.root.path}/old.txt')..writeAsStringSync('old');
+    // Force the file's mtime WELL into the past so the tombstone is younger.
+    f.setLastModifiedSync(DateTime.now().subtract(const Duration(hours: 1)));
+    await a.engine.syncNow(pairId, host: 'l', port: 0);
+    final onB = File('${b.root.path}/old.txt');
+    expect(onB.existsSync(), isTrue);
+    onB.setLastModifiedSync(
+      DateTime.now().subtract(const Duration(hours: 1)),
+    );
+
+    // A deletes now (tombstone newer than both copies' mtimes).
+    File('${a.root.path}/old.txt').deleteSync();
+    await a.engine.syncNow(pairId, host: 'l', port: 0);
+    expect(onB.existsSync(), isFalse, reason: 'delete propagated');
+
+    // B (holding nothing) pushes — nothing resurrects on A.
+    await b.engine.syncNow(pairId, host: 'l', port: 0);
+    expect(File('${a.root.path}/old.txt').existsSync(), isFalse);
+  });
+
   test('a stranger (or a paused pair) is rejected', () async {
     await setUpPair();
     File('${a.root.path}/x.txt').writeAsStringSync('x');
@@ -342,8 +394,7 @@ void main() {
     // Point A's peer-info at B and auto-accept invites on B into B's root.
     a.engine = SyncEngine(
       a.db.syncDao,
-      ManifestStore(a.db.syncDao, scan: dartScan()),
-      DeltaEngine(diff: _dartDiff),
+      ManifestStore(a.db.syncDao, ownFingerprint: 'fp-a', scan: dartScan()),
       a.crypto,
       ownPublicKeyBase64: a.crypto.publicKeyBase64,
       ownFingerprint: 'fp-a',
@@ -414,8 +465,7 @@ void main() {
     await setUpPair();
     a.engine = SyncEngine(
       a.db.syncDao,
-      ManifestStore(a.db.syncDao, scan: dartScan()),
-      DeltaEngine(diff: _dartDiff),
+      ManifestStore(a.db.syncDao, ownFingerprint: 'fp-a', scan: dartScan()),
       a.crypto,
       ownPublicKeyBase64: a.crypto.publicKeyBase64,
       trashRoot: a.trash,

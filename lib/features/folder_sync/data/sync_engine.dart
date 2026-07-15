@@ -10,7 +10,6 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import '../../../core/crypto/e2e_crypto.dart';
 import '../../../core/storage/app_database.dart';
 import '../../../core/storage/sync_tables.dart';
-import '../../../core/sync/delta_engine.dart';
 import '../../../core/sync/manifest_store.dart';
 import '../../../core/sync/sync_models.dart';
 import '../../../core/sync/sync_paths.dart';
@@ -133,7 +132,6 @@ class SyncEngine {
   SyncEngine(
     this._dao,
     this._store,
-    this._delta,
     this._crypto, {
     required String ownPublicKeyBase64,
     required Directory trashRoot,
@@ -158,7 +156,6 @@ class SyncEngine {
 
   final SyncDao _dao;
   final ManifestStore _store;
-  final DeltaEngine _delta;
   final E2ECrypto _crypto;
   final String _ownPub;
   final String _ownFingerprint;
@@ -226,9 +223,13 @@ class SyncEngine {
 
       _emit(SyncPairStatus(pairId, SyncPhase.exchanging));
       final cursor = await _dao.nextCursor(pairId);
+      // Full snapshot (adds) + our tombstones (delete ops, deletedAtMs riding
+      // mtimeMs) — a delete only ever propagates as an explicit tombstone,
+      // never inferred from absence (two-way M2, §6.3).
+      final tombs = await _dao.tombstonesFor(pairId);
       final msg = SyncManifestMessage(
         pairId: pairId,
-        baseCursor: 0, // M1: always a full snapshot
+        baseCursor: 0, // always a full snapshot until cursor deltas (M2+)
         newCursor: cursor,
         ops: [
           for (final e in scan.entries)
@@ -239,6 +240,12 @@ class SyncEngine {
               size: e.size,
               mtimeMs: e.mtimeMs,
               isDir: e.isDir,
+            ),
+          for (final t in tombs)
+            DeltaOp(
+              kind: SyncOpKind.delete,
+              path: t.path,
+              mtimeMs: t.deletedAtMs,
             ),
         ],
       );
@@ -521,15 +528,19 @@ class SyncEngine {
     return pair.rootPath;
   }
 
-  /// Diff the announced snapshot against the local tree and apply what needs no
-  /// bytes; report the rest as needed. Runs inside the pair's serialize chain.
+  /// Two-way reconciliation of the announced snapshot against the local tree
+  /// (§4.4/§6). Deletes apply ONLY via explicit peer tombstones (absence from
+  /// the snapshot never deletes — the peer may simply not have OUR new files);
+  /// modify-modify resolves by LWW mtime with a deterministic fingerprint
+  /// tiebreak, preserving the overwritten side as a conflict copy; a local
+  /// tombstone newer than a remote add suppresses resurrection. Runs inside
+  /// the pair's serialize chain.
   Future<SyncAckMessage> _applyManifest(
     SyncPair pair,
     SyncManifestMessage msg,
   ) async {
     if (!msg.isFullSnapshot) {
-      // M1 receivers only speak full snapshots; a cursor delta from a newer
-      // peer degrades safely to "send me everything" via an empty ack.
+      // Cursor deltas from a newer peer degrade safely to "send everything".
       return SyncAckMessage(
         pairId: pair.id,
         applied: 0,
@@ -538,45 +549,132 @@ class SyncEngine {
       );
     }
 
-    // Fresh local truth (self-healing: catches files that arrived as payloads
-    // since the last exchange), then the SAME shared diff engine as the sender.
+    // Fresh local truth (self-healing: catches payload arrivals + local edits
+    // since the last exchange, and stamps originFp for the conflict rules).
     final local = (await _store.rescan(pair)).entries;
-    final remote = [
-      for (final op in msg.ops)
-        if (op.kind == SyncOpKind.add)
-          ManifestEntry(
-            path: op.path,
-            size: op.size ?? 0,
-            mtimeMs: op.mtimeMs ?? 0,
-            sha256: op.sha256,
-            isDir: op.isDirectory,
-          ),
-    ];
-    final ops = await _delta.diff(local: local, remote: remote);
+    final localByPath = {for (final e in local) e.path: e};
+    final rowByPath = {
+      for (final r in await _dao.entriesFor(pair.id)) r.path: r,
+    };
+    final myTombs = {
+      for (final t in await _dao.tombstonesFor(pair.id)) t.path: t,
+    };
+
+    final remoteLive = <DeltaOp>[];
+    final remoteTombs = <String, int>{}; // path → deletedAtMs
+    for (final op in msg.ops) {
+      switch (op.kind) {
+        case SyncOpKind.add:
+          remoteLive.add(op);
+        case SyncOpKind.delete:
+          remoteTombs[op.path] = op.mtimeMs ?? 0;
+        default:
+          debugPrint('[Sync] ignoring ${op.kind.wire} op for ${op.path}');
+      }
+    }
 
     var applied = 0;
     final needed = <SyncNeededFile>[];
-    for (final op in ops) {
-      switch (op.kind) {
-        case SyncOpKind.add || SyncOpKind.modify when op.isDirectory:
-          final dir = _safeDir(pair.rootPath, op.path);
-          if (dir != null) {
-            await dir.create(recursive: true);
-            await _upsertEntryRow(pair.id, op);
+    final renamedFrom = <String>{}; // local paths consumed by a rename
+
+    for (final add in remoteLive) {
+      if (add.isDirectory) {
+        final dir = _safeDir(pair.rootPath, add.path);
+        if (dir != null && !dir.existsSync()) {
+          await dir.create(recursive: true);
+          await _upsertEntryRow(pair.id, add, originFp: pair.peerFingerprint);
+          applied++;
+        }
+        continue;
+      }
+
+      final mine = localByPath[add.path];
+      if (mine == null) {
+        // Not on disk here. Our newer tombstone wins (no resurrection) — the
+        // peer converges when our tombstone reaches it on our next push.
+        final tomb = myTombs[add.path];
+        if (tomb != null && tomb.deletedAtMs > (add.mtimeMs ?? 0)) continue;
+        if (tomb != null) {
+          await _dao.clearTombstone(pair.id, add.path); // re-created remotely
+        }
+        // Rename detection (zero transfer): the same content vanished remotely
+        // under a path we still hold → move ours instead of re-downloading.
+        final oldPath = _renameSource(add, remoteTombs, localByPath, renamedFrom);
+        if (oldPath != null) {
+          final moved = await _applyRename(
+            pair,
+            DeltaOp(
+              kind: SyncOpKind.rename,
+              path: oldPath,
+              newPath: add.path,
+              sha256: add.sha256,
+              size: add.size,
+              mtimeMs: add.mtimeMs,
+              isDir: add.isDir,
+            ),
+          );
+          if (moved) {
+            renamedFrom.add(oldPath);
             applied++;
+            continue;
           }
-        case SyncOpKind.add || SyncOpKind.modify:
-          needed.add(SyncNeededFile(
-            path: op.path,
-            sha256: op.sha256,
-            size: op.size,
+        }
+        await _needFile(pair.id, add, needed);
+        continue;
+      }
+
+      if (mine.sha256 == add.sha256) continue; // converged
+
+      // Modify-modify: LWW by mtime, deterministic fingerprint tiebreak (the
+      // LARGER fingerprint wins a tie on both sides).
+      final remoteWins = (add.mtimeMs ?? 0) > mine.mtimeMs ||
+          ((add.mtimeMs ?? 0) == mine.mtimeMs &&
+              pair.peerFingerprint.compareTo(_ownFingerprint) > 0);
+      if (!remoteWins) continue; // we win — peer converges on reverse push
+
+      // If OUR current version was locally authored (an edit the peer has
+      // never seen), preserve it as a conflict copy BEFORE the incoming
+      // payload overwrites it (§6.1 — the loser is never discarded).
+      if (rowByPath[add.path]?.originFp == _ownFingerprint) {
+        await _preserveConflictLoser(pair, add.path);
+      }
+      await _needFile(pair.id, add, needed);
+    }
+
+    for (final entry in remoteTombs.entries) {
+      final path = entry.key;
+      final deletedAtMs = entry.value;
+      if (renamedFrom.contains(path)) continue; // consumed by a rename
+      final mine = localByPath[path];
+      if (mine == null) {
+        // Nothing local — remember the newer tombstone so a stale third push
+        // can't resurrect the path later.
+        final tomb = myTombs[path];
+        if (tomb == null || tomb.deletedAtMs < deletedAtMs) {
+          await _dao.putTombstone(SyncTombstonesCompanion.insert(
+            pairId: pair.id,
+            path: path,
+            deletedAtMs: deletedAtMs,
+            originFp: Value(pair.peerFingerprint),
           ));
-        case SyncOpKind.rename:
-          if (await _applyRename(pair, op)) applied++;
-        case SyncOpKind.delete:
-          if (await _applyDelete(pair, op)) applied++;
-        case SyncOpKind.unknown:
-          debugPrint('[Sync] ignoring unknown op for ${op.path}');
+        }
+        continue;
+      }
+      // Modify beats delete (§6.3): a local version newer than the deletion
+      // survives, and our next push restores it on the peer.
+      if (mine.mtimeMs > deletedAtMs) continue;
+      final trashed = await _applyDelete(
+        pair,
+        DeltaOp(kind: SyncOpKind.delete, path: path, isDir: mine.isDir),
+      );
+      if (trashed) {
+        await _dao.putTombstone(SyncTombstonesCompanion.insert(
+          pairId: pair.id,
+          path: path,
+          deletedAtMs: deletedAtMs,
+          originFp: Value(pair.peerFingerprint),
+        ));
+        applied++;
       }
     }
 
@@ -594,6 +692,88 @@ class SyncEngine {
     );
   }
 
+  /// Queue a file's bytes and pre-register the expected content hash so (a) the
+  /// watcher's echo suppression drops the write event and (b) the next rescan
+  /// stamps the row peer-authored instead of locally-authored (payload TTL is
+  /// generous — big files take a while to arrive).
+  Future<void> _needFile(
+    String pairId,
+    DeltaOp add,
+    List<SyncNeededFile> needed,
+  ) async {
+    final sha = add.sha256;
+    if (sha != null && sha.isNotEmpty) {
+      await _dao.expectChange(SyncExpectedChangesRow(
+        pairId: pairId,
+        path: add.path,
+        expectedSha256: sha,
+        ttl: const Duration(hours: 24),
+      ));
+    }
+    needed.add(SyncNeededFile(path: add.path, sha256: sha, size: add.size));
+  }
+
+  /// The local path whose content matches [add] AND was tombstoned remotely —
+  /// i.e. a rename we can replay locally with zero bytes. Skips already-used
+  /// sources and hashless entries.
+  String? _renameSource(
+    DeltaOp add,
+    Map<String, int> remoteTombs,
+    Map<String, ManifestEntry> localByPath,
+    Set<String> used,
+  ) {
+    final sha = add.sha256;
+    if (sha == null || sha.isEmpty) return null;
+    for (final tombPath in remoteTombs.keys) {
+      if (used.contains(tombPath)) continue;
+      final candidate = localByPath[tombPath];
+      if (candidate != null &&
+          !candidate.isDir &&
+          candidate.sha256 == sha &&
+          candidate.size == add.size) {
+        return tombPath;
+      }
+    }
+    return null;
+  }
+
+  /// Save the about-to-be-overwritten local version as a Syncthing-style
+  /// sibling `<name>.sync-conflict-<yyyyMMdd-HHmmss>-<alias><.ext>` and record
+  /// it in `SyncConflicts`. Conflict copies are default-ignored by the scanner,
+  /// so they never sync back (§6.1).
+  Future<void> _preserveConflictLoser(SyncPair pair, String relPath) async {
+    final src = _safeFile(pair.rootPath, relPath);
+    if (src == null || !await src.exists()) return;
+    final now = DateTime.now();
+    String two(int n) => n.toString().padLeft(2, '0');
+    final stamp = '${now.year}${two(now.month)}${two(now.day)}'
+        '-${two(now.hour)}${two(now.minute)}${two(now.second)}';
+    final alias = _ownAlias.isEmpty
+        ? _ownFingerprint.replaceAll(RegExp('[^A-Za-z0-9]'), '').padRight(1, 'x')
+        : _ownAlias.replaceAll(RegExp(r'[\\/:*?"<>| ]'), '');
+
+    final slash = relPath.lastIndexOf('/');
+    final dirPart = slash < 0 ? '' : relPath.substring(0, slash + 1);
+    final name = slash < 0 ? relPath : relPath.substring(slash + 1);
+    final dot = name.lastIndexOf('.');
+    final stem = dot <= 0 ? name : name.substring(0, dot);
+    final ext = dot <= 0 ? '' : name.substring(dot);
+    final copyRel = '$dirPart$stem.sync-conflict-$stamp-$alias$ext';
+
+    final dst = _safeFile(pair.rootPath, copyRel);
+    if (dst == null) return;
+    await src.copy(dst.path);
+    await _dao.recordConflict(SyncConflictsCompanion.insert(
+      id: _newPairId(),
+      pairId: pair.id,
+      path: relPath,
+      loserCopyPath: copyRel,
+      winnerFp: Value(pair.peerFingerprint),
+      createdAt: now,
+    ));
+    debugPrint('[Sync] conflict on $relPath — loser preserved as $copyRel');
+  }
+
   /// Rename/move with no byte transfer. Falls back to "needed" semantics only
   /// via the next exchange if the source is missing (degrades to add — honest,
   /// just less efficient, mirroring manifest_diff's own degradation).
@@ -607,7 +787,12 @@ class SyncEngine {
     await Directory(dst.parent.path).create(recursive: true);
     await src.rename(dst.path);
     await _dao.deleteEntry(pair.id, op.path);
-    await _upsertEntryRow(pair.id, op, atPath: to);
+    await _upsertEntryRow(
+      pair.id,
+      op,
+      atPath: to,
+      originFp: pair.peerFingerprint,
+    );
     return true;
   }
 
@@ -646,6 +831,7 @@ class SyncEngine {
     String pairId,
     DeltaOp op, {
     String? atPath,
+    String? originFp,
   }) => _dao.upsertEntry(SyncEntriesCompanion.insert(
     pairId: pairId,
     path: atPath ?? op.path,
@@ -653,6 +839,7 @@ class SyncEngine {
     mtimeMs: op.mtimeMs ?? 0,
     sha256: Value(op.sha256),
     isDir: Value(op.isDirectory),
+    originFp: Value(originFp),
   ));
 
   /// Trash targets never overwrite an earlier trashed generation.

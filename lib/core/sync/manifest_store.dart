@@ -33,12 +33,18 @@ class ManifestScanResult {
 
 /// Materializes and persists a pair's local manifest. It drives the Rust scanner
 /// (which hashes only changed files), applies the pair's ignore rules, upserts
-/// the survivors into `SyncEntries`, and prunes rows for vanished paths — so
-/// `SyncEntries` is always the on-disk truth and the source for `manifest_diff`.
+/// the survivors into `SyncEntries`, and — two-way (M2) — turns vanished paths
+/// into `SyncTombstones` (an explicit local delete that can propagate) instead
+/// of silently dropping rows. Rows whose content changed on disk are stamped
+/// `originFp = ownFp`: "this device authored the current version", the signal
+/// the conflict rules (§6.1) use to tell a local edit from a synced-in one.
 class ManifestStore {
-  ManifestStore(this._dao, {ScanFn? scan}) : _scan = scan ?? scanAndHash;
+  ManifestStore(this._dao, {String ownFingerprint = '', ScanFn? scan})
+      : _ownFp = ownFingerprint,
+        _scan = scan ?? scanAndHash;
 
   final SyncDao _dao;
+  final String _ownFp;
   final ScanFn _scan;
 
   /// Rescan [pair]'s root and reconcile `SyncEntries`. Unchanged files are never
@@ -84,19 +90,28 @@ class ManifestStore {
       }
     }
 
-    final changed = await _reconcile(pair.id, entries, priorRows);
+    final changed = await _reconcile(pair.id, entries, priorRows, stats);
     return ManifestScanResult(entries: entries, changed: changed, stats: stats);
   }
 
-  /// Upsert new/changed rows and delete vanished ones. Returns whether the
+  /// Upsert new/changed rows and tombstone vanished ones. Returns whether the
   /// persisted manifest moved at all.
+  ///
+  /// * A row whose on-disk content CHANGED is stamped `originFp = ownFp` — this
+  ///   device authored the current version (feeds the §6.1 conflict rules). An
+  ///   unchanged row keeps its origin (a synced-in file stays peer-authored).
+  /// * A vanished path becomes a `SyncTombstone` (originFp = ownFp): an explicit
+  ///   local delete that the exchange propagates. Silent row-drops would make a
+  ///   local delete indistinguishable from "never had it" (two-way M2, §6.3).
   Future<bool> _reconcile(
     String pairId,
     List<ManifestEntry> fresh,
     List<SyncEntry> prior,
+    FfiScanStats? stats,
   ) async {
     final priorByPath = {for (final e in prior) e.path: e};
     final freshPaths = {for (final e in fresh) e.path};
+    final now = DateTime.now().millisecondsSinceEpoch;
 
     final toUpsert = <SyncEntriesCompanion>[];
     for (final e in fresh) {
@@ -107,6 +122,10 @@ class ManifestStore {
           p.sha256 == e.sha256 &&
           p.isDir == e.isDir;
       if (unchanged) continue;
+      // Content moved vs the prior row → locally authored; a brand-new path is
+      // local too. (Peer-applied writes upsert their row with the peer's fp
+      // BEFORE the next rescan, and arrive content-identical here → unchanged.)
+      final contentMoved = p == null || p.sha256 != e.sha256 || p.size != e.size;
       toUpsert.add(SyncEntriesCompanion.insert(
         pairId: pairId,
         path: e.path,
@@ -114,13 +133,29 @@ class ManifestStore {
         mtimeMs: e.mtimeMs,
         sha256: Value(e.sha256),
         isDir: Value(e.isDir),
+        originFp: Value(contentMoved ? _ownFp : p.originFp),
       ));
     }
     if (toUpsert.isNotEmpty) await _dao.upsertEntries(toUpsert);
 
+    // An EMPTY scan of a previously-populated pair is trustworthy only when the
+    // walk was clean: scanner errors (unreadable/unmounted root — the iOS
+    // scoped-folder failure mode) with zero entries mean "couldn't look", and
+    // tombstoning everything would propagate a catastrophic delete. Fail SAFE:
+    // keep the rows, tombstone nothing (risk #9). A clean empty walk is a
+    // genuine "user removed everything" and flows through as deletes.
+    final walkFailed = stats == null || stats.errors > BigInt.zero;
+    if (fresh.isEmpty && prior.isNotEmpty && walkFailed) return false;
+
     var deleted = 0;
     for (final p in prior) {
       if (!freshPaths.contains(p.path)) {
+        await _dao.putTombstone(SyncTombstonesCompanion.insert(
+          pairId: pairId,
+          path: p.path,
+          deletedAtMs: now,
+          originFp: Value(_ownFp),
+        ));
         await _dao.deleteEntry(pairId, p.path);
         deleted++;
       }
