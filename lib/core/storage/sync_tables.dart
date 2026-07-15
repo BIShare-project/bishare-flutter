@@ -190,6 +190,11 @@ class SyncDao extends DatabaseAccessor<AppDatabase> with _$SyncDaoMixin {
       (update(syncPairs)..where((p) => p.id.equals(id)))
           .write(SyncPairsCompanion(paused: Value(paused)));
 
+  /// Switch a pair between 'lanOnly' and 'lanCloud' (M3 cloud fallback).
+  Future<void> setMode(String id, String mode) =>
+      (update(syncPairs)..where((p) => p.id.equals(id)))
+          .write(SyncPairsCompanion(mode: Value(mode)));
+
   /// Remove a pair and every dependent row (no FK cascade in SQLite here).
   Future<void> deletePair(String id) => transaction(() async {
     for (final go in [

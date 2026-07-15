@@ -50,7 +50,14 @@ class DriveService {
   // ---- Browse ---------------------------------------------------------------
 
   /// Child folders of [parentId] (root folders when null). Ordered name ASC.
-  Future<List<DriveFolder>> folders({String? parentId}) => _call(() async {
+  ///
+  /// Folder-sync keeps its content-addressed store in hidden
+  /// `.bishare-sync-<pairId>` folders (Tahap 4, Q3): the Drive UI filters them
+  /// out by default; only the sync engine lists with [includeHidden].
+  Future<List<DriveFolder>> folders({
+    String? parentId,
+    bool includeHidden = false,
+  }) => _call(() async {
     final res = await _dio.get<Map<String, dynamic>>(
       CloudConfig.folders,
       queryParameters: {'parent_id': ?parentId},
@@ -58,7 +65,10 @@ class DriveService {
     final data = (res.data?['data'] as List?) ?? const [];
     return [
       for (final f in data)
-        if (f is Map<String, dynamic>) DriveFolder.fromJson(f),
+        if (f is Map<String, dynamic>)
+          for (final folder in [DriveFolder.fromJson(f)])
+            if (includeHidden || !folder.name.startsWith('.bishare-sync-'))
+              folder,
     ];
   });
 

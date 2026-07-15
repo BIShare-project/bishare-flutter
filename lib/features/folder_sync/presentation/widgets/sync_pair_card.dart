@@ -16,6 +16,7 @@ class SyncPairCard extends StatelessWidget {
     required this.onTogglePause,
     required this.onDelete,
     this.onConflicts,
+    this.onToggleCloud,
   });
 
   final SyncPairView view;
@@ -25,6 +26,9 @@ class SyncPairCard extends StatelessWidget {
 
   /// Opens the conflict-resolution sheet (shown when [SyncPairView.conflicts] > 0).
   final VoidCallback? onConflicts;
+
+  /// Toggles the pair between LAN-only and LAN+Cloud (Pro).
+  final VoidCallback? onToggleCloud;
 
   String get _folderName {
     final parts = view.displayRoot
@@ -111,6 +115,15 @@ class SyncPairCard extends StatelessWidget {
                   disabled: paused || !view.peerOnline,
                   onPressed: onSyncNow,
                 ),
+              ),
+              const SizedBox(width: 8),
+              AppButton(
+                label: view.pair.mode == 'lanCloud'
+                    ? 'sync.cloud_on'.tr()
+                    : 'sync.cloud_off'.tr(),
+                variant: AppButtonVariant.outline,
+                size: AppButtonSize.small,
+                onPressed: onToggleCloud,
               ),
               const SizedBox(width: 8),
               AppButton(

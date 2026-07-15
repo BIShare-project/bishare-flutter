@@ -610,6 +610,9 @@
     "error_generic": "Terjadi kesalahan. Silakan coba lagi."
   },
   "sync": {
+    "cloud_needs_pro": "Sync lewat cloud butuh Pro — sync LAN tetap gratis",
+    "cloud_off": "Cloud: MATI",
+    "cloud_on": "Cloud: AKTIF",
     "conflicts_button": "{count} konflik — selesaikan",
     "conflicts_empty_message": "Semua file di sini sepakat pada satu versi.",
     "conflicts_empty_title": "Tidak ada konflik",

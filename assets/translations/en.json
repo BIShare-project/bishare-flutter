@@ -610,6 +610,9 @@
     "error_generic": "Something went wrong. Please try again."
   },
   "sync": {
+    "cloud_needs_pro": "Sync over the cloud needs Pro — LAN sync stays free",
+    "cloud_off": "Cloud: OFF",
+    "cloud_on": "Cloud: ON",
     "conflicts_button": "{count} conflict(s) — resolve",
     "conflicts_empty_message": "Everything here agreed on a single version.",
     "conflicts_empty_title": "No conflicts",

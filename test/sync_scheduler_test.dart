@@ -172,6 +172,57 @@ void main() {
     expect(calls, 2, reason: 'a failure must not wedge future triggers');
   });
 
+  test('cloud: offline peer + lanCloud → push; poll tick pulls', () async {
+    await scheduler.dispose();
+    final pushes = <String>[];
+    final pulls = <String>[];
+    scheduler = SyncScheduler(
+      (pair, peer) async => runs.add((pair.id, peer.fingerprint)),
+      db.syncDao,
+      deviceStream: devices.stream,
+      currentDevices: () => online, // peer stays OFFLINE
+      cloudPush: (pair) async => pushes.add(pair.id),
+      cloudPull: (pair) async => pulls.add(pair.id),
+      cloudPollEvery: const Duration(milliseconds: 60),
+      watcherFactory: (root) => FolderWatcher(
+        root,
+        debounce: const Duration(milliseconds: 30),
+        factory: (path) => fakes.putIfAbsent(path, () => FakeDirWatcher(path)),
+      ),
+    )..start();
+
+    await db.syncDao.createPair(
+      SyncPairsCompanion.insert(
+        id: 'pc',
+        rootPath: '/root/pc',
+        peerFingerprint: 'fp-away',
+        peerPublicKey: const Value('pk'),
+        mode: const Value('lanCloud'),
+        createdAt: DateTime(2026, 1, 1),
+      ),
+      'pc',
+    );
+    await pump();
+
+    // A change with the peer away goes to the cloud, not the LAN.
+    fakes['/root/pc']!.emit();
+    await pump(80);
+    expect(runs, isEmpty);
+    expect(pushes, ['pc']);
+
+    // The poll tick pulls for lanCloud pairs.
+    await pump(80);
+    expect(pulls, isNotEmpty);
+
+    // A lanOnly pair triggers NEITHER path while its peer is away.
+    await db.syncDao.setMode('pc', 'lanOnly');
+    await pump();
+    pushes.clear();
+    fakes['/root/pc']!.emit();
+    await pump(80);
+    expect(pushes, isEmpty, reason: 'lanOnly never touches the cloud');
+  });
+
   test('deleting a pair tears its watcher down', () async {
     online = [_device('fp-peer')];
     await addPair('p1', 'fp-peer');

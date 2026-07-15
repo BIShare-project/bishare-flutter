@@ -204,6 +204,11 @@ class FolderSyncCubit extends Cubit<FolderSyncState> {
   Future<void> setPaused(String pairId, bool paused) =>
       _dao.setPaused(pairId, paused);
 
+  /// Enable/disable the cloud fallback for a pair (Q1 Pro gating happens at
+  /// the call site with the live tier; the adapter re-gates on every run).
+  Future<void> setCloud(String pairId, bool enabled) =>
+      _dao.setMode(pairId, enabled ? 'lanCloud' : 'lanOnly');
+
   Future<void> deletePair(String pairId) => _dao.deletePair(pairId);
 
   /// Unresolved conflicts for the resolution sheet (newest first).

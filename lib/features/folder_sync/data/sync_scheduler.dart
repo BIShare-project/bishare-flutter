@@ -11,6 +11,11 @@ import '../../discovery/domain/discovered_device.dart';
 /// Production wraps `SyncEngine.syncNow`; tests inject a recorder.
 typedef SyncRunner = Future<void> Function(SyncPair pair, DiscoveredDevice peer);
 
+/// A cloud-path run (push when the peer is away, pull on the poll tick).
+/// Production wraps `CloudSyncAdapter`; the adapter self-gates (mode/tier/key),
+/// so calling it for an ineligible pair is a cheap no-op.
+typedef CloudRunner = Future<void> Function(SyncPair pair);
+
 /// Turns manual folder sync into automatic sync (M2b): one debounced
 /// [FolderWatcher] per active pair, a push when a pair's peer (re)appears on
 /// the LAN, and a periodic full-rescan backstop for anything a watcher missed.
@@ -31,7 +36,12 @@ class SyncScheduler {
     FolderWatcher Function(String rootPath)? watcherFactory,
     String Function(String stored)? resolveRoot,
     Future<void> Function()? maintenance,
+    CloudRunner? cloudPush,
+    CloudRunner? cloudPull,
+    this.cloudPollEvery = const Duration(seconds: 60),
   })  : _maintenance = maintenance,
+        _cloudPush = cloudPush,
+        _cloudPull = cloudPull,
         _currentDevices = currentDevices,
         _deviceStream = deviceStream,
         _resolveRoot = resolveRoot ?? ((s) => s),
@@ -45,13 +55,17 @@ class SyncScheduler {
   final FolderWatcher Function(String rootPath) _watcherFactory;
   final String Function(String stored) _resolveRoot;
   final Future<void> Function()? _maintenance;
+  final CloudRunner? _cloudPush;
+  final CloudRunner? _cloudPull;
   final Duration rescanEvery;
+  final Duration cloudPollEvery;
 
   final Map<String, FolderWatcher> _watchers = {}; // pairId → watcher
   final Map<String, StreamSubscription<void>> _watcherSubs = {};
   StreamSubscription<List<SyncPair>>? _pairsSub;
   StreamSubscription<List<DiscoveredDevice>>? _deviceSub;
   Timer? _rescanTimer;
+  Timer? _cloudPollTimer;
   Set<String> _onlineFps = const {};
   List<SyncPair> _pairs = const [];
 
@@ -75,6 +89,28 @@ class SyncScheduler {
         _trigger(p, reason: 'periodic rescan');
       }
     });
+    // Cloud poll (§5.2): a cheap beacon check per lanCloud pair — the adapter
+    // short-circuits on an unchanged fingerprint and self-gates on tier/mode.
+    final pull = _cloudPull;
+    if (pull != null) {
+      _cloudPollTimer ??= Timer.periodic(cloudPollEvery, (_) {
+        for (final p in _pairs) {
+          if (!p.paused && p.mode == 'lanCloud') {
+            _contained('cloud pull ${p.id}', () => pull(p));
+          }
+        }
+      });
+    }
+  }
+
+  void _contained(String what, Future<void> Function() run) {
+    unawaited(() async {
+      try {
+        await run();
+      } on Object catch (e) {
+        debugPrint('[SyncSched] $what failed: $e');
+      }
+    }());
   }
 
   void _onPairs(List<SyncPair> pairs) {
@@ -112,7 +148,17 @@ class SyncScheduler {
     }
   }
 
-  void _trigger(SyncPair pair, {required String reason}) {
+  void _trigger(SyncPair snapshot, {required String reason}) {
+    // The watcher closure captured the pair row as it was when the watcher
+    // started — resolve the LIVE row so a mode/pause change applies without
+    // restarting the watcher.
+    SyncPair pair = snapshot;
+    for (final p in _pairs) {
+      if (p.id == snapshot.id) {
+        pair = p;
+        break;
+      }
+    }
     if (pair.paused) return;
     DiscoveredDevice? peer;
     for (final d in _currentDevices()) {
@@ -121,7 +167,16 @@ class SyncScheduler {
         break;
       }
     }
-    if (peer == null) return; // offline — the peer-online trigger will fire
+    if (peer == null) {
+      // Peer away: hand the delta to the cloud (store-and-forward, §5.3) —
+      // LAN always wins when available, the cloud only covers absence.
+      final push = _cloudPush;
+      if (push != null && pair.mode == 'lanCloud') {
+        debugPrint('[SyncSched] ${pair.id}: $reason → cloud push (peer away)');
+        _contained('cloud push ${pair.id}', () => push(pair));
+      }
+      return; // the peer-online trigger handles the LAN flush
+    }
     final target = peer; // non-nullable copy (closure capture blocks promotion)
     debugPrint('[SyncSched] ${pair.id}: $reason → syncNow');
     // syncNow serializes per pair; errors already surface on the engine status
@@ -141,6 +196,7 @@ class SyncScheduler {
     await _pairsSub?.cancel();
     await _deviceSub?.cancel();
     _rescanTimer?.cancel();
+    _cloudPollTimer?.cancel();
     for (final s in _watcherSubs.values) {
       await s.cancel();
     }
