@@ -14,6 +14,7 @@ import '../constants/cloud.dart';
 /// Defaults are the SAFE state when a flag is absent/unreachable:
 /// * [driveEnabled] false — the Drive surface stays hidden until launch.
 /// * [cloudSyncFree] false — the Pro gate applies unless the flag lifts it.
+/// * [loginEnabled] false — sign-in entry points stay hidden until launch.
 class FeatureFlags extends ChangeNotifier {
   FeatureFlags(this._prefs);
 
@@ -41,6 +42,10 @@ class FeatureFlags extends ChangeNotifier {
   /// Folder-sync cloud fallback free-for-everyone (pre-IAP period). When false
   /// the Pro tier gate applies.
   bool get cloudSyncFree => _boolFlag('cloud_sync_free', orElse: false);
+
+  /// Sign-in surfaces (Settings row, Drive CTA). Hidden pre-launch — the
+  /// magic-link mailer isn't live yet; existing sessions are unaffected.
+  bool get loginEnabled => _boolFlag('login_enabled', orElse: false);
 
   /// Load cached flags synchronously-ish, then refresh from the network in the
   /// background (callers listen for changes).

@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/config/feature_flags.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../auth/presentation/auth_cubit.dart';
@@ -70,16 +71,20 @@ class _SignedOut extends StatelessWidget {
                       title: 'drive.signed_out_title'.tr(),
                       message: 'drive.signed_out_message'.tr(),
                     ),
-                    const SizedBox(height: 12),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: AppButton(
-                        label: 'auth.sign_in'.tr(),
-                        icon: AppIcons.logIn,
-                        fullWidth: true,
-                        onPressed: () => context.push('/login'),
+                    // Sign-in exists only once the launch flag turns on
+                    // (this page itself is deep-link-only while hidden).
+                    if (getIt<FeatureFlags>().loginEnabled) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        child: AppButton(
+                          label: 'auth.sign_in'.tr(),
+                          icon: AppIcons.logIn,
+                          fullWidth: true,
+                          onPressed: () => context.push('/login'),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/config/feature_flags.dart';
+import '../../../../core/di/locator.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../../../auth/presentation/auth_cubit.dart';
 import 'glyph.dart';
@@ -12,6 +14,10 @@ import 'glyph.dart';
 /// signed-in identity (name · email · tier badge) with a sign-out sheet when
 /// signed in. Reads the app-wide [AuthCubit], so the same state also feeds the
 /// future Drive tab.
+///
+/// Launch flag: while `login_enabled` is off (admin-controlled), a signed-out
+/// device shows no Account section at all — sign-in simply doesn't exist yet.
+/// An existing session keeps its profile row (sign-out still works).
 class AccountSection extends StatelessWidget {
   const AccountSection({super.key});
 
@@ -20,15 +26,23 @@ class AccountSection extends StatelessWidget {
     final cs = ShadTheme.of(context).colorScheme;
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
-        return Column(
-          children: [
-            AppSectionHeader('auth.account'.tr()),
-            AppGroup(
-              child: state.isAuthenticated
-                  ? _signedIn(context, cs, state)
-                  : _signedOut(context, cs),
-            ),
-          ],
+        return ListenableBuilder(
+          listenable: getIt<FeatureFlags>(),
+          builder: (context, _) {
+            if (!state.isAuthenticated && !getIt<FeatureFlags>().loginEnabled) {
+              return const SizedBox.shrink();
+            }
+            return Column(
+              children: [
+                AppSectionHeader('auth.account'.tr()),
+                AppGroup(
+                  child: state.isAuthenticated
+                      ? _signedIn(context, cs, state)
+                      : _signedOut(context, cs),
+                ),
+              ],
+            );
+          },
         );
       },
     );
