@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/di/locator.dart';
+import '../../../../core/server/transfer_server.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../../data/sync_engine.dart';
 
@@ -43,14 +44,16 @@ Future<void> showSyncInviteSheet(
           label: 'sync.invite_accept'.tr(),
           icon: AppIcons.refreshSync,
           fullWidth: true,
-          onPressed: () async {
+          onPressed: () {
             decided = true;
             Navigator.of(sheetContext).pop();
-            // Default: <Documents>/BIShare Sync/<rootName> — one tap, no
-            // picker, so the accept lands within the inviter's 30s window.
-            final docs = await getApplicationDocumentsDirectory();
+            // Default: <save location>/BIShare Sync/<rootName> — the SAME
+            // user-visible folder received transfers land in (its sandbox
+            // write grant is already managed by the save-location setting),
+            // one tap, so the accept lands within the inviter's 30s window.
+            final saveDir = getIt<TransferServer>().saveDirectory;
             final root = Directory(
-              '${docs.path}${Platform.pathSeparator}BIShare Sync'
+              '${saveDir.path}${Platform.pathSeparator}BIShare Sync'
               '${Platform.pathSeparator}${invite.rootName}',
             );
             invite.accept(root.path);
