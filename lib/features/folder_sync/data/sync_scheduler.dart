@@ -30,7 +30,9 @@ class SyncScheduler {
     Duration watcherDebounce = const Duration(milliseconds: 500),
     FolderWatcher Function(String rootPath)? watcherFactory,
     String Function(String stored)? resolveRoot,
-  })  : _currentDevices = currentDevices,
+    Future<void> Function()? maintenance,
+  })  : _maintenance = maintenance,
+        _currentDevices = currentDevices,
         _deviceStream = deviceStream,
         _resolveRoot = resolveRoot ?? ((s) => s),
         _watcherFactory = watcherFactory ??
@@ -42,6 +44,7 @@ class SyncScheduler {
   final List<DiscoveredDevice> Function() _currentDevices;
   final FolderWatcher Function(String rootPath) _watcherFactory;
   final String Function(String stored) _resolveRoot;
+  final Future<void> Function()? _maintenance;
   final Duration rescanEvery;
 
   final Map<String, FolderWatcher> _watchers = {}; // pairId → watcher
@@ -57,6 +60,17 @@ class SyncScheduler {
     _deviceSub ??= _deviceStream.listen(_onDevices);
     _onlineFps = {for (final d in _currentDevices()) d.fingerprint};
     _rescanTimer ??= Timer.periodic(rescanEvery, (_) {
+      // Housekeeping rides the same tick (trash TTL is 30 days — 6h is plenty).
+      final sweep = _maintenance;
+      if (sweep != null) {
+        unawaited(() async {
+          try {
+            await sweep();
+          } on Object catch (e) {
+            debugPrint('[SyncSched] maintenance sweep failed: $e');
+          }
+        }());
+      }
       for (final p in _pairs) {
         _trigger(p, reason: 'periodic rescan');
       }

@@ -610,6 +610,11 @@
     "error_generic": "Something went wrong. Please try again."
   },
   "sync": {
+    "conflicts_button": "{count} conflict(s) — resolve",
+    "conflicts_empty_message": "Everything here agreed on a single version.",
+    "conflicts_empty_title": "No conflicts",
+    "conflicts_explain": "This file was edited on both devices. The newer version won; your version was preserved.",
+    "conflicts_title": "Sync conflicts",
     "delete_message": "Files stay on both devices — only the sync link is removed.",
     "delete_title": "Remove sync pair?",
     "empty_message": "Pick a folder and a device — changes you make are mirrored over your local network, end-to-end encrypted.",
@@ -626,6 +631,9 @@
     "invite_explain": "Files will be mirrored over your local network, end-to-end encrypted. You can pause or remove the pair anytime.",
     "invite_message": "{device} wants to sync \"{folder}\" with this device",
     "invite_title": "Folder Sync invite",
+    "keep_both": "Keep both",
+    "keep_mine": "Keep mine",
+    "keep_theirs": "Keep theirs",
     "new_pair": "New sync pair",
     "no_devices_message": "Open BIShare on your other device on the same Wi-Fi, then try again.",
     "no_devices_title": "No devices online",

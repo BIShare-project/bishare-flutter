@@ -610,6 +610,11 @@
     "error_generic": "Terjadi kesalahan. Silakan coba lagi."
   },
   "sync": {
+    "conflicts_button": "{count} konflik — selesaikan",
+    "conflicts_empty_message": "Semua file di sini sepakat pada satu versi.",
+    "conflicts_empty_title": "Tidak ada konflik",
+    "conflicts_explain": "File ini diedit di dua perangkat. Versi lebih baru menang; versimu tetap disimpan.",
+    "conflicts_title": "Konflik sync",
     "delete_message": "File tetap ada di kedua perangkat — hanya tautan sync yang dihapus.",
     "delete_title": "Hapus pasangan sync?",
     "empty_message": "Pilih folder dan perangkat — perubahanmu dicerminkan lewat jaringan lokal, terenkripsi ujung-ke-ujung.",
@@ -626,6 +631,9 @@
     "invite_explain": "File dicerminkan lewat jaringan lokal, terenkripsi ujung-ke-ujung. Kamu bisa menjeda atau menghapus pasangan kapan saja.",
     "invite_message": "{device} ingin menyinkronkan \"{folder}\" dengan perangkat ini",
     "invite_title": "Undangan Folder Sync",
+    "keep_both": "Simpan keduanya",
+    "keep_mine": "Pakai punyaku",
+    "keep_theirs": "Pakai punya mereka",
     "new_pair": "Pasangan sync baru",
     "no_devices_message": "Buka BIShare di perangkat lain pada Wi-Fi yang sama, lalu coba lagi.",
     "no_devices_title": "Tidak ada perangkat online",

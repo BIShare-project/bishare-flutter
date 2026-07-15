@@ -505,6 +505,92 @@ void main() {
     );
   });
 
+  test('conflict resolution: keep-mine restores and wins; keep-theirs retires; keep-both renames',
+      () async {
+    await setUpPair();
+    // Manufacture a real conflict (same flow as the LWW test).
+    final fileA = File('${a.root.path}/doc.txt')..writeAsStringSync('base');
+    await a.engine.syncNow(pairId, host: 'l', port: 0);
+    fileA.writeAsStringSync('mine');
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    File('${b.root.path}/doc.txt').writeAsStringSync('theirs — newer');
+    await a.engine.syncNow(pairId, host: 'l', port: 0);
+    await b.engine.syncNow(pairId, host: 'l', port: 0);
+
+    var conflicts = await a.db.syncDao.unresolvedConflictsFor(pairId);
+    expect(conflicts, hasLength(1));
+    expect(fileA.readAsStringSync(), 'theirs — newer');
+
+    // KEEP MINE: my version comes back over the path; nothing unlinked (the
+    // overwritten winner + the copy both land in the trash).
+    await a.engine.resolveConflict(conflicts.single.id, ConflictChoice.keepMine);
+    expect(fileA.readAsStringSync(), 'mine');
+    expect(
+      File('${a.root.path}/${conflicts.single.loserCopyPath}').existsSync(),
+      isFalse,
+      reason: 'the conflict copy is retired to the trash',
+    );
+    expect(await a.db.syncDao.unresolvedConflictsFor(pairId), isEmpty);
+    final trashed = Directory('${a.trash.path}/$pairId')
+        .listSync(recursive: true)
+        .whereType<File>();
+    expect(trashed.any((f) => f.readAsStringSync() == 'theirs — newer'), isTrue,
+        reason: 'the displaced winner is preserved in the trash');
+
+    // KEEP THEIRS on a synthetic second conflict: the copy is retired.
+    final copy2 = File('${a.root.path}/x.sync-conflict-20260101-000000-a.txt')
+      ..writeAsStringSync('old mine');
+    await a.db.syncDao.recordConflict(SyncConflictsCompanion.insert(
+      id: 'c2',
+      pairId: pairId,
+      path: 'x.txt',
+      loserCopyPath: 'x.sync-conflict-20260101-000000-a.txt',
+      createdAt: DateTime(2026, 1, 2),
+    ));
+    await a.engine.resolveConflict('c2', ConflictChoice.keepTheirs);
+    expect(copy2.existsSync(), isFalse);
+
+    // KEEP BOTH: the copy is renamed OUT of the ignored namespace.
+    final copy3 = File('${a.root.path}/y.sync-conflict-20260101-000000-a.txt')
+      ..writeAsStringSync('both!');
+    await a.db.syncDao.recordConflict(SyncConflictsCompanion.insert(
+      id: 'c3',
+      pairId: pairId,
+      path: 'y.txt',
+      loserCopyPath: 'y.sync-conflict-20260101-000000-a.txt',
+      createdAt: DateTime(2026, 1, 2),
+    ));
+    await a.engine.resolveConflict('c3', ConflictChoice.keepBoth);
+    expect(copy3.existsSync(), isFalse);
+    final renamed = a.root
+        .listSync()
+        .whereType<File>()
+        .where((f) =>
+            f.path.contains('conflict') && !f.path.contains('.sync-conflict-'))
+        .toList();
+    expect(renamed, hasLength(1));
+    expect(renamed.single.readAsStringSync(), 'both!');
+  });
+
+  test('sweepMaintenance drops trash older than the TTL, keeps the rest',
+      () async {
+    await setUpPair();
+    final old = File('${a.trash.path}/$pairId/old.txt')
+      ..createSync(recursive: true)
+      ..writeAsStringSync('old');
+    old.setLastModifiedSync(
+      DateTime.now().subtract(const Duration(days: 40)),
+    );
+    final fresh = File('${a.trash.path}/$pairId/fresh.txt')
+      ..createSync(recursive: true)
+      ..writeAsStringSync('fresh');
+
+    await a.engine.sweepMaintenance();
+
+    expect(old.existsSync(), isFalse, reason: '40 days > 30-day TTL');
+    expect(fresh.existsSync(), isTrue);
+  });
+
   test('an exchange against a missing pair root answers 403, not a crash',
       () async {
     await setUpPair();

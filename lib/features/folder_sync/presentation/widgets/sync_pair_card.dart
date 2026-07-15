@@ -15,12 +15,16 @@ class SyncPairCard extends StatelessWidget {
     required this.onSyncNow,
     required this.onTogglePause,
     required this.onDelete,
+    this.onConflicts,
   });
 
   final SyncPairView view;
   final VoidCallback onSyncNow;
   final VoidCallback onTogglePause;
   final VoidCallback onDelete;
+
+  /// Opens the conflict-resolution sheet (shown when [SyncPairView.conflicts] > 0).
+  final VoidCallback? onConflicts;
 
   String get _folderName {
     final parts = view.displayRoot
@@ -124,6 +128,18 @@ class SyncPairCard extends StatelessWidget {
               ),
             ],
           ),
+          if (view.conflicts > 0) ...[
+            const SizedBox(height: 8),
+            AppButton(
+              label: 'sync.conflicts_button'
+                  .tr(namedArgs: {'count': '${view.conflicts}'}),
+              icon: AppIcons.circleAlert,
+              variant: AppButtonVariant.outline,
+              size: AppButtonSize.small,
+              fullWidth: true,
+              onPressed: onConflicts,
+            ),
+          ],
           if (view.errorMessage != null) ...[
             const SizedBox(height: 8),
             Row(

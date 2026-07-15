@@ -177,7 +177,10 @@ Future<void> setupLocator() async {
     deviceStream: discovery.devices,
     currentDevices: () => discovery.current,
     resolveRoot: syncRoots.resolve,
+    maintenance: syncEngine.sweepMaintenance,
   )..start();
+  // One startup sweep too (30-day trash TTL + expired tombstones).
+  unawaited(syncEngine.sweepMaintenance());
 
   // Magic-link auth + session. TokenStore holds the session in the secure
   // store; AuthedDio (Bearer + silent refresh) is the client Fase B / Drive

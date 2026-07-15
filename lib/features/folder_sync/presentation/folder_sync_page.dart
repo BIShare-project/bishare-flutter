@@ -9,6 +9,7 @@ import '../../../core/ui/app_ui.dart';
 import '../../discovery/data/discovery_service.dart';
 import '../data/sync_engine.dart';
 import 'folder_sync_cubit.dart';
+import 'widgets/conflict_sheet.dart';
 import 'widgets/pair_setup_sheet.dart';
 import 'widgets/sync_pair_card.dart';
 
@@ -77,6 +78,8 @@ class _FolderSyncView extends StatelessWidget {
                                       ),
                                       onDelete: () =>
                                           _confirmDelete(context, cubit, v),
+                                      onConflicts: () =>
+                                          showConflictSheet(context, cubit, v),
                                     ),
                                 ],
                               ),

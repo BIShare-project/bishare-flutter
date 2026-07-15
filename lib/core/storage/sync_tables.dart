@@ -285,6 +285,20 @@ class SyncDao extends DatabaseAccessor<AppDatabase> with _$SyncDaoMixin {
             ..where((c) => c.pairId.equals(pairId) & c.resolvedAt.isNull()))
           .watch();
 
+  /// Every unresolved conflict across ALL pairs — the UI folds these into
+  /// per-pair badge counts.
+  Stream<List<SyncConflict>> watchAllUnresolvedConflicts() =>
+      (select(syncConflicts)..where((c) => c.resolvedAt.isNull())).watch();
+
+  Future<List<SyncConflict>> unresolvedConflictsFor(String pairId) =>
+      (select(syncConflicts)
+            ..where((c) => c.pairId.equals(pairId) & c.resolvedAt.isNull())
+            ..orderBy([(c) => OrderingTerm.desc(c.createdAt)]))
+          .get();
+
+  Future<SyncConflict?> conflictById(String id) =>
+      (select(syncConflicts)..where((c) => c.id.equals(id))).getSingleOrNull();
+
   Future<void> recordConflict(SyncConflictsCompanion row) =>
       into(syncConflicts).insert(row);
 

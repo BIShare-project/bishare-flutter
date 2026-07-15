@@ -106,6 +106,20 @@ class PendingSyncInvite {
 /// Outcome of [SyncEngine.invitePeer].
 enum PairInviteOutcome { accepted, rejected }
 
+/// The user's decision on a recorded conflict (§6.1 resolution sheet).
+enum ConflictChoice {
+  /// Keep the synced winner; my preserved copy goes to the sync-trash.
+  keepTheirs,
+
+  /// Restore MY version over the path (it becomes a fresh local edit that
+  /// syncs out and wins by recency); the conflict copy goes to the trash.
+  keepMine,
+
+  /// Keep both: the conflict copy is renamed to a normal (non-ignored) name so
+  /// it syncs to every device alongside the winner.
+  keepBoth,
+}
+
 /// Pushes the needed files to the peer as a sync payload transfer (the
 /// prepare/upload leg with `syncPairId` + per-file `relPath`). Injectable;
 /// production wraps `TransferClient.send` (see `sync_transport.dart`).
@@ -892,6 +906,103 @@ class SyncEngine {
 
   Map<String, dynamic> _decodeJsonMap(List<int> bytes) =>
       jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+
+  // ─── Conflict resolution (M2c) ───
+
+  /// Apply the user's [choice] to a recorded conflict, then mark it resolved.
+  /// Every path stays non-destructive: nothing is unlinked — discarded versions
+  /// go to the pair's sync-trash (risk #9).
+  Future<void> resolveConflict(String conflictId, ConflictChoice choice) async {
+    final conflict = await _dao.conflictById(conflictId);
+    if (conflict == null) return;
+    final pair = await _dao.pairById(conflict.pairId);
+    if (pair == null) {
+      await _dao.resolveConflict(conflictId);
+      return;
+    }
+    await _serialize(pair.id, () async {
+      final root = _rootOf(pair);
+      final copy = _safeFile(root, conflict.loserCopyPath);
+      final target = _safeFile(root, conflict.path);
+
+      switch (choice) {
+        case ConflictChoice.keepTheirs:
+          // The winner already sits at the path — retire my preserved copy.
+          if (copy != null && await copy.exists()) {
+            await _moveToTrash(pair, conflict.loserCopyPath, copy);
+          }
+        case ConflictChoice.keepMine:
+          if (copy != null && await copy.exists() && target != null) {
+            // The overwritten winner is preserved too, then mine comes back as
+            // a fresh local edit (newer mtime → wins the next exchange).
+            if (await target.exists()) {
+              await _moveToTrash(pair, conflict.path, target);
+            }
+            await Directory(target.parent.path).create(recursive: true);
+            await copy.copy(target.path);
+            await _moveToTrash(pair, conflict.loserCopyPath, copy);
+          }
+        case ConflictChoice.keepBoth:
+          // Rename the copy OUT of the ignored *.sync-conflict-* namespace so
+          // it syncs everywhere alongside the winner.
+          if (copy != null && await copy.exists()) {
+            final friendly = conflict.loserCopyPath
+                .replaceFirst('.sync-conflict-', ' (conflict ')
+                .replaceFirst(RegExp(r'(\.[^./]+)?$'), r')$1');
+            final dst = _safeFile(root, friendly);
+            if (dst != null && !await dst.exists()) {
+              await copy.rename(dst.path);
+            }
+          }
+      }
+      await _dao.resolveConflict(conflictId);
+    });
+  }
+
+  Future<void> _moveToTrash(SyncPair pair, String relPath, File src) async {
+    final trashed = File(
+      '${_trashRoot.path}${Platform.pathSeparator}${pair.id}'
+      '${Platform.pathSeparator}${relPath.replaceAll('/', Platform.pathSeparator)}',
+    );
+    await Directory(trashed.parent.path).create(recursive: true);
+    final dst = await _nonClobbering(trashed.path);
+    try {
+      await src.rename(dst);
+    } on FileSystemException {
+      await src.copy(dst);
+      await src.delete();
+    }
+  }
+
+  // ─── Maintenance sweeps (M2c) ───
+
+  /// Housekeeping: drop sync-trash items older than [trashTtl] (30 days, §6.3)
+  /// and expired tombstones (90 days). Cheap; safe to run at startup and on the
+  /// scheduler's periodic tick.
+  Future<void> sweepMaintenance({
+    Duration trashTtl = const Duration(days: 30),
+  }) async {
+    for (final pair in await _dao.allPairs()) {
+      await _dao.sweepTombstones(pair.id);
+    }
+    if (!_trashRoot.existsSync()) return;
+    final cutoff = DateTime.now().subtract(trashTtl);
+    try {
+      await for (final ent
+          in _trashRoot.list(recursive: true, followLinks: false)) {
+        if (ent is! File) continue;
+        try {
+          if ((await ent.lastModified()).isBefore(cutoff)) {
+            await ent.delete();
+          }
+        } on FileSystemException {
+          // Raced/unreadable — the next sweep retries.
+        }
+      }
+    } on FileSystemException {
+      // Trash root vanished mid-walk — nothing to sweep.
+    }
+  }
 
   Future<void> dispose() async {
     await _status.close();

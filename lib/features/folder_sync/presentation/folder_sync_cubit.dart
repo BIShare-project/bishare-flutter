@@ -20,6 +20,7 @@ class SyncPairView extends Equatable {
     required this.peerOnline,
     this.pushedFiles = 0,
     this.totalFiles = 0,
+    this.conflicts = 0,
     this.errorMessage,
   });
 
@@ -31,11 +32,22 @@ class SyncPairView extends Equatable {
   final bool peerOnline;
   final int pushedFiles;
   final int totalFiles;
+
+  /// Unresolved conflicts recorded for this pair (badge + resolution sheet).
+  final int conflicts;
   final String? errorMessage;
 
   @override
-  List<Object?> get props =>
-      [pair, displayRoot, phase, peerOnline, pushedFiles, totalFiles, errorMessage];
+  List<Object?> get props => [
+        pair,
+        displayRoot,
+        phase,
+        peerOnline,
+        pushedFiles,
+        totalFiles,
+        conflicts,
+        errorMessage,
+      ];
 }
 
 class FolderSyncState extends Equatable {
@@ -80,6 +92,16 @@ class FolderSyncCubit extends Cubit<FolderSyncState> {
     _pairsSub = _dao.watchPairs().listen(_onPairs);
     _statusSub = _engine.status.listen(_onStatus);
     _discoverySub = _discovery.devices.listen((_) => _refold());
+    _conflictsSub = _dao.watchAllUnresolvedConflicts().listen((rows) {
+      final counts = <String, int>{};
+      for (final r in rows) {
+        counts[r.pairId] = (counts[r.pairId] ?? 0) + 1;
+      }
+      _conflictCounts
+        ..clear()
+        ..addAll(counts);
+      _refold();
+    });
   }
 
   final SyncEngine _engine;
@@ -89,6 +111,8 @@ class FolderSyncCubit extends Cubit<FolderSyncState> {
   late final StreamSubscription<List<SyncPair>> _pairsSub;
   late final StreamSubscription<SyncPairStatus> _statusSub;
   late final StreamSubscription<Object?> _discoverySub;
+  late final StreamSubscription<List<SyncConflict>> _conflictsSub;
+  final Map<String, int> _conflictCounts = {};
 
   List<SyncPair> _pairs = const [];
   final Map<String, SyncPairStatus> _live = {};
@@ -116,6 +140,7 @@ class FolderSyncCubit extends Cubit<FolderSyncState> {
             peerOnline: online.contains(p.peerFingerprint),
             pushedFiles: _live[p.id]?.pushedFiles ?? 0,
             totalFiles: _live[p.id]?.totalFiles ?? 0,
+            conflicts: _conflictCounts[p.id] ?? 0,
             errorMessage: _live[p.id]?.phase == SyncPhase.error
                 ? _live[p.id]?.message
                 : null,
@@ -181,6 +206,14 @@ class FolderSyncCubit extends Cubit<FolderSyncState> {
 
   Future<void> deletePair(String pairId) => _dao.deletePair(pairId);
 
+  /// Unresolved conflicts for the resolution sheet (newest first).
+  Future<List<SyncConflict>> conflictsFor(String pairId) =>
+      _dao.unresolvedConflictsFor(pairId);
+
+  /// Apply a resolution choice; the watch stream refreshes the badge.
+  Future<void> resolveConflict(String conflictId, ConflictChoice choice) =>
+      _engine.resolveConflict(conflictId, choice);
+
   void clearError() {
     if (state.errorKey != null) emit(state.copyWith(clearError: true));
   }
@@ -197,6 +230,7 @@ class FolderSyncCubit extends Cubit<FolderSyncState> {
     await _pairsSub.cancel();
     await _statusSub.cancel();
     await _discoverySub.cancel();
+    await _conflictsSub.cancel();
     return super.close();
   }
 }
