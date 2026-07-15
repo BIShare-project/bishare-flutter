@@ -501,6 +501,20 @@ void main() {
     );
   });
 
+  test('an exchange against a missing pair root answers 403, not a crash',
+      () async {
+    await setUpPair();
+    File('${a.root.path}/x.txt').writeAsStringSync('x');
+    // Simulate the stale-pair case: B's folder vanished after pairing.
+    b.root.deleteSync(recursive: true);
+
+    await expectLater(
+      a.engine.syncNow(pairId, host: 'l', port: 0),
+      throwsA(isA<HttpException>()), // the 403 surfaces as a clean sender error
+    );
+    b.root.createSync(); // restore for tearDown
+  });
+
   test('malicious traversal paths are ignored, not applied', () async {
     await setUpPair();
     // Craft a manifest claiming a file above the root; B must skip it.

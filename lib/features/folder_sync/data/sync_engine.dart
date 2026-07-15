@@ -446,7 +446,15 @@ class SyncEngine {
       return null; // wire identity must match the pairing-time key
     }
 
-    final ack = await _serialize(msg.pairId, () => _applyManifest(pair, msg));
+    final SyncAckMessage ack;
+    try {
+      ack = await _serialize(msg.pairId, () => _applyManifest(pair, msg));
+    } on Object catch (e) {
+      // An apply failure (unreadable/missing root — e.g. a stale pair whose
+      // folder is gone) must answer 403, not bubble into the server as a 500.
+      debugPrint('[Sync] apply failed for ${msg.pairId}: $e');
+      return null;
+    }
     return cipher.encryptCombined(
       Uint8List.fromList(_encodeJson(ack.toJson())),
     );
