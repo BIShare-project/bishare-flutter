@@ -352,10 +352,12 @@ class SyncEngine {
     if (poster == null || peerInfo == null || keys == null) {
       throw StateError('sync transport not wired');
     }
+    debugPrint('[Sync] invite → GET info $host:$port');
     final info = await peerInfo(host, port);
     if (info == null || info.publicKey.isEmpty) {
-      throw StateError('peer does not expose a public key');
+      throw StateError('peer info unreachable/keyless at $host:$port');
     }
+    debugPrint('[Sync] invite → peer fp=${info.fingerprint}');
     final cipher = await _crypto.deriveSession(info.publicKey);
     if (cipher == null) throw StateError('peer public key is malformed');
 
@@ -381,12 +383,14 @@ class SyncEngine {
         'wrappedKey': base64Encode(wrapped),
       }),
     ));
+    debugPrint('[Sync] invite → POST /sync (${body.length}B), menunggu consent…');
     final replyBytes = await poster(
       Uri(scheme: 'http', host: host, port: port, path: '/api/v1/sync'),
       body,
       {'x-sync-sender-pub': _ownPub},
     );
     final reply = _decodeJsonMap(await cipher.decryptCombined(replyBytes));
+    debugPrint('[Sync] invite → reply: ${reply['type']}');
     if (reply['type'] != 'pairAccept') return PairInviteOutcome.rejected;
 
     await _dao.createPair(
@@ -533,7 +537,16 @@ class SyncEngine {
       return null;
     }
 
-    await Directory(rootPath).create(recursive: true);
+    // rootPath arrives in STORED form (possibly portable @save/…): resolve to a
+    // real filesystem path before touching disk — creating the raw portable
+    // string was a relative path on iOS and 500'd every accept (regression of
+    // the portable-roots change). Filesystem failures answer 403, never a 500.
+    try {
+      await Directory(_resolveRoot(rootPath)).create(recursive: true);
+    } on Object catch (e) {
+      debugPrint('[Sync] pair accept: root create failed: $e');
+      return null;
+    }
     await _dao.createPair(
       SyncPairsCompanion.insert(
         id: pairId,

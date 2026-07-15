@@ -465,6 +465,47 @@ void main() {
     );
   });
 
+  test('pairing: accept with a PORTABLE root resolves before creating the dir',
+      () async {
+    await setUpPair();
+    final resolvedBase = Directory('${b.root.parent.path}/portable-resolved');
+    // B's engine resolves @save/ → a real base (like production SyncRootResolver).
+    b.engine = SyncEngine(
+      b.db.syncDao,
+      ManifestStore(b.db.syncDao, ownFingerprint: 'fp-b', scan: dartScan()),
+      b.crypto,
+      ownPublicKeyBase64: b.crypto.publicKeyBase64,
+      ownFingerprint: 'fp-b',
+      ownAlias: 'b',
+      trashRoot: b.trash,
+      keyStore: b.keys,
+      codec: ManifestFrameCodec.json(),
+      resolveRoot: (stored) => stored.startsWith('@save/')
+          ? '${resolvedBase.path}/${stored.substring(6)}'
+          : stored,
+      inviteDecisionTimeout: const Duration(seconds: 2),
+    );
+    a.engine = buildEngine(a, b);
+    final sub = b.engine.invites.listen(
+      (inv) => inv.accept('@save/BIShare Sync/${inv.rootName}'),
+    );
+    addTearDown(sub.cancel);
+
+    final outcome = await a.engine.invitePeer(
+      host: 'loop',
+      port: 0,
+      rootPath: a.root.path,
+    );
+    expect(outcome, PairInviteOutcome.accepted,
+        reason: 'portable root must not 500 the accept');
+    // The REAL resolved directory was created; the raw portable string was not.
+    final created = Directory(
+      '${resolvedBase.path}/BIShare Sync',
+    );
+    expect(created.existsSync(), isTrue);
+    expect(Directory('@save').existsSync(), isFalse);
+  });
+
   test('pairing: reject leaves no trace on either side', () async {
     await setUpPair();
     a.engine = SyncEngine(

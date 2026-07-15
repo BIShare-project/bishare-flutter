@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/di/locator.dart';
@@ -172,7 +173,8 @@ class FolderSyncCubit extends Cubit<FolderSyncState> {
         emit(state.copyWith(busy: false));
       }
       return outcome;
-    } on Object {
+    } on Object catch (e) {
+      debugPrint('[FolderSync] invitePeer FAILED: $e');
       emit(state.copyWith(busy: false, errorKey: 'sync.error_invite_failed'));
       return null;
     }
