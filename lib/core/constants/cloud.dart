@@ -77,6 +77,14 @@ class CloudConfig {
   static const String filesMultipartComplete =
       '/api/v1/files/multipart/complete';
 
+  /// Content dedup: `{hashes:[sha256…]}` (1–500, lowercase hex) → exists map.
+  /// Folder-sync M3 checks CIPHERTEXT hashes here (idempotent re-push, §7.1).
+  static const String filesCheckExists = '/api/v1/files/check-exists';
+
+  /// Cheap change beacon: `{last_sync_at,total_files,total_size,…}` — the
+  /// fingerprint triple folder-sync polls to know "pull the manifest" (§5.2).
+  static const String filesSyncStatus = '/api/v1/files/sync-status';
+
   static String file(String id) => '/api/v1/files/$id';
   static String fileDownloadUrl(String id) => '/api/v1/files/$id/download-url';
   static String filePermanent(String id) => '/api/v1/files/$id/permanent';

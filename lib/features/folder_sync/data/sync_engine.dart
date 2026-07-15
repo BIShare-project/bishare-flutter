@@ -562,6 +562,12 @@ class SyncEngine {
     return _rootOf(pair);
   }
 
+  /// Apply a peer snapshot that arrived OUTSIDE the LAN exchange — the cloud
+  /// pull path (M3). Same two-way semantics, serialized per pair; the caller
+  /// (CloudSyncAdapter) downloads whatever the ack reports as needed.
+  Future<SyncAckMessage> applySnapshot(SyncPair pair, SyncManifestMessage msg) =>
+      _serialize(msg.pairId, () => _applyManifest(pair, msg));
+
   /// Two-way reconciliation of the announced snapshot against the local tree
   /// (§4.4/§6). Deletes apply ONLY via explicit peer tombstones (absence from
   /// the snapshot never deletes — the peer may simply not have OUR new files);
