@@ -256,6 +256,25 @@ void main() {
       expect((await adapterA.push(pairId)).gate, CloudSyncGate.notPro);
       expect(cloud.objects, isEmpty, reason: 'no bytes may leave on free');
 
+      // The remote `cloud_sync_free` flag (admin-controlled launch period)
+      // lifts the tier gate — same free tier, push now goes through.
+      final freeAdapter = CloudSyncAdapter(
+        a.db.syncDao,
+        ManifestStore(
+          a.db.syncDao,
+          ownFingerprint: 'fp-${a.name}',
+          scan: dartScan(),
+        ),
+        a.engine,
+        cloud: cloud,
+        keys: a.keys,
+        ownFingerprint: 'fp-${a.name}',
+        cloudSyncFree: () => true,
+      );
+      expect((await freeAdapter.push(pairId)).gate, CloudSyncGate.ok);
+      expect(cloud.objects, isNotEmpty);
+      cloud.objects.clear();
+
       cloud.tier = 'pro';
       await a.db.syncDao.updatePair(
         (await a.db.syncDao.pairById(pairId))!

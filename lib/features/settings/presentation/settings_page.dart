@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import '../../auth/presentation/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -292,23 +291,10 @@ class SettingsPage extends StatelessWidget {
                                   ),
                                   trailing: ShadSwitch(
                                     value: state.folderCloudSync,
-                                    onChanged: (on) {
-                                      final tier = context
-                                          .read<AuthCubit>()
-                                          .state
-                                          .tier;
-                                      if (on &&
-                                          tier != 'pro' &&
-                                          tier != 'business') {
-                                        toast(
-                                          context,
-                                          'sync.cloud_needs_pro'.tr(),
-                                          type: ToastType.error,
-                                        );
-                                        return;
-                                      }
-                                      cubit.setFolderCloudSync(on);
-                                    },
+                                    // Pure user preference — tier enforcement
+                                    // lives in CloudSyncAdapter and is driven
+                                    // by the admin-controlled remote flags.
+                                    onChanged: cubit.setFolderCloudSync,
                                   ),
                                 ),
                                 const AppRowDivider(indent: 58),

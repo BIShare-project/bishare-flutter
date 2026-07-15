@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../core/config/feature_flags.dart';
 import '../../core/di/locator.dart';
 import '../../core/identity/device_identity.dart';
 import '../../core/ui/app_ui.dart';
@@ -107,7 +108,15 @@ class HomePage extends StatelessWidget {
                                 hidden: settings.visibility.name == 'hidden',
                               ),
                             ),
-                            const DriveEntryCard(),
+                            // Drive is remote-flag gated (hidden pre-launch;
+                            // flip `drive_enabled` from the admin Flags page).
+                            ListenableBuilder(
+                              listenable: getIt<FeatureFlags>(),
+                              builder: (context, _) =>
+                                  getIt<FeatureFlags>().driveEnabled
+                                      ? const DriveEntryCard()
+                                      : const SizedBox.shrink(),
+                            ),
                             const SyncEntryCard(),
                             const ComposeTray(),
                             const DeviceSection(),

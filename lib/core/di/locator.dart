@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../config/feature_flags.dart';
 import '../storage/save_folder_channel.dart';
 import '../storage/android_downloads_channel.dart';
 import '../../features/auth/data/auth_service.dart';
@@ -53,6 +54,10 @@ final GetIt getIt = GetIt.instance;
 Future<void> setupLocator() async {
   final prefs = await SharedPreferences.getInstance();
   const secure = FlutterSecureStorage();
+  // Remote feature flags (drive visibility, free cloud-sync period): cached
+  // copy applies immediately, the network refresh lands in the background.
+  final featureFlags = FeatureFlags(prefs);
+  await featureFlags.load();
   final identity = await DeviceIdentity.load(prefs: prefs, secure: secure);
   final saveDir = await _resolveSaveDirectory();
 
@@ -200,6 +205,7 @@ Future<void> setupLocator() async {
     keys: SecureSyncKeyStore(secure),
     ownFingerprint: identity.fingerprint,
     resolveRoot: syncRoots.resolve,
+    cloudSyncFree: () => featureFlags.cloudSyncFree,
   );
   // Auto-sync (M2b): folder watchers + peer-online pushes + periodic rescan.
   final syncScheduler = SyncScheduler(
@@ -225,6 +231,7 @@ Future<void> setupLocator() async {
 
   getIt
     ..registerSingleton<SharedPreferences>(prefs)
+    ..registerSingleton<FeatureFlags>(featureFlags)
     ..registerSingleton<DeviceIdentity>(identity)
     ..registerSingleton<TokenStore>(tokenStore)
     ..registerSingleton<AuthService>(authService)

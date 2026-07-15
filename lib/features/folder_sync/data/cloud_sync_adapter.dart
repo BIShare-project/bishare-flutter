@@ -53,11 +53,13 @@ class CloudSyncAdapter {
     required String ownFingerprint,
     SyncBlobCipher? cipher,
     String Function(String stored)? resolveRoot,
+    bool Function()? cloudSyncFree,
   })  : _cloud = cloud,
         _keys = keys,
         _ownFp = ownFingerprint,
         _cipher = cipher ?? SyncBlobCipher(),
-        _resolveRoot = resolveRoot ?? ((s) => s);
+        _resolveRoot = resolveRoot ?? ((s) => s),
+        _cloudSyncFree = cloudSyncFree ?? (() => false);
 
   final SyncDao _dao;
   final ManifestStore _store;
@@ -68,6 +70,10 @@ class CloudSyncAdapter {
   final SyncBlobCipher _cipher;
   final String Function(String stored) _resolveRoot;
 
+  /// Remote feature flag `cloud_sync_free`: pre-IAP launch period where the
+  /// cloud fallback is free for everyone — lifts the Pro tier gate.
+  final bool Function() _cloudSyncFree;
+
   static const int _manifestVersion = 1;
 
   String _manifestName(String fp) =>
@@ -76,9 +82,11 @@ class CloudSyncAdapter {
   /// Gate shared by push/pull: pair mode, tier, and key presence.
   Future<(CloudSyncGate, Uint8List?)> _gate(SyncPair pair) async {
     if (pair.mode != 'lanCloud') return (CloudSyncGate.notLanCloud, null);
-    final beacon = await _cloud.beacon();
-    if (beacon.tier != 'pro' && beacon.tier != 'business') {
-      return (CloudSyncGate.notPro, null);
+    if (!_cloudSyncFree()) {
+      final beacon = await _cloud.beacon();
+      if (beacon.tier != 'pro' && beacon.tier != 'business') {
+        return (CloudSyncGate.notPro, null);
+      }
     }
     final keyB64 = await _keys.read(SyncEngine.pairKeyStorageKey(pair.id));
     if (keyB64 == null || keyB64.isEmpty) return (CloudSyncGate.noPairKey, null);
