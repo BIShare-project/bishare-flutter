@@ -182,7 +182,11 @@ class SyncPairCard extends StatelessWidget {
       return AppBadge('sync.paused'.tr(), color: cs.mutedForeground);
     }
     if (!view.peerOnline) {
-      return AppBadge('sync.peer_offline'.tr(), color: cs.mutedForeground);
+      // With the cloud fallback on, an away peer still syncs — say so instead
+      // of the alarming "offline".
+      return view.pair.mode == 'lanCloud'
+          ? AppBadge('sync.via_cloud'.tr())
+          : AppBadge('sync.peer_offline'.tr(), color: cs.mutedForeground);
     }
     return switch (view.phase) {
       SyncPhase.error => AppBadge('sync.failed'.tr(), color: cs.destructive),

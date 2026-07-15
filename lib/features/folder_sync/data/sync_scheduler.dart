@@ -187,7 +187,15 @@ class SyncScheduler {
       try {
         await _run(pair, target);
       } on Object catch (e) {
-        debugPrint('[SyncSched] ${pair.id}: sync failed: $e');
+        debugPrint('[SyncSched] ${pair.id}: LAN sync failed: $e');
+        // Stale presence (§5.3 flap): mDNS can keep announcing a peer that
+        // already left the network — the LAN attempt times out. For lanCloud
+        // pairs the delta must not strand: hand it to the cloud.
+        final push = _cloudPush;
+        if (push != null && pair.mode == 'lanCloud') {
+          debugPrint('[SyncSched] ${pair.id}: falling back to cloud push');
+          _contained('cloud push ${pair.id}', () => push(pair));
+        }
       }
     }());
   }

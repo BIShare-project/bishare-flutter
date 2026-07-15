@@ -657,6 +657,7 @@
     "sync_now": "Sinkronkan sekarang",
     "title": "Folder Sync",
     "up_to_date": "Terbaru",
+    "via_cloud": "via cloud",
     "warn_empty_scan": "Folder kosong atau tidak terbaca — 0 file dipindai",
     "working": "Menyinkronkan…"
   }

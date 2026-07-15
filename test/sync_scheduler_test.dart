@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:bishare/core/storage/app_database.dart';
 import 'package:bishare/core/sync/folder_watcher.dart';
@@ -221,6 +222,42 @@ void main() {
     fakes['/root/pc']!.emit();
     await pump(80);
     expect(pushes, isEmpty, reason: 'lanOnly never touches the cloud');
+  });
+
+  test('stale presence: LAN failure falls back to cloud push (lanCloud only)',
+      () async {
+    await scheduler.dispose();
+    final pushes = <String>[];
+    scheduler = SyncScheduler(
+      (pair, peer) async => throw const SocketException('timed out'),
+      db.syncDao,
+      deviceStream: devices.stream,
+      currentDevices: () => online, // peer LOOKS online (stale mDNS)
+      cloudPush: (pair) async => pushes.add(pair.id),
+      cloudPull: (pair) async {},
+      watcherFactory: (root) => FolderWatcher(
+        root,
+        debounce: const Duration(milliseconds: 30),
+        factory: (path) => fakes.putIfAbsent(path, () => FakeDirWatcher(path)),
+      ),
+    )..start();
+
+    online = [_device('fp-peer')];
+    await addPair('pl', 'fp-peer'); // lanOnly default
+    await db.syncDao.setMode('pl', 'lanCloud');
+    await pump();
+
+    fakes['/root/pl']!.emit();
+    await pump(120);
+    expect(pushes, ['pl'], reason: 'LAN timeout must hand off to the cloud');
+
+    // lanOnly pair: failure stays failed — never the cloud.
+    await db.syncDao.setMode('pl', 'lanOnly');
+    await pump();
+    pushes.clear();
+    fakes['/root/pl']!.emit();
+    await pump(120);
+    expect(pushes, isEmpty);
   });
 
   test('deleting a pair tears its watcher down', () async {
