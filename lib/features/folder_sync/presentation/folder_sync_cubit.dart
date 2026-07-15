@@ -157,7 +157,13 @@ class FolderSyncCubit extends Cubit<FolderSyncState> {
     }
     emit(state.copyWith(clearError: true));
     try {
-      await _engine.syncNow(pairId, host: device.host, port: device.port);
+      final report =
+          await _engine.syncNow(pairId, host: device.host, port: device.port);
+      if (report.scanned == 0) {
+        // Never silently "up to date" on an empty/unreadable root — this is
+        // exactly how an iOS scoped-folder miss looked before (0 files seen).
+        emit(state.copyWith(errorKey: 'sync.warn_empty_scan'));
+      }
     } on Object {
       // The engine already emitted SyncPhase.error with the message.
     }

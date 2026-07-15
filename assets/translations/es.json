@@ -644,6 +644,7 @@
     "sync_now": "Sync now",
     "title": "Folder Sync",
     "up_to_date": "Up to date",
+    "warn_empty_scan": "The folder is empty or unreadable — 0 files scanned",
     "working": "Syncing…"
   }
 }
