@@ -6,7 +6,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/storage/app_database.dart';
 import '../../../core/ui/app_ui.dart';
-import '../../auth/presentation/auth_cubit.dart';
 import '../../discovery/data/discovery_service.dart';
 import '../data/sync_engine.dart';
 import 'folder_sync_cubit.dart';
@@ -81,25 +80,6 @@ class _FolderSyncView extends StatelessWidget {
                                           _confirmDelete(context, cubit, v),
                                       onConflicts: () =>
                                           showConflictSheet(context, cubit, v),
-                                      onToggleCloud: () {
-                                        final enabling =
-                                            v.pair.mode != 'lanCloud';
-                                        final tier = context
-                                            .read<AuthCubit>()
-                                            .state
-                                            .tier;
-                                        if (enabling &&
-                                            tier != 'pro' &&
-                                            tier != 'business') {
-                                          toast(
-                                            context,
-                                            'sync.cloud_needs_pro'.tr(),
-                                            type: ToastType.error,
-                                          );
-                                          return;
-                                        }
-                                        cubit.setCloud(v.pair.id, enabling);
-                                      },
                                     ),
                                 ],
                               ),
