@@ -370,7 +370,7 @@
     "browser_upload_subtitle": "允许网页浏览器向此设备发送文件",
     "browser_upload_unlimited": "无限制",
     "choose_folder": "选择文件夹…",
-    "clipboard_cloud": "通过云同步",
+    "clipboard_cloud": "Clipboard via cloud",
     "clipboard_cloud_soon": "即将推出，可跨不同网络同步",
     "clipboard_cloud_subtitle": "在不同网络的设备之间中转剪贴板内容",
     "clipboard_history": "剪贴板历史",

@@ -370,7 +370,7 @@
     "browser_upload_subtitle": "웹 브라우저에서 이 기기로 파일을 보낼 수 있도록 허용합니다",
     "browser_upload_unlimited": "무제한",
     "choose_folder": "폴더 선택…",
-    "clipboard_cloud": "클라우드로 동기화",
+    "clipboard_cloud": "Clipboard via cloud",
     "clipboard_cloud_soon": "출시 예정 — 다른 네트워크 간 동기화",
     "clipboard_cloud_subtitle": "다른 네트워크에 있는 기기 간에 클립보드를 중계합니다",
     "clipboard_history": "클립보드 기록",

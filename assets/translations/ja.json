@@ -370,7 +370,7 @@
     "browser_upload_subtitle": "ウェブブラウザからこのデバイスにファイルを送信できるようにします",
     "browser_upload_unlimited": "無制限",
     "choose_folder": "フォルダを選択…",
-    "clipboard_cloud": "クラウド経由で同期",
+    "clipboard_cloud": "Clipboard via cloud",
     "clipboard_cloud_soon": "近日公開 — 異なるネットワーク間で同期",
     "clipboard_cloud_subtitle": "異なるネットワーク上のデバイス間でクリップボードを中継します",
     "clipboard_history": "クリップボード履歴",
