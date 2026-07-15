@@ -15,23 +15,24 @@ import 'glyph.dart';
 /// signed in. Reads the app-wide [AuthCubit], so the same state also feeds the
 /// future Drive tab.
 ///
-/// Launch flag: while `login_enabled` is off (admin-controlled), a signed-out
-/// device shows no Account section at all — sign-in simply doesn't exist yet.
-/// An existing session keeps its profile row (sign-out still works).
+/// Launch flag: while `login_enabled` is off (admin-controlled), the Account
+/// section doesn't exist at all — not even for a device with a live session
+/// (the session keeps working underneath; its profile row and sign-out return
+/// when the flag flips on).
 class AccountSection extends StatelessWidget {
   const AccountSection({super.key});
 
   @override
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
-    return BlocBuilder<AuthCubit, AuthState>(
-      builder: (context, state) {
-        return ListenableBuilder(
-          listenable: getIt<FeatureFlags>(),
-          builder: (context, _) {
-            if (!state.isAuthenticated && !getIt<FeatureFlags>().loginEnabled) {
-              return const SizedBox.shrink();
-            }
+    return ListenableBuilder(
+      listenable: getIt<FeatureFlags>(),
+      builder: (context, _) {
+        if (!getIt<FeatureFlags>().loginEnabled) {
+          return const SizedBox.shrink();
+        }
+        return BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
             return Column(
               children: [
                 AppSectionHeader('auth.account'.tr()),
