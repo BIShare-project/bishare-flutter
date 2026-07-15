@@ -21,6 +21,7 @@ import '../../features/clipboard/data/clipboard_token_store.dart';
 import '../../features/discovery/data/discovery_service.dart';
 import '../../features/favorites/data/favorites_repository.dart';
 import '../../features/folder_sync/data/sync_engine.dart';
+import '../../features/folder_sync/data/sync_scheduler.dart';
 import '../../features/folder_sync/data/sync_transport.dart';
 import '../../features/history/data/history_repository.dart';
 import '../../features/nearby/data/nearby_service.dart';
@@ -151,6 +152,14 @@ Future<void> setupLocator() async {
   server
     ..onSyncFrame = syncEngine.handleSyncRequest
     ..syncRootFor = syncEngine.rootForPayload;
+  // Auto-sync (M2b): folder watchers + peer-online pushes + periodic rescan.
+  final syncScheduler = SyncScheduler(
+    (pair, peer) =>
+        syncEngine.syncNow(pair.id, host: peer.host, port: peer.port),
+    db.syncDao,
+    deviceStream: discovery.devices,
+    currentDevices: () => discovery.current,
+  )..start();
 
   // Magic-link auth + session. TokenStore holds the session in the secure
   // store; AuthedDio (Bearer + silent refresh) is the client Fase B / Drive
@@ -197,6 +206,7 @@ Future<void> setupLocator() async {
     ..registerSingleton<DeepLinkService>(DeepLinkService())
     ..registerSingleton<TransferClient>(transferClient)
     ..registerSingleton<SyncEngine>(syncEngine)
+    ..registerSingleton<SyncScheduler>(syncScheduler)
     ..registerSingleton<NearbyService>(NearbyService())
     ..registerSingleton<DesktopService>(DesktopService(server))
     // Cloud relay WS+REST client (v2.4 premium features). Lazy: it stays

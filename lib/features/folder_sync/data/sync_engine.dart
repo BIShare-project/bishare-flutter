@@ -232,15 +232,19 @@ class SyncEngine {
         baseCursor: 0, // always a full snapshot until cursor deltas (M2+)
         newCursor: cursor,
         ops: [
+          // Hashless files are mid-write (the scanner's stability check
+          // deferred them) — announcing them would push half-written bytes.
+          // The next watcher debounce / rescan picks them up settled.
           for (final e in scan.entries)
-            DeltaOp(
-              kind: SyncOpKind.add,
-              path: e.path,
-              sha256: e.sha256,
-              size: e.size,
-              mtimeMs: e.mtimeMs,
-              isDir: e.isDir,
-            ),
+            if (e.isDir || e.sha256 != null)
+              DeltaOp(
+                kind: SyncOpKind.add,
+                path: e.path,
+                sha256: e.sha256,
+                size: e.size,
+                mtimeMs: e.mtimeMs,
+                isDir: e.isDir,
+              ),
           for (final t in tombs)
             DeltaOp(
               kind: SyncOpKind.delete,

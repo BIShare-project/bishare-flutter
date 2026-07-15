@@ -1,0 +1,154 @@
+import 'dart:async';
+
+import 'package:bishare/core/storage/app_database.dart';
+import 'package:bishare/core/sync/folder_watcher.dart';
+import 'package:bishare/features/folder_sync/data/sync_scheduler.dart';
+import 'package:bishare/features/discovery/domain/discovered_device.dart';
+import 'package:drift/drift.dart' show Value;
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:watcher/watcher.dart';
+
+/// A hand-driven DirectoryWatcher: tests push [WatchEvent]s into [emit].
+class FakeDirWatcher implements DirectoryWatcher {
+  FakeDirWatcher(this.path);
+
+  @override
+  final String path;
+  final _events = StreamController<WatchEvent>.broadcast();
+
+  void emit() =>
+      _events.add(WatchEvent(ChangeType.MODIFY, '$path/some-file'));
+
+  @override
+  Stream<WatchEvent> get events => _events.stream;
+
+  @override
+  String get directory => path;
+
+  @override
+  bool get isReady => true;
+
+  @override
+  Future<void> get ready async {}
+}
+
+DiscoveredDevice _device(String fp) => DiscoveredDevice(
+      fingerprint: fp,
+      alias: fp,
+      host: '198.18.0.1',
+      port: 1,
+      lastSeen: DateTime(2026, 1, 1),
+      firstSeen: DateTime(2026, 1, 1),
+    );
+
+void main() {
+  late AppDatabase db;
+  late StreamController<List<DiscoveredDevice>> devices;
+  late List<DiscoveredDevice> online;
+  late List<(String pairId, String peerFp)> runs;
+  late Map<String, FakeDirWatcher> fakes;
+  late SyncScheduler scheduler;
+
+  Future<void> pump([int ms = 50]) =>
+      Future<void>.delayed(Duration(milliseconds: ms));
+
+  setUp(() async {
+    db = AppDatabase(NativeDatabase.memory());
+    devices = StreamController<List<DiscoveredDevice>>.broadcast();
+    online = [];
+    runs = [];
+    fakes = {};
+    scheduler = SyncScheduler(
+      (pair, peer) async => runs.add((pair.id, peer.fingerprint)),
+      db.syncDao,
+      deviceStream: devices.stream,
+      currentDevices: () => online,
+      watcherFactory: (root) => FolderWatcher(
+        root,
+        debounce: const Duration(milliseconds: 30),
+        factory: (path) => fakes.putIfAbsent(path, () => FakeDirWatcher(path)),
+      ),
+    )..start();
+  });
+
+  tearDown(() async {
+    await scheduler.dispose();
+    await devices.close();
+    await db.close();
+  });
+
+  Future<void> addPair(String id, String peerFp, {bool paused = false}) async {
+    await db.syncDao.createPair(
+      SyncPairsCompanion.insert(
+        id: id,
+        rootPath: '/root/$id',
+        peerFingerprint: peerFp,
+        peerPublicKey: const Value('pk'),
+        createdAt: DateTime(2026, 1, 1),
+        paused: Value(paused),
+      ),
+      id,
+    );
+    await pump();
+  }
+
+  test('a debounced burst of file events triggers ONE sync to the online peer',
+      () async {
+    online = [_device('fp-peer')];
+    await addPair('p1', 'fp-peer');
+
+    final fake = fakes['/root/p1']!;
+    fake.emit();
+    fake.emit();
+    fake.emit(); // burst
+    await pump(80); // > debounce
+
+    expect(runs, [('p1', 'fp-peer')], reason: 'burst collapses to one run');
+  });
+
+  test('no run while the peer is offline; peer-online flushes the pair',
+      () async {
+    await addPair('p1', 'fp-peer'); // peer NOT in `online`
+
+    fakes['/root/p1']!.emit();
+    await pump(80);
+    expect(runs, isEmpty, reason: 'offline peer → nothing to sync against');
+
+    // Peer appears on the LAN.
+    online = [_device('fp-peer')];
+    devices.add(online);
+    await pump();
+    expect(runs, [('p1', 'fp-peer')], reason: 'presence flushes the pair');
+  });
+
+  test('a paused pair never watches nor triggers; resume re-arms it', () async {
+    online = [_device('fp-peer')];
+    await addPair('p1', 'fp-peer', paused: true);
+    expect(fakes, isEmpty, reason: 'paused pair gets no watcher');
+
+    devices.add(online); // presence event
+    await pump();
+    expect(runs, isEmpty);
+
+    await db.syncDao.setPaused('p1', false);
+    await pump();
+    expect(fakes.containsKey('/root/p1'), isTrue, reason: 'resume arms watcher');
+    fakes['/root/p1']!.emit();
+    await pump(80);
+    expect(runs, [('p1', 'fp-peer')]);
+  });
+
+  test('deleting a pair tears its watcher down', () async {
+    online = [_device('fp-peer')];
+    await addPair('p1', 'fp-peer');
+    expect(fakes['/root/p1']!, isNotNull);
+    final watcherStopped = fakes['/root/p1']!;
+
+    await db.syncDao.deletePair('p1');
+    await pump();
+    watcherStopped.emit(); // stale event after teardown
+    await pump(80);
+    expect(runs, isEmpty, reason: 'no trigger after the pair is gone');
+  });
+}
