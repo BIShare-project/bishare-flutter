@@ -105,9 +105,19 @@ class SyncScheduler {
       }
     }
     if (peer == null) return; // offline — the peer-online trigger will fire
+    final target = peer; // non-nullable copy (closure capture blocks promotion)
     debugPrint('[SyncSched] ${pair.id}: $reason → syncNow');
-    // syncNow serializes per pair; errors surface on the engine status stream.
-    unawaited(_run(pair, peer).catchError((Object _) {}));
+    // syncNow serializes per pair; errors already surface on the engine status
+    // stream. try/catch (NOT Future.catchError) so a runner whose runtime
+    // future carries a value type can't turn a failure into an unhandled
+    // "handler must return a value of the future's type".
+    unawaited(() async {
+      try {
+        await _run(pair, target);
+      } on Object catch (e) {
+        debugPrint('[SyncSched] ${pair.id}: sync failed: $e');
+      }
+    }());
   }
 
   Future<void> dispose() async {

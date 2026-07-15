@@ -154,8 +154,11 @@ Future<void> setupLocator() async {
     ..syncRootFor = syncEngine.rootForPayload;
   // Auto-sync (M2b): folder watchers + peer-online pushes + periodic rescan.
   final syncScheduler = SyncScheduler(
-    (pair, peer) =>
-        syncEngine.syncNow(pair.id, host: peer.host, port: peer.port),
+    // async body (not a bare tear-off) so the runtime future is Future<void>,
+    // never the engine's Future<SyncPushReport> wearing a void mask.
+    (pair, peer) async {
+      await syncEngine.syncNow(pair.id, host: peer.host, port: peer.port);
+    },
     db.syncDao,
     deviceStream: discovery.devices,
     currentDevices: () => discovery.current,

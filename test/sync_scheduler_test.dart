@@ -139,6 +139,39 @@ void main() {
     expect(runs, [('p1', 'fp-peer')]);
   });
 
+  test('a failing runner is contained and later triggers still fire', () async {
+    // Rebuild the scheduler with a runner whose RUNTIME future carries a value
+    // type and THROWS — the regression that produced "the error handler of
+    // Future.catchError must return a value of the future's type" on device.
+    await scheduler.dispose();
+    var calls = 0;
+    scheduler = SyncScheduler(
+      (pair, peer) async {
+        calls++;
+        if (calls == 1) throw StateError('peer went away mid-sync');
+      },
+      db.syncDao,
+      deviceStream: devices.stream,
+      currentDevices: () => online,
+      watcherFactory: (root) => FolderWatcher(
+        root,
+        debounce: const Duration(milliseconds: 30),
+        factory: (path) => fakes.putIfAbsent(path, () => FakeDirWatcher(path)),
+      ),
+    )..start();
+
+    online = [_device('fp-peer')];
+    await addPair('p1', 'fp-peer');
+
+    fakes['/root/p1']!.emit();
+    await pump(80); // first run throws — must be swallowed, not unhandled
+    expect(calls, 1);
+
+    fakes['/root/p1']!.emit();
+    await pump(80);
+    expect(calls, 2, reason: 'a failure must not wedge future triggers');
+  });
+
   test('deleting a pair tears its watcher down', () async {
     online = [_device('fp-peer')];
     await addPair('p1', 'fp-peer');
