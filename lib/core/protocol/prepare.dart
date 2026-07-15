@@ -6,15 +6,22 @@ import 'file_metadata.dart';
 part 'prepare.g.dart';
 
 /// Request body for `POST /api/v1/prepare`. `files` is keyed by fileId.
-@JsonSerializable(explicitToJson: true)
+@JsonSerializable(explicitToJson: true, includeIfNull: false)
 class PrepareRequest {
-  const PrepareRequest({required this.info, required this.files});
+  const PrepareRequest({required this.info, required this.files, this.syncPairId});
 
   factory PrepareRequest.fromJson(Map<String, dynamic> json) =>
       _$PrepareRequestFromJson(json);
 
   final DeviceInfo info;
   final Map<String, FileMetadata> files;
+
+  /// Folder-sync payload marker (Tahap 4): when set, this prepare carries files
+  /// for the given sync pair — the receiver auto-accepts if (pairId, sender
+  /// fingerprint) matches a configured pair, and routes each file to the pair
+  /// root at its [FileMetadata.relPath] instead of the inbox. Older peers
+  /// ignore the field (it's absent from normal transfers).
+  final String? syncPairId;
 
   Map<String, dynamic> toJson() => _$PrepareRequestToJson(this);
 }

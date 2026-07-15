@@ -2198,6 +2198,18 @@ class $SyncPairsTable extends SyncPairs
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _peerPublicKeyMeta = const VerificationMeta(
+    'peerPublicKey',
+  );
+  @override
+  late final GeneratedColumn<String> peerPublicKey = GeneratedColumn<String>(
+    'peer_public_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _directionMeta = const VerificationMeta(
     'direction',
   );
@@ -2294,6 +2306,7 @@ class $SyncPairsTable extends SyncPairs
     id,
     rootPath,
     peerFingerprint,
+    peerPublicKey,
     direction,
     mode,
     paused,
@@ -2338,6 +2351,15 @@ class $SyncPairsTable extends SyncPairs
       );
     } else if (isInserting) {
       context.missing(_peerFingerprintMeta);
+    }
+    if (data.containsKey('peer_public_key')) {
+      context.handle(
+        _peerPublicKeyMeta,
+        peerPublicKey.isAcceptableOrUnknown(
+          data['peer_public_key']!,
+          _peerPublicKeyMeta,
+        ),
+      );
     }
     if (data.containsKey('direction')) {
       context.handle(
@@ -2419,6 +2441,10 @@ class $SyncPairsTable extends SyncPairs
         DriftSqlType.string,
         data['${effectivePrefix}peer_fingerprint'],
       )!,
+      peerPublicKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}peer_public_key'],
+      )!,
       direction: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}direction'],
@@ -2467,6 +2493,14 @@ class SyncPair extends DataClass implements Insertable<SyncPair> {
   final String rootPath;
   final String peerFingerprint;
 
+  /// The peer's base64 X25519 public key, captured at pairing. Authenticates the
+  /// sync wire: an /api/v1/sync request must AEAD-decrypt under the key derived
+  /// from THIS public key (only the private-key holder can produce that), and a
+  /// payload prepare's fingerprint must match [peerFingerprint]. The device
+  /// fingerprint alone is a plain UUID — spoofable — so the pubkey is the
+  /// cryptographic identity. (Added pre-release within schemaVersion 4.)
+  final String peerPublicKey;
+
   /// 'twoWay' (v1) | 'pushOnly' | 'pullOnly' — enum ready, only twoWay in v1.
   final String direction;
 
@@ -2490,6 +2524,7 @@ class SyncPair extends DataClass implements Insertable<SyncPair> {
     required this.id,
     required this.rootPath,
     required this.peerFingerprint,
+    required this.peerPublicKey,
     required this.direction,
     required this.mode,
     required this.paused,
@@ -2505,6 +2540,7 @@ class SyncPair extends DataClass implements Insertable<SyncPair> {
     map['id'] = Variable<String>(id);
     map['root_path'] = Variable<String>(rootPath);
     map['peer_fingerprint'] = Variable<String>(peerFingerprint);
+    map['peer_public_key'] = Variable<String>(peerPublicKey);
     map['direction'] = Variable<String>(direction);
     map['mode'] = Variable<String>(mode);
     map['paused'] = Variable<bool>(paused);
@@ -2527,6 +2563,7 @@ class SyncPair extends DataClass implements Insertable<SyncPair> {
       id: Value(id),
       rootPath: Value(rootPath),
       peerFingerprint: Value(peerFingerprint),
+      peerPublicKey: Value(peerPublicKey),
       direction: Value(direction),
       mode: Value(mode),
       paused: Value(paused),
@@ -2553,6 +2590,7 @@ class SyncPair extends DataClass implements Insertable<SyncPair> {
       id: serializer.fromJson<String>(json['id']),
       rootPath: serializer.fromJson<String>(json['rootPath']),
       peerFingerprint: serializer.fromJson<String>(json['peerFingerprint']),
+      peerPublicKey: serializer.fromJson<String>(json['peerPublicKey']),
       direction: serializer.fromJson<String>(json['direction']),
       mode: serializer.fromJson<String>(json['mode']),
       paused: serializer.fromJson<bool>(json['paused']),
@@ -2570,6 +2608,7 @@ class SyncPair extends DataClass implements Insertable<SyncPair> {
       'id': serializer.toJson<String>(id),
       'rootPath': serializer.toJson<String>(rootPath),
       'peerFingerprint': serializer.toJson<String>(peerFingerprint),
+      'peerPublicKey': serializer.toJson<String>(peerPublicKey),
       'direction': serializer.toJson<String>(direction),
       'mode': serializer.toJson<String>(mode),
       'paused': serializer.toJson<bool>(paused),
@@ -2585,6 +2624,7 @@ class SyncPair extends DataClass implements Insertable<SyncPair> {
     String? id,
     String? rootPath,
     String? peerFingerprint,
+    String? peerPublicKey,
     String? direction,
     String? mode,
     bool? paused,
@@ -2597,6 +2637,7 @@ class SyncPair extends DataClass implements Insertable<SyncPair> {
     id: id ?? this.id,
     rootPath: rootPath ?? this.rootPath,
     peerFingerprint: peerFingerprint ?? this.peerFingerprint,
+    peerPublicKey: peerPublicKey ?? this.peerPublicKey,
     direction: direction ?? this.direction,
     mode: mode ?? this.mode,
     paused: paused ?? this.paused,
@@ -2617,6 +2658,9 @@ class SyncPair extends DataClass implements Insertable<SyncPair> {
       peerFingerprint: data.peerFingerprint.present
           ? data.peerFingerprint.value
           : this.peerFingerprint,
+      peerPublicKey: data.peerPublicKey.present
+          ? data.peerPublicKey.value
+          : this.peerPublicKey,
       direction: data.direction.present ? data.direction.value : this.direction,
       mode: data.mode.present ? data.mode.value : this.mode,
       paused: data.paused.present ? data.paused.value : this.paused,
@@ -2642,6 +2686,7 @@ class SyncPair extends DataClass implements Insertable<SyncPair> {
           ..write('id: $id, ')
           ..write('rootPath: $rootPath, ')
           ..write('peerFingerprint: $peerFingerprint, ')
+          ..write('peerPublicKey: $peerPublicKey, ')
           ..write('direction: $direction, ')
           ..write('mode: $mode, ')
           ..write('paused: $paused, ')
@@ -2659,6 +2704,7 @@ class SyncPair extends DataClass implements Insertable<SyncPair> {
     id,
     rootPath,
     peerFingerprint,
+    peerPublicKey,
     direction,
     mode,
     paused,
@@ -2675,6 +2721,7 @@ class SyncPair extends DataClass implements Insertable<SyncPair> {
           other.id == this.id &&
           other.rootPath == this.rootPath &&
           other.peerFingerprint == this.peerFingerprint &&
+          other.peerPublicKey == this.peerPublicKey &&
           other.direction == this.direction &&
           other.mode == this.mode &&
           other.paused == this.paused &&
@@ -2689,6 +2736,7 @@ class SyncPairsCompanion extends UpdateCompanion<SyncPair> {
   final Value<String> id;
   final Value<String> rootPath;
   final Value<String> peerFingerprint;
+  final Value<String> peerPublicKey;
   final Value<String> direction;
   final Value<String> mode;
   final Value<bool> paused;
@@ -2702,6 +2750,7 @@ class SyncPairsCompanion extends UpdateCompanion<SyncPair> {
     this.id = const Value.absent(),
     this.rootPath = const Value.absent(),
     this.peerFingerprint = const Value.absent(),
+    this.peerPublicKey = const Value.absent(),
     this.direction = const Value.absent(),
     this.mode = const Value.absent(),
     this.paused = const Value.absent(),
@@ -2716,6 +2765,7 @@ class SyncPairsCompanion extends UpdateCompanion<SyncPair> {
     required String id,
     required String rootPath,
     required String peerFingerprint,
+    this.peerPublicKey = const Value.absent(),
     this.direction = const Value.absent(),
     this.mode = const Value.absent(),
     this.paused = const Value.absent(),
@@ -2733,6 +2783,7 @@ class SyncPairsCompanion extends UpdateCompanion<SyncPair> {
     Expression<String>? id,
     Expression<String>? rootPath,
     Expression<String>? peerFingerprint,
+    Expression<String>? peerPublicKey,
     Expression<String>? direction,
     Expression<String>? mode,
     Expression<bool>? paused,
@@ -2747,6 +2798,7 @@ class SyncPairsCompanion extends UpdateCompanion<SyncPair> {
       if (id != null) 'id': id,
       if (rootPath != null) 'root_path': rootPath,
       if (peerFingerprint != null) 'peer_fingerprint': peerFingerprint,
+      if (peerPublicKey != null) 'peer_public_key': peerPublicKey,
       if (direction != null) 'direction': direction,
       if (mode != null) 'mode': mode,
       if (paused != null) 'paused': paused,
@@ -2763,6 +2815,7 @@ class SyncPairsCompanion extends UpdateCompanion<SyncPair> {
     Value<String>? id,
     Value<String>? rootPath,
     Value<String>? peerFingerprint,
+    Value<String>? peerPublicKey,
     Value<String>? direction,
     Value<String>? mode,
     Value<bool>? paused,
@@ -2777,6 +2830,7 @@ class SyncPairsCompanion extends UpdateCompanion<SyncPair> {
       id: id ?? this.id,
       rootPath: rootPath ?? this.rootPath,
       peerFingerprint: peerFingerprint ?? this.peerFingerprint,
+      peerPublicKey: peerPublicKey ?? this.peerPublicKey,
       direction: direction ?? this.direction,
       mode: mode ?? this.mode,
       paused: paused ?? this.paused,
@@ -2800,6 +2854,9 @@ class SyncPairsCompanion extends UpdateCompanion<SyncPair> {
     }
     if (peerFingerprint.present) {
       map['peer_fingerprint'] = Variable<String>(peerFingerprint.value);
+    }
+    if (peerPublicKey.present) {
+      map['peer_public_key'] = Variable<String>(peerPublicKey.value);
     }
     if (direction.present) {
       map['direction'] = Variable<String>(direction.value);
@@ -2837,6 +2894,7 @@ class SyncPairsCompanion extends UpdateCompanion<SyncPair> {
           ..write('id: $id, ')
           ..write('rootPath: $rootPath, ')
           ..write('peerFingerprint: $peerFingerprint, ')
+          ..write('peerPublicKey: $peerPublicKey, ')
           ..write('direction: $direction, ')
           ..write('mode: $mode, ')
           ..write('paused: $paused, ')
@@ -6428,6 +6486,7 @@ typedef $$SyncPairsTableCreateCompanionBuilder =
       required String id,
       required String rootPath,
       required String peerFingerprint,
+      Value<String> peerPublicKey,
       Value<String> direction,
       Value<String> mode,
       Value<bool> paused,
@@ -6443,6 +6502,7 @@ typedef $$SyncPairsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> rootPath,
       Value<String> peerFingerprint,
+      Value<String> peerPublicKey,
       Value<String> direction,
       Value<String> mode,
       Value<bool> paused,
@@ -6475,6 +6535,11 @@ class $$SyncPairsTableFilterComposer
 
   ColumnFilters<String> get peerFingerprint => $composableBuilder(
     column: $table.peerFingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get peerPublicKey => $composableBuilder(
+    column: $table.peerPublicKey,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6543,6 +6608,11 @@ class $$SyncPairsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get peerPublicKey => $composableBuilder(
+    column: $table.peerPublicKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get direction => $composableBuilder(
     column: $table.direction,
     builder: (column) => ColumnOrderings(column),
@@ -6601,6 +6671,11 @@ class $$SyncPairsTableAnnotationComposer
 
   GeneratedColumn<String> get peerFingerprint => $composableBuilder(
     column: $table.peerFingerprint,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get peerPublicKey => $composableBuilder(
+    column: $table.peerPublicKey,
     builder: (column) => column,
   );
 
@@ -6668,6 +6743,7 @@ class $$SyncPairsTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> rootPath = const Value.absent(),
                 Value<String> peerFingerprint = const Value.absent(),
+                Value<String> peerPublicKey = const Value.absent(),
                 Value<String> direction = const Value.absent(),
                 Value<String> mode = const Value.absent(),
                 Value<bool> paused = const Value.absent(),
@@ -6681,6 +6757,7 @@ class $$SyncPairsTableTableManager
                 id: id,
                 rootPath: rootPath,
                 peerFingerprint: peerFingerprint,
+                peerPublicKey: peerPublicKey,
                 direction: direction,
                 mode: mode,
                 paused: paused,
@@ -6696,6 +6773,7 @@ class $$SyncPairsTableTableManager
                 required String id,
                 required String rootPath,
                 required String peerFingerprint,
+                Value<String> peerPublicKey = const Value.absent(),
                 Value<String> direction = const Value.absent(),
                 Value<String> mode = const Value.absent(),
                 Value<bool> paused = const Value.absent(),
@@ -6709,6 +6787,7 @@ class $$SyncPairsTableTableManager
                 id: id,
                 rootPath: rootPath,
                 peerFingerprint: peerFingerprint,
+                peerPublicKey: peerPublicKey,
                 direction: direction,
                 mode: mode,
                 paused: paused,

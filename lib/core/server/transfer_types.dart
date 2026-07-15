@@ -13,6 +13,8 @@ class TransferSession {
     required this.tokens,
     required this.createdAt,
     this.symmetricKey,
+    this.syncPairId,
+    this.syncRootPath,
   });
 
   final String sessionId;
@@ -23,6 +25,15 @@ class TransferSession {
 
   /// Derived AES-256 key for E2E (32 bytes), or null for a plaintext session.
   final List<int>? symmetricKey;
+
+  /// Folder-sync payload session (Tahap 4): each file routes to [syncRootPath]
+  /// at its `FileMetadata.relPath` (mirror semantics — exact name, overwrite,
+  /// no inbox record). Set only when the prepare carried a `syncPairId` that
+  /// resolved to a configured pair for the sender's fingerprint.
+  final String? syncPairId;
+  final String? syncRootPath;
+
+  bool get isSync => syncRootPath != null;
 
   bool get encrypted => symmetricKey != null;
 

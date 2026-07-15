@@ -12,12 +12,14 @@ PrepareRequest _$PrepareRequestFromJson(Map<String, dynamic> json) =>
       files: (json['files'] as Map<String, dynamic>).map(
         (k, e) => MapEntry(k, FileMetadata.fromJson(e as Map<String, dynamic>)),
       ),
+      syncPairId: json['syncPairId'] as String?,
     );
 
 Map<String, dynamic> _$PrepareRequestToJson(PrepareRequest instance) =>
     <String, dynamic>{
       'info': instance.info.toJson(),
       'files': instance.files.map((k, e) => MapEntry(k, e.toJson())),
+      'syncPairId': ?instance.syncPairId,
     };
 
 PrepareResponse _$PrepareResponseFromJson(Map<String, dynamic> json) =>

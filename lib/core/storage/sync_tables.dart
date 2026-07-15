@@ -19,6 +19,14 @@ class SyncPairs extends Table {
   TextColumn get rootPath => text()();
   TextColumn get peerFingerprint => text()();
 
+  /// The peer's base64 X25519 public key, captured at pairing. Authenticates the
+  /// sync wire: an /api/v1/sync request must AEAD-decrypt under the key derived
+  /// from THIS public key (only the private-key holder can produce that), and a
+  /// payload prepare's fingerprint must match [peerFingerprint]. The device
+  /// fingerprint alone is a plain UUID — spoofable — so the pubkey is the
+  /// cryptographic identity. (Added pre-release within schemaVersion 4.)
+  TextColumn get peerPublicKey => text().withDefault(const Constant(''))();
+
   /// 'twoWay' (v1) | 'pushOnly' | 'pullOnly' — enum ready, only twoWay in v1.
   TextColumn get direction => text().withDefault(const Constant('twoWay'))();
 

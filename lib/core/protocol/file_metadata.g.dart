@@ -14,6 +14,7 @@ FileMetadata _$FileMetadataFromJson(Map<String, dynamic> json) => FileMetadata(
   sha256: json['sha256'] as String?,
   preview: json['preview'] as String?,
   expiresInSeconds: (json['expiresInSeconds'] as num?)?.toInt(),
+  relPath: json['relPath'] as String?,
 );
 
 Map<String, dynamic> _$FileMetadataToJson(FileMetadata instance) =>
@@ -25,4 +26,5 @@ Map<String, dynamic> _$FileMetadataToJson(FileMetadata instance) =>
       'sha256': ?instance.sha256,
       'preview': ?instance.preview,
       'expiresInSeconds': ?instance.expiresInSeconds,
+      'relPath': ?instance.relPath,
     };

@@ -149,6 +149,12 @@ class TransferClient {
 
   /// Sends [files] to [device]. Emits progress and throws a [TransferHttpException]
   /// / [CancelledException] on failure.
+  ///
+  /// Folder-sync payload mode (Tahap 4): pass [syncPairId] + a [syncRelPaths]
+  /// map (fileId → pair-root-relative path). The receiver auto-accepts (the
+  /// pair was consented at pairing) and mirrors each file to its relPath. M1
+  /// pushes sync payloads over TCP only — the QUIC receive leg doesn't know
+  /// pair routing yet (3b-ii) — and requires the E2E-encrypted session.
   Future<void> send(
     List<SendableFile> files,
     DiscoveredDevice device, {
@@ -157,6 +163,8 @@ class TransferClient {
     CancelToken? cancelToken,
     void Function(String sessionId)? onSession,
     void Function(String transport)? onTransport,
+    String? syncPairId,
+    Map<String, String>? syncRelPaths,
   }) async {
     final dio = _dioFor(device.host, device.port);
     final info = await _identity.makeDeviceInfo();
@@ -173,6 +181,7 @@ class TransferClient {
         // instant and the file is read once (not twice). Encrypted transfers
         // keep integrity via per-chunk AES-GCM auth; small files still verify.
         sha256: f.size <= _hashSizeLimit ? await _sha256(f) : null,
+        relPath: syncRelPaths?[f.id],
       );
     }
 
@@ -191,7 +200,11 @@ class TransferClient {
         prepareRes = await dio.post<Map<String, dynamic>>(
           BIShareApi.prepare,
           queryParameters: pin != null ? {'pin': pin} : null,
-          data: PrepareRequest(info: info, files: metas).toJson(),
+          data: PrepareRequest(
+            info: info,
+            files: metas,
+            syncPairId: syncPairId,
+          ).toJson(),
           cancelToken: cancelToken,
           options: Options(
             receiveTimeout:
@@ -278,8 +291,10 @@ class TransferClient {
     // Phase 1a: open ONE persistent QUIC connection for the whole session (a
     // single handshake reused for every file) instead of a handshake per file.
     // On any failure we fall back to the HTTP/TCP path for all files.
+    // Sync payloads (M1) force TCP: the QUIC receive leg has no pair routing
+    // yet, so a QUIC-received sync file would land in the inbox (3b-ii).
     var quicReady = false;
-    if (_shouldUseQuic() && device.quicPort != null) {
+    if (syncPairId == null && _shouldUseQuic() && device.quicPort != null) {
       try {
         await quic.quicConnect(
           host: device.host,

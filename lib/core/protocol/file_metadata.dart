@@ -14,6 +14,7 @@ class FileMetadata {
     this.sha256,
     this.preview,
     this.expiresInSeconds,
+    this.relPath,
   });
 
   factory FileMetadata.fromJson(Map<String, dynamic> json) =>
@@ -30,6 +31,11 @@ class FileMetadata {
 
   /// Self-destruct TTL in seconds (null = never).
   final int? expiresInSeconds;
+
+  /// Folder-sync (Tahap 4): path relative to the pair root, forward-slashed —
+  /// where a sync payload lands on the receiver. Only present when the prepare
+  /// carries a `syncPairId`; the receiver rejects traversal (`..`) segments.
+  final String? relPath;
 
   Map<String, dynamic> toJson() => _$FileMetadataToJson(this);
 }

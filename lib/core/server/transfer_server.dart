@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data' show BytesBuilder;
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
@@ -13,6 +14,7 @@ import 'package:uuid/uuid.dart';
 
 import '../constants/protocol.dart';
 import '../identity/device_identity.dart';
+import '../sync/sync_paths.dart';
 import '../../features/clipboard/data/clipboard_token_store.dart';
 import '../protocol/file_metadata.dart';
 import '../protocol/file_request.dart';
@@ -76,6 +78,13 @@ class TransferServer {
   /// Whether browsers may upload to this device at all (the "Browser uploads"
   /// setting). Gates the classic multipart route AND the chunked routes.
   bool browserUploadEnabled = true;
+
+  /// Folder-sync delegates (Tahap 4), wired by `SyncEngine.attach`. The server
+  /// stays transport-only: [onSyncFrame] owns pair auth + crypto + diff/apply
+  /// for `POST /api/v1/sync` (null result → 403); [syncRootFor] resolves the
+  /// pair root for a payload prepare (null → 403). Both unset → sync 503s.
+  Future<List<int>?> Function(String senderPub, List<int> body)? onSyncFrame;
+  Future<String?> Function(String pairId, String senderPublicKey)? syncRootFor;
 
   /// Chunked resumable browser uploads (`.part` staging in the save dir).
   late final BrowserUploadStore _uploads = BrowserUploadStore(() => _saveDir);
@@ -172,6 +181,38 @@ class TransferServer {
     );
   }
 
+  // POST /api/v1/sync — folder-sync manifest exchange (Tahap 4 §5.1). The body
+  // is an AEAD-encrypted manifest frame; all crypto/auth/apply happens in the
+  // SyncEngine delegate. 503 until an engine attaches; 403 on any auth/shape
+  // failure (the delegate returns null — no oracle about WHICH check failed).
+  Future<Response> _handleSync(Request request) async {
+    final handler = onSyncFrame;
+    if (handler == null) {
+      return _error('Sync not available', BIShareStatus.serverError);
+    }
+    final senderPub = request.headers['x-sync-sender-pub'];
+    if (senderPub == null || senderPub.isEmpty) {
+      return _error('Missing sender key', BIShareStatus.forbidden);
+    }
+    final body = await _readBytes(request);
+    final reply = await handler(senderPub, body);
+    if (reply == null) {
+      return _error('Sync rejected', BIShareStatus.forbidden);
+    }
+    return Response.ok(
+      reply,
+      headers: {'content-type': 'application/octet-stream'},
+    );
+  }
+
+  Future<List<int>> _readBytes(Request request) async {
+    final builder = BytesBuilder(copy: false);
+    await for (final chunk in request.read()) {
+      builder.add(chunk);
+    }
+    return builder.takeBytes();
+  }
+
   /// When hidden, `/api/v1/info` returns 403 so probing peers drop us (mirrors
   /// native "Hidden" visibility). Discovery advertisement is also stopped.
   bool hidden = false;
@@ -229,6 +270,7 @@ class TransferServer {
       ..post(BIShareApi.request, _handleFileRequest)
       ..get(BIShareApi.instant, _handleInstant)
       ..get(BIShareApi.clipboard, _handleClipboardPull)
+      ..post(BIShareApi.sync, _handleSync)
       // Web-Share browser UI + endpoints.
       ..get('/', _handleBrowserPage)
       ..post(BIShareApi.verifyPin, _handleVerifyPin)
@@ -666,6 +708,28 @@ class TransferServer {
       '${prepareReq.files.length} file(s), e2e=${symmetricKey != null}',
     );
 
+    // Folder-sync payload session (Tahap 4): resolved via the engine delegate,
+    // consented at PAIRING time — no per-transfer prompt. Requires E2E (the
+    // AEAD session is what authenticates the sender's claimed public key) and
+    // a relPath on every file.
+    String? syncRootPath;
+    final syncPairId = prepareReq.syncPairId;
+    if (syncPairId != null) {
+      final resolve = syncRootFor;
+      if (resolve == null || symmetricKey == null || senderPub == null) {
+        return _error('Sync rejected', BIShareStatus.forbidden);
+      }
+      syncRootPath = await resolve(syncPairId, senderPub);
+      if (syncRootPath == null) {
+        return _error('Sync rejected', BIShareStatus.forbidden);
+      }
+      if (prepareReq.files.values.any(
+        (f) => safeSyncJoin(syncRootPath!, f.relPath ?? '') == null,
+      )) {
+        return _error('Invalid sync path', BIShareStatus.forbidden);
+      }
+    }
+
     final sessionId = _uuid.v4();
     final tokens = {for (final id in prepareReq.files.keys) id: _uuid.v4()};
     final session = TransferSession(
@@ -675,9 +739,12 @@ class TransferServer {
       tokens: tokens,
       createdAt: DateTime.now(),
       symmetricKey: symmetricKey,
+      syncPairId: syncPairId,
+      syncRootPath: syncRootPath,
     );
 
-    final accepted = await _decide(session);
+    // A pair was consented when it was created — a sync session never prompts.
+    final accepted = session.isSync || await _decide(session);
     if (!accepted) {
       return _error('Transfer rejected', BIShareStatus.forbidden);
     }
@@ -925,11 +992,23 @@ class TransferServer {
       );
     }
 
-    final saved = ReceiveNaming.targetFile(
-      _saveDir,
-      meta,
-      session.sender.alias,
-    );
+    final File saved;
+    if (session.isSync) {
+      // Sync payload: land at the pair root under the file's relPath (mirror
+      // semantics — exact name, overwrite in place, NO inbox record). The path
+      // was validated at prepare; re-validate anyway (defense in depth).
+      final target = safeSyncJoin(session.syncRootPath!, meta.relPath ?? '');
+      if (target == null) {
+        if (tmp.existsSync()) tmp.deleteSync();
+        return _error('Invalid sync path', BIShareStatus.forbidden);
+      }
+      saved = File(target);
+      await saved.parent.create(recursive: true);
+      // Windows rename() fails onto an existing file — replace explicitly.
+      if (saved.existsSync()) await saved.delete();
+    } else {
+      saved = ReceiveNaming.targetFile(_saveDir, meta, session.sender.alias);
+    }
     // rename() fails across volumes (EXDEV) — likely with a custom save location
     // on another disk — so fall back to copy+delete.
     try {
@@ -942,21 +1021,23 @@ class TransferServer {
     session.completedFileIds.add(fileId);
     debugPrint(
       '[Server] received "${meta.fileName}" (${meta.size}B, e2e=$isEncrypted, '
-      'sha256-ok=$verified) → ${saved.path}',
+      'sha256-ok=$verified, sync=${session.isSync}) → ${saved.path}',
     );
-    _received.add(
-      ReceivedFile(
-        fileName: saved.uri.pathSegments.last,
-        savedPath: saved.path,
-        size: meta.size,
-        senderAlias: session.sender.alias,
-        senderFingerprint: session.sender.fingerprint,
-        fileType: meta.fileType,
-        encrypted: isEncrypted,
-        receivedAt: DateTime.now(),
-        verified: verified,
-      ),
-    );
+    if (!session.isSync) {
+      _received.add(
+        ReceivedFile(
+          fileName: saved.uri.pathSegments.last,
+          savedPath: saved.path,
+          size: meta.size,
+          senderAlias: session.sender.alias,
+          senderFingerprint: session.sender.fingerprint,
+          fileType: meta.fileType,
+          encrypted: isEncrypted,
+          receivedAt: DateTime.now(),
+          verified: verified,
+        ),
+      );
+    }
     _emitProgress(
       session,
       meta.fileName,

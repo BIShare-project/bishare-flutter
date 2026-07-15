@@ -20,6 +20,8 @@ import '../../features/clipboard/data/clipboard_service.dart';
 import '../../features/clipboard/data/clipboard_token_store.dart';
 import '../../features/discovery/data/discovery_service.dart';
 import '../../features/favorites/data/favorites_repository.dart';
+import '../../features/folder_sync/data/sync_engine.dart';
+import '../../features/folder_sync/data/sync_transport.dart';
 import '../../features/history/data/history_repository.dart';
 import '../../features/nearby/data/nearby_service.dart';
 import '../../features/remote/data/cloud_config_service.dart';
@@ -32,6 +34,8 @@ import '../deeplink/deep_link_service.dart';
 import '../desktop/desktop_service.dart';
 import '../devices/device_registry.dart';
 import '../identity/device_identity.dart';
+import '../sync/delta_engine.dart';
+import '../sync/manifest_store.dart';
 import '../notifications/notification_service.dart';
 import '../relay/relay_channel.dart';
 import '../server/browser_share.dart';
@@ -126,6 +130,26 @@ Future<void> setupLocator() async {
   // presence, plus the sighting writer that keeps lastSeen/lastIp fresh.
   final deviceRegistry = PresenceDeviceRegistry(db, discovery, favorites);
 
+  // Folder sync (Tahap 4 M1): the engine owns pair auth + crypto + diff/apply;
+  // the transfer server stays transport-only via the two delegates. Payloads
+  // ride the normal transfer pipeline (TCP, E2E) with sync routing fields.
+  final transferClient = TransferClient(identity);
+  final syncEngine = SyncEngine(
+    db.syncDao,
+    ManifestStore(db.syncDao),
+    DeltaEngine(),
+    identity.crypto,
+    ownPublicKeyBase64: identity.publicKeyBase64,
+    trashRoot: Directory(
+      '${supportDir.path}${Platform.pathSeparator}sync-trash',
+    ),
+    poster: httpSyncPoster(),
+    payloadSender: transferPayloadSender(transferClient),
+  );
+  server
+    ..onSyncFrame = syncEngine.handleSyncRequest
+    ..syncRootFor = syncEngine.rootForPayload;
+
   // Magic-link auth + session. TokenStore holds the session in the secure
   // store; AuthedDio (Bearer + silent refresh) is the client Fase B / Drive
   // will make its authenticated calls through.
@@ -169,7 +193,8 @@ Future<void> setupLocator() async {
       StreamRelayService(server, history),
     )
     ..registerSingleton<DeepLinkService>(DeepLinkService())
-    ..registerSingleton<TransferClient>(TransferClient(identity))
+    ..registerSingleton<TransferClient>(transferClient)
+    ..registerSingleton<SyncEngine>(syncEngine)
     ..registerSingleton<NearbyService>(NearbyService())
     ..registerSingleton<DesktopService>(DesktopService(server))
     // Cloud relay WS+REST client (v2.4 premium features). Lazy: it stays

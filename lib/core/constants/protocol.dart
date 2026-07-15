@@ -75,6 +75,11 @@ class BIShareApi {
   /// receiver GETs the announced image with `?token=` (one-shot, 60s TTL).
   static const String clipboard = '/api/v1/clipboard';
 
+  /// Folder-sync manifest exchange (Tahap 4, mirrors Rust `ApiPath::SYNC`) —
+  /// a paired peer POSTs an AEAD-encrypted manifest frame (0x0C–0x0E) and gets
+  /// an encrypted ack (needed-files list) back. See `SyncEngine`.
+  static const String sync = '/api/v1/sync';
+
   // Browser Web-Share extensions (feature #11). Served only to web browsers,
   // never to app peers, so they need no protocol mirror — an older server
   // simply 404s, which the page treats as "feature unavailable" (natural
