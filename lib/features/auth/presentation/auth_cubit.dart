@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/constants/cloud.dart';
 import '../../../core/identity/device_identity.dart';
 import '../data/auth_models.dart';
 import '../data/auth_service.dart';
@@ -96,13 +97,36 @@ class AuthCubit extends Cubit<AuthState> {
 
   static final _emailRegExp = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 
-  /// Restore a persisted session on launch.
+  /// Restore a persisted session on launch, then refresh the profile from the
+  /// server — tier/storage changes made server-side (admin grant, IAP webhook)
+  /// must reach the app without a re-login.
   Future<void> _restore() async {
     final user = await _tokens.user();
     if (await _tokens.hasSession() && user != null) {
       emit(AuthState(status: AuthStatus.authenticated, user: user));
+      unawaited(refreshProfile());
     } else {
       emit(const AuthState(status: AuthStatus.unauthenticated));
+    }
+  }
+
+  /// Re-fetch `GET /user/me` and update the stored + emitted user. Silent on
+  /// failure (offline launch keeps the cached profile).
+  Future<void> refreshProfile() async {
+    if (state.status != AuthStatus.authenticated) return;
+    try {
+      final res = await _authedDio.dio.get<Map<String, dynamic>>(
+        CloudConfig.userMe,
+      );
+      final data = res.data?['data'];
+      if (data is! Map<String, dynamic>) return;
+      final fresh = AuthUser.fromJson(data);
+      await _tokens.saveUser(fresh);
+      if (!isClosed && state.status == AuthStatus.authenticated) {
+        emit(AuthState(status: AuthStatus.authenticated, user: fresh));
+      }
+    } on Object {
+      // Offline / expired session — AuthedDio's refresh path handles expiry.
     }
   }
 
