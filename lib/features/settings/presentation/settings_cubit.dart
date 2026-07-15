@@ -1,4 +1,6 @@
 import 'dart:io';
+import '../../../core/di/locator.dart';
+import '../../../core/storage/app_database.dart';
 
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -57,6 +59,7 @@ class SettingsCubit extends Cubit<Settings> {
   static const _kClipboardImages = 'clipboardImages';
   static const _kClipboardMaxSizeMb = 'clipboardMaxSizeMb';
   static const _kClipboardCloud = 'clipboardCloud';
+  static const _kFolderCloudSync = 'folderCloudSync';
 
   static Settings _load(SharedPreferences p, DeviceIdentity id) => Settings(
     alias: id.alias,
@@ -82,6 +85,7 @@ class SettingsCubit extends Cubit<Settings> {
     browserUpload: p.getBool(_kBrowserUpload) ?? true,
     browserUploadMaxGb: p.getInt(_kBrowserUploadMaxGb) ?? 0,
     clipboardSync: p.getBool(_kClipboardSync) ?? false,
+    folderCloudSync: p.getBool(_kFolderCloudSync) ?? false,
     clipboardImages: p.getBool(_kClipboardImages) ?? true,
     clipboardMaxSizeMb: p.getInt(_kClipboardMaxSizeMb) ?? 5,
     clipboardCloud: p.getBool(_kClipboardCloud) ?? false,
@@ -193,6 +197,18 @@ class SettingsCubit extends Cubit<Settings> {
   Future<void> setClipboardMaxSizeMb(int mb) async {
     await _prefs.setInt(_kClipboardMaxSizeMb, mb);
     _applyClipboardConfig(state.copyWith(clipboardMaxSizeMb: mb));
+  }
+
+  /// Folder Sync cloud master switch: persists the pref, flips EVERY existing
+  /// pair's mode, and (via the engine's default) applies to new pairs. Pro
+  /// gating happens at the call site with the live tier.
+  Future<void> setFolderCloudSync(bool on) async {
+    await _prefs.setBool(_kFolderCloudSync, on);
+    final dao = getIt<AppDatabase>().syncDao;
+    for (final pair in await dao.allPairs()) {
+      await dao.setMode(pair.id, on ? 'lanCloud' : 'lanOnly');
+    }
+    emit(state.copyWith(folderCloudSync: on));
   }
 
   Future<void> setClipboardCloud(bool on) async {

@@ -157,6 +157,7 @@ class SyncEngine {
     SyncPoster? poster,
     SyncPayloadSender? payloadSender,
     String Function(String stored)? resolveRoot,
+    String Function()? defaultPairMode,
     Duration inviteDecisionTimeout = const Duration(seconds: 30),
   }) : _ownPub = ownPublicKeyBase64,
        _ownFingerprint = ownFingerprint,
@@ -168,7 +169,10 @@ class SyncEngine {
        _poster = poster,
        _payloadSender = payloadSender,
        _resolveRoot = resolveRoot ?? _storedAsIs,
+       _defaultPairMode = defaultPairMode ?? _lanOnly,
        _inviteTimeout = inviteDecisionTimeout;
+
+  static String _lanOnly() => 'lanOnly';
 
   static String _storedAsIs(String s) => s;
 
@@ -185,6 +189,10 @@ class SyncEngine {
   final SyncPoster? _poster;
   final SyncPayloadSender? _payloadSender;
   final String Function(String stored) _resolveRoot;
+
+  /// Mode for NEWLY created pairs ('lanOnly' | 'lanCloud') — follows the
+  /// Settings master switch in production.
+  final String Function() _defaultPairMode;
   final Duration _inviteTimeout;
 
   /// Filesystem root of [pair] (stored form may be portable/legacy — §sync_roots).
@@ -399,6 +407,7 @@ class SyncEngine {
         rootPath: rootPath,
         peerFingerprint: info.fingerprint,
         peerPublicKey: Value(info.publicKey),
+        mode: Value(_defaultPairMode()),
         createdAt: DateTime.now(),
       ),
       pairId,
@@ -553,6 +562,7 @@ class SyncEngine {
         rootPath: rootPath,
         peerFingerprint: invite.peerFingerprint,
         peerPublicKey: Value(senderPub),
+        mode: Value(_defaultPairMode()),
         createdAt: DateTime.now(),
       ),
       pairId,

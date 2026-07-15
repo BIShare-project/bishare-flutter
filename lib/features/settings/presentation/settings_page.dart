@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import '../../auth/presentation/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -278,6 +279,36 @@ class SettingsPage extends StatelessWidget {
                                   trailing: const ShadSwitch(
                                     value: false,
                                     enabled: false,
+                                  ),
+                                ),
+                                const AppRowDivider(indent: 58),
+                                // Folder Sync cloud fallback (Pro): master
+                                // switch — flips every pair + new-pair default.
+                                AppListTile(
+                                  leading: const Glyph(AppIcons.refreshSync),
+                                  title: Text('settings.folder_cloud'.tr()),
+                                  subtitle: Text(
+                                    'settings.folder_cloud_subtitle'.tr(),
+                                  ),
+                                  trailing: ShadSwitch(
+                                    value: state.folderCloudSync,
+                                    onChanged: (on) {
+                                      final tier = context
+                                          .read<AuthCubit>()
+                                          .state
+                                          .tier;
+                                      if (on &&
+                                          tier != 'pro' &&
+                                          tier != 'business') {
+                                        toast(
+                                          context,
+                                          'sync.cloud_needs_pro'.tr(),
+                                          type: ToastType.error,
+                                        );
+                                        return;
+                                      }
+                                      cubit.setFolderCloudSync(on);
+                                    },
                                   ),
                                 ),
                                 const AppRowDivider(indent: 58),

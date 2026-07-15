@@ -74,6 +74,7 @@ class Settings extends Equatable {
     this.clipboardImages = true,
     this.clipboardMaxSizeMb = 5,
     this.clipboardCloud = false,
+    this.folderCloudSync = false,
   });
 
   final String alias;
@@ -121,6 +122,10 @@ class Settings extends Equatable {
   /// Clipboard sync via the cloud relay (OFF by default — privacy).
   final bool clipboardCloud;
 
+  /// Folder Sync cloud fallback master switch (Pro): ON = pairs sync through
+  /// the cloud when the peer is away; new pairs default to it.
+  final bool folderCloudSync;
+
   /// The selectable [clipboardMaxSizeMb] values.
   static const List<int> clipboardSizesMb = [1, 5, 10, 25];
 
@@ -146,6 +151,7 @@ class Settings extends Equatable {
     bool? clipboardImages,
     int? clipboardMaxSizeMb,
     bool? clipboardCloud,
+    bool? folderCloudSync,
   }) => Settings(
     alias: alias ?? this.alias,
     themeMode: themeMode ?? this.themeMode,
@@ -165,6 +171,7 @@ class Settings extends Equatable {
     clipboardImages: clipboardImages ?? this.clipboardImages,
     clipboardMaxSizeMb: clipboardMaxSizeMb ?? this.clipboardMaxSizeMb,
     clipboardCloud: clipboardCloud ?? this.clipboardCloud,
+    folderCloudSync: folderCloudSync ?? this.folderCloudSync,
   );
 
   @override
@@ -187,6 +194,7 @@ class Settings extends Equatable {
     clipboardImages,
     clipboardMaxSizeMb,
     clipboardCloud,
+    folderCloudSync,
   ];
 }
 

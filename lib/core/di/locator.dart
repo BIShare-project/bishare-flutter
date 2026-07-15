@@ -174,6 +174,9 @@ Future<void> setupLocator() async {
     payloadSender:
         transferPayloadSender(transferClient, resolveRoot: syncRoots.resolve),
     resolveRoot: syncRoots.resolve,
+    // New pairs follow the Settings "Folder Sync via cloud" master switch.
+    defaultPairMode: () =>
+        (prefs.getBool('folderCloudSync') ?? false) ? 'lanCloud' : 'lanOnly',
   );
   server
     ..onSyncFrame = syncEngine.handleSyncRequest
