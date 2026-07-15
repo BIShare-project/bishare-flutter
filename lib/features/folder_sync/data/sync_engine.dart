@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:drift/drift.dart' show Value;
@@ -61,6 +62,51 @@ typedef SyncPoster = Future<Uint8List> Function(
   Map<String, String> headers,
 );
 
+/// Fetches a peer's base64 public key (GET /api/v1/info) — needed BEFORE the
+/// first encrypted message of a pairing. Injectable; production in
+/// `sync_transport.dart`.
+typedef PeerInfoFetcher = Future<({String publicKey, String fingerprint})?>
+    Function(String host, int port);
+
+/// Persists per-pair secrets (the §7.1 pairKey) OUTSIDE drift — production
+/// wraps `flutter_secure_storage` (Keychain/Keystore).
+abstract class SyncKeyStore {
+  Future<void> write(String key, String value);
+  Future<String?> read(String key);
+  Future<void> delete(String key);
+}
+
+/// An incoming pairing request awaiting the user's decision (consent sheet).
+/// [accept] with the local folder to sync; [reject] or a 30s timeout declines.
+class PendingSyncInvite {
+  PendingSyncInvite({
+    required this.pairId,
+    required this.peerAlias,
+    required this.peerFingerprint,
+    required this.rootName,
+  });
+
+  final String pairId;
+  final String peerAlias;
+  final String peerFingerprint;
+
+  /// The folder name on the inviting device (display + default-folder naming).
+  final String rootName;
+
+  final Completer<String?> _decision = Completer<String?>();
+
+  void accept(String rootPath) {
+    if (!_decision.isCompleted) _decision.complete(rootPath);
+  }
+
+  void reject() {
+    if (!_decision.isCompleted) _decision.complete(null);
+  }
+}
+
+/// Outcome of [SyncEngine.invitePeer].
+enum PairInviteOutcome { accepted, rejected }
+
 /// Pushes the needed files to the peer as a sync payload transfer (the
 /// prepare/upload leg with `syncPairId` + per-file `relPath`). Injectable;
 /// production wraps `TransferClient.send` (see `sync_transport.dart`).
@@ -91,27 +137,50 @@ class SyncEngine {
     this._crypto, {
     required String ownPublicKeyBase64,
     required Directory trashRoot,
+    String ownFingerprint = '',
+    String ownAlias = '',
+    SyncKeyStore? keyStore,
+    PeerInfoFetcher? peerInfo,
     ManifestFrameCodec? codec,
     SyncPoster? poster,
     SyncPayloadSender? payloadSender,
+    Duration inviteDecisionTimeout = const Duration(seconds: 30),
   }) : _ownPub = ownPublicKeyBase64,
+       _ownFingerprint = ownFingerprint,
+       _ownAlias = ownAlias,
        _trashRoot = trashRoot,
+       _keyStore = keyStore,
+       _peerInfo = peerInfo,
        _codec = codec ?? ManifestFrameCodec.ffi(),
        _poster = poster,
-       _payloadSender = payloadSender;
+       _payloadSender = payloadSender,
+       _inviteTimeout = inviteDecisionTimeout;
 
   final SyncDao _dao;
   final ManifestStore _store;
   final DeltaEngine _delta;
   final E2ECrypto _crypto;
   final String _ownPub;
+  final String _ownFingerprint;
+  final String _ownAlias;
   final Directory _trashRoot;
+  final SyncKeyStore? _keyStore;
+  final PeerInfoFetcher? _peerInfo;
   final ManifestFrameCodec _codec;
   final SyncPoster? _poster;
   final SyncPayloadSender? _payloadSender;
+  final Duration _inviteTimeout;
 
   final _status = StreamController<SyncPairStatus>.broadcast();
   Stream<SyncPairStatus> get status => _status.stream;
+
+  final _invites = StreamController<PendingSyncInvite>.broadcast();
+
+  /// Incoming pairing requests — the UI shows a consent sheet per event.
+  Stream<PendingSyncInvite> get invites => _invites.stream;
+
+  /// The secure-storage key holding a pair's §7.1 pairKey.
+  static String pairKeyStorageKey(String pairId) => 'sync_pairkey_$pairId';
 
   /// Per-pair single-flight chains — every run on a pair is serialized.
   final Map<String, Future<void>> _chains = {};
@@ -232,12 +301,95 @@ class SyncEngine {
     }
   });
 
+  // ─── Pairing (§7.1 bootstrap) ───
+
+  /// Invite [host]:[port] to form a sync pair over [rootPath]. Fetches the
+  /// peer's identity, mints the pair's 32-byte AES key, wraps it to the peer's
+  /// X25519 key (the same 60-byte envelope as the Rust `wrap_content_key` —
+  /// byte-compatible), and sends a consent request. Rows + the stored key are
+  /// created ONLY on acceptance — a rejection leaves no trace on either side.
+  Future<PairInviteOutcome> invitePeer({
+    required String host,
+    required int port,
+    required String rootPath,
+  }) async {
+    final poster = _poster;
+    final peerInfo = _peerInfo;
+    final keys = _keyStore;
+    if (poster == null || peerInfo == null || keys == null) {
+      throw StateError('sync transport not wired');
+    }
+    final info = await peerInfo(host, port);
+    if (info == null || info.publicKey.isEmpty) {
+      throw StateError('peer does not expose a public key');
+    }
+    final cipher = await _crypto.deriveSession(info.publicKey);
+    if (cipher == null) throw StateError('peer public key is malformed');
+
+    final pairId = _newPairId();
+    final pairKey = _randomKey();
+    // KEK = the derived session key, so the peer unwraps with its own derive —
+    // exactly wrap_content_key/unwrap_content_key semantics (§7.1).
+    final wrapped = await cipher.encryptCombined(pairKey);
+
+    final rootName = rootPath
+        .replaceAll('\\', '/')
+        .split('/')
+        .where((s) => s.isNotEmpty)
+        .lastOrNull ??
+        'Folder';
+    final body = await cipher.encryptCombined(Uint8List.fromList(
+      _encodeJson({
+        'type': 'pairInvite',
+        'pairId': pairId,
+        'alias': _ownAlias,
+        'fingerprint': _ownFingerprint,
+        'rootName': rootName,
+        'wrappedKey': base64Encode(wrapped),
+      }),
+    ));
+    final replyBytes = await poster(
+      Uri(scheme: 'http', host: host, port: port, path: '/api/v1/sync'),
+      body,
+      {'x-sync-sender-pub': _ownPub},
+    );
+    final reply = _decodeJsonMap(await cipher.decryptCombined(replyBytes));
+    if (reply['type'] != 'pairAccept') return PairInviteOutcome.rejected;
+
+    await _dao.createPair(
+      SyncPairsCompanion.insert(
+        id: pairId,
+        rootPath: rootPath,
+        peerFingerprint: info.fingerprint,
+        peerPublicKey: Value(info.publicKey),
+        createdAt: DateTime.now(),
+      ),
+      pairId,
+    );
+    await keys.write(pairKeyStorageKey(pairId), base64Encode(pairKey));
+    return PairInviteOutcome.accepted;
+  }
+
+  String _newPairId() {
+    final rnd = _randomKey();
+    return base64UrlEncode(rnd.sublist(0, 12)).replaceAll('=', '');
+  }
+
+  Uint8List _randomKey() {
+    final r = Random.secure();
+    return Uint8List.fromList(List<int>.generate(32, (_) => r.nextInt(256)));
+  }
+
   // ─── Receiver: wired into TransferServer ───
 
   /// `POST /api/v1/sync` delegate. [senderPub] comes from the request header;
   /// authenticity is the AEAD itself — a body that decrypts under the key
   /// derived from the pair's stored `peerPublicKey` can only have been produced
   /// by that key's private holder. Returns the encrypted ack, or null → 403.
+  ///
+  /// Two message shapes share the endpoint: a binary manifest frame (paired
+  /// peers) and a JSON pairing message (pre-pair, consent-gated — the decrypted
+  /// payload starting with `{` routes here).
   Future<List<int>?> handleSyncRequest(
     String senderPub,
     List<int> body,
@@ -249,13 +401,32 @@ class SyncEngine {
     final cipher = await _crypto.deriveSession(senderPub);
     if (cipher == null) return null;
 
+    final Uint8List plain;
+    try {
+      plain = await cipher.decryptCombined(Uint8List.fromList(body));
+    } on Object {
+      return null; // bad AEAD tag — not the presented key's holder
+    }
+
+    // Pairing messages are JSON objects tagged type:pairInvite; anything else
+    // (binary frames — or the JSON test codec's manifests) falls through to
+    // the frame codec.
+    if (plain.isNotEmpty && plain.first == 0x7B /* '{' */) {
+      try {
+        final probe = _decodeJsonMap(plain);
+        if (probe['type'] == 'pairInvite') {
+          return _handlePairingMessage(senderPub, cipher, plain);
+        }
+      } on Object {
+        // not JSON after all — treat as a frame below
+      }
+    }
+
     final SyncManifestMessage msg;
     try {
-      msg = await _codec.decode(
-        await cipher.decryptCombined(Uint8List.fromList(body)),
-      );
+      msg = await _codec.decode(plain);
     } on Object {
-      return null; // bad AEAD tag / malformed frame — not a paired sender
+      return null; // malformed frame
     }
 
     final pair = await _dao.pairById(msg.pairId);
@@ -267,6 +438,75 @@ class SyncEngine {
     final ack = await _serialize(msg.pairId, () => _applyManifest(pair, msg));
     return cipher.encryptCombined(
       Uint8List.fromList(_encodeJson(ack.toJson())),
+    );
+  }
+
+  /// Consent-gated pairing: surface the invite to the UI and hold the HTTP
+  /// exchange open until the user decides (or [_inviteTimeout] rejects). On
+  /// accept the pair rows + unwrapped pairKey are stored BEFORE the reply, so
+  /// an accepted inviter can sync immediately.
+  Future<List<int>?> _handlePairingMessage(
+    String senderPub,
+    SessionCipher cipher,
+    Uint8List plain,
+  ) async {
+    final Map<String, dynamic> msg;
+    try {
+      msg = _decodeJsonMap(plain);
+    } on Object {
+      return null;
+    }
+    if (msg['type'] != 'pairInvite') return null;
+    final pairId = msg['pairId'] as String?;
+    final wrappedB64 = msg['wrappedKey'] as String?;
+    final keys = _keyStore;
+    if (pairId == null || pairId.isEmpty || wrappedB64 == null || keys == null) {
+      return null;
+    }
+    if (await _dao.pairById(pairId) != null) return null; // replayed invite
+
+    final invite = PendingSyncInvite(
+      pairId: pairId,
+      peerAlias: (msg['alias'] as String?) ?? '',
+      peerFingerprint: (msg['fingerprint'] as String?) ?? '',
+      rootName: (msg['rootName'] as String?) ?? 'Folder',
+    );
+    _invites.add(invite);
+    final rootPath = await invite._decision.future
+        .timeout(_inviteTimeout, onTimeout: () => null);
+
+    if (rootPath == null) {
+      return cipher.encryptCombined(
+        Uint8List.fromList(_encodeJson({'type': 'pairReject'})),
+      );
+    }
+
+    // Unwrap the pairKey with OUR derive of the same shared key (§7.1).
+    final Uint8List pairKey;
+    try {
+      pairKey = await cipher.decryptCombined(
+        Uint8List.fromList(base64Decode(wrappedB64)),
+      );
+      if (pairKey.length != 32) throw const FormatException('bad key length');
+    } on Object {
+      return null;
+    }
+
+    await Directory(rootPath).create(recursive: true);
+    await _dao.createPair(
+      SyncPairsCompanion.insert(
+        id: pairId,
+        rootPath: rootPath,
+        peerFingerprint: invite.peerFingerprint,
+        peerPublicKey: Value(senderPub),
+        createdAt: DateTime.now(),
+      ),
+      pairId,
+    );
+    await keys.write(pairKeyStorageKey(pairId), base64Encode(pairKey));
+
+    return cipher.encryptCombined(
+      Uint8List.fromList(_encodeJson({'type': 'pairAccept'})),
     );
   }
 
@@ -439,5 +679,8 @@ class SyncEngine {
   Map<String, dynamic> _decodeJsonMap(List<int> bytes) =>
       jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
 
-  Future<void> dispose() => _status.close();
+  Future<void> dispose() async {
+    await _status.close();
+    await _invites.close();
+  }
 }

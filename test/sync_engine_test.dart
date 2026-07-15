@@ -59,37 +59,56 @@ ScanFn dartScan() {
   };
 }
 
+/// In-memory [SyncKeyStore] for tests.
+class MemKeyStore implements SyncKeyStore {
+  final Map<String, String> map = {};
+  @override
+  Future<void> write(String key, String value) async => map[key] = value;
+  @override
+  Future<String?> read(String key) async => map[key];
+  @override
+  Future<void> delete(String key) async => map.remove(key);
+}
+
 /// One side (device) of a sync test: its DB, root dir, identity, and engine.
 class TestDevice {
-  TestDevice._(this.db, this.root, this.trash, this.crypto, this.engine);
+  TestDevice._(this.db, this.root, this.trash, this.crypto, this.keys);
 
   final AppDatabase db;
   final Directory root;
   final Directory trash;
   final E2ECrypto crypto;
+  final MemKeyStore keys;
   late SyncEngine engine;
 
   static Future<TestDevice> create(
     String name, {
     SyncPoster? poster,
     SyncPayloadSender? payloadSender,
+    PeerInfoFetcher? peerInfo,
   }) async {
     final db = AppDatabase(NativeDatabase.memory());
     final base = await Directory.systemTemp.createTemp('bishare_sync_$name');
     final root = Directory('${base.path}/root')..createSync();
     final trash = Directory('${base.path}/trash')..createSync();
     final (crypto, _) = await E2ECrypto.create();
-    final dev = TestDevice._(db, root, trash, crypto, SyncEngine(
+    final dev = TestDevice._(db, root, trash, crypto, MemKeyStore());
+    dev.engine = SyncEngine(
       db.syncDao,
       ManifestStore(db.syncDao, scan: dartScan()),
       DeltaEngine(diff: _dartDiff),
       crypto,
       ownPublicKeyBase64: crypto.publicKeyBase64,
+      ownFingerprint: 'fp-$name',
+      ownAlias: name,
       trashRoot: trash,
+      keyStore: dev.keys,
+      peerInfo: peerInfo,
       codec: ManifestFrameCodec.json(),
       poster: poster,
       payloadSender: payloadSender,
-    ));
+      inviteDecisionTimeout: const Duration(seconds: 2),
+    );
     return dev;
   }
 
@@ -314,6 +333,121 @@ void main() {
     await expectLater(
       a.engine.syncNow(pairId, host: 'l', port: 0),
       throwsA(isA<HttpException>()),
+    );
+  });
+
+  test('pairing: invite→accept bootstraps the SAME pairKey both sides, then syncs',
+      () async {
+    await setUpPair(); // wires poster/payload; we'll pair under a NEW id
+    // Point A's peer-info at B and auto-accept invites on B into B's root.
+    a.engine = SyncEngine(
+      a.db.syncDao,
+      ManifestStore(a.db.syncDao, scan: dartScan()),
+      DeltaEngine(diff: _dartDiff),
+      a.crypto,
+      ownPublicKeyBase64: a.crypto.publicKeyBase64,
+      ownFingerprint: 'fp-a',
+      ownAlias: 'Device A',
+      trashRoot: a.trash,
+      keyStore: a.keys,
+      peerInfo: (host, port) async =>
+          (publicKey: b.crypto.publicKeyBase64, fingerprint: 'fp-b'),
+      codec: ManifestFrameCodec.json(),
+      poster: (url, body, headers) async {
+        final reply = await b.engine.handleSyncRequest(
+          headers['x-sync-sender-pub']!,
+          body,
+        );
+        if (reply == null) throw const HttpException('403');
+        return Uint8List.fromList(reply);
+      },
+      payloadSender: (pair, needed, host, port, {onFile}) async {
+        // Deliver to the RECEIVER's root for this pair (like the real server).
+        final bPair = await b.db.syncDao.pairById(pair.id);
+        for (final n in needed) {
+          final dst = File('${bPair!.rootPath}/${n.path}');
+          dst.parent.createSync(recursive: true);
+          File('${a.root.path}/${n.path}').copySync(dst.path);
+        }
+      },
+    );
+    final acceptedRoot = Directory('${b.root.parent.path}/accepted-root');
+    final sub = b.engine.invites.listen((inv) {
+      expect(inv.peerAlias, 'Device A');
+      inv.accept(acceptedRoot.path);
+    });
+    addTearDown(sub.cancel);
+
+    final outcome = await a.engine.invitePeer(
+      host: 'loop',
+      port: 0,
+      rootPath: a.root.path,
+    );
+    expect(outcome, PairInviteOutcome.accepted);
+
+    // Both sides created the pair and hold the IDENTICAL 32-byte pairKey.
+    // (setUpPair pre-created 'pair-test' — the invited pair is the OTHER one.)
+    final pairA = (await a.db.syncDao.allPairs())
+        .firstWhere((p) => p.id != pairId);
+    final pairB = (await b.db.syncDao.allPairs())
+        .firstWhere((p) => p.id != pairId);
+    expect(pairB.rootPath, acceptedRoot.path);
+    expect(pairA.id, pairB.id);
+    expect(pairA.peerPublicKey, b.crypto.publicKeyBase64);
+    expect(pairB.peerPublicKey, a.crypto.publicKeyBase64);
+    final keyA = a.keys.map[SyncEngine.pairKeyStorageKey(pairA.id)];
+    final keyB = b.keys.map[SyncEngine.pairKeyStorageKey(pairA.id)];
+    expect(keyA, isNotNull);
+    expect(keyA, keyB, reason: 'wrap→unwrap must round-trip the same key');
+    expect(base64Decode(keyA!).length, 32);
+
+    // The freshly-paired root syncs end-to-end immediately.
+    File('${a.root.path}/hello.txt').writeAsStringSync('paired!');
+    await a.engine.syncNow(pairA.id, host: 'loop', port: 0);
+    expect(
+      File('${acceptedRoot.path}/hello.txt').readAsStringSync(),
+      'paired!',
+    );
+  });
+
+  test('pairing: reject leaves no trace on either side', () async {
+    await setUpPair();
+    a.engine = SyncEngine(
+      a.db.syncDao,
+      ManifestStore(a.db.syncDao, scan: dartScan()),
+      DeltaEngine(diff: _dartDiff),
+      a.crypto,
+      ownPublicKeyBase64: a.crypto.publicKeyBase64,
+      trashRoot: a.trash,
+      keyStore: a.keys,
+      peerInfo: (host, port) async =>
+          (publicKey: b.crypto.publicKeyBase64, fingerprint: 'fp-b'),
+      codec: ManifestFrameCodec.json(),
+      poster: (url, body, headers) async {
+        final reply = await b.engine.handleSyncRequest(
+          headers['x-sync-sender-pub']!,
+          body,
+        );
+        if (reply == null) throw const HttpException('403');
+        return Uint8List.fromList(reply);
+      },
+      payloadSender: (pair, needed, host, port, {onFile}) async {},
+    );
+    final before = (await a.db.syncDao.allPairs()).length;
+    final sub = b.engine.invites.listen((inv) => inv.reject());
+    addTearDown(sub.cancel);
+
+    final outcome = await a.engine.invitePeer(
+      host: 'loop',
+      port: 0,
+      rootPath: a.root.path,
+    );
+    expect(outcome, PairInviteOutcome.rejected);
+    expect((await a.db.syncDao.allPairs()).length, before, reason: 'no A row');
+    // B stored nothing either (only the pre-existing test pair remains).
+    expect(
+      b.keys.map.keys.where((k) => k.startsWith('sync_pairkey_')),
+      isEmpty,
     );
   });
 

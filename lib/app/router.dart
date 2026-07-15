@@ -12,6 +12,7 @@ import '../features/drive/presentation/shares_page.dart';
 import '../features/drive/presentation/trash_page.dart';
 import '../features/file_manager/presentation/file_manager_page.dart';
 import '../features/inbox/presentation/image_gallery_page.dart';
+import '../features/folder_sync/presentation/folder_sync_page.dart';
 import '../features/nearby/presentation/nearby_page.dart';
 import '../features/onboarding/presentation/onboarding_page.dart';
 import '../features/remote/presentation/remote_share_page.dart';
@@ -91,6 +92,10 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: 'login',
           builder: (context, state) => const LoginPage(),
+        ),
+        GoRoute(
+          path: 'folder-sync',
+          builder: (context, state) => const FolderSyncPage(),
         ),
         GoRoute(
           path: 'drive',

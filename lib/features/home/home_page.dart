@@ -18,6 +18,7 @@ import '../settings/presentation/settings_cubit.dart';
 import 'widgets/compose_tray.dart';
 import 'widgets/device_section.dart';
 import 'widgets/drive_entry_card.dart';
+import 'widgets/sync_entry_card.dart';
 import 'widgets/floating_transfers.dart';
 import 'widgets/header.dart';
 import 'widgets/my_device_card.dart';
@@ -107,6 +108,7 @@ class HomePage extends StatelessWidget {
                               ),
                             ),
                             const DriveEntryCard(),
+                            const SyncEntryCard(),
                             const ComposeTray(),
                             const DeviceSection(),
                           ],

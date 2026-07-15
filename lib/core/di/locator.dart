@@ -140,9 +140,13 @@ Future<void> setupLocator() async {
     DeltaEngine(),
     identity.crypto,
     ownPublicKeyBase64: identity.publicKeyBase64,
+    ownFingerprint: identity.fingerprint,
+    ownAlias: identity.alias,
     trashRoot: Directory(
       '${supportDir.path}${Platform.pathSeparator}sync-trash',
     ),
+    keyStore: SecureSyncKeyStore(secure),
+    peerInfo: httpPeerInfoFetcher(),
     poster: httpSyncPoster(),
     payloadSender: transferPayloadSender(transferClient),
   );

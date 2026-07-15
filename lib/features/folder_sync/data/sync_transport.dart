@@ -1,8 +1,11 @@
 /// Production transports for [SyncEngine] — the pieces tests inject fakes for.
 library;
 
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../core/storage/app_database.dart';
 import '../../../core/sync/sync_paths.dart';
@@ -37,6 +40,49 @@ SyncPoster httpSyncPoster() {
       client.close();
     }
   };
+}
+
+/// Fetches a peer's identity for pairing: `GET /api/v1/info` → publicKey +
+/// fingerprint. Null on any failure (offline, hidden, no key).
+PeerInfoFetcher httpPeerInfoFetcher() {
+  return (String host, int port) async {
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 6);
+    try {
+      final req = await client.getUrl(
+        Uri(scheme: 'http', host: host, port: port, path: '/api/v1/info'),
+      );
+      final res = await req.close().timeout(const Duration(seconds: 10));
+      if (res.statusCode != HttpStatus.ok) return null;
+      final body = await res.transform(utf8.decoder).join();
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      final pub = json['publicKey'] as String?;
+      final fp = json['fingerprint'] as String?;
+      if (pub == null || pub.isEmpty || fp == null || fp.isEmpty) return null;
+      return (publicKey: pub, fingerprint: fp);
+    } on Object {
+      return null;
+    } finally {
+      client.close();
+    }
+  };
+}
+
+/// §7.1 pairKey storage on the platform keychain/keystore — never in drift.
+class SecureSyncKeyStore implements SyncKeyStore {
+  SecureSyncKeyStore(this._storage);
+
+  final FlutterSecureStorage _storage;
+
+  @override
+  Future<void> write(String key, String value) =>
+      _storage.write(key: key, value: value);
+
+  @override
+  Future<String?> read(String key) => _storage.read(key: key);
+
+  @override
+  Future<void> delete(String key) => _storage.delete(key: key);
 }
 
 /// Pushes needed files through the normal transfer pipeline (prepare/upload,

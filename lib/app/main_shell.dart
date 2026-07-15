@@ -14,6 +14,8 @@ import '../core/di/locator.dart';
 import '../core/share/share_intent_service.dart';
 import '../core/storage/app_database.dart';
 import '../core/ui/app_ui.dart';
+import '../features/folder_sync/data/sync_engine.dart';
+import '../features/folder_sync/presentation/widgets/sync_invite_sheet.dart';
 import '../features/history/presentation/history_page.dart';
 import '../features/home/home_page.dart';
 import '../features/inbox/presentation/inbox_cubit.dart';
@@ -39,6 +41,7 @@ class _MainShellState extends State<MainShell> {
   int _index = 0;
   StreamSubscription<DeepLinkAction>? _linkSub;
   StreamSubscription<List<String>>? _shareSub;
+  StreamSubscription<PendingSyncInvite>? _syncInviteSub;
   ShareIntentService? _share;
 
   static const _pages = [
@@ -62,6 +65,12 @@ class _MainShellState extends State<MainShell> {
     });
     links.start();
     _initShareIntent();
+    // Folder-sync pairing invites are answered from anywhere in the app; the
+    // engine auto-declines after its timeout if the sheet goes unanswered.
+    _syncInviteSub = getIt<SyncEngine>().invites.listen((invite) {
+      if (!mounted) return;
+      showSyncInviteSheet(context, invite);
+    });
   }
 
   /// Files shared into BIShare from another app's share sheet (mobile only) land
@@ -87,6 +96,7 @@ class _MainShellState extends State<MainShell> {
   void dispose() {
     _linkSub?.cancel();
     _shareSub?.cancel();
+    _syncInviteSub?.cancel();
     _share?.dispose();
     super.dispose();
   }
