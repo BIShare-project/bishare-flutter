@@ -10,11 +10,6 @@ import '../constants/cloud.dart';
 /// Remote feature flags from `GET /api/v1/config` (`data.flags`, managed live
 /// from the admin panel's Feature Flags page). Cached in prefs so a cold
 /// offline launch keeps the last-known state; refreshed once per app run.
-///
-/// Defaults are the SAFE state when a flag is absent/unreachable:
-/// * [driveEnabled] false — the Drive surface stays hidden until launch.
-/// * [cloudSyncFree] false — the Pro gate applies unless the flag lifts it.
-/// * [loginEnabled] false — sign-in entry points stay hidden until launch.
 class FeatureFlags extends ChangeNotifier {
   FeatureFlags(this._prefs);
 

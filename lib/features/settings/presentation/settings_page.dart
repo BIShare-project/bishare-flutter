@@ -4,18 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../../core/config/feature_flags.dart';
 import '../../../core/desktop/desktop_service.dart';
-import '../../../core/di/locator.dart';
 import '../../../core/l10n/app_locales.dart';
-import '../../auth/presentation/auth_cubit.dart';
 import '../../../core/server/transfer_types.dart';
 import '../../../core/ui/app_ui.dart';
 import '../domain/settings.dart' as s;
 import 'settings_cubit.dart';
 import 'widgets/about_section.dart';
 import 'widgets/accent_row.dart';
-import 'widgets/account_section.dart';
 import 'widgets/autostart_row.dart';
 import 'widgets/glyph.dart';
 import 'widgets/profile_card.dart';
@@ -54,8 +50,6 @@ class SettingsPage extends StatelessWidget {
                           alias: state.alias,
                           onTap: () => _editAlias(context, cubit, state.alias),
                         ),
-                        // Account: magic-link sign-in / signed-in identity.
-                        const AccountSection(),
                         // Devices dashboard: the full known-devices roster with
                         // presence, stats, and per-device actions.
                         Padding(
@@ -283,31 +277,6 @@ class SettingsPage extends StatelessWidget {
                                     enabled: false,
                                   ),
                                 ),
-                                // Folder Sync cloud fallback: master switch —
-                                // flips every pair + new-pair default. Needs an
-                                // account, so it hides while sign-in doesn't
-                                // exist (login_enabled off) and no session.
-                                if (context
-                                        .watch<AuthCubit>()
-                                        .state
-                                        .isAuthenticated ||
-                                    getIt<FeatureFlags>().loginEnabled) ...[
-                                  const AppRowDivider(indent: 58),
-                                  AppListTile(
-                                    leading: const Glyph(AppIcons.refreshSync),
-                                    title: Text('settings.folder_cloud'.tr()),
-                                    subtitle: Text(
-                                      'settings.folder_cloud_subtitle'.tr(),
-                                    ),
-                                    trailing: ShadSwitch(
-                                      value: state.folderCloudSync,
-                                      // Pure user preference — tier enforcement
-                                      // lives in CloudSyncAdapter and is driven
-                                      // by the admin-controlled remote flags.
-                                      onChanged: cubit.setFolderCloudSync,
-                                    ),
-                                  ),
-                                ],
                                 const AppRowDivider(indent: 58),
                                 AppListTile(
                                   leading:

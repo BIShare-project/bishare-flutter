@@ -10,22 +10,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/feature_flags.dart';
 import '../storage/save_folder_channel.dart';
 import '../storage/android_downloads_channel.dart';
-import '../../features/auth/data/auth_service.dart';
-import '../../features/auth/data/authed_dio.dart';
-import '../../features/auth/data/oauth_service.dart';
-import '../../features/auth/data/token_store.dart';
 import '../../features/clipboard/data/clipboard_history_store.dart';
-import '../../features/drive/data/drive_service.dart';
 import '../../features/clipboard/data/clipboard_relay.dart';
 import '../../features/clipboard/data/clipboard_service.dart';
 import '../../features/clipboard/data/clipboard_token_store.dart';
 import '../../features/discovery/data/discovery_service.dart';
 import '../../features/favorites/data/favorites_repository.dart';
-import '../../features/folder_sync/data/cloud_sync_adapter.dart';
-import '../../features/folder_sync/data/sync_cloud_http.dart';
-import '../../features/folder_sync/data/sync_engine.dart';
-import '../../features/folder_sync/data/sync_scheduler.dart';
-import '../../features/folder_sync/data/sync_transport.dart';
 import '../../features/history/data/history_repository.dart';
 import '../../features/nearby/data/nearby_service.dart';
 import '../../features/remote/data/cloud_config_service.dart';
@@ -38,8 +28,6 @@ import '../deeplink/deep_link_service.dart';
 import '../desktop/desktop_service.dart';
 import '../devices/device_registry.dart';
 import '../identity/device_identity.dart';
-import '../sync/manifest_store.dart';
-import '../sync/sync_roots.dart';
 import '../notifications/notification_service.dart';
 import '../relay/relay_channel.dart';
 import '../server/browser_share.dart';
@@ -138,108 +126,13 @@ Future<void> setupLocator() async {
   // presence, plus the sighting writer that keeps lastSeen/lastIp fresh.
   final deviceRegistry = PresenceDeviceRegistry(db, discovery, favorites);
 
-  // Magic-link auth + session. TokenStore holds the session in the secure
-  // store; AuthedDio (Bearer + silent refresh) is the client Fase B / Drive
-  // will make its authenticated calls through.
-  final tokenStore = TokenStore(secure);
-  final authService = AuthService();
-  final authedDio = AuthedDio(tokenStore, authService);
-  // Google/Apple sign-in — exchanges a provider id_token for the same session
-  // envelope as magic-link verify (see OauthService).
-  final oauthService = OauthService(identity);
-
-  // Folder sync (Tahap 4 M1): the engine owns pair auth + crypto + diff/apply;
-  // the transfer server stays transport-only via the two delegates. Payloads
-  // ride the normal transfer pipeline (TCP, E2E) with sync routing fields.
+  // Transfer client for the LAN send pipeline (TCP, E2E).
   final transferClient = TransferClient(identity);
-  // Roots are stored portable (@save/...) and resolved live — iOS container
-  // paths change every install/update, so absolutes would break pairs.
-  final docsDir = await getApplicationDocumentsDirectory();
-  final syncRoots = SyncRootResolver(
-    saveDirPath: () => server.saveDirectory.path,
-    docsDirPath: () => docsDir.path,
-  );
-  final syncEngine = SyncEngine(
-    db.syncDao,
-    ManifestStore(
-      db.syncDao,
-      ownFingerprint: identity.fingerprint,
-      resolveRoot: syncRoots.resolve,
-    ),
-    identity.crypto,
-    ownPublicKeyBase64: identity.publicKeyBase64,
-    ownFingerprint: identity.fingerprint,
-    ownAlias: identity.alias,
-    trashRoot: Directory(
-      '${supportDir.path}${Platform.pathSeparator}sync-trash',
-    ),
-    keyStore: SecureSyncKeyStore(secure),
-    peerInfo: httpPeerInfoFetcher(),
-    poster: httpSyncPoster(),
-    payloadSender:
-        transferPayloadSender(transferClient, resolveRoot: syncRoots.resolve),
-    resolveRoot: syncRoots.resolve,
-    // New pairs follow the Settings "Folder Sync via cloud" master switch.
-    defaultPairMode: () =>
-        (prefs.getBool('folderCloudSync') ?? false) ? 'lanCloud' : 'lanOnly',
-  );
-  server
-    ..onSyncFrame = syncEngine.handleSyncRequest
-    ..syncRootFor = syncEngine.rootForPayload;
-  // Cloud fallback (M3): store-and-forward over the drive backend — blobs +
-  // manifests encrypted client-side; the adapter self-gates (Pro, lanCloud).
-  final driveService = DriveService(authedDio.dio);
-  final cloudAdapter = CloudSyncAdapter(
-    db.syncDao,
-    ManifestStore(
-      db.syncDao,
-      ownFingerprint: identity.fingerprint,
-      resolveRoot: syncRoots.resolve,
-    ),
-    syncEngine,
-    cloud: HttpSyncCloudStore(
-      driveService,
-      authedDio.dio,
-      scratchDir: supportDir,
-    ),
-    keys: SecureSyncKeyStore(secure),
-    ownFingerprint: identity.fingerprint,
-    resolveRoot: syncRoots.resolve,
-    cloudSyncFree: () => featureFlags.cloudSyncFree,
-  );
-  // Auto-sync (M2b): folder watchers + peer-online pushes + periodic rescan.
-  final syncScheduler = SyncScheduler(
-    // async body (not a bare tear-off) so the runtime future is Future<void>,
-    // never the engine's Future<SyncPushReport> wearing a void mask.
-    (pair, peer) async {
-      await syncEngine.syncNow(pair.id, host: peer.host, port: peer.port);
-    },
-    db.syncDao,
-    deviceStream: discovery.devices,
-    currentDevices: () => discovery.current,
-    resolveRoot: syncRoots.resolve,
-    maintenance: syncEngine.sweepMaintenance,
-    cloudPush: (pair) async {
-      await cloudAdapter.push(pair.id);
-    },
-    cloudPull: (pair) async {
-      await cloudAdapter.pull(pair.id);
-    },
-  )..start();
-  // One startup sweep too (30-day trash TTL + expired tombstones).
-  unawaited(syncEngine.sweepMaintenance());
 
   getIt
     ..registerSingleton<SharedPreferences>(prefs)
     ..registerSingleton<FeatureFlags>(featureFlags)
     ..registerSingleton<DeviceIdentity>(identity)
-    ..registerSingleton<TokenStore>(tokenStore)
-    ..registerSingleton<AuthService>(authService)
-    ..registerSingleton<OauthService>(oauthService)
-    ..registerSingleton<AuthedDio>(authedDio)
-    // Drive (Fase B): cloud file manager over the authenticated Dio (Bearer +
-    // silent refresh). Lazy — no work until the Drive tab is opened.
-    ..registerSingleton<DriveService>(driveService)
     ..registerSingleton<AppDatabase>(db)
     ..registerSingleton<HistoryRepository>(history)
     ..registerSingleton<FavoritesRepository>(favorites)
@@ -264,10 +157,6 @@ Future<void> setupLocator() async {
     )
     ..registerSingleton<DeepLinkService>(DeepLinkService())
     ..registerSingleton<TransferClient>(transferClient)
-    ..registerSingleton<SyncRootResolver>(syncRoots)
-    ..registerSingleton<SyncEngine>(syncEngine)
-    ..registerSingleton<CloudSyncAdapter>(cloudAdapter)
-    ..registerSingleton<SyncScheduler>(syncScheduler)
     ..registerSingleton<NearbyService>(NearbyService())
     ..registerSingleton<DesktopService>(DesktopService(server))
     // Cloud relay WS+REST client (v2.4 premium features). Lazy: it stays

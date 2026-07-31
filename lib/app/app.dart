@@ -7,7 +7,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../core/di/locator.dart';
 import '../core/theme/app_theme.dart';
-import '../features/auth/presentation/auth_cubit.dart';
 import '../features/clipboard/presentation/clipboard_cubit.dart';
 import '../features/devices/presentation/devices_cubit.dart';
 import '../features/discovery/data/discovery_service.dart';
@@ -74,11 +73,6 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        // App-wide auth: bootstraps the persisted session, drives the magic-link
-        // flow, and exposes the signed-in user/tier to Settings + the Drive tab.
-        BlocProvider(
-          create: (_) => AuthCubit(getIt(), getIt(), getIt(), getIt(), getIt()),
-        ),
         BlocProvider(create: (_) => DiscoveryCubit(getIt())),
         BlocProvider(create: (_) => ReceiveCubit(getIt())),
         BlocProvider(create: (_) => SendCubit(getIt(), getIt())),
