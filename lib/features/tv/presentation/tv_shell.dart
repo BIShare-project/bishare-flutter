@@ -32,12 +32,12 @@ class TvShell extends StatelessWidget {
           // Main content — generous overscan-safe padding for TV bezels.
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(56, 40, 56, 40),
+              padding: const EdgeInsets.fromLTRB(48, 28, 48, 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _Header(name: name),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 24),
                   Expanded(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,66 +150,72 @@ class _ReadyPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'tv.ready_to_receive'.tr(),
-          style: TextStyle(
-            color: cs.mutedForeground,
-            fontSize: 20,
-            fontWeight: FontWeight.w500,
+    // Scroll-safe: TV logical heights are short (high DPR) and device names can
+    // be long, so this panel flows top-down and scrolls rather than overflowing.
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'tv.ready_to_receive'.tr(),
+            style: TextStyle(
+              color: cs.mutedForeground,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          name,
-          style: TextStyle(
-            color: cs.foreground,
-            fontSize: 40,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -1,
-            height: 1.05,
+          const SizedBox(height: 6),
+          Text(
+            name,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: cs.foreground,
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+              height: 1.05,
+            ),
           ),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'tv.how_to_send'.tr(namedArgs: {'name': name}),
-          style: TextStyle(
-            color: cs.mutedForeground,
-            fontSize: 17,
-            height: 1.5,
+          const SizedBox(height: 18),
+          Text(
+            'tv.how_to_send'.tr(namedArgs: {'name': name}),
+            style: TextStyle(
+              color: cs.mutedForeground,
+              fontSize: 15,
+              height: 1.45,
+            ),
           ),
-        ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: cs.card,
-            border: Border.all(color: cs.border),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: const BiShareQr(data: 'https://bishare.app', size: 96),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  'tv.no_app_scan'.tr(),
-                  style: TextStyle(
-                    color: cs.mutedForeground,
-                    fontSize: 14,
-                    height: 1.4,
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: cs.card,
+              border: Border.all(color: cs.border),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: const BiShareQr(data: 'https://bishare.app', size: 80),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    'tv.no_app_scan'.tr(),
+                    style: TextStyle(
+                      color: cs.mutedForeground,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
