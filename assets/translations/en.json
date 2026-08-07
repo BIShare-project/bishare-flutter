@@ -660,5 +660,24 @@
     "via_cloud": "via cloud",
     "warn_empty_scan": "The folder is empty or unreadable — 0 files scanned",
     "working": "Syncing…"
+  },
+  "tv": {
+    "ready_to_receive": "Ready to receive",
+    "status_ready": "READY TO RECEIVE",
+    "how_to_send": "On your phone or laptop, open BIShare on the same Wi-Fi and pick “{name}” to send files straight to this screen.",
+    "no_app_scan": "No app yet?\nScan to install BIShare on your phone.",
+    "received": "Received",
+    "empty_received": "Files you receive will appear here",
+    "incoming_title": "Incoming transfer",
+    "incoming_desc": "{sender} wants to send {files} · {size}",
+    "accept": "Accept",
+    "decline": "Decline",
+    "receiving_from": "Receiving from {sender} · {file}",
+    "saved_to_device": "Saved to this device",
+    "viewer_hint": "browse · Back to close",
+    "n_files": {
+      "one": "{} file",
+      "other": "{} files"
+    }
   }
 }

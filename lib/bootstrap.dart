@@ -11,7 +11,15 @@ import 'features/discovery/data/discovery_service.dart';
 /// start the receiver server and discovery. Failures to bind/advertise are
 /// non-fatal — the UI still runs.
 Future<void> bootstrap() async {
-  await Rust.ensureInitialized();
+  // Loading the Rust bridge is best-effort: on a broken/compat runtime where the
+  // native library can't load, we log and continue so the app still LAUNCHES and
+  // renders (transfer crypto degrades — see DeviceIdentity.rustEngine). A failure
+  // here must never leave the user staring at a blank window.
+  try {
+    await Rust.ensureInitialized();
+  } on Object catch (e) {
+    debugPrint('[bootstrap] Rust bridge init failed (crypto degraded): $e');
+  }
   await setupLocator();
   try {
     await getIt<TransferServer>().start();

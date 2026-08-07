@@ -36,8 +36,17 @@ class Rust {
       rc.peerFingerprint(base64Key: base64Key);
   static List<int> generateBaseNonce() => rc.generateBaseNonce();
   static rc.EncryptionEngine newEngine() => rc.EncryptionEngine.generate();
-  static rc.EncryptionEngine? engineFromSeed(List<int> seed) =>
-      rc.EncryptionEngine.fromSeed(seed: seed);
+
+  /// Build the shared engine from a seed, or null if the seed is invalid OR the
+  /// Rust bridge isn't loaded. Never throws — [DeviceIdentity.load] relies on
+  /// this so a missing bridge degrades transfers instead of blanking launch.
+  static rc.EncryptionEngine? engineFromSeed(List<int> seed) {
+    try {
+      return rc.EncryptionEngine.fromSeed(seed: seed);
+    } on Object {
+      return null;
+    }
+  }
 
   /// Encrypt one transfer chunk → `nonce(12) | ciphertext | tag(16)`.
   ///

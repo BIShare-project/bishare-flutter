@@ -660,5 +660,24 @@
     "via_cloud": "via cloud",
     "warn_empty_scan": "Folder kosong atau tidak terbaca — 0 file dipindai",
     "working": "Menyinkronkan…"
+  },
+  "tv": {
+    "ready_to_receive": "Siap menerima",
+    "status_ready": "SIAP MENERIMA",
+    "how_to_send": "Di ponsel atau laptopmu, buka BIShare di Wi-Fi yang sama lalu pilih “{name}” untuk mengirim file langsung ke layar ini.",
+    "no_app_scan": "Belum punya aplikasinya?\nPindai untuk memasang BIShare di ponselmu.",
+    "received": "Diterima",
+    "empty_received": "File yang kamu terima akan muncul di sini",
+    "incoming_title": "Transfer masuk",
+    "incoming_desc": "{sender} ingin mengirim {files} · {size}",
+    "accept": "Terima",
+    "decline": "Tolak",
+    "receiving_from": "Menerima dari {sender} · {file}",
+    "saved_to_device": "Tersimpan di perangkat ini",
+    "viewer_hint": "jelajah · Kembali untuk menutup",
+    "n_files": {
+      "one": "{} file",
+      "other": "{} file"
+    }
   }
 }

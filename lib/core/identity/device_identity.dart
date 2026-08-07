@@ -40,16 +40,20 @@ class DeviceIdentity {
   final E2ECrypto crypto;
 
   /// Shared Rust engine (same seed) — used for the hot transfer path (ECDH key
-  /// derivation + AES-GCM chunk encrypt/decrypt) via FFI.
-  final rc.EncryptionEngine rustEngine;
+  /// derivation + AES-GCM chunk encrypt/decrypt) via FFI. **Nullable**: if the
+  /// Rust bridge fails to load (an ad-hoc/compat runtime edge case), identity
+  /// still constructs so the app LAUNCHES and renders — transfers degrade to
+  /// unencrypted rather than the whole app blanking at startup.
+  final rc.EncryptionEngine? rustEngine;
 
   final String deviceModel;
   final String deviceType;
 
   /// Derive the AES-256 session key shared with a peer (32 bytes), or null if the
-  /// peer key is malformed. Symmetric with the peer's own derivation.
+  /// peer key is malformed OR the Rust engine is unavailable. Symmetric with the
+  /// peer's own derivation. Callers already treat null as "no E2E for this hop".
   List<int>? deriveKey(String peerPublicKeyBase64) =>
-      rustEngine.deriveSharedKey(peerPublicKeyBase64: peerPublicKeyBase64);
+      rustEngine?.deriveSharedKey(peerPublicKeyBase64: peerPublicKeyBase64);
 
   final SharedPreferences _prefs;
   String _alias;
@@ -107,8 +111,11 @@ class DeviceIdentity {
     }
 
     // Same seed → the Rust engine produces the identical X25519 key pair, so ECDH
-    // with peers stays consistent regardless of which engine derives.
-    final rustEngine = Rust.engineFromSeed(actualSeed)!;
+    // with peers stays consistent regardless of which engine derives. NOT
+    // null-asserted: if the Rust bridge didn't load, we still build a valid
+    // identity (pure-Dart `crypto` covers public key + fingerprint) so launch
+    // never blanks; only the FFI-accelerated transfer crypto is unavailable.
+    final rustEngine = Rust.engineFromSeed(actualSeed);
 
     return DeviceIdentity._(
       fingerprint: fingerprint,

@@ -660,5 +660,24 @@
     "via_cloud": "via cloud",
     "warn_empty_scan": "The folder is empty or unreadable — 0 files scanned",
     "working": "Syncing…"
+  },
+  "tv": {
+    "ready_to_receive": "받을 준비 완료",
+    "status_ready": "받을 준비 완료",
+    "how_to_send": "휴대폰이나 노트북에서 같은 Wi-Fi의 BIShare를 열고 “{name}”을(를) 선택하면 이 화면으로 바로 파일을 보낼 수 있어요.",
+    "no_app_scan": "앱이 아직 없나요?\n스캔해서 휴대폰에 BIShare를 설치하세요.",
+    "received": "받은 파일",
+    "empty_received": "받은 파일이 여기에 표시됩니다",
+    "incoming_title": "수신 중인 전송",
+    "incoming_desc": "{sender}님이 {files}을(를) 보내려고 합니다 · {size}",
+    "accept": "수락",
+    "decline": "거절",
+    "receiving_from": "{sender}에서 받는 중 · {file}",
+    "saved_to_device": "이 기기에 저장됨",
+    "viewer_hint": "탐색 · 뒤로 닫기",
+    "n_files": {
+      "one": "파일 {}개",
+      "other": "파일 {}개"
+    }
   }
 }

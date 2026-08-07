@@ -1,11 +1,13 @@
 package com.bishare.app
 
+import android.app.UiModeManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.net.Uri
@@ -38,10 +40,12 @@ class MainActivity : FlutterActivity() {
     private val downloadsChannelName = "app.bishare/android_downloads"
     private val clipboardChannelName = "app.bishare/clipboard"
     private val appsChannelName = "app.bishare/apps"
+    private val deviceChannelName = "app.bishare/device"
     private var shareChannel: MethodChannel? = null
     private var downloadsChannel: MethodChannel? = null
     private var clipboardChannel: MethodChannel? = null
     private var appsChannel: MethodChannel? = null
+    private var deviceChannel: MethodChannel? = null
 
     /// Cheap clipboard generation counter for the Dart poll loop (mirrors
     /// NSPasteboard.changeCount). Bumped by the primary-clip listener; note
@@ -105,8 +109,28 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+        // Device kind: lets Dart pick the TV (Leanback) UI vs the touch UI.
+        deviceChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, deviceChannelName)
+        deviceChannel!!.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "isTv" -> result.success(isTvDevice())
+                else -> result.notImplemented()
+            }
+        }
         // The intent that launched us (cold start) may be a share.
         handleShareIntent(intent, initial = true)
+    }
+
+    /** True on Android TV / Leanback devices (no touchscreen, remote-driven). */
+    private fun isTvDevice(): Boolean {
+        val pm = packageManager
+        if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
+            pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+        ) {
+            return true
+        }
+        val uiMode = getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager
+        return uiMode?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
     }
 
     /**

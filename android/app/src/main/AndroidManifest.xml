@@ -22,11 +22,19 @@
          'required="false"' keeps the app installable on phones/tablets too. -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <!-- The CAMERA / RECORD_AUDIO permissions above imply required camera + mic
+         hardware, which would exclude the app from most Android TVs (no camera,
+         often no mic). Declare them optional so TV devices stay compatible;
+         QR scan / voice messages are simply unavailable there. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <application
         android:label="bishare"
         android:name="${applicationName}"
         android:localeConfig="@xml/locales_config"
-        android:banner="@mipmap/ic_launcher"
+        android:banner="@drawable/tv_banner"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

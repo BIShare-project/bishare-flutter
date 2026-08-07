@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/di/locator.dart';
+import '../core/platform/tv.dart';
 import '../core/storage/app_database.dart';
 import '../features/clipboard/presentation/clipboard_history_page.dart';
 import '../features/devices/presentation/devices_page.dart';
@@ -12,6 +13,7 @@ import '../features/nearby/presentation/nearby_page.dart';
 import '../features/onboarding/presentation/onboarding_page.dart';
 import '../features/remote/presentation/remote_share_page.dart';
 import '../features/scanner/presentation/scanner_page.dart';
+import '../features/tv/presentation/tv_shell.dart';
 import 'main_shell.dart';
 
 /// Arguments for the image gallery route (passed via `extra`).
@@ -24,8 +26,11 @@ final GoRouter appRouter = GoRouter(
   // Gate first-run: show onboarding until the user finishes it.
   redirect: (context, state) {
     try {
-      final done = getIt<SharedPreferences>().getBool(kOnboardingDone) ?? false;
       final atOnboarding = state.matchedLocation == '/onboarding';
+      // TV is a remote-driven receiver — skip the touch-oriented onboarding
+      // entirely and land straight on the TV shell.
+      if (isTvDevice) return atOnboarding ? '/' : null;
+      final done = getIt<SharedPreferences>().getBool(kOnboardingDone) ?? false;
       if (!done && !atOnboarding) return '/onboarding';
       if (done && atOnboarding) return '/';
       return null;
@@ -39,7 +44,7 @@ final GoRouter appRouter = GoRouter(
     // If no route matches, just show the main shell - deep links are handled
     // separately by DeepLinkService, not by GoRouter navigation
     debugPrint('No route found for: ${state.uri} - staying on main shell');
-    return const MainShell();
+    return isTvDevice ? const TvShell() : const MainShell();
   },
   routes: [
     GoRoute(
@@ -48,7 +53,8 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/',
-      builder: (context, state) => const MainShell(),
+      builder: (context, state) =>
+          isTvDevice ? const TvShell() : const MainShell(),
       routes: [
         GoRoute(
           path: 'files',

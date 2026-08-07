@@ -660,5 +660,24 @@
     "via_cloud": "via cloud",
     "warn_empty_scan": "The folder is empty or unreadable — 0 files scanned",
     "working": "Syncing…"
+  },
+  "tv": {
+    "ready_to_receive": "准备接收",
+    "status_ready": "准备接收",
+    "how_to_send": "在手机或电脑上连接同一 Wi-Fi 打开 BIShare，选择“{name}”即可直接把文件发送到此屏幕。",
+    "no_app_scan": "还没有应用？\n扫码在手机上安装 BIShare。",
+    "received": "已接收",
+    "empty_received": "你接收的文件会显示在这里",
+    "incoming_title": "有文件传入",
+    "incoming_desc": "{sender} 想发送 {files} · {size}",
+    "accept": "接受",
+    "decline": "拒绝",
+    "receiving_from": "正在接收来自 {sender} · {file}",
+    "saved_to_device": "已保存到此设备",
+    "viewer_hint": "浏览 · 返回关闭",
+    "n_files": {
+      "one": "{} 个文件",
+      "other": "{} 个文件"
+    }
   }
 }

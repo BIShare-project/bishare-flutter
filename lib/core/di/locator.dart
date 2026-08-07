@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
@@ -45,7 +46,13 @@ Future<void> setupLocator() async {
   // Remote feature flags (drive visibility, free cloud-sync period): cached
   // copy applies immediately, the network refresh lands in the background.
   final featureFlags = FeatureFlags(prefs);
-  await featureFlags.load();
+  // Best-effort: a failed cache/network read must not abort setup (which would
+  // leave getIt unpopulated → blank launch). Defaults apply until refresh lands.
+  try {
+    await featureFlags.load();
+  } on Object catch (e) {
+    debugPrint('[locator] feature flags load failed: $e');
+  }
   final identity = await DeviceIdentity.load(prefs: prefs, secure: secure);
   final saveDir = await _resolveSaveDirectory();
 
@@ -78,9 +85,15 @@ Future<void> setupLocator() async {
     ..isFavorite = favorites.isFavorite
     ..favoriteAutoAccepts = favorites.favoriteAutoAccepts;
 
-  // Local notifications on received files (best-effort).
+  // Local notifications on received files (best-effort). The Darwin init +
+  // permission request can misbehave on a compat runtime; a failure must not
+  // abort setup (getIt would stay empty → blank launch).
   final notifications = NotificationService();
-  await notifications.init();
+  try {
+    await notifications.init();
+  } on Object catch (e) {
+    debugPrint('[locator] notification init failed: $e');
+  }
   notifications.attach(server);
 
   // Seed the advertise intent from persisted visibility so a device the user set
