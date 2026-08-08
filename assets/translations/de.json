@@ -127,7 +127,8 @@
       "one": "{} Datei wird gesendet…",
       "other": "{} Dateien werden gesendet…"
     },
-    "wants_to_send": "möchte senden"
+    "wants_to_send": "möchte senden",
+    "key_changed_warning": "Der Sicherheitsschlüssel dieses Geräts hat sich seit dem letzten Mal geändert — evtl. ein neues Gerät oder ein Betrüger. Nur annehmen, wenn du diese Übertragung erwartest."
   },
   "invite": {
     "title": "Gerät einladen",

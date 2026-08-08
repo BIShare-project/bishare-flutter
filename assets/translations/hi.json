@@ -127,7 +127,8 @@
       "one": "Envoi de {} fichier…",
       "other": "Envoi de {} fichiers…"
     },
-    "wants_to_send": "veut envoyer"
+    "wants_to_send": "veut envoyer",
+    "key_changed_warning": "पिछली बार भरोसा करने के बाद इस डिवाइस की सुरक्षा कुंजी बदल गई है — यह नया डिवाइस या कोई नकली हो सकता है। तभी स्वीकार करें जब आप इस ट्रांसफ़र की अपेक्षा कर रहे हों।"
   },
   "invite": {
     "title": "किसी डिवाइस को आमंत्रित करें",

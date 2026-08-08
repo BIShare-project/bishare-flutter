@@ -52,9 +52,15 @@ class TransferSession {
 /// An incoming transfer awaiting the user's accept/reject decision. The prepare
 /// HTTP handler blocks on [decision] until the UI resolves it (or it times out).
 class PendingTransfer {
-  PendingTransfer({required this.session});
+  PendingTransfer({required this.session, this.keyChanged = false});
 
   final TransferSession session;
+
+  /// P0.5: the sender's X25519 key differs from the one we pinned for its
+  /// fingerprint (device replaced, or a possible impersonator). The accept
+  /// prompt surfaces this so the user can decide deliberately.
+  final bool keyChanged;
+
   final Completer<bool> decision = Completer<bool>();
 
   String get id => session.sessionId;

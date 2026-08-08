@@ -127,7 +127,8 @@
       "one": "Mengirim {} file…",
       "other": "Mengirim {} file…"
     },
-    "wants_to_send": "ingin mengirim"
+    "wants_to_send": "ingin mengirim",
+    "key_changed_warning": "Kunci keamanan device ini berubah sejak terakhir kamu percaya — bisa jadi device baru, atau penyamar. Terima hanya jika kamu memang menunggu transfer ini."
   },
   "invite": {
     "title": "Undang perangkat",

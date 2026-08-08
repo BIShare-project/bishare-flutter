@@ -127,7 +127,8 @@
       "one": "Sending {} file…",
       "other": "Sending {} files…"
     },
-    "wants_to_send": "wants to send"
+    "wants_to_send": "wants to send",
+    "key_changed_warning": "This device’s security key changed since you last trusted it — it may be a new device, or an impostor. Only accept if you’re expecting this transfer."
   },
   "invite": {
     "title": "Invite a device",
