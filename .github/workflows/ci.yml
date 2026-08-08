@@ -98,9 +98,10 @@ jobs:
         run: cargo test --manifest-path rust/Cargo.toml
       - run: flutter analyze
       - run: flutter test
-      # FFI cross-vector parity (loads the cargokit-built lib), byte-exact vs golden.
-      - run: flutter test integration_test/rust_vectors_test.dart -d macos
-      # Throughput gate (≥40 MB/s encrypted) is a RELEASE measurement — `flutter
-      # test` only builds debug (unoptimised AES). Measured via the app's bench hook:
-      #   BISHARE_BENCH=1 flutter run --release -d macos   → "BISHARE_BENCH RESULT: N MB/s"
-      # Verified locally: 57.9 MB/s (single-isolate loopback; cross-device is faster).
+      # NOTE: an `integration_test/rust_vectors_test.dart -d macos` step used to
+      # live here, but that file was never committed (the dir doesn't exist), so
+      # the step could never pass. FFI↔Dart golden parity is covered by the
+      # "FFI crate builds + golden generator runs" step above plus `flutter test`.
+      # Re-add a macOS integration step here if/when that test file is committed.
+      # Throughput gate (≥40 MB/s encrypted) stays a manual RELEASE measurement:
+      #   BISHARE_BENCH=1 flutter run --release -d macos → "BISHARE_BENCH RESULT: N MB/s".
