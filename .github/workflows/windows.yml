@@ -48,9 +48,17 @@ jobs:
         working-directory: bishare-flutter
         run: dart run build_runner build --delete-conflicting-outputs
 
+      # Build the FFI crate directly first so the REAL rustc/cargo error is in
+      # the log — `flutter build windows` only surfaces cargokit's opaque
+      # "custom build exited with code -1" (MSB8066).
+      - name: Diagnostic — build FFI crate for Windows
+        run: cargo build --release --manifest-path bishare-flutter/rust/Cargo.toml
+        env:
+          RUST_BACKTRACE: "1"
+
       - name: Build Windows (release)
         working-directory: bishare-flutter
-        run: flutter build windows --release
+        run: flutter build windows --release --verbose
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
