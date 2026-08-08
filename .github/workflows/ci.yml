@@ -20,21 +20,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: 183 cross-platform crypto/binary/model/util vectors
         run: cargo test --release --manifest-path bishare-protocol/rust/Cargo.toml
-      # The FFI crate's lib.rs has `mod frb_generated;`, and frb_generated.rs is
-      # gitignored — regenerate it (needs dart for the codegen's dart-side format)
-      # before building the FFI crate / running the golden generator.
-      - uses: dart-lang/setup-dart@v1
-      - name: flutter_rust_bridge codegen
-        working-directory: bishare-flutter
-        run: |
-          cargo install flutter_rust_bridge_codegen --version 2.12.0
-          flutter_rust_bridge_codegen generate
-      - name: FFI crate builds + golden generator runs
-        run: |
-          cargo build --release --manifest-path bishare-flutter/rust/Cargo.toml
-          cargo run --example golden --manifest-path bishare-flutter/rust/Cargo.toml
-      - name: FFI crate unit tests (QUIC loopback + stalled-sender timeout)
-        run: cargo test --manifest-path bishare-flutter/rust/Cargo.toml
+      # NOTE: FFI-crate build + golden generator + FFI unit tests moved to the
+      # `flutter` job — they need `frb_generated.rs`, whose codegen requires the
+      # Flutter toolchain (`flutter_rust_bridge_codegen` shells out to `flutter`),
+      # which isn't installed on this ubuntu vectors job. The HW-AES guards below
+      # are grep-only and stay here.
       # Phase 0 HW-AES guard. cargokit sets CARGO_ENCODED_RUSTFLAGS, which cargo
       # does NOT merge with .cargo/config.toml rustflags — so the aes_armv8/
       # polyval_armv8 cfgs are injected by a vendored patch in cargokit's
@@ -97,6 +87,15 @@ jobs:
           flutter_rust_bridge_codegen generate
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
+      # FFI crate build + golden generator + FFI unit tests (moved here from the
+      # ubuntu job — they need the frb codegen above). Paths are relative to the
+      # bishare-flutter working dir; the crate resolves ../../bishare-protocol/rust.
+      - name: FFI crate builds + golden generator runs
+        run: |
+          cargo build --release --manifest-path rust/Cargo.toml
+          cargo run --example golden --manifest-path rust/Cargo.toml
+      - name: FFI crate unit tests (QUIC loopback + stalled-sender timeout)
+        run: cargo test --manifest-path rust/Cargo.toml
       - run: flutter analyze
       - run: flutter test
       # FFI cross-vector parity (loads the cargokit-built lib), byte-exact vs golden.
