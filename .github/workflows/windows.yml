@@ -1,0 +1,82 @@
+name: windows-build
+
+# First real Windows build for the Flutter client. Produces an installable
+# (unsigned, unpackaged) release folder as a downloadable artifact so the app
+# can be smoke-tested on Windows before any MSIX/installer/signing work.
+#
+# The FFI crate (rust/Cargo.toml) path-depends on ../../bishare-protocol/rust,
+# so BOTH repos are checked out as sibling dirs (bishare-flutter/ + bishare-
+# protocol/) — the same layout the other jobs assume via working-directory.
+# bishare-protocol is public, so the default token is enough.
+
+on:
+  push:
+    branches: [main, "ci/windows**"]
+  workflow_dispatch: {}
+
+jobs:
+  windows:
+    # Pinned to VS 2022. windows-latest moved to a preview MSVC (VS 18 / 14.51)
+    # that HARD-ERRORS the deprecated /await + <experimental/coroutine> still used
+    # by the gal and permission_handler_windows plugins (STL1011 / C2338).
+    runs-on: windows-2022
+    steps:
+      - name: Checkout bishare-flutter
+        uses: actions/checkout@v4
+        with:
+          path: bishare-flutter
+
+      - name: Checkout bishare-protocol (FFI crate path-depends on it)
+        uses: actions/checkout@v4
+        with:
+          repository: BIShare-project/bishare-protocol
+          path: bishare-protocol
+
+      - name: Rust toolchain (cargokit builds the FFI DLL during the Flutter build)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: pub get
+        working-directory: bishare-flutter
+        run: flutter pub get
+
+      # frb_generated.rs + lib/src/rust/frb_generated*.dart are gitignored, so
+      # they must be regenerated in CI (matching the runtime FRB version) before
+      # anything compiles — otherwise `mod frb_generated;` fails with E0583.
+      - name: flutter_rust_bridge codegen
+        working-directory: bishare-flutter
+        run: |
+          cargo install flutter_rust_bridge_codegen --version 2.12.0
+          flutter_rust_bridge_codegen generate
+
+      - name: Codegen (freezed / injectable / drift)
+        working-directory: bishare-flutter
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # Build the FFI crate directly first so the REAL rustc/cargo error is in
+      # the log — `flutter build windows` only surfaces cargokit's opaque
+      # "custom build exited with code -1" (MSB8066).
+      - name: Diagnostic — build FFI crate for Windows
+        run: cargo build --release --manifest-path bishare-flutter/rust/Cargo.toml
+        env:
+          RUST_BACKTRACE: "1"
+
+      - name: Build Windows (release)
+        working-directory: bishare-flutter
+        run: flutter build windows --release --verbose
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: bishare-windows-x64
+          path: bishare-flutter/build/windows/x64/runner/Release/
+          if-no-files-found: error
