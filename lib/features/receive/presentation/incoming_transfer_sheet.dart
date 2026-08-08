@@ -77,6 +77,36 @@ class _IncomingContent extends StatelessWidget {
             'receive.wants_to_send'.tr(),
             style: TextStyle(fontSize: 14, color: cs.mutedForeground),
           ),
+          // P0.5: warn when this device's security key differs from the one we
+          // pinned — a replaced device, or a possible impersonator (MITM).
+          if (pending.keyChanged) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: cs.destructive.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cs.destructive.withValues(alpha: 0.35)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.gpp_maybe_outlined, size: 18, color: cs.destructive),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'receive.key_changed_warning'.tr(),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        height: 1.35,
+                        color: cs.destructive,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Container(
             constraints: const BoxConstraints(maxHeight: 210),

@@ -127,7 +127,8 @@
       "one": "Envoi de {} fichier…",
       "other": "Envoi de {} fichiers…"
     },
-    "wants_to_send": "veut envoyer"
+    "wants_to_send": "veut envoyer",
+    "key_changed_warning": "La clé de sécurité de cet appareil a changé depuis la dernière fois — nouvel appareil, ou usurpateur. N’acceptez que si vous attendiez ce transfert."
   },
   "invite": {
     "title": "Inviter un appareil",

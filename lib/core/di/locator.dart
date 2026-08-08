@@ -87,7 +87,7 @@ Future<void> setupLocator() async {
     ..isFavorite = favorites.isFavorite
     ..favoriteAutoAccepts = favorites.favoriteAutoAccepts
     // P0: gate auto-accept on the sender's pinned key (TOFU pin + change detect).
-    ..keyMatchesPinned = pinnedKeys.recordAndMatch;
+    ..checkPinnedKey = pinnedKeys.recordAndCheck;
 
   // Local notifications on received files (best-effort). The Darwin init +
   // permission request can misbehave on a compat runtime; a failure must not

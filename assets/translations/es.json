@@ -127,7 +127,8 @@
       "one": "Enviando {} archivo…",
       "other": "Enviando {} archivos…"
     },
-    "wants_to_send": "quiere enviar"
+    "wants_to_send": "quiere enviar",
+    "key_changed_warning": "La clave de seguridad de este dispositivo cambió desde la última vez — puede ser un dispositivo nuevo o un impostor. Acepta solo si esperabas esta transferencia."
   },
   "invite": {
     "title": "Invitar un dispositivo",

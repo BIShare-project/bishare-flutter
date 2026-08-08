@@ -14,6 +14,7 @@ import 'package:uuid/uuid.dart';
 
 import '../constants/protocol.dart';
 import '../identity/device_identity.dart';
+import '../identity/pinned_keys.dart';
 import '../sync/sync_paths.dart';
 import '../../features/clipboard/data/clipboard_token_store.dart';
 import '../protocol/file_metadata.dart';
@@ -223,10 +224,11 @@ class TransferServer {
   bool Function(String fingerprint)? favoriteAutoAccepts;
 
   /// P0 key-pinning gate: given the sender's fingerprint + the public key it
-  /// presented this session, records it on first sight (TOFU) and returns
-  /// whether it matches the pinned key. Wired from PinnedKeysStore in the
-  /// locator. When null, pinning is skipped (returns match=true upstream).
-  Future<bool> Function(String fingerprint, String? publicKey)? keyMatchesPinned;
+  /// presented this session, records it on first sight (TOFU) and returns the
+  /// outcome vs the pinned key. Wired from PinnedKeysStore in the locator. When
+  /// null, pinning is skipped (treated as a match upstream).
+  Future<KeyPinResult> Function(String fingerprint, String? publicKey)?
+  checkPinnedKey;
 
   final Map<String, TransferSession> _sessions = {};
 
@@ -799,11 +801,13 @@ class TransferServer {
     if (autoAccept == AutoAcceptMode.acceptAll) return true;
     final fp = session.sender.fingerprint;
     // P0: pin the sender's key on first sight and check it matches on repeats.
-    // Auto-accept requires a key match — a changed/substituted key (MITM) fails
-    // it and drops to a manual prompt instead of silently auto-accepting.
-    final keyOk = keyMatchesPinned == null
-        ? true
-        : await keyMatchesPinned!(fp, session.sender.publicKey);
+    // Auto-accept requires a trusted key — a changed/substituted key (MITM)
+    // fails it and drops to a manual prompt instead of silently auto-accepting.
+    final pin = checkPinnedKey == null
+        ? KeyPinResult.match
+        : await checkPinnedKey!(fp, session.sender.publicKey);
+    final keyOk =
+        pin == KeyPinResult.firstSeen || pin == KeyPinResult.match;
     // Per-device auto-accept (a favorite marked "auto-accept") always wins —
     // but only when the pinned key still matches.
     if (keyOk && (favoriteAutoAccepts?.call(fp) ?? false)) return true;
@@ -813,7 +817,11 @@ class TransferServer {
         (isFavorite?.call(fp) ?? false)) {
       return true;
     }
-    final pending = PendingTransfer(session: session);
+    // P0.5: flag a changed key so the accept prompt can warn the user.
+    final pending = PendingTransfer(
+      session: session,
+      keyChanged: pin == KeyPinResult.changed,
+    );
     _incoming.add(pending);
     try {
       return await pending.decision.future.timeout(

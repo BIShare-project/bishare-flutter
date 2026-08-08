@@ -2,6 +2,22 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Outcome of checking a peer's presented key against the pinned one.
+enum KeyPinResult {
+  /// Nothing was pinned before — pinned now (TOFU). Trusted.
+  firstSeen,
+
+  /// Presented key matches the pinned key. Trusted.
+  match,
+
+  /// Presented key DIFFERS from the pinned key — device replaced, or a MITM.
+  /// Not auto-trusted; surfaced to the user.
+  changed,
+
+  /// No usable key was presented.
+  missing,
+}
+
 /// Trust-on-first-use pinning of peer public keys, keyed by device fingerprint.
 ///
 /// Closes the auto-accept hole (P0): a favorited device is auto-accepted only if
@@ -43,20 +59,21 @@ class PinnedKeysStore {
   /// Whether a key is already pinned for [fingerprint].
   bool isPinned(String fingerprint) => _pins.containsKey(fingerprint);
 
-  /// Records [publicKey] for [fingerprint] on first sight (TOFU) and reports
-  /// whether it matches what was pinned. Returns:
-  ///  - `true`  when nothing was pinned yet (pins it now) or the key matches;
-  ///  - `false` when [publicKey] is empty, or it differs from the pinned key.
-  /// A mismatch does NOT overwrite the pin — the change must be reviewed first.
-  Future<bool> recordAndMatch(String fingerprint, String? publicKey) async {
-    if (publicKey == null || publicKey.isEmpty) return false;
+  /// Records [publicKey] for [fingerprint] on first sight (TOFU) and reports the
+  /// outcome vs the pinned key. A mismatch ([KeyPinResult.changed]) does NOT
+  /// overwrite the pin — the change must be reviewed/verified first.
+  Future<KeyPinResult> recordAndCheck(
+    String fingerprint,
+    String? publicKey,
+  ) async {
+    if (publicKey == null || publicKey.isEmpty) return KeyPinResult.missing;
     final existing = _pins[fingerprint];
     if (existing == null) {
       _pins[fingerprint] = publicKey;
       await _persist();
-      return true;
+      return KeyPinResult.firstSeen;
     }
-    return existing == publicKey;
+    return existing == publicKey ? KeyPinResult.match : KeyPinResult.changed;
   }
 
   /// Replace the pinned key for [fingerprint] — used after the user explicitly
