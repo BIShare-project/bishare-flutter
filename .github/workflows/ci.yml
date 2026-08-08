@@ -20,6 +20,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: 183 cross-platform crypto/binary/model/util vectors
         run: cargo test --release --manifest-path bishare-protocol/rust/Cargo.toml
+      # The FFI crate's lib.rs has `mod frb_generated;`, and frb_generated.rs is
+      # gitignored — regenerate it (needs dart for the codegen's dart-side format)
+      # before building the FFI crate / running the golden generator.
+      - uses: dart-lang/setup-dart@v1
+      - name: flutter_rust_bridge codegen
+        working-directory: bishare-flutter
+        run: |
+          cargo install flutter_rust_bridge_codegen --version 2.12.0
+          flutter_rust_bridge_codegen generate
       - name: FFI crate builds + golden generator runs
         run: |
           cargo build --release --manifest-path bishare-flutter/rust/Cargo.toml
