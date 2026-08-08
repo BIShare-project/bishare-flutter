@@ -31,6 +31,8 @@ jobs:
 
       - name: Rust toolchain (cargokit builds the FFI DLL during the Flutter build)
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
 
       - name: Flutter
         uses: subosito/flutter-action@v2
@@ -43,6 +45,15 @@ jobs:
       - name: pub get
         working-directory: bishare-flutter
         run: flutter pub get
+
+      # frb_generated.rs + lib/src/rust/frb_generated*.dart are gitignored, so
+      # they must be regenerated in CI (matching the runtime FRB version) before
+      # anything compiles — otherwise `mod frb_generated;` fails with E0583.
+      - name: flutter_rust_bridge codegen
+        working-directory: bishare-flutter
+        run: |
+          dart pub global activate flutter_rust_bridge_codegen 2.12.0
+          dart pub global run flutter_rust_bridge_codegen generate
 
       - name: Codegen (freezed / injectable / drift)
         working-directory: bishare-flutter
