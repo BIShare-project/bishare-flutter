@@ -222,6 +222,12 @@ class TransferServer {
   bool Function(String fingerprint)? isFavorite;
   bool Function(String fingerprint)? favoriteAutoAccepts;
 
+  /// P0 key-pinning gate: given the sender's fingerprint + the public key it
+  /// presented this session, records it on first sight (TOFU) and returns
+  /// whether it matches the pinned key. Wired from PinnedKeysStore in the
+  /// locator. When null, pinning is skipped (returns match=true upstream).
+  Future<bool> Function(String fingerprint, String? publicKey)? keyMatchesPinned;
+
   final Map<String, TransferSession> _sessions = {};
 
   final _incoming = StreamController<PendingTransfer>.broadcast();
@@ -792,10 +798,18 @@ class TransferServer {
   Future<bool> _decide(TransferSession session) async {
     if (autoAccept == AutoAcceptMode.acceptAll) return true;
     final fp = session.sender.fingerprint;
-    // Per-device auto-accept (a favorite marked "auto-accept") always wins.
-    if (favoriteAutoAccepts?.call(fp) ?? false) return true;
+    // P0: pin the sender's key on first sight and check it matches on repeats.
+    // Auto-accept requires a key match — a changed/substituted key (MITM) fails
+    // it and drops to a manual prompt instead of silently auto-accepting.
+    final keyOk = keyMatchesPinned == null
+        ? true
+        : await keyMatchesPinned!(fp, session.sender.publicKey);
+    // Per-device auto-accept (a favorite marked "auto-accept") always wins —
+    // but only when the pinned key still matches.
+    if (keyOk && (favoriteAutoAccepts?.call(fp) ?? false)) return true;
     // "Favorites only" auto-accepts known favorites; everyone else is prompted.
-    if (autoAccept == AutoAcceptMode.favoritesOnly &&
+    if (keyOk &&
+        autoAccept == AutoAcceptMode.favoritesOnly &&
         (isFavorite?.call(fp) ?? false)) {
       return true;
     }

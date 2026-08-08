@@ -8,17 +8,23 @@ jobs:
   rust-vectors:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with: { submodules: recursive }
+      # The FFI crate path-depends on ../../bishare-protocol/rust, so both repos
+      # must sit as sibling dirs (matches the manifest paths + working-directory
+      # this file already assumes). bishare-protocol is public.
+      - name: Checkout bishare-flutter
+        uses: actions/checkout@v4
+        with: { path: bishare-flutter }
+      - name: Checkout bishare-protocol
+        uses: actions/checkout@v4
+        with: { repository: BIShare-project/bishare-protocol, path: bishare-protocol }
       - uses: dtolnay/rust-toolchain@stable
       - name: 183 cross-platform crypto/binary/model/util vectors
         run: cargo test --release --manifest-path bishare-protocol/rust/Cargo.toml
-      - name: FFI crate builds + golden generator runs
-        run: |
-          cargo build --release --manifest-path bishare-flutter/rust/Cargo.toml
-          cargo run --example golden --manifest-path bishare-flutter/rust/Cargo.toml
-      - name: FFI crate unit tests (QUIC loopback + stalled-sender timeout)
-        run: cargo test --manifest-path bishare-flutter/rust/Cargo.toml
+      # NOTE: FFI-crate build + golden generator + FFI unit tests moved to the
+      # `flutter` job — they need `frb_generated.rs`, whose codegen requires the
+      # Flutter toolchain (`flutter_rust_bridge_codegen` shells out to `flutter`),
+      # which isn't installed on this ubuntu vectors job. The HW-AES guards below
+      # are grep-only and stay here.
       # Phase 0 HW-AES guard. cargokit sets CARGO_ENCODED_RUSTFLAGS, which cargo
       # does NOT merge with .cargo/config.toml rustflags — so the aes_armv8/
       # polyval_armv8 cfgs are injected by a vendored patch in cargokit's
@@ -63,17 +69,39 @@ jobs:
       run:
         working-directory: bishare-flutter
     steps:
-      - uses: actions/checkout@v4
-        with: { submodules: recursive }
+      - name: Checkout bishare-flutter
+        uses: actions/checkout@v4
+        with: { path: bishare-flutter }
+      - name: Checkout bishare-protocol
+        uses: actions/checkout@v4
+        with: { repository: BIShare-project/bishare-protocol, path: bishare-protocol }
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: rustfmt }
       - uses: subosito/flutter-action@v2
         with: { channel: stable }
+      # frb_generated.rs + lib/src/rust/frb_generated*.dart are gitignored →
+      # regenerate before analyze/test (matches runtime FRB version).
+      - name: flutter_rust_bridge codegen
+        run: |
+          cargo install flutter_rust_bridge_codegen --version 2.12.0
+          flutter_rust_bridge_codegen generate
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
+      # FFI crate build + golden generator + FFI unit tests (moved here from the
+      # ubuntu job — they need the frb codegen above). Paths are relative to the
+      # bishare-flutter working dir; the crate resolves ../../bishare-protocol/rust.
+      - name: FFI crate builds + golden generator runs
+        run: |
+          cargo build --release --manifest-path rust/Cargo.toml
+          cargo run --example golden --manifest-path rust/Cargo.toml
+      - name: FFI crate unit tests (QUIC loopback + stalled-sender timeout)
+        run: cargo test --manifest-path rust/Cargo.toml
       - run: flutter analyze
       - run: flutter test
-      # FFI cross-vector parity (loads the cargokit-built lib), byte-exact vs golden.
-      - run: flutter test integration_test/rust_vectors_test.dart -d macos
-      # Throughput gate (≥40 MB/s encrypted) is a RELEASE measurement — `flutter
-      # test` only builds debug (unoptimised AES). Measured via the app's bench hook:
-      #   BISHARE_BENCH=1 flutter run --release -d macos   → "BISHARE_BENCH RESULT: N MB/s"
-      # Verified locally: 57.9 MB/s (single-isolate loopback; cross-device is faster).
+      # NOTE: an `integration_test/rust_vectors_test.dart -d macos` step used to
+      # live here, but that file was never committed (the dir doesn't exist), so
+      # the step could never pass. FFI↔Dart golden parity is covered by the
+      # "FFI crate builds + golden generator runs" step above plus `flutter test`.
+      # Re-add a macOS integration step here if/when that test file is committed.
+      # Throughput gate (≥40 MB/s encrypted) stays a manual RELEASE measurement:
+      #   BISHARE_BENCH=1 flutter run --release -d macos → "BISHARE_BENCH RESULT: N MB/s".
