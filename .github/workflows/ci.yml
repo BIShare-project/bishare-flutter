@@ -8,8 +8,15 @@ jobs:
   rust-vectors:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with: { submodules: recursive }
+      # The FFI crate path-depends on ../../bishare-protocol/rust, so both repos
+      # must sit as sibling dirs (matches the manifest paths + working-directory
+      # this file already assumes). bishare-protocol is public.
+      - name: Checkout bishare-flutter
+        uses: actions/checkout@v4
+        with: { path: bishare-flutter }
+      - name: Checkout bishare-protocol
+        uses: actions/checkout@v4
+        with: { repository: BIShare-project/bishare-protocol, path: bishare-protocol }
       - uses: dtolnay/rust-toolchain@stable
       - name: 183 cross-platform crypto/binary/model/util vectors
         run: cargo test --release --manifest-path bishare-protocol/rust/Cargo.toml
@@ -63,10 +70,22 @@ jobs:
       run:
         working-directory: bishare-flutter
     steps:
-      - uses: actions/checkout@v4
-        with: { submodules: recursive }
+      - name: Checkout bishare-flutter
+        uses: actions/checkout@v4
+        with: { path: bishare-flutter }
+      - name: Checkout bishare-protocol
+        uses: actions/checkout@v4
+        with: { repository: BIShare-project/bishare-protocol, path: bishare-protocol }
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: rustfmt }
       - uses: subosito/flutter-action@v2
         with: { channel: stable }
+      # frb_generated.rs + lib/src/rust/frb_generated*.dart are gitignored →
+      # regenerate before analyze/test (matches runtime FRB version).
+      - name: flutter_rust_bridge codegen
+        run: |
+          cargo install flutter_rust_bridge_codegen --version 2.12.0
+          flutter_rust_bridge_codegen generate
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter analyze
