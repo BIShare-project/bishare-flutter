@@ -1,0 +1,60 @@
+name: windows-build
+
+# First real Windows build for the Flutter client. Produces an installable
+# (unsigned, unpackaged) release folder as a downloadable artifact so the app
+# can be smoke-tested on Windows before any MSIX/installer/signing work.
+#
+# The FFI crate (rust/Cargo.toml) path-depends on ../../bishare-protocol/rust,
+# so BOTH repos are checked out as sibling dirs (bishare-flutter/ + bishare-
+# protocol/) — the same layout the other jobs assume via working-directory.
+# bishare-protocol is public, so the default token is enough.
+
+on:
+  push:
+    branches: [main, "ci/windows**"]
+  workflow_dispatch: {}
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout bishare-flutter
+        uses: actions/checkout@v4
+        with:
+          path: bishare-flutter
+
+      - name: Checkout bishare-protocol (FFI crate path-depends on it)
+        uses: actions/checkout@v4
+        with:
+          repository: BIShare-project/bishare-protocol
+          path: bishare-protocol
+
+      - name: Rust toolchain (cargokit builds the FFI DLL during the Flutter build)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: pub get
+        working-directory: bishare-flutter
+        run: flutter pub get
+
+      - name: Codegen (freezed / injectable / drift)
+        working-directory: bishare-flutter
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build Windows (release)
+        working-directory: bishare-flutter
+        run: flutter build windows --release
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: bishare-windows-x64
+          path: bishare-flutter/build/windows/x64/runner/Release/
+          if-no-files-found: error
