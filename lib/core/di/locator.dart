@@ -29,6 +29,7 @@ import '../deeplink/deep_link_service.dart';
 import '../desktop/desktop_service.dart';
 import '../devices/device_registry.dart';
 import '../identity/device_identity.dart';
+import '../identity/pinned_keys.dart';
 import '../notifications/notification_service.dart';
 import '../relay/relay_channel.dart';
 import '../server/browser_share.dart';
@@ -64,6 +65,7 @@ Future<void> setupLocator() async {
   unawaited(db.purgeOlderThan(90));
   final history = HistoryRepository(db)..attach(server);
   final favorites = FavoritesRepository(db);
+  final pinnedKeys = PinnedKeysStore(prefs);
 
   // Feed the browser Web-Share file list from the received-files log on disk.
   server.receivedFilesProvider = () async {
@@ -83,7 +85,9 @@ Future<void> setupLocator() async {
   // Let the receiver consult favorites during an incoming prepare.
   server
     ..isFavorite = favorites.isFavorite
-    ..favoriteAutoAccepts = favorites.favoriteAutoAccepts;
+    ..favoriteAutoAccepts = favorites.favoriteAutoAccepts
+    // P0: gate auto-accept on the sender's pinned key (TOFU pin + change detect).
+    ..keyMatchesPinned = pinnedKeys.recordAndMatch;
 
   // Local notifications on received files (best-effort). The Darwin init +
   // permission request can misbehave on a compat runtime; a failure must not
@@ -149,6 +153,7 @@ Future<void> setupLocator() async {
     ..registerSingleton<AppDatabase>(db)
     ..registerSingleton<HistoryRepository>(history)
     ..registerSingleton<FavoritesRepository>(favorites)
+    ..registerSingleton<PinnedKeysStore>(pinnedKeys)
     ..registerSingleton<DiscoveryService>(discovery)
     ..registerSingleton<PresenceDeviceRegistry>(deviceRegistry)
     ..registerSingleton<TransferServer>(server)
