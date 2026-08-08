@@ -16,7 +16,10 @@ on:
 
 jobs:
   windows:
-    runs-on: windows-latest
+    # Pinned to VS 2022. windows-latest moved to a preview MSVC (VS 18 / 14.51)
+    # that HARD-ERRORS the deprecated /await + <experimental/coroutine> still used
+    # by the gal and permission_handler_windows plugins (STL1011 / C2338).
+    runs-on: windows-2022
     steps:
       - name: Checkout bishare-flutter
         uses: actions/checkout@v4
