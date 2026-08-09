@@ -680,5 +680,35 @@
       "one": "{} file",
       "other": "{} files"
     }
+  },
+  "qr_beam": {
+    "title": "QR Beam",
+    "subtitle": "Send a small file with no network at all",
+    "send_title": "Show a file",
+    "send_desc": "Turn a file into a stream of QR codes the other phone scans.",
+    "receive_title": "Scan a file",
+    "receive_desc": "Point your camera at the other phone's QR stream.",
+    "hint": "QR Beam works with no Wi-Fi, hotspot, or Bluetooth — just screen to camera. Best for text, keys, and small documents.",
+    "send_empty_title": "Beam a small file",
+    "send_empty_msg": "Pick a file and BIShare turns it into a looping stream of QR codes. Point the other device's camera at your screen to receive it.",
+    "pick_file": "Pick a file",
+    "pick_another": "Pick another file",
+    "err_read": "Couldn't read that file.",
+    "err_too_large": "Too large for QR Beam (max {max}). Use nearby or a link for bigger files.",
+    "err_save": "Couldn't save the received file.",
+    "frame_of": "Frame {i} of {n}",
+    "chunks": "{n} chunks",
+    "chunks_of": "{i} of {n} chunks",
+    "keep_steady": "Keep both screens steady and facing each other until it finishes.",
+    "large_warn": "Larger files take longer — keep the cameras aligned.",
+    "speed": "Speed",
+    "sender": "QR Beam",
+    "aim": "Aim at the QR stream",
+    "aim_hint": "Point your camera at the other phone showing the QR codes.",
+    "receiving": "Receiving…",
+    "received_title": "File received",
+    "done": "Done",
+    "camera_denied_title": "Camera access needed",
+    "camera_denied_msg": "Allow camera access in Settings to scan a QR Beam."
   }
 }
