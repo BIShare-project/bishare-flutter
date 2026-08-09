@@ -170,15 +170,18 @@ assets/translations/    # 13-locale JSON message catalogs
 
 ## Contributing
 
-Contributions are welcome!
+Contributions are welcome! New to the codebase? Start with
+**[ARCHITECTURE.md](ARCHITECTURE.md)**, browse
+[`good first issue`](https://github.com/BIShare-project/bishare-flutter/labels/good%20first%20issue),
+and see what's coming in the [**roadmap**](ROADMAP.md).
 
 1. Fork the repo and create a feature branch (`git checkout -b feat/my-feature`).
 2. Make your change and run `flutter analyze` + `flutter test`.
-3. Keep user-facing strings localized — add keys to **all** files in
-   `assets/translations/`.
+3. Keep user-facing strings localized — see [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md).
 4. Open a pull request describing the change.
 
-Please open an issue first for larger features so we can align on direction.
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the full guide. Please open an
+issue first for larger features so we can align on direction.
 
 ## Translations 🌍
 
