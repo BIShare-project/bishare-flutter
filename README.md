@@ -1,47 +1,151 @@
-# BIShare — Flutter Client (P0 Scaffold)
+<div align="center">
 
-Satu codebase Dart/Flutter menggantikan native iOS + Android **dan** rencana Tauri desktop — target penuh **iOS, Android, macOS, Windows, Linux**. Rencana lengkap: [`../flutter-client.md`](../flutter-client.md).
+# BIShare
 
-## Status: P0 Foundation (compile-verified)
+**Fast, private, cross-platform file sharing — like AirDrop, but for every device.**
 
-`flutter analyze` **bersih (0 issue)**, 5 test crypto **hijau**, `cargo build` FFI **sukses**.
+Send any file between iPhone, Android, Mac, Windows, and Linux. Instant and
+end-to-end encrypted over your local network, or a link the other side opens in
+any browser. No account, no ads, no cloud in the middle.
 
-### Sudah jadi & terverifikasi
+![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-2563eb)
+![Built with](https://img.shields.io/badge/built%20with-Flutter%20%2B%20Rust-2563eb)
+![License](https://img.shields.io/badge/license-TBD-lightgrey)
 
-| Area | File | Catatan |
-|---|---|---|
-| Konstanta protokol (grounded) | `lib/core/constants/protocol.dart` | Port 58317–58320, `_bishare._tcp`, path API, versi 2.3, crypto — **byte-exact** dari `bishare-protocol` |
-| Wire DTO | `lib/core/protocol/*` | `DeviceInfo` (+ self-reported `ip`), `FileMetadata`, `Prepare*`, `UploadResponse` — cocok persis JSON native |
-| **E2E crypto** | `lib/core/crypto/e2e_crypto.dart` | X25519 + HKDF-SHA256 (`BIShare-E2E`/`file-transfer`) + AES-256-GCM, chunk-nonce XOR — **interop byte-exact, teruji round-trip** |
-| Identity | `lib/core/identity/device_identity.dart` | fingerprint UUID, alias, keypair (secure storage), `makeDeviceInfo()` refresh IP |
-| Self-report IPv4 | `lib/core/network/local_ip.dart` | hindari loopback/link-local/AWDL-IPv6 — **fix discovery** |
-| Discovery | `lib/features/discovery/data/discovery_service.dart` | `bonsoir` advertise+browse, TXT fast-path `ip`, stale sweep |
-| Receiver | `lib/core/server/transfer_server.dart` | `shelf` dual-stack :58317 — info/prepare(accept·reject·PIN·busy·30s·**derive-key**)/upload(**stream-decrypt** `[len][nonce\|ct\|tag]` frames→disk + sha256 plaintext)/cancel/goodbye |
-| Sender | `lib/features/send/data/transfer_client.dart` | `dio` — info/prepare/upload (**E2E chunked-encrypt stream**, `X-Encrypted: chunked`)/cancel/goodbye + **cancel-propagation** |
-| **E2E transfer** | client+server + `bishare_ffi` | ECDH key negotiate lewat prepare `publicKey`, chunk `encrypt_chunk`/`decrypt_chunk` di **Rust FFI**, framing **byte-exact native** (baseNonce dari chunk-0), verifikasi sha256 plaintext — teruji round-trip + split-jaringan |
-| DI + BLoC + UI | `lib/core/di`, `lib/features/*/presentation`, `lib/features/home` | get_it + flutter_bloc + Home yang runnable |
-| **FFI (flutter_rust_bridge)** | `rust/` + `lib/src/rust/` + `lib/core/rust/rust_facade.dart` | **wired end-to-end**: crate `bishare_ffi` reuse `bishare-protocol` (crypto/utils), binding Dart ter-generate, `RustLib.init()` di bootstrap, receiver pakai `sanitizeFilename` Rust. `flutter build macos` membundel `bishare_ffi.framework` (11 MB, symbol FRB terverifikasi via `nm`) |
+</div>
 
-### Scope P0 yang menyusul (jujur, bukan bug — belum diimplementasi)
+---
 
-1. **QUIC** — TCP dulu (sesuai default nyata native); QUIC via `quinn` di `bishare_ffi` = P7.
-2. **injectable/freezed/drift/retrofit codegen** — scaffold pakai get_it manual + json_serializable; migrasi ke anotasi = increment.
-3. Dep `device_info_plus`/`network_info_plus`/`connectivity_plus` dilepas sementara (konflik `win32 6 vs 5.9` dengan file_picker) — re-add saat dipakai.
-4. **Verifikasi interop di device nyata** — E2E teruji round-trip di Dart + build; transfer Flutter↔iOS/Android di jaringan asli belum dijalankan (butuh device).
-5. **Offload decrypt ke isolate** — FFI sync per-chunk di isolate server saat file besar (perf, bukan correctness).
+## Why BIShare?
 
-## Menjalankan
+AirDrop is Apple-only. Android's Quick Share skips iPhones. WeTransfer caps free
+transfers and routes everything through the cloud. BIShare fills the gap: **one
+app for every platform**, with the file going **directly device-to-device** when
+you're on the same network — no upload, no server, no waiting.
+
+## Features
+
+- 🚀 **Local-network transfer** — files stream straight between devices over
+  Wi-Fi at full speed. Nothing is uploaded to a server.
+- 🔒 **End-to-end encrypted** — X25519 key exchange + AES-256-GCM with per-file
+  keys. Only the sender and receiver can read the data.
+- 📡 **Nearby & offline** — devices discover each other automatically over the
+  LAN (mDNS); transfer works even over a phone hotspot with no internet.
+- 🔳 **QR Beam** — send a small file with **no network at all**: the sender's
+  screen shows an animated stream of QR codes and the receiver's camera scans
+  them (purely screen → camera). Great for text, keys, and small docs.
+- 🔗 **Remote share** — for devices that aren't nearby, get a link, QR code, and
+  6-character code the recipient opens in any browser — no app on their end.
+- 👥 **Rooms** — share files with a group in a live, shared room.
+- 📋 **Universal clipboard** — sync clipboard content across your own devices.
+- 📥 **Inbox & history** — received files land in an inbox with a gallery, plus
+  searchable transfer history.
+- 🖥️ **Truly cross-platform** — one Dart/Flutter codebase for **iOS, Android,
+  macOS, Windows, and Linux**.
+- 🙅 **No account, no ads** — nothing to sign up for; ephemeral by design.
+- 🌍 **13 languages** — English, Indonesian, Spanish, French, German, Portuguese
+  (BR), Russian, Arabic, Hindi, Japanese, Korean, and Simplified/Traditional
+  Chinese.
+
+## Supported platforms
+
+| Android | iOS | macOS | Windows | Linux |
+|:---:|:---:|:---:|:---:|:---:|
+| ✅ | ✅ | ✅ | ✅ | ✅ |
+
+## Tech stack
+
+- **[Flutter](https://flutter.dev/)** (Dart) — a single UI codebase across all platforms.
+- **Rust core** via **[flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge)** —
+  the cryptography and protocol primitives (X25519, AES-256-GCM, framing,
+  filename sanitisation) live in a shared Rust crate for correctness and speed.
+- **State & DI** — `flutter_bloc` (Cubit) + `get_it`.
+- **Routing** — `go_router`.
+- **Networking** — `shelf` (receiver server), `dio` (sender client),
+  `bonsoir` (mDNS/Bonjour discovery).
+- **Storage** — `drift` (SQLite) for history + favorites.
+- **QR** — `qr_flutter` (generate) + `mobile_scanner` (scan).
+- **UI** — `shadcn_ui`.
+- **i18n** — `easy_localization`.
+
+## Getting started
+
+### Prerequisites
+
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (Dart SDK ≥ 3.11).
+- [Rust toolchain](https://rustup.rs/) (`rustc` + `cargo`) — the native crypto
+  core is built from source via flutter_rust_bridge.
+- Platform toolchains for whatever you target (Xcode for iOS/macOS, Android
+  Studio / NDK for Android, Visual Studio for Windows, GTK/Clang for Linux).
+
+### Run
 
 ```bash
+# 1. Install Dart/Flutter dependencies
 flutter pub get
-dart run build_runner build   # generate *.g.dart (json_serializable)
-flutter run -d macos          # atau ios / windows / linux / android
-flutter analyze               # 0 issue
-flutter test                  # crypto round-trip
+
+# 2. Generate the serialization code (*.g.dart)
+dart run build_runner build --delete-conflicting-outputs
+
+# 3. Run on a connected device or desktop
+flutter run -d macos      # or: ios | android | windows | linux
 ```
 
-Dua device di Wi-Fi yang sama akan saling terlihat; tap device → pilih file → prompt Accept di penerima → transfer + progress.
+> The first build compiles the Rust core, so it takes longer than a pure-Dart
+> app. Subsequent builds are incremental.
 
-## Arsitektur
+### Checks
 
-Clean Architecture feature-first (`core/` + `features/<f>/{domain,data,presentation}`), BLoC (Cubit) untuk state, get_it untuk DI, Dio (sender) + shelf (receiver), `flutter_rust_bridge` untuk reuse protokol Rust. Detail: `../flutter-client.md` §2–3.
+```bash
+flutter analyze     # static analysis
+flutter test        # unit tests (incl. crypto round-trip)
+```
+
+## Project structure
+
+```
+lib/
+├─ app/                 # app shell, router, bootstrap
+├─ core/                # cross-cutting services
+│  ├─ crypto/           #   E2E crypto (Dart side)
+│  ├─ server/           #   receiver (shelf) — inbox/history pipeline
+│  ├─ identity/         #   device identity, keypair
+│  ├─ rust/             #   flutter_rust_bridge facade
+│  └─ ui/               #   shared design-system widgets
+├─ features/            # feature-first vertical slices
+│  ├─ send/  receive/   #   transfer flows
+│  ├─ nearby/           #   offline device discovery + send
+│  ├─ qr_beam/          #   QR-stream offline transfer
+│  ├─ remote/  room/    #   link/QR/code + group sharing
+│  ├─ inbox/  history/  #   received files + records
+│  └─ ...               #   home, settings, clipboard, file_manager, …
+└─ src/rust/            # generated flutter_rust_bridge bindings
+
+rust/                   # the native crate (bishare_ffi) exposed to Dart
+assets/translations/    # 13-locale JSON message catalogs
+```
+
+## Contributing
+
+Contributions are welcome!
+
+1. Fork the repo and create a feature branch (`git checkout -b feat/my-feature`).
+2. Make your change and run `flutter analyze` + `flutter test`.
+3. Keep user-facing strings localized — add keys to **all** files in
+   `assets/translations/`.
+4. Open a pull request describing the change.
+
+Please open an issue first for larger features so we can align on direction.
+
+## License
+
+No license has been chosen yet — until a `LICENSE` file is added, **all rights
+are reserved**. A permissive license (e.g. [MIT](https://choosealicense.com/licenses/mit/)
+or [Apache-2.0](https://choosealicense.com/licenses/apache-2.0/)) is recommended
+before accepting external contributions.
+
+---
+
+<div align="center">
+Made with Flutter &amp; Rust · <a href="https://bishare.app">bishare.app</a>
+</div>
