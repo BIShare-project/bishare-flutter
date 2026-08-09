@@ -1,0 +1,76 @@
+name: bishare
+base: core22
+adopt-info: bishare
+summary: Send files across every device — fast, private, offline-capable
+description: |
+  BIShare moves files directly between your devices — iPhone, Android, Mac,
+  Windows, and Linux — over your local network at full speed, end-to-end
+  encrypted, with no account and no cloud in the middle. When there is no
+  network at all, QR Beam streams a small file over an animated QR code that
+  the other device's camera scans.
+
+  Features:
+
+  * Direct device-to-device transfer over Wi-Fi or a hotspot — no size limit.
+  * End-to-end encryption (X25519 + AES-256-GCM) with per-file keys.
+  * Cross-platform, including the direction AirDrop can't do: iPhone ↔ Android.
+  * QR Beam: send a small file with zero network, screen-to-camera.
+  * Free and open source (MIT).
+
+grade: stable
+confinement: strict
+compression: lzo
+
+# The application. The `gnome` extension wires up the GTK3 runtime, themes,
+# fonts, and desktop-portal integration that a Flutter Linux app needs.
+apps:
+  bishare:
+    command: bishare
+    extensions: [gnome]
+    common-id: com.bishare.app
+    plugs:
+      - network         # LAN transfer + cloud relay (remote share / rooms)
+      - network-bind    # local HTTP receiver (shelf listens on a LAN port)
+      - avahi-observe   # mDNS device discovery via the host avahi daemon (bonsoir)
+      - camera          # QR scanning / QR Beam receive (mobile_scanner)
+      - home            # open/save files the user explicitly picks
+      - removable-media # save to USB drives / mounted volumes
+      - audio-playback  # notification / transfer sounds
+
+parts:
+  # Rust toolchain for the flutter_rust_bridge core. cargokit compiles the
+  # `bishare_ffi` crate during `flutter build linux`. The bishare-protocol
+  # crate is VENDORED in-repo (rust/bishare-protocol), so the build needs no
+  # network access to any private sibling repository.
+  rust-toolchain:
+    plugin: nil
+    build-packages:
+      - curl
+      - build-essential
+      - pkg-config
+    override-build: |
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+        | sh -s -- -y --default-toolchain stable --profile minimal
+      craftctl default
+
+  bishare:
+    after: [rust-toolchain]
+    source: .
+    plugin: flutter
+    flutter-target: lib/main.dart
+    # cargo lives under $HOME/.cargo after rustup; expose it to the Flutter
+    # build so cargokit can find it.
+    build-environment:
+      - PATH: "$HOME/.cargo/bin:$PATH"
+    build-packages:
+      - clang
+      - cmake
+      - ninja-build
+      - pkg-config
+      - libgtk-3-dev
+      - liblzma-dev
+    override-pull: |
+      craftctl default
+      # Derive the snap version from pubspec.yaml (e.g. "2.4.5+245" -> "2.4.5").
+      version="$(grep '^version:' pubspec.yaml | head -1 | sed -E 's/version:\s*//; s/\+.*//')"
+      craftctl set version="$version"

@@ -1,0 +1,38 @@
+name: snap
+
+# Build the Linux Snap package. Runs on version tags and can be triggered
+# manually. Publishing is left commented out — add store credentials first.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Build snap
+        id: snapcraft
+        uses: snapcore/action-build@v1
+
+      - name: Upload snap artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bishare-snap
+          path: ${{ steps.snapcraft.outputs.snap }}
+
+      # To auto-publish, add a repo secret SNAPCRAFT_STORE_CREDENTIALS
+      # (from `snapcraft export-login`) and uncomment:
+      #
+      # - name: Publish to edge
+      #   uses: snapcore/action-publish@v1
+      #   env:
+      #     SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+      #   with:
+      #     snap: ${{ steps.snapcraft.outputs.snap }}
+      #     release: edge

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=BIShare
+GenericName=File Sharing
+Comment=Fast, private, cross-platform file sharing
+Exec=bishare
+Icon=${SNAP}/meta/gui/bishare.png
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;Utility;
+Keywords=file;share;transfer;airdrop;nearby;send;
+StartupNotify=true
+StartupWMClass=bishare
+X-GNOME-UsesNotifications=true
