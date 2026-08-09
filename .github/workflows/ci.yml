@@ -8,18 +8,14 @@ jobs:
   rust-vectors:
     runs-on: ubuntu-latest
     steps:
-      # The FFI crate path-depends on ../../bishare-protocol/rust, so both repos
-      # must sit as sibling dirs (matches the manifest paths + working-directory
-      # this file already assumes). bishare-protocol is public.
+      # The protocol crate is vendored into rust/bishare-protocol, so the client
+      # builds from a single checkout — no sibling repo required.
       - name: Checkout bishare-flutter
         uses: actions/checkout@v4
         with: { path: bishare-flutter }
-      - name: Checkout bishare-protocol
-        uses: actions/checkout@v4
-        with: { repository: BIShare-project/bishare-protocol, path: bishare-protocol }
       - uses: dtolnay/rust-toolchain@stable
-      - name: 183 cross-platform crypto/binary/model/util vectors
-        run: cargo test --release --manifest-path bishare-protocol/rust/Cargo.toml
+      - name: cross-platform crypto/binary/model/util vectors
+        run: cargo test --release --manifest-path bishare-flutter/rust/bishare-protocol/Cargo.toml
       # NOTE: FFI-crate build + golden generator + FFI unit tests moved to the
       # `flutter` job — they need `frb_generated.rs`, whose codegen requires the
       # Flutter toolchain (`flutter_rust_bridge_codegen` shells out to `flutter`),
@@ -72,9 +68,6 @@ jobs:
       - name: Checkout bishare-flutter
         uses: actions/checkout@v4
         with: { path: bishare-flutter }
-      - name: Checkout bishare-protocol
-        uses: actions/checkout@v4
-        with: { repository: BIShare-project/bishare-protocol, path: bishare-protocol }
       - uses: dtolnay/rust-toolchain@stable
         with: { components: rustfmt }
       - uses: subosito/flutter-action@v2
@@ -89,7 +82,7 @@ jobs:
       - run: dart run build_runner build --delete-conflicting-outputs
       # FFI crate build + golden generator + FFI unit tests (moved here from the
       # ubuntu job — they need the frb codegen above). Paths are relative to the
-      # bishare-flutter working dir; the crate resolves ../../bishare-protocol/rust.
+      # bishare-flutter working dir; the crate resolves the vendored rust/bishare-protocol.
       - name: FFI crate builds + golden generator runs
         run: |
           cargo build --release --manifest-path rust/Cargo.toml

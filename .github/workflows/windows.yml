@@ -4,10 +4,8 @@ name: windows-build
 # (unsigned, unpackaged) release folder as a downloadable artifact so the app
 # can be smoke-tested on Windows before any MSIX/installer/signing work.
 #
-# The FFI crate (rust/Cargo.toml) path-depends on ../../bishare-protocol/rust,
-# so BOTH repos are checked out as sibling dirs (bishare-flutter/ + bishare-
-# protocol/) — the same layout the other jobs assume via working-directory.
-# bishare-protocol is public, so the default token is enough.
+# The protocol crate is vendored into rust/bishare-protocol, so the client
+# builds from a single checkout — no sibling repo required.
 
 on:
   push:
@@ -25,12 +23,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: bishare-flutter
-
-      - name: Checkout bishare-protocol (FFI crate path-depends on it)
-        uses: actions/checkout@v4
-        with:
-          repository: BIShare-project/bishare-protocol
-          path: bishare-protocol
 
       - name: Rust toolchain (cargokit builds the FFI DLL during the Flutter build)
         uses: dtolnay/rust-toolchain@stable
