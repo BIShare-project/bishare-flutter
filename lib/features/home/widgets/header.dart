@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/desktop/desktop_service.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../discovery/domain/discovered_device.dart';
 import '../../discovery/presentation/discovery_cubit.dart';
@@ -51,10 +52,12 @@ class Header extends StatelessWidget {
               onPressed: () => context.push('/nearby'),
             ),
           // Scan a QR to receive a remote transfer / share / room.
-          AppIconButton(
-            icon: AppIcons.scanDocument,
-            onPressed: () => context.push('/scan'),
-          ),
+          // Camera scanning is unavailable on Windows/Linux (no mobile_scanner).
+          if (supportsCameraScan)
+            AppIconButton(
+              icon: AppIcons.scanDocument,
+              onPressed: () => context.push('/scan'),
+            ),
           // QR Beam: offline file transfer over a stream of QR codes (no network).
           AppIconButton(
             icon: AppIcons.qrShare,

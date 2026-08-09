@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/desktop/desktop_service.dart';
 import '../../../core/ui/app_ui.dart';
 
 /// QR Beam entry — pick a direction. QR Beam transfers a small file over an
@@ -58,15 +59,18 @@ class QrBeamPage extends StatelessWidget {
                       context.push('/qr-beam/send');
                     },
                   ),
-                  _OptionCard(
-                    icon: AppIcons.scanDocument,
-                    title: 'qr_beam.receive_title'.tr(),
-                    subtitle: 'qr_beam.receive_desc'.tr(),
-                    onTap: () {
-                      tapHaptic();
-                      context.push('/qr-beam/receive');
-                    },
-                  ),
+                  // Receiving needs a camera to scan the QR stream — unavailable
+                  // on Windows/Linux (no mobile_scanner). QR Beam is send-only there.
+                  if (supportsCameraScan)
+                    _OptionCard(
+                      icon: AppIcons.scanDocument,
+                      title: 'qr_beam.receive_title'.tr(),
+                      subtitle: 'qr_beam.receive_desc'.tr(),
+                      onTap: () {
+                        tapHaptic();
+                        context.push('/qr-beam/receive');
+                      },
+                    ),
                   const Spacer(),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),

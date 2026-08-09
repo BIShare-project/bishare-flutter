@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/desktop/desktop_service.dart';
 import '../core/di/locator.dart';
 import '../core/platform/tv.dart';
 import '../core/storage/app_database.dart';
@@ -75,6 +76,9 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: 'scan',
+          // Camera QR scanning isn't available on Windows/Linux — never build
+          // the scanner there (constructing it throws MissingPluginException).
+          redirect: (context, state) => supportsCameraScan ? null : '/',
           builder: (context, state) => const ScannerPage(),
         ),
         GoRoute(
@@ -95,6 +99,8 @@ final GoRouter appRouter = GoRouter(
             ),
             GoRoute(
               path: 'receive',
+              // QR Beam receive needs a camera — unavailable on Windows/Linux.
+              redirect: (context, state) => supportsCameraScan ? null : '/',
               builder: (context, state) => const QrBeamReceivePage(),
             ),
           ],

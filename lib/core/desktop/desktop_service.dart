@@ -14,6 +14,14 @@ import '../server/transfer_server.dart';
 bool get isDesktop =>
     !kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux);
 
+/// Whether camera-based QR scanning is available. `mobile_scanner` ships an
+/// implementation on Android, iOS, and macOS — but NOT on Windows or Linux.
+/// Gate every camera-scan entry point on this so the Windows/Linux builds never
+/// construct a `MobileScannerController` (which throws `MissingPluginException`).
+/// QR Beam stays send-only on Windows/Linux as a result.
+bool get supportsCameraScan =>
+    !kIsWeb && !(Platform.isWindows || Platform.isLinux);
+
 /// Desktop-only polish (macOS · Windows · Linux): a native window with a minimum
 /// size that hides to the tray on close (so receiving keeps running in the
 /// background), a menu-bar/tray icon with a receiving toggle, and launch-at-login.

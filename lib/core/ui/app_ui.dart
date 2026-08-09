@@ -24,6 +24,7 @@ export 'app_card.dart';
 export 'app_empty_state.dart';
 export 'app_format.dart';
 export 'bishare_qr.dart';
+export 'file_open.dart';
 export 'file_preview.dart';
 export 'app_icon_button.dart';
 export 'app_list_tile.dart';

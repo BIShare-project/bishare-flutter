@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -103,13 +102,8 @@ class HistoryRow extends StatelessWidget {
       );
       return;
     }
-    final res = await OpenFilex.open(path);
-    if (res.type != ResultType.done && context.mounted) {
-      toast(
-        context,
-        'history.cannot_open'.tr(namedArgs: {'error': res.message}),
-        type: ToastType.error,
-      );
+    if (!await openFile(path) && context.mounted) {
+      toast(context, 'common.no_app_open'.tr(), type: ToastType.error);
     }
   }
 

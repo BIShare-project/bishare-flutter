@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -12,6 +11,7 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 import 'app_format.dart';
 import 'app_sheet.dart';
 import 'app_svg_icon.dart';
+import 'file_open.dart';
 
 /// Opens a rich preview of a local [path]. Images get a full-screen pinch-zoom
 /// viewer, videos a poster frame with a play affordance (opens in the system
@@ -57,8 +57,7 @@ Future<void> showFilePreview(
 }
 
 Future<void> _open(BuildContext context, String path) async {
-  final res = await OpenFilex.open(path);
-  if (res.type != ResultType.done && context.mounted) {
+  if (!await openFile(path) && context.mounted) {
     toast(context, 'common.no_app_open'.tr(), type: ToastType.error);
   }
 }

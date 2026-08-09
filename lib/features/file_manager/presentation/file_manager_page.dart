@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -193,9 +192,8 @@ class _FileManagerPageState extends State<FileManagerPage> {
   }
 
   Future<void> _open(ManagedFile f) async {
-    final res = await OpenFilex.open(f.path);
-    if (res.type != ResultType.done && mounted) {
-      toast(context, 'files.cannot_open'.tr(namedArgs: {'message': res.message}), type: ToastType.error);
+    if (!await openFile(f.path) && mounted) {
+      toast(context, 'common.no_app_open'.tr(), type: ToastType.error);
     }
   }
 
