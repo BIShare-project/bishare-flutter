@@ -10,7 +10,7 @@ any browser. No account, no ads, no cloud in the middle.
 
 ![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-2563eb)
 ![Built with](https://img.shields.io/badge/built%20with-Flutter%20%2B%20Rust-2563eb)
-![License](https://img.shields.io/badge/license-TBD-lightgrey)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 </div>
 
@@ -139,10 +139,7 @@ Please open an issue first for larger features so we can align on direction.
 
 ## License
 
-No license has been chosen yet — until a `LICENSE` file is added, **all rights
-are reserved**. A permissive license (e.g. [MIT](https://choosealicense.com/licenses/mit/)
-or [Apache-2.0](https://choosealicense.com/licenses/apache-2.0/)) is recommended
-before accepting external contributions.
+Released under the [MIT License](LICENSE) — free to use, modify, and distribute.
 
 ---
 
