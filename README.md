@@ -32,12 +32,9 @@ you're on the same network — no upload, no server, no waiting.
 
 ## Demo
 
-<!-- Drop a short screen recording at docs/demo.gif (e.g. sending a file phone → laptop
-     over the LAN) and uncomment the line below so it renders here. -->
-<!-- <div align="center"><img src="docs/demo.gif" alt="BIShare demo" width="720"></div> -->
-
-> 📹 A short demo GIF goes here — sending a file device-to-device. See
-> [`docs/`](docs/) to contribute screenshots or a recording.
+<div align="center">
+  <img src="docs/demo.gif" alt="BIShare — sending a file device-to-device" width="300">
+</div>
 
 ## Download
 
