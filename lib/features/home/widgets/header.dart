@@ -55,6 +55,11 @@ class Header extends StatelessWidget {
             icon: AppIcons.scanDocument,
             onPressed: () => context.push('/scan'),
           ),
+          // QR Beam: offline file transfer over a stream of QR codes (no network).
+          AppIconButton(
+            icon: AppIcons.qrShare,
+            onPressed: () => context.push('/qr-beam'),
+          ),
           // Remote share: send a file as a link + QR that works anywhere.
           AppIconButton(
             icon: AppIcons.send,

@@ -680,5 +680,35 @@
       "one": "{} Datei",
       "other": "{} Dateien"
     }
+  },
+  "qr_beam": {
+    "title": "QR Beam",
+    "subtitle": "Sende eine kleine Datei ganz ohne Netzwerk",
+    "send_title": "Datei anzeigen",
+    "send_desc": "Wandelt eine Datei in einen Strom von QR-Codes um, den das andere Handy scannt.",
+    "receive_title": "Datei scannen",
+    "receive_desc": "Richte deine Kamera auf den QR-Strom des anderen Handys.",
+    "hint": "QR Beam funktioniert ohne WLAN, Hotspot oder Bluetooth — nur Bildschirm zu Kamera. Ideal für Text, Schlüssel und kleine Dokumente.",
+    "send_empty_title": "Kleine Datei beamen",
+    "send_empty_msg": "Wähle eine Datei und BIShare wandelt sie in einen fortlaufenden Strom von QR-Codes um. Richte die Kamera des anderen Geräts auf deinen Bildschirm, um sie zu empfangen.",
+    "pick_file": "Datei auswählen",
+    "pick_another": "Andere Datei auswählen",
+    "err_read": "Diese Datei konnte nicht gelesen werden.",
+    "err_too_large": "Zu groß für QR Beam (max. {max}). Nutze nearby oder einen Link für größere Dateien.",
+    "err_save": "Die empfangene Datei konnte nicht gespeichert werden.",
+    "frame_of": "Bild {i} von {n}",
+    "chunks": "{n} Blöcke",
+    "chunks_of": "{i} von {n} Blöcken",
+    "keep_steady": "Halte beide Bildschirme ruhig und einander zugewandt, bis es fertig ist.",
+    "large_warn": "Größere Dateien dauern länger — halte die Kameras ausgerichtet.",
+    "speed": "Geschwindigkeit",
+    "sender": "QR Beam",
+    "aim": "Auf den QR-Strom zielen",
+    "aim_hint": "Richte deine Kamera auf das andere Handy, das die QR-Codes anzeigt.",
+    "receiving": "Empfange…",
+    "received_title": "Datei empfangen",
+    "done": "Fertig",
+    "camera_denied_title": "Kamerazugriff erforderlich",
+    "camera_denied_msg": "Erlaube den Kamerazugriff in den Einstellungen, um einen QR Beam zu scannen."
   }
 }

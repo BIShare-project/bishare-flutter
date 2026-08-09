@@ -11,6 +11,9 @@ import '../features/file_manager/presentation/file_manager_page.dart';
 import '../features/inbox/presentation/image_gallery_page.dart';
 import '../features/nearby/presentation/nearby_page.dart';
 import '../features/onboarding/presentation/onboarding_page.dart';
+import '../features/qr_beam/presentation/qr_beam_page.dart';
+import '../features/qr_beam/presentation/qr_beam_receive_page.dart';
+import '../features/qr_beam/presentation/qr_beam_send_page.dart';
 import '../features/remote/presentation/remote_share_page.dart';
 import '../features/scanner/presentation/scanner_page.dart';
 import '../features/tv/presentation/tv_shell.dart';
@@ -81,6 +84,20 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: 'nearby',
           builder: (context, state) => const NearbyPage(),
+        ),
+        GoRoute(
+          path: 'qr-beam',
+          builder: (context, state) => const QrBeamPage(),
+          routes: [
+            GoRoute(
+              path: 'send',
+              builder: (context, state) => const QrBeamSendPage(),
+            ),
+            GoRoute(
+              path: 'receive',
+              builder: (context, state) => const QrBeamReceivePage(),
+            ),
+          ],
         ),
         GoRoute(
           path: 'devices',

@@ -680,5 +680,35 @@
       "one": "{} arquivo",
       "other": "{} arquivos"
     }
+  },
+  "qr_beam": {
+    "title": "QR Beam",
+    "subtitle": "Envie um arquivo pequeno sem rede nenhuma",
+    "send_title": "Mostrar um arquivo",
+    "send_desc": "Transforma um arquivo em um fluxo de códigos QR que o outro celular escaneia.",
+    "receive_title": "Escanear um arquivo",
+    "receive_desc": "Aponte a câmera para o fluxo QR do outro celular.",
+    "hint": "O QR Beam funciona sem Wi-Fi, roteador ou Bluetooth — só da tela para a câmera. Ideal para texto, chaves e documentos pequenos.",
+    "send_empty_title": "Enviar um arquivo pequeno",
+    "send_empty_msg": "Escolha um arquivo e o BIShare o transforma em um fluxo contínuo de códigos QR. Aponte a câmera do outro dispositivo para a sua tela para recebê-lo.",
+    "pick_file": "Escolher um arquivo",
+    "pick_another": "Escolher outro arquivo",
+    "err_read": "Não foi possível ler esse arquivo.",
+    "err_too_large": "Grande demais para o QR Beam (máx. {max}). Use nearby ou um link para arquivos maiores.",
+    "err_save": "Não foi possível salvar o arquivo recebido.",
+    "frame_of": "Quadro {i} de {n}",
+    "chunks": "{n} partes",
+    "chunks_of": "{i} de {n} partes",
+    "keep_steady": "Mantenha as duas telas firmes e voltadas uma para a outra até terminar.",
+    "large_warn": "Arquivos maiores demoram mais — mantenha as câmeras alinhadas.",
+    "speed": "Velocidade",
+    "sender": "QR Beam",
+    "aim": "Aponte para o fluxo QR",
+    "aim_hint": "Aponte a câmera para o outro celular que mostra os códigos QR.",
+    "receiving": "Recebendo…",
+    "received_title": "Arquivo recebido",
+    "done": "Concluído",
+    "camera_denied_title": "Acesso à câmera necessário",
+    "camera_denied_msg": "Permita o acesso à câmera nos Ajustes para escanear um QR Beam."
   }
 }

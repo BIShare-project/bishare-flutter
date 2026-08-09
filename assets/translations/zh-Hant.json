@@ -680,5 +680,35 @@
       "one": "{} 個檔案",
       "other": "{} 個檔案"
     }
+  },
+  "qr_beam": {
+    "title": "QR Beam",
+    "subtitle": "完全不需網路，傳送小檔案",
+    "send_title": "顯示檔案",
+    "send_desc": "將檔案轉換為一串 QR 碼，供另一支手機掃描。",
+    "receive_title": "掃描檔案",
+    "receive_desc": "將相機對準另一支手機的 QR 碼流。",
+    "hint": "QR Beam 無需 Wi-Fi、熱點或 Bluetooth 即可使用——只需螢幕對相機。最適合文字、金鑰和小型文件。",
+    "send_empty_title": "傳送小檔案",
+    "send_empty_msg": "選擇一個檔案，BIShare 會將其轉換為循環播放的 QR 碼流。將另一台裝置的相機對準你的螢幕即可接收。",
+    "pick_file": "選擇檔案",
+    "pick_another": "選擇其他檔案",
+    "err_read": "無法讀取該檔案。",
+    "err_too_large": "檔案對 QR Beam 太大（最大 {max}）。較大檔案請使用 nearby 或連結。",
+    "err_save": "無法儲存接收到的檔案。",
+    "frame_of": "第 {i} 幀，共 {n} 幀",
+    "chunks": "{n} 個區塊",
+    "chunks_of": "第 {i} 個，共 {n} 個區塊",
+    "keep_steady": "在完成前保持兩塊螢幕穩定並相互對準。",
+    "large_warn": "檔案越大耗時越長——請保持相機對齊。",
+    "speed": "速度",
+    "sender": "QR Beam",
+    "aim": "對準 QR 碼流",
+    "aim_hint": "將相機對準正在顯示 QR 碼的另一支手機。",
+    "receiving": "接收中…",
+    "received_title": "已接收檔案",
+    "done": "完成",
+    "camera_denied_title": "需要相機權限",
+    "camera_denied_msg": "請在「設定」中允許相機權限以掃描 QR Beam。"
   }
 }

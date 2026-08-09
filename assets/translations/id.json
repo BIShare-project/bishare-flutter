@@ -680,5 +680,35 @@
       "one": "{} file",
       "other": "{} file"
     }
+  },
+  "qr_beam": {
+    "title": "QR Beam",
+    "subtitle": "Kirim file kecil tanpa jaringan sama sekali",
+    "send_title": "Tampilkan file",
+    "send_desc": "Ubah file menjadi aliran kode QR untuk dipindai ponsel lain.",
+    "receive_title": "Pindai file",
+    "receive_desc": "Arahkan kamera ke aliran QR di ponsel lain.",
+    "hint": "QR Beam bekerja tanpa Wi-Fi, hotspot, atau Bluetooth — cukup layar ke kamera. Cocok untuk teks, kunci, dan dokumen kecil.",
+    "send_empty_title": "Beam file kecil",
+    "send_empty_msg": "Pilih file dan BIShare mengubahnya menjadi aliran kode QR berulang. Arahkan kamera perangkat lain ke layar Anda untuk menerimanya.",
+    "pick_file": "Pilih file",
+    "pick_another": "Pilih file lain",
+    "err_read": "Tidak bisa membaca file itu.",
+    "err_too_large": "Terlalu besar untuk QR Beam (maks {max}). Gunakan nearby atau tautan untuk file lebih besar.",
+    "err_save": "Tidak bisa menyimpan file yang diterima.",
+    "frame_of": "Bingkai {i} dari {n}",
+    "chunks": "{n} potongan",
+    "chunks_of": "{i} dari {n} potongan",
+    "keep_steady": "Jaga kedua layar tetap stabil dan saling berhadapan sampai selesai.",
+    "large_warn": "File lebih besar butuh waktu lebih lama — jaga kamera tetap sejajar.",
+    "speed": "Kecepatan",
+    "sender": "QR Beam",
+    "aim": "Arahkan ke aliran QR",
+    "aim_hint": "Arahkan kamera ke ponsel lain yang menampilkan kode QR.",
+    "receiving": "Menerima…",
+    "received_title": "File diterima",
+    "done": "Selesai",
+    "camera_denied_title": "Perlu akses kamera",
+    "camera_denied_msg": "Izinkan akses kamera di Pengaturan untuk memindai QR Beam."
   }
 }

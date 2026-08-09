@@ -680,5 +680,35 @@
       "one": "파일 {}개",
       "other": "파일 {}개"
     }
+  },
+  "qr_beam": {
+    "title": "QR Beam",
+    "subtitle": "네트워크 없이 작은 파일 보내기",
+    "send_title": "파일 표시",
+    "send_desc": "파일을 QR 코드 스트림으로 바꿔 상대 휴대폰이 스캔합니다.",
+    "receive_title": "파일 스캔",
+    "receive_desc": "상대 휴대폰의 QR 스트림에 카메라를 향하세요.",
+    "hint": "QR Beam은 Wi-Fi, 핫스팟, Bluetooth 없이 작동합니다 — 화면에서 카메라로만. 텍스트, 키, 작은 문서에 가장 적합합니다.",
+    "send_empty_title": "작은 파일 빔",
+    "send_empty_msg": "파일을 선택하면 BIShare가 반복되는 QR 코드 스트림으로 바꿉니다. 받으려면 상대 기기의 카메라를 화면에 향하세요.",
+    "pick_file": "파일 선택",
+    "pick_another": "다른 파일 선택",
+    "err_read": "해당 파일을 읽을 수 없습니다.",
+    "err_too_large": "QR Beam에 너무 큽니다(최대 {max}). 큰 파일은 nearby 또는 링크를 사용하세요.",
+    "err_save": "받은 파일을 저장할 수 없습니다.",
+    "frame_of": "프레임 {i}/{n}",
+    "chunks": "{n}개 청크",
+    "chunks_of": "{n}개 중 {i}개 청크",
+    "keep_steady": "끝날 때까지 두 화면을 흔들리지 않게 마주 보게 유지하세요.",
+    "large_warn": "큰 파일은 시간이 더 걸립니다 — 카메라 정렬을 유지하세요.",
+    "speed": "속도",
+    "sender": "QR Beam",
+    "aim": "QR 스트림을 향하세요",
+    "aim_hint": "QR 코드를 표시하는 상대 휴대폰에 카메라를 향하세요.",
+    "receiving": "받는 중…",
+    "received_title": "파일 수신됨",
+    "done": "완료",
+    "camera_denied_title": "카메라 접근 권한 필요",
+    "camera_denied_msg": "QR Beam을 스캔하려면 설정에서 카메라 접근을 허용하세요."
   }
 }
