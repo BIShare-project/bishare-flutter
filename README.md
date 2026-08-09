@@ -8,6 +8,7 @@ Send any file between iPhone, Android, Mac, Windows, and Linux. Instant and
 end-to-end encrypted over your local network, or a link the other side opens in
 any browser. No account, no ads, no cloud in the middle.
 
+[![CI](https://github.com/BIShare-project/bishare-flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/BIShare-project/bishare-flutter/actions/workflows/ci.yml)
 ![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-2563eb)
 ![Built with](https://img.shields.io/badge/built%20with-Flutter%20%2B%20Rust-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -28,6 +29,15 @@ AirDrop is Apple-only. Android's Quick Share skips iPhones. WeTransfer caps free
 transfers and routes everything through the cloud. BIShare fills the gap: **one
 app for every platform**, with the file going **directly device-to-device** when
 you're on the same network — no upload, no server, no waiting.
+
+## Demo
+
+<!-- Drop a short screen recording at docs/demo.gif (e.g. sending a file phone → laptop
+     over the LAN) and uncomment the line below so it renders here. -->
+<!-- <div align="center"><img src="docs/demo.gif" alt="BIShare demo" width="720"></div> -->
+
+> 📹 A short demo GIF goes here — sending a file device-to-device. See
+> [`docs/`](docs/) to contribute screenshots or a recording.
 
 ## Download
 

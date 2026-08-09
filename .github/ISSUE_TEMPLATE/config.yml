@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & discussion
+    url: https://github.com/BIShare-project/bishare-flutter/discussions
+    about: Ask a question or share an idea before opening an issue.
+  - name: 🌐 Website
+    url: https://bishare.app
+    about: Learn more about BIShare or download the app.
