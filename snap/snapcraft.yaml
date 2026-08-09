@@ -69,6 +69,13 @@ parts:
       - pkg-config
       - libgtk-3-dev
       - liblzma-dev
+      # Verified on a clean Ubuntu 22.04 build (Azure): these desktop plugins
+      # fail `cmake` configure without their dev headers —
+      # flutter_secure_storage_linux needs libsecret + jsoncpp, tray_manager
+      # needs ayatana-appindicator.
+      - libsecret-1-dev
+      - libjsoncpp-dev
+      - libayatana-appindicator3-dev
     override-pull: |
       craftctl default
       # Derive the snap version from pubspec.yaml (e.g. "2.4.5+245" -> "2.4.5").
