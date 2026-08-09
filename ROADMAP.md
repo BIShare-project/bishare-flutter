@@ -17,6 +17,8 @@ item.
 
 ## Near-term 🔜
 
+- **Folder Sync** *(coming soon)* — keep folders in sync across your own devices,
+  local-first and end-to-end encrypted.
 - **Desktop polish** — camera support for QR Beam on Linux, window/tray niceties,
   packaging & signing for Windows/macOS/Linux.
 - **Transfer resume** — make interrupted transfers resume more robustly.
@@ -36,7 +38,6 @@ item.
 - **Air Gesture** — send with a hand gesture (grab → throw → catch) using
   on-device hand tracking. Feasibility notes exist; not committed.
 - **Broadcast / one-to-many** transfers.
-- **Folder sync** between your own devices.
 
 ## How to influence the roadmap
 
