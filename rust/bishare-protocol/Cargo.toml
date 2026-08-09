@@ -1,0 +1,20 @@
+[package]
+name = "bishare-protocol"
+version = "2.4.0"
+edition = "2024"
+description = "BIShare file transfer protocol library"
+license = "MIT"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+x25519-dalek = { version = "2", features = ["static_secrets"] }
+aes-gcm = "0.10"
+hkdf = "0.12"
+sha2 = "0.10"
+rand = "0.8"
+base64 = "0.22"
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+pretty_assertions = "1"

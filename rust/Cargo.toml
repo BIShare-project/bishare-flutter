@@ -11,7 +11,7 @@ crate-type = ["cdylib", "staticlib", "lib"]
 [dependencies]
 flutter_rust_bridge = "=2.12.0"
 # Re-use the existing, test-vector-covered protocol crate (crypto/binary/utils).
-bishare-protocol = { path = "../../bishare-protocol/rust" }
+bishare-protocol = { path = "bishare-protocol" }
 # v2.4 frame payloads cross the FFI as JSON strings (cheap; avoids mirroring the
 # protocol structs into FRB) — parsed/re-framed here with the same serde_json the
 # protocol crate serializes with.
