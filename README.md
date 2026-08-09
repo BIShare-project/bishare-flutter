@@ -12,6 +12,12 @@ any browser. No account, no ads, no cloud in the middle.
 ![Built with](https://img.shields.io/badge/built%20with-Flutter%20%2B%20Rust-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
+**[🌐 bishare.app](https://bishare.app)** &nbsp;·&nbsp; **[📥 Download](https://bishare.app/download)** &nbsp;·&nbsp; **[🚀 Try it in the browser](https://bishare.app/transfer)**
+
+[![App Store](https://img.shields.io/badge/Download-App_Store-0D96F6?logo=apple&logoColor=white)](https://apps.apple.com/us/app/bishare-file-transfer/id6760924092)
+[![Google Play](https://img.shields.io/badge/Download-Google_Play-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.bishare.app)
+[![Web App](https://img.shields.io/badge/Try-Web_App-2563eb?logo=googlechrome&logoColor=white)](https://bishare.app/transfer)
+
 </div>
 
 ---
@@ -22,6 +28,17 @@ AirDrop is Apple-only. Android's Quick Share skips iPhones. WeTransfer caps free
 transfers and routes everything through the cloud. BIShare fills the gap: **one
 app for every platform**, with the file going **directly device-to-device** when
 you're on the same network — no upload, no server, no waiting.
+
+## Download
+
+| Platform | Where |
+|---|---|
+| **iOS & macOS** | [App Store](https://apps.apple.com/us/app/bishare-file-transfer/id6760924092) |
+| **Android** | [Google Play](https://play.google.com/store/apps/details?id=com.bishare.app) |
+| **Web** | Use it in any browser — [bishare.app/transfer](https://bishare.app/transfer) |
+| **Windows & Linux** | Build from source (see [Getting started](#getting-started)) |
+
+Website: **[bishare.app](https://bishare.app)** · All downloads: **[bishare.app/download](https://bishare.app/download)**
 
 ## Features
 
@@ -46,6 +63,24 @@ you're on the same network — no upload, no server, no waiting.
 - 🌍 **13 languages** — English, Indonesian, Spanish, French, German, Portuguese
   (BR), Russian, Arabic, Hindi, Japanese, Korean, and Simplified/Traditional
   Chinese.
+
+## How it works
+
+BIShare picks the best path automatically, so sending a file is always one step:
+
+1. **On the same Wi-Fi** — devices discover each other over mDNS and the file
+   streams **directly device-to-device**, end-to-end encrypted (X25519 +
+   AES-256-GCM). Nothing is uploaded; it's as fast as your network. Works even
+   over a phone hotspot with no internet.
+2. **Far away** — BIShare gives you a **link, QR code, and 6-character code**. The
+   recipient opens the link in any browser and downloads — no app or account on
+   their end. Links auto-expire.
+3. **No network at all** — **QR Beam** turns a small file into an animated stream
+   of QR codes on the sender's screen; the receiver's camera scans them to
+   rebuild the file. Purely screen → camera, for text, keys, and small docs.
+
+Everything is designed to be **private by default**: nearby transfers never leave
+your local network, there's no account, and nothing lingers on a server.
 
 ## Supported platforms
 
@@ -144,5 +179,9 @@ Released under the [MIT License](LICENSE) — free to use, modify, and distribut
 ---
 
 <div align="center">
-Made with Flutter &amp; Rust · <a href="https://bishare.app">bishare.app</a>
+
+**[Website](https://bishare.app)** · **[Download](https://bishare.app/download)** · **[App Store](https://apps.apple.com/us/app/bishare-file-transfer/id6760924092)** · **[Google Play](https://play.google.com/store/apps/details?id=com.bishare.app)** · **[Web App](https://bishare.app/transfer)**
+
+Made with Flutter &amp; Rust · [bishare.app](https://bishare.app)
+
 </div>
