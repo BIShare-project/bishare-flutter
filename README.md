@@ -11,6 +11,7 @@ any browser. No account, no ads, no cloud in the middle.
 [![CI](https://github.com/BIShare-project/bishare-flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/BIShare-project/bishare-flutter/actions/workflows/ci.yml)
 ![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-2563eb)
 ![Built with](https://img.shields.io/badge/built%20with-Flutter%20%2B%20Rust-2563eb)
+![Languages](https://img.shields.io/badge/languages-13-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 **[🌐 bishare.app](https://bishare.app)** &nbsp;·&nbsp; **[📥 Download](https://bishare.app/download)** &nbsp;·&nbsp; **[🚀 Try it in the browser](https://bishare.app/transfer)**
@@ -178,6 +179,17 @@ Contributions are welcome!
 4. Open a pull request describing the change.
 
 Please open an issue first for larger features so we can align on direction.
+
+## Translations 🌍
+
+BIShare ships in **13 languages** and community translations are hugely welcome —
+it's the easiest way to contribute (just a text editor, no build required).
+Adding a language is 3 small edits; see **[docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)**
+for the step-by-step guide and current status. Verify with:
+
+```bash
+dart run tool/check_translations.dart
+```
 
 ## License
 

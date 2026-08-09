@@ -8,8 +8,8 @@ all kinds are welcome — bug fixes, features, translations, docs, and design.
 
 - 🐛 **Report bugs** — open an issue with steps to reproduce and your platform.
 - 💡 **Suggest features** — open an issue describing the problem you want solved.
-- 🌍 **Translations** — improve or complete any of the 13 locales in
-  `assets/translations/`.
+- 🌍 **Translations** — add a new language or improve an existing one. It's the
+  easiest way to contribute (just a text editor) — see **[docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)**.
 - 🧑‍💻 **Code** — pick up an issue labeled [`good first issue`](https://github.com/BIShare-project/bishare-flutter/labels/good%20first%20issue)
   or [`help wanted`](https://github.com/BIShare-project/bishare-flutter/labels/help%20wanted).
 
@@ -46,8 +46,8 @@ the first build, so it takes a little longer up front.
    flutter test
    ```
 3. **Localize everything** — any new user-facing string must have a key in **all**
-   files under `assets/translations/` (13 locales). Reference strings with
-   `'my.key'.tr()`; never hard-code UI text.
+   files under `assets/translations/`. Reference strings with `'my.key'.tr()`;
+   never hard-code UI text. Verify parity with `dart run tool/check_translations.dart`.
 4. **Match the code style** — feature-first structure under `lib/features/`,
    `flutter_bloc` (Cubit) for state, `shadcn_ui` widgets from `lib/core/ui/`.
 5. **Keep commits focused** and write a clear PR description of what changed and

@@ -79,6 +79,9 @@ jobs:
           cargo install flutter_rust_bridge_codegen --version 2.12.0
           flutter_rust_bridge_codegen generate
       - run: flutter pub get
+      # Guard translation completeness — fails a PR if any locale misses a key.
+      - name: Translation completeness
+        run: dart run tool/check_translations.dart
       - run: dart run build_runner build --delete-conflicting-outputs
       # FFI crate build + golden generator + FFI unit tests (moved here from the
       # ubuntu job — they need the frb codegen above). Paths are relative to the
