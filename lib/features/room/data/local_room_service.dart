@@ -383,6 +383,17 @@ class LocalRoomService {
       _members.removeWhere((m) => m.fingerprint == fp);
       _endpoints.remove(fp);
       _events.add(RoomMemberLeftEvent(fp));
+      // A leaving member notifies only the host, so the host must relay the
+      // departure to the remaining peers — otherwise they keep a stale roster
+      // entry (mirror of the join fan-out). Only the host relays; peers that
+      // receive this relayed event just remove and never re-relay.
+      if (_isHost) {
+        final payload = jsonEncode({'fingerprint': fp});
+        for (final m in _members) {
+          if (m.fingerprint == _hostFingerprint || m.host.isEmpty) continue;
+          _post(m.host, m.port, BIShareApi.roomMemberLeft, payload);
+        }
+      }
     }
     return Response.ok('{"ok":true}');
   }
