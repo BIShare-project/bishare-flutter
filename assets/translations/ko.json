@@ -425,7 +425,9 @@
     "universal_clipboard": "유니버설 클립보드",
     "use_default": "기본값 사용",
     "visible_everyone": "모두에게 표시",
-    "visible_subtitle": "끄기 = 숨김, 검색 불가"
+    "visible_subtitle": "끄기 = 숨김, 검색 불가",
+    "telemetry": "익명 사용 통계",
+    "telemetry_subtitle": "전송 횟수만 익명으로 보내 공개 통계에 실제 사용을 반영합니다. 파일이나 개인정보는 없습니다."
   },
   "notification": {
     "clipboard_from": "{sender}에서 복사됨",

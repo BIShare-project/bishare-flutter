@@ -8,6 +8,8 @@ import 'package:get_it/get_it.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../telemetry/telemetry_service.dart';
+
 import '../config/feature_flags.dart';
 import '../storage/save_folder_channel.dart';
 import '../storage/android_downloads_channel.dart';
@@ -148,6 +150,7 @@ Future<void> setupLocator() async {
 
   getIt
     ..registerSingleton<SharedPreferences>(prefs)
+    ..registerSingleton<TelemetryService>(TelemetryService(prefs))
     ..registerSingleton<FeatureFlags>(featureFlags)
     ..registerSingleton<DeviceIdentity>(identity)
     ..registerSingleton<AppDatabase>(db)

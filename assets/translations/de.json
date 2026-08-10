@@ -425,7 +425,9 @@
     "universal_clipboard": "Universelle Zwischenablage",
     "use_default": "Standard verwenden",
     "visible_everyone": "Für alle sichtbar",
-    "visible_subtitle": "Aus = versteckt, nicht auffindbar"
+    "visible_subtitle": "Aus = versteckt, nicht auffindbar",
+    "telemetry": "Anonyme Nutzungsstatistik",
+    "telemetry_subtitle": "Sendet eine private Anzahl von Übertragungen, damit die Statistik echte Nutzung zeigt. Keine Dateien, keine persönlichen Daten."
   },
   "notification": {
     "clipboard_from": "Kopiert von {sender}",

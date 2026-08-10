@@ -425,7 +425,9 @@
     "universal_clipboard": "Portapapeles universal",
     "use_default": "Usar predeterminado",
     "visible_everyone": "Visible para todos",
-    "visible_subtitle": "Desactivado = oculto, no detectable"
+    "visible_subtitle": "Desactivado = oculto, no detectable",
+    "telemetry": "Estadísticas de uso anónimas",
+    "telemetry_subtitle": "Envía un conteo privado de transferencias para que las estadísticas reflejen el uso real. Sin archivos ni datos personales."
   },
   "notification": {
     "clipboard_from": "Copiado desde {sender}",

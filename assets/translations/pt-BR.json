@@ -425,7 +425,9 @@
     "universal_clipboard": "Área de transferência universal",
     "use_default": "Usar padrão",
     "visible_everyone": "Visível para todos",
-    "visible_subtitle": "Desligado = oculto, não detetável"
+    "visible_subtitle": "Desligado = oculto, não detetável",
+    "telemetry": "Estatísticas de uso anônimas",
+    "telemetry_subtitle": "Envia uma contagem privada de transferências para as estatísticas refletirem o uso real. Sem arquivos, sem dados pessoais."
   },
   "notification": {
     "clipboard_from": "Copiado de {sender}",

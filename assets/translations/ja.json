@@ -425,7 +425,9 @@
     "universal_clipboard": "ユニバーサルクリップボード",
     "use_default": "デフォルトを使用",
     "visible_everyone": "全員に表示",
-    "visible_subtitle": "オフ = 非表示・検出不可"
+    "visible_subtitle": "オフ = 非表示・検出不可",
+    "telemetry": "匿名の利用統計",
+    "telemetry_subtitle": "転送回数だけを匿名で送り、公開統計に実際の利用を反映します。ファイルも個人データも送りません。"
   },
   "notification": {
     "clipboard_from": "{sender}からコピーしました",

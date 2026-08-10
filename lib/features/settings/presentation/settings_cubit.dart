@@ -55,6 +55,7 @@ class SettingsCubit extends Cubit<Settings> {
   static const _kSaveLocation = 'saveLocation';
   static const _kBrowserUpload = 'browserUpload';
   static const _kBrowserUploadMaxGb = 'browserUploadMaxGb';
+  static const _kTelemetry = 'telemetryEnabled';
   static const _kClipboardSync = 'clipboardSync';
   static const _kClipboardImages = 'clipboardImages';
   static const _kClipboardMaxSizeMb = 'clipboardMaxSizeMb';
@@ -84,6 +85,7 @@ class SettingsCubit extends Cubit<Settings> {
     saveLocation: p.getString(_kSaveLocation) ?? '',
     browserUpload: p.getBool(_kBrowserUpload) ?? true,
     browserUploadMaxGb: p.getInt(_kBrowserUploadMaxGb) ?? 0,
+    telemetryEnabled: p.getBool(_kTelemetry) ?? true,
     clipboardSync: p.getBool(_kClipboardSync) ?? false,
     folderCloudSync: p.getBool(_kFolderCloudSync) ?? false,
     clipboardImages: p.getBool(_kClipboardImages) ?? true,
@@ -175,6 +177,13 @@ class SettingsCubit extends Cubit<Settings> {
     await _prefs.setBool(_kBrowserUpload, on);
     _server.browserUploadEnabled = on;
     emit(state.copyWith(browserUpload: on));
+  }
+
+  /// Toggle anonymous usage telemetry. The key is shared with TelemetryService,
+  /// which reads it directly when deciding whether to report a transfer.
+  Future<void> setTelemetry(bool on) async {
+    await _prefs.setBool(_kTelemetry, on);
+    emit(state.copyWith(telemetryEnabled: on));
   }
 
   Future<void> setBrowserUploadMaxGb(int gb) async {

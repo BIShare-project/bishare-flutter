@@ -425,7 +425,9 @@
     "universal_clipboard": "Papan klip universal",
     "use_default": "Gunakan default",
     "visible_everyone": "Terlihat oleh semua",
-    "visible_subtitle": "Mati = tersembunyi, tidak dapat ditemukan"
+    "visible_subtitle": "Mati = tersembunyi, tidak dapat ditemukan",
+    "telemetry": "Statistik penggunaan anonim",
+    "telemetry_subtitle": "Kirim hitungan transfer secara privat agar statistik publik mencerminkan pemakaian nyata. Tanpa file, tanpa data pribadi."
   },
   "notification": {
     "clipboard_from": "Disalin dari {sender}",

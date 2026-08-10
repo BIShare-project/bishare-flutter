@@ -425,7 +425,9 @@
     "universal_clipboard": "Universal clipboard",
     "use_default": "Use default",
     "visible_everyone": "Visible to everyone",
-    "visible_subtitle": "Off = hidden, not discoverable"
+    "visible_subtitle": "Off = hidden, not discoverable",
+    "telemetry": "Anonymous usage stats",
+    "telemetry_subtitle": "Send a private count of transfers so public stats reflect real usage. No files, no personal data."
   },
   "notification": {
     "clipboard_from": "Copied from {sender}",

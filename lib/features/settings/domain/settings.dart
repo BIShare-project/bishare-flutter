@@ -70,6 +70,7 @@ class Settings extends Equatable {
     this.resolvedSaveDir = '',
     this.browserUpload = true,
     this.browserUploadMaxGb = 0,
+    this.telemetryEnabled = true,
     this.clipboardSync = false,
     this.clipboardImages = true,
     this.clipboardMaxSizeMb = 5,
@@ -106,6 +107,11 @@ class Settings extends Equatable {
 
   /// Whether web browsers may upload files to this device (Web-Share).
   final bool browserUpload;
+
+  /// Send anonymous, aggregate-only usage telemetry (a transfer count + bytes
+  /// + platform; no PII). Lets the public stats reflect LAN transfers that
+  /// never touch the relay. Opt-out here.
+  final bool telemetryEnabled;
 
   /// Per-upload size cap for browser uploads, in GB. 0 = unlimited.
   final int browserUploadMaxGb;
@@ -147,6 +153,7 @@ class Settings extends Equatable {
     String? resolvedSaveDir,
     bool? browserUpload,
     int? browserUploadMaxGb,
+    bool? telemetryEnabled,
     bool? clipboardSync,
     bool? clipboardImages,
     int? clipboardMaxSizeMb,
@@ -167,6 +174,7 @@ class Settings extends Equatable {
     resolvedSaveDir: resolvedSaveDir ?? this.resolvedSaveDir,
     browserUpload: browserUpload ?? this.browserUpload,
     browserUploadMaxGb: browserUploadMaxGb ?? this.browserUploadMaxGb,
+    telemetryEnabled: telemetryEnabled ?? this.telemetryEnabled,
     clipboardSync: clipboardSync ?? this.clipboardSync,
     clipboardImages: clipboardImages ?? this.clipboardImages,
     clipboardMaxSizeMb: clipboardMaxSizeMb ?? this.clipboardMaxSizeMb,
@@ -190,6 +198,7 @@ class Settings extends Equatable {
     resolvedSaveDir,
     browserUpload,
     browserUploadMaxGb,
+    telemetryEnabled,
     clipboardSync,
     clipboardImages,
     clipboardMaxSizeMb,

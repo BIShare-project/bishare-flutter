@@ -200,6 +200,16 @@ class SettingsPage extends StatelessWidget {
                                 ),
                               ],
                               const AppRowDivider(indent: 58),
+                              // Anonymous, aggregate-only usage telemetry so the
+                              // public stats reflect LAN transfers (no PII).
+                              SwitchRow(
+                                icon: AppIcons.storageUsage,
+                                title: 'settings.telemetry'.tr(),
+                                subtitle: 'settings.telemetry_subtitle'.tr(),
+                                value: state.telemetryEnabled,
+                                onChanged: cubit.setTelemetry,
+                              ),
+                              const AppRowDivider(indent: 58),
                               AppListTile(
                                 leading: const Glyph(AppIcons.folder),
                                 title: Text('settings.save_location'.tr()),

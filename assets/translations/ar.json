@@ -425,7 +425,9 @@
     "universal_clipboard": "الحافظة العالمية",
     "use_default": "استخدام الافتراضي",
     "visible_everyone": "مرئي للجميع",
-    "visible_subtitle": "إيقاف = مخفي، غير قابل للاكتشاف"
+    "visible_subtitle": "إيقاف = مخفي، غير قابل للاكتشاف",
+    "telemetry": "إحصاءات استخدام مجهولة",
+    "telemetry_subtitle": "يرسل عدّادًا خاصًا لعمليات النقل لتعكس الإحصاءات الاستخدام الحقيقي. بلا ملفات ولا بيانات شخصية."
   },
   "notification": {
     "clipboard_from": "تم النسخ من {sender}",

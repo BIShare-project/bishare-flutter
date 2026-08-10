@@ -425,7 +425,9 @@
     "universal_clipboard": "通用剪贴板",
     "use_default": "使用默认",
     "visible_everyone": "对所有人可见",
-    "visible_subtitle": "关闭 = 隐藏，不可发现"
+    "visible_subtitle": "关闭 = 隐藏，不可发现",
+    "telemetry": "匿名使用统计",
+    "telemetry_subtitle": "匿名发送传输次数，让公开统计反映真实使用。不含文件，不含个人数据。"
   },
   "notification": {
     "clipboard_from": "已从 {sender} 复制",

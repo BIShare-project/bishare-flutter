@@ -425,7 +425,9 @@
     "universal_clipboard": "Presse-papiers universel",
     "use_default": "Utiliser la valeur par défaut",
     "visible_everyone": "Visible par tout le monde",
-    "visible_subtitle": "Désactivé = masqué, non détectable"
+    "visible_subtitle": "Désactivé = masqué, non détectable",
+    "telemetry": "Statistiques d’usage anonymes",
+    "telemetry_subtitle": "Envoie un décompte privé des transferts pour que les stats reflètent l’usage réel. Aucun fichier, aucune donnée personnelle."
   },
   "notification": {
     "clipboard_from": "Copié depuis {sender}",
