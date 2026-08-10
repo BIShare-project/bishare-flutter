@@ -76,13 +76,17 @@ class WebrtcRoomService {
   final _rand = Random();
   String _newSid() => '${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}-${_sidCounter++}-${_rand.nextInt(1 << 32).toRadixString(36)}';
 
-  /// Try to join a WebRTC room by code. Resolves to (session, members, files)
-  /// once at least one peer appears within [timeout] (i.e. it IS a live web
-  /// room); returns null otherwise so the caller can fall back to a relay room.
-  Future<(RoomSession, List<RoomMember>, List<RoomFile>)?> joinWebrtc(
-    String code, {
-    Duration timeout = const Duration(seconds: 4),
-  }) async {
+  /// Connect the signaling for [code] and wire the peer/roster/SDP callbacks.
+  /// [firstPeer] (join path) completes with the first peer seen so the caller
+  /// can confirm it's a live room; omitted on the host path (just stay open).
+  void _startSignaling(String code, {Completer<SignalPeer?>? firstPeer}) {
+    // The service is a singleton — clear any prior room's state first.
+    for (final sid in _sessions.keys.toList()) {
+      _teardown(sid);
+    }
+    _members.clear();
+    _savedPaths.clear();
+    _sig?.close();
     _code = code.trim().toUpperCase();
     _peerId = _identity.fingerprint;
     final self = SignalPeer(
@@ -90,15 +94,13 @@ class WebrtcRoomService {
       alias: _identity.alias,
       emoji: _emojis[_rand.nextInt(_emojis.length)],
     );
-
-    final firstPeer = Completer<SignalPeer?>();
     void offerPeer(SignalPeer? p) {
-      if (!firstPeer.isCompleted) firstPeer.complete(p);
+      if (firstPeer != null && !firstPeer.isCompleted) firstPeer.complete(p);
     }
-
     final sig = WebrtcSignaling(self, _code)
       ..onPeers = (list) {
         for (final p in list) {
+          if (_members[p.peerId] == null) _events.add(RoomMemberJoinedEvent(_memberOf(p)));
           _members[p.peerId] = _memberOf(p);
         }
         if (list.isNotEmpty) offerPeer(list.first);
@@ -118,11 +120,28 @@ class WebrtcRoomService {
       ..onClose = () {};
     _sig = sig;
     sig.connect();
+  }
+
+  /// Advertise an app-hosted local (Bonjour) room over WebRTC signaling too, so
+  /// web peers — which can't do Bonjour — can find and join it. No peer-wait:
+  /// stay connected and handle peers/files as they arrive. Runs ALONGSIDE the
+  /// Bonjour host (dual transport); the cubit fans shares to both.
+  void hostLocal(String code) => _startSignaling(code);
+
+  /// Try to join a WebRTC room by code. Resolves to (session, members, files)
+  /// once at least one peer appears within [timeout] (i.e. it IS a live web
+  /// room); returns null otherwise so the caller can fall back to a relay room.
+  Future<(RoomSession, List<RoomMember>, List<RoomFile>)?> joinWebrtc(
+    String code, {
+    Duration timeout = const Duration(seconds: 4),
+  }) async {
+    final firstPeer = Completer<SignalPeer?>();
+    _startSignaling(code, firstPeer: firstPeer);
 
     // Wait for the first peer (= confirmation this is a real web room).
     final peer = await firstPeer.future.timeout(timeout, onTimeout: () => null);
     if (peer == null) {
-      sig.close();
+      _sig?.close();
       _sig = null;
       return null;
     }
@@ -140,12 +159,20 @@ class WebrtcRoomService {
   RoomMember _memberOf(SignalPeer p) =>
       RoomMember(fingerprint: p.peerId, alias: p.alias, deviceType: 'web');
 
+  /// True when this service already holds [id] (received over WebRTC or our own
+  /// share) — used by the cubit to route a download to the right transport in a
+  /// dual (Bonjour + WebRTC) local room.
+  bool hasFile(String id) => _savedPaths.containsKey(id);
+
   // ── outgoing: broadcast a file to every peer ──
-  Future<void> addFile(File file, {required String name, required String mime}) async {
+  // [emitOwn] false in a dual-transport local room, where the Bonjour side
+  // already surfaces the host's own file (avoids a duplicate list entry).
+  Future<void> addFile(File file, {required String name, required String mime, bool emitOwn = true}) async {
     _events.add(RoomUploadStartEvent(_identity.alias, name));
     final peers = _members.keys.toList();
     await Future.wait(peers.map((id) => _sendTo(id, file, name, mime).catchError((_) {})));
     _events.add(const RoomUploadDoneEvent());
+    if (!emitOwn) return;
     // Surface our own shared file locally too, so the sender sees it in the list.
     final ownId = _newSid();
     _savedPaths[ownId] = file.path;
@@ -364,6 +391,7 @@ class WebrtcRoomService {
       _teardown(sid);
     }
     _members.clear();
+    _savedPaths.clear();
     _sig?.close();
     _sig = null;
   }

@@ -82,6 +82,11 @@ class RoomCubit extends Cubit<RoomState> {
   bool _isLocal = false;
   bool _isWebrtc = false;
 
+  /// A local room WE host runs DUAL transport: Bonjour (app peers on the LAN)
+  /// AND WebRTC signaling (so web peers, which can't do Bonjour, can join too).
+  /// Shares fan out to both; downloads route by which side holds the file.
+  bool _localDual = false;
+
   /// Create a room. [local] = same-Wi-Fi Bonjour room (no internet); otherwise
   /// a relay room reachable from any network.
   Future<void> createRoom({bool local = false}) async {
@@ -98,8 +103,15 @@ class RoomCubit extends Cubit<RoomState> {
     try {
       _isLocal = local;
       _isWebrtc = false;
+      _localDual = false;
       final session =
           local ? await _local.createLocal() : await _remote.createRemote();
+      if (local) {
+        // Advertise the same code over WebRTC signaling so web peers (which
+        // can't do Bonjour) can join this local room too. Dual transport.
+        _webrtc.hostLocal(session.code);
+        _localDual = true;
+      }
       emit(
         RoomState(
           status: RoomStatus.inRoom,
@@ -160,6 +172,7 @@ class RoomCubit extends Cubit<RoomState> {
         if (local != null) {
           _isLocal = true;
           _isWebrtc = false;
+          _localDual = false;
           final (session, members, files) = local;
           emit(
             RoomState(
@@ -190,6 +203,7 @@ class RoomCubit extends Cubit<RoomState> {
         if (done.isCompleted) return;
         _isLocal = false;
         _isWebrtc = false;
+        _localDual = false;
         final (session, members, files) = remote;
         emit(
           RoomState(
@@ -219,6 +233,7 @@ class RoomCubit extends Cubit<RoomState> {
         if (r != null) {
           _isLocal = false;
           _isWebrtc = true;
+          _localDual = false;
           final (session, members, files) = r;
           emit(
             RoomState(
@@ -304,6 +319,11 @@ class RoomCubit extends Cubit<RoomState> {
     try {
       if (_isLocal) {
         await _local.addFile(file, name: name, mime: mime, thumbnailBase64: thumb);
+        if (_localDual) {
+          // Fan the same file to any web peers over WebRTC. Bonjour already put
+          // our own file in the list, so don't let WebRTC emit it again.
+          await _webrtc.addFile(file, name: name, mime: mime, emitOwn: false);
+        }
       } else if (_isWebrtc) {
         await _webrtc.addFile(file, name: name, mime: mime);
       } else {
@@ -326,8 +346,12 @@ class RoomCubit extends Cubit<RoomState> {
   Future<File> download(RoomFile file) {
     final code = state.session?.code;
     if (code == null) throw const CloudDownloadException('You left the room.');
-    if (_isLocal) return _local.downloadFile(file);
     if (_isWebrtc) return _webrtc.downloadFile(file);
+    if (_isLocal) {
+      // Dual room: a file a web peer pushed is held by the WebRTC side.
+      if (_localDual && _webrtc.hasFile(file.id)) return _webrtc.downloadFile(file);
+      return _local.downloadFile(file);
+    }
     return _remote.downloadFile(code, file);
   }
 
@@ -335,8 +359,11 @@ class RoomCubit extends Cubit<RoomState> {
   Future<File> downloadTemp(RoomFile file) {
     final code = state.session?.code;
     if (code == null) throw const CloudDownloadException('You left the room.');
-    if (_isLocal) return _local.downloadToTemp(file);
     if (_isWebrtc) return _webrtc.downloadToTemp(file);
+    if (_isLocal) {
+      if (_localDual && _webrtc.hasFile(file.id)) return _webrtc.downloadToTemp(file);
+      return _local.downloadToTemp(file);
+    }
     return _remote.downloadToTemp(code, file);
   }
 
@@ -345,6 +372,7 @@ class RoomCubit extends Cubit<RoomState> {
     if (s != null) {
       if (_isLocal) {
         await _local.leave();
+        if (_localDual) await _webrtc.leave();
       } else if (_isWebrtc) {
         await _webrtc.leave();
       } else if (s.isHost && s.hostToken != null) {
