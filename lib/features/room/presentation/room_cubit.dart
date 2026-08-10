@@ -9,6 +9,7 @@ import '../../remote/data/cloud_transfer_service.dart' show CloudDownloadExcepti
 import '../data/local_room_service.dart';
 import '../data/room_service.dart';
 import '../data/room_thumbnail.dart';
+import '../data/webrtc_room_service.dart';
 import '../domain/room_models.dart';
 
 enum RoomStatus { lobby, connecting, inRoom, error }
@@ -63,18 +64,23 @@ class RoomState {
 /// Drives the Rooms screen: create/join a remote room, keep members + shared
 /// files live over the WebSocket, add + download files.
 class RoomCubit extends Cubit<RoomState> {
-  RoomCubit(this._remote, this._local) : super(const RoomState()) {
+  RoomCubit(this._remote, this._local, this._webrtc) : super(const RoomState()) {
     _remoteSub = _remote.events.listen(_onEvent);
     _localSub = _local.events.listen(_onEvent);
+    _webrtcSub = _webrtc.events.listen(_onEvent);
   }
 
   final RoomService _remote;
   final LocalRoomService _local;
+  final WebrtcRoomService _webrtc;
   late final StreamSubscription<RoomEvent> _remoteSub;
   late final StreamSubscription<RoomEvent> _localSub;
+  late final StreamSubscription<RoomEvent> _webrtcSub;
 
-  /// Whether the current room is a local (Bonjour) room vs. a remote (relay) one.
+  /// Which transport backs the current room: Bonjour (local), WebRTC P2P
+  /// (a browser-hosted local room), or the relay (remote). Mutually exclusive.
   bool _isLocal = false;
+  bool _isWebrtc = false;
 
   /// Create a room. [local] = same-Wi-Fi Bonjour room (no internet); otherwise
   /// a relay room reachable from any network.
@@ -91,6 +97,7 @@ class RoomCubit extends Cubit<RoomState> {
     await Future<void>.delayed(Duration.zero);
     try {
       _isLocal = local;
+      _isWebrtc = false;
       final session =
           local ? await _local.createLocal() : await _remote.createRemote();
       emit(
@@ -130,14 +137,16 @@ class RoomCubit extends Cubit<RoomState> {
 
     final done = Completer<void>();
     var localMissed = false;
+    var webrtcMissed = false;
     Object? remoteError;
 
-    // Only surface an error once BOTH realms have given up; prefer the remote
-    // error message (a genuine local-only room fails remote with 404, and a
-    // genuine remote room is what the user most likely meant).
+    // Only surface an error once ALL THREE realms (Bonjour, WebRTC P2P, relay)
+    // have given up; prefer the remote error message (a genuine local-only room
+    // fails remote with 404, and a genuine remote room is what the user most
+    // likely meant).
     void failIfBothDone() {
       if (done.isCompleted) return;
-      if (localMissed && remoteError != null) {
+      if (localMissed && webrtcMissed && remoteError != null) {
         done.completeError(remoteError!);
       }
     }
@@ -150,6 +159,7 @@ class RoomCubit extends Cubit<RoomState> {
         if (done.isCompleted) return;
         if (local != null) {
           _isLocal = true;
+          _isWebrtc = false;
           final (session, members, files) = local;
           emit(
             RoomState(
@@ -179,6 +189,7 @@ class RoomCubit extends Cubit<RoomState> {
       _remote.joinRemote(trimmed).then((remote) {
         if (done.isCompleted) return;
         _isLocal = false;
+        _isWebrtc = false;
         final (session, members, files) = remote;
         emit(
           RoomState(
@@ -192,6 +203,39 @@ class RoomCubit extends Cubit<RoomState> {
       }).catchError((Object e) {
         if (done.isCompleted) return;
         remoteError = e;
+        failIfBothDone();
+      }),
+    );
+
+    // WebRTC P2P: if the code is a browser-hosted local room (no Bonjour host on
+    // the LAN, no relay room), signaling finds a peer and this wins. Runs
+    // concurrently; drops its signaling if another realm resolves first.
+    unawaited(
+      _webrtc.joinWebrtc(trimmed, timeout: const Duration(seconds: 4)).then((r) {
+        if (done.isCompleted) {
+          if (r != null) unawaited(_webrtc.leave());
+          return;
+        }
+        if (r != null) {
+          _isLocal = false;
+          _isWebrtc = true;
+          final (session, members, files) = r;
+          emit(
+            RoomState(
+              status: RoomStatus.inRoom,
+              session: session,
+              members: members,
+              files: files,
+            ),
+          );
+          done.complete();
+        } else {
+          webrtcMissed = true;
+          failIfBothDone();
+        }
+      }).catchError((Object _) {
+        if (done.isCompleted) return;
+        webrtcMissed = true;
         failIfBothDone();
       }),
     );
@@ -260,6 +304,8 @@ class RoomCubit extends Cubit<RoomState> {
     try {
       if (_isLocal) {
         await _local.addFile(file, name: name, mime: mime, thumbnailBase64: thumb);
+      } else if (_isWebrtc) {
+        await _webrtc.addFile(file, name: name, mime: mime);
       } else {
         await _remote.uploadFile(
           code,
@@ -280,18 +326,18 @@ class RoomCubit extends Cubit<RoomState> {
   Future<File> download(RoomFile file) {
     final code = state.session?.code;
     if (code == null) throw const CloudDownloadException('You left the room.');
-    return _isLocal
-        ? _local.downloadFile(file)
-        : _remote.downloadFile(code, file);
+    if (_isLocal) return _local.downloadFile(file);
+    if (_isWebrtc) return _webrtc.downloadFile(file);
+    return _remote.downloadFile(code, file);
   }
 
   /// Download a shared file to a temp location for previewing (no Inbox record).
   Future<File> downloadTemp(RoomFile file) {
     final code = state.session?.code;
     if (code == null) throw const CloudDownloadException('You left the room.');
-    return _isLocal
-        ? _local.downloadToTemp(file)
-        : _remote.downloadToTemp(code, file);
+    if (_isLocal) return _local.downloadToTemp(file);
+    if (_isWebrtc) return _webrtc.downloadToTemp(file);
+    return _remote.downloadToTemp(code, file);
   }
 
   Future<void> leave() async {
@@ -299,6 +345,8 @@ class RoomCubit extends Cubit<RoomState> {
     if (s != null) {
       if (_isLocal) {
         await _local.leave();
+      } else if (_isWebrtc) {
+        await _webrtc.leave();
       } else if (s.isHost && s.hostToken != null) {
         await _remote.close(s.code, s.hostToken!);
       } else {
@@ -312,6 +360,7 @@ class RoomCubit extends Cubit<RoomState> {
   Future<void> close() {
     _remoteSub.cancel();
     _localSub.cancel();
+    _webrtcSub.cancel();
     return super.close();
   }
 }

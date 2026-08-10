@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:bishare/core/server/transfer_server.dart';
 import 'package:bishare/core/server/transfer_types.dart';
+import 'package:bishare/core/telemetry/telemetry_service.dart';
 import 'package:bishare/features/receive/presentation/receive_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// A stand-in for [TransferServer] that exposes only the four streams
 /// [ReceiveCubit] subscribes to, so the receive-card lifecycle can be driven
@@ -57,9 +59,13 @@ void main() {
   late _FakeServer server;
   late ReceiveCubit cubit;
 
-  setUp(() {
+  setUp(() async {
+    // Disabled telemetry so recordReceive is a no-op (no network in tests).
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({'telemetryEnabled': false});
+    final prefs = await SharedPreferences.getInstance();
     server = _FakeServer();
-    cubit = ReceiveCubit(server);
+    cubit = ReceiveCubit(server, TelemetryService(prefs));
   });
 
   tearDown(() async {

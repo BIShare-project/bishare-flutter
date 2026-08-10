@@ -82,7 +82,7 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
         BlocProvider(create: (_) => ClipboardCubit(getIt(), getIt())),
         BlocProvider(create: (_) => InboxCubit(getIt())),
         BlocProvider(create: (_) => HistoryCubit(getIt())),
-        BlocProvider(create: (_) => RoomCubit(getIt(), getIt())),
+        BlocProvider(create: (_) => RoomCubit(getIt(), getIt(), getIt())),
         BlocProvider(create: (_) => NearbyCubit(getIt(), getIt(), getIt())),
         BlocProvider(
           create: (_) => SettingsCubit(
