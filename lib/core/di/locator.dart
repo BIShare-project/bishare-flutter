@@ -148,9 +148,13 @@ Future<void> setupLocator() async {
   // Transfer client for the LAN send pipeline (TCP, E2E).
   final transferClient = TransferClient(identity);
 
+  // Anonymous telemetry — shared by SendCubit/ReceiveCubit (via getIt) and
+  // LocalRoomService (constructor-injected below), so keep one instance.
+  final telemetry = TelemetryService(prefs);
+
   getIt
     ..registerSingleton<SharedPreferences>(prefs)
-    ..registerSingleton<TelemetryService>(TelemetryService(prefs))
+    ..registerSingleton<TelemetryService>(telemetry)
     ..registerSingleton<FeatureFlags>(featureFlags)
     ..registerSingleton<DeviceIdentity>(identity)
     ..registerSingleton<AppDatabase>(db)
@@ -171,7 +175,7 @@ Future<void> setupLocator() async {
     ..registerLazySingleton<CloudConfigService>(CloudConfigService.new)
     ..registerSingleton<RoomService>(RoomService(identity, server, history))
     ..registerSingleton<LocalRoomService>(
-      LocalRoomService(identity, server, history),
+      LocalRoomService(identity, server, history, telemetry),
     )
     ..registerSingleton<StreamRelayService>(
       StreamRelayService(server, history),

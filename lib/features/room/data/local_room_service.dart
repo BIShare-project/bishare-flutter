@@ -13,6 +13,7 @@ import 'package:shelf_router/shelf_router.dart';
 import '../../../core/constants/cloud.dart' show ShareCodes;
 import '../../../core/constants/protocol.dart';
 import '../../../core/identity/device_identity.dart';
+import '../../../core/telemetry/telemetry_service.dart';
 import '../../../core/network/local_ip.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/server/transfer_types.dart';
@@ -35,11 +36,12 @@ import 'room_service.dart'
 /// Emits the same [RoomEvent]s as the remote [RoomService] so the cubit/UI are
 /// shared.
 class LocalRoomService {
-  LocalRoomService(this._identity, this._server, this._history);
+  LocalRoomService(this._identity, this._server, this._history, this._telemetry);
 
   final DeviceIdentity _identity;
   final TransferServer _server;
   final HistoryRepository _history;
+  final TelemetryService _telemetry;
   final dio.Dio _dio =
       dio.Dio(dio.BaseOptions(connectTimeout: const Duration(seconds: 6)));
 
@@ -90,6 +92,9 @@ class LocalRoomService {
     );
     await _broadcast!.initialize();
     await _broadcast!.start();
+    // Anonymous, opt-out telemetry: a local (LAN) room never touches the relay,
+    // so report it once here so it shows up in the public stats. Fire-and-forget.
+    _telemetry.recordLocalRoom();
     return RoomSession(
       code: _code,
       hostFingerprint: _hostFingerprint,

@@ -42,18 +42,41 @@ class TelemetryService {
     return 'other';
   }
 
-  /// Fire-and-forget; call once per successful transfer (sender side).
+  /// Fire-and-forget; call once per successful transfer (SENDER side).
   /// [transport] is 'lan' (TCP) or 'quic'.
   void recordTransfer({required int bytes, String transport = 'lan'}) {
     if (!enabled || bytes <= 0) return;
-    unawaited(_post(bytes, transport));
+    unawaited(_post(kind: 'send', bytes: bytes, transport: transport));
   }
 
-  Future<void> _post(int bytes, String transport) async {
+  /// Fire-and-forget; call once per file successfully RECEIVED over LAN. Counts
+  /// as a "download" the relay never sees. [transport] is 'lan' or 'quic'.
+  void recordReceive({required int bytes, String transport = 'lan'}) {
+    if (!enabled || bytes <= 0) return;
+    unawaited(_post(kind: 'receive', bytes: bytes, transport: transport));
+  }
+
+  /// Fire-and-forget; call once when a LOCAL (Bonjour/LAN) room is hosted.
+  /// No bytes — just a count so local rooms show up in the public stats.
+  void recordLocalRoom() {
+    if (!enabled) return;
+    unawaited(_post(kind: 'room', bytes: 0, transport: 'lan'));
+  }
+
+  Future<void> _post({
+    required String kind,
+    required int bytes,
+    required String transport,
+  }) async {
     try {
       await _dio.post<void>(
         '/api/v1/telemetry/transfer',
-        data: {'bytes': bytes, 'platform': _platform, 'transport': transport},
+        data: {
+          'kind': kind,
+          'bytes': bytes,
+          'platform': _platform,
+          'transport': transport,
+        },
       );
     } catch (_) {
       // best-effort — never surfaced to the user

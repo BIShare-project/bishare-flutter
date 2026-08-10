@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/server/transfer_server.dart';
 import '../../../core/server/transfer_types.dart';
+import '../../../core/telemetry/telemetry_service.dart';
 
 /// UI state for the receiver: a possible pending accept/reject prompt, a pending
 /// file-request (reverse flow), and live receive progress.
@@ -64,7 +65,7 @@ class ReceiveState extends Equatable {
 /// Drives the accept/reject prompt, file-request prompt, and receive progress
 /// from [TransferServer].
 class ReceiveCubit extends Cubit<ReceiveState> {
-  ReceiveCubit(this._server) : super(const ReceiveState()) {
+  ReceiveCubit(this._server, this._telemetry) : super(const ReceiveState()) {
     _incoming = _server.incoming.listen((p) {
       emit(state.copyWith(pending: p));
     });
@@ -113,10 +114,14 @@ class ReceiveCubit extends Cubit<ReceiveState> {
     });
     _recv = _server.received.listen((f) {
       emit(state.copyWith(lastReceived: f));
+      // Anonymous, opt-out telemetry: a LAN receive is a "download" the relay
+      // never sees. Fire-and-forget; the service no-ops when disabled.
+      _telemetry.recordReceive(bytes: f.size);
     });
   }
 
   final TransferServer _server;
+  final TelemetryService _telemetry;
   // Live-speed clock for the receive card (mirrors send_cubit's `_sw`), keyed by
   // session so a new transfer restarts the measurement.
   final _sw = Stopwatch();
