@@ -16,8 +16,14 @@ import 'webrtc_signaling.dart';
 const _emojis = ['🦊', '🐼', '🐧', '🦉', '🐙', '🦜', '🐳', '🦄', '🐝', '🦩'];
 const _chunkSize = 256 * 1024;
 const _bufferHigh = 8 * 1024 * 1024;
+// STUN for direct/same-network paths; TURN as a relay fallback so transfers
+// still connect when the network blocks peer-to-peer (client isolation, strict
+// NAT). Direct paths are preferred — TURN is a last resort.
 final _ice = <Map<String, dynamic>>[
   {'urls': 'stun:stun.l.google.com:19302'},
+  {'urls': 'turn:openrelay.metered.ca:80', 'username': 'openrelayproject', 'credential': 'openrelayproject'},
+  {'urls': 'turn:openrelay.metered.ca:443', 'username': 'openrelayproject', 'credential': 'openrelayproject'},
+  {'urls': 'turn:openrelay.metered.ca:443?transport=tcp', 'username': 'openrelayproject', 'credential': 'openrelayproject'},
 ];
 
 class _Session {
