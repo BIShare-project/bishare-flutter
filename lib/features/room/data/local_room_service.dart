@@ -77,6 +77,20 @@ class LocalRoomService {
     _hostFingerprint = _identity.fingerprint;
     await _startServer();
     final ip = await LocalIp.resolve();
+    // The host is a participant of its own room. Register it in _members so the
+    // join response (a joiner's entire initial roster) actually contains the
+    // host — previously it was absent, so members never saw the host
+    // ("penyedia tidak muncul di list anggota"). The fan-out in _handleJoin
+    // skips this self entry so the host never POSTs a join event to itself.
+    _members
+      ..clear()
+      ..add(RoomMember(
+        fingerprint: _hostFingerprint,
+        alias: _hostAlias,
+        deviceType: _identity.deviceType,
+        host: ip,
+        port: _port,
+      ));
     _broadcast = BonsoirBroadcast(
       service: BonsoirService(
         name: 'room-$_code',
@@ -293,7 +307,13 @@ class LocalRoomService {
         'port': member.port,
       });
       for (final m in _members) {
-        if (m.fingerprint == fingerprint || m.host.isEmpty) continue;
+        // Skip the newcomer (already has itself) and the host self entry
+        // (fanning to our own endpoint would POST to ourselves).
+        if (m.fingerprint == fingerprint ||
+            m.fingerprint == _hostFingerprint ||
+            m.host.isEmpty) {
+          continue;
+        }
         _post(m.host, m.port, BIShareApi.roomMemberJoined, payload);
       }
     }
