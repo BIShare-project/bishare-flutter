@@ -24,6 +24,8 @@ class RoomState {
     this.uploadingLabel,
     this.connectingLabel = 'Connecting…',
     this.error = '',
+    this.webRoomHint = false,
+    this.webRoomCode,
   });
 
   final RoomStatus status;
@@ -39,6 +41,15 @@ class RoomState {
   final String connectingLabel;
   final String error;
 
+  /// One-shot: the code turned out to be a browser-hosted (WebRTC) room, which
+  /// the app can't join without a TURN relay — the UI shows an explainer sheet
+  /// and then dismisses it (resetting this flag).
+  final bool webRoomHint;
+
+  /// The code of the detected browser room — used to build the "open in browser
+  /// and join" deep link.
+  final String? webRoomCode;
+
   bool get isHost => session?.isHost ?? false;
 
   RoomState copyWith({
@@ -50,6 +61,8 @@ class RoomState {
     bool clearUploading = false,
     String? connectingLabel,
     String? error,
+    bool webRoomHint = false,
+    String? webRoomCode,
   }) => RoomState(
     status: status ?? this.status,
     session: session ?? this.session,
@@ -58,6 +71,8 @@ class RoomState {
     uploadingLabel: clearUploading ? null : (uploadingLabel ?? this.uploadingLabel),
     connectingLabel: connectingLabel ?? this.connectingLabel,
     error: error ?? this.error,
+    webRoomHint: webRoomHint,
+    webRoomCode: webRoomCode ?? this.webRoomCode,
   );
 }
 
@@ -231,19 +246,12 @@ class RoomCubit extends Cubit<RoomState> {
           return;
         }
         if (r != null) {
-          _isLocal = false;
-          _isWebrtc = true;
-          _localDual = false;
-          final (session, members, files) = r;
-          emit(
-            RoomState(
-              status: RoomStatus.inRoom,
-              session: session,
-              members: members,
-              files: files,
-            ),
-          );
+          // It IS a browser-hosted (WebRTC) room. Without a TURN relay the app
+          // can't reliably transfer with it, so don't join — surface an
+          // explainer sheet (browser-to-browser; use a browser or a Cloud room).
+          unawaited(_webrtc.leave());
           done.complete();
+          emit(RoomState(status: RoomStatus.lobby, webRoomHint: true, webRoomCode: trimmed));
         } else {
           webrtcMissed = true;
           failIfBothDone();
@@ -305,6 +313,9 @@ class RoomCubit extends Cubit<RoomState> {
         emit(const RoomState(error: 'The host closed the room.'));
     }
   }
+
+  /// Dismiss the "this is a browser room" explainer sheet (back to the lobby).
+  void dismissWebRoomHint() => emit(const RoomState());
 
   /// Upload a local file into the room (with an image/video thumbnail so peers
   /// see a preview in the list).

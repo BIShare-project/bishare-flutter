@@ -356,7 +356,11 @@
     "step_3": "所有人均可在房间内共享文件",
     "subtitle": "与多人共享文件",
     "title": "房间",
-    "uploading": "正在上传 {label}…"
+    "uploading": "正在上传 {label}…",
+    "web_room_title": "浏览器房间",
+    "web_room_body": "此房间在浏览器中创建。文件在浏览器之间直接（P2P）传输，App 暂时无法加入。请在浏览器中打开 bishare.app/rooms 加入，或请房主创建一个云房间。",
+    "web_room_ok": "知道了",
+    "web_room_open": "在浏览器中打开并加入"
   },
   "settings": {
     "about": "关于",

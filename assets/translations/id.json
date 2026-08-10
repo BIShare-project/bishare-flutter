@@ -356,7 +356,11 @@
     "step_3": "Semua orang dapat berbagi file di ruangan",
     "subtitle": "Bagikan file dengan banyak orang",
     "title": "Ruangan",
-    "uploading": "Mengunggah {label}…"
+    "uploading": "Mengunggah {label}…",
+    "web_room_title": "Ruang browser",
+    "web_room_body": "Ruang ini dibuat di browser. File dikirim langsung antar-browser (P2P) — aplikasi belum bisa gabung. Buka bishare.app/rooms di browser untuk gabung, atau minta host membuat Cloud room agar bisa lewat aplikasi.",
+    "web_room_ok": "Mengerti",
+    "web_room_open": "Buka di browser & gabung"
   },
   "settings": {
     "about": "Tentang",

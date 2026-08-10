@@ -356,7 +356,11 @@
     "step_3": "Everyone can share files in the room",
     "subtitle": "Share files with multiple people",
     "title": "Rooms",
-    "uploading": "Uploading {label}…"
+    "uploading": "Uploading {label}…",
+    "web_room_title": "Browser room",
+    "web_room_body": "This room was created in a browser. Files go directly browser-to-browser (P2P), which the app can't join yet. Open bishare.app/rooms in a browser to join — or ask the host to make a Cloud room to use the app.",
+    "web_room_ok": "Got it",
+    "web_room_open": "Open in browser & join"
   },
   "settings": {
     "about": "About",

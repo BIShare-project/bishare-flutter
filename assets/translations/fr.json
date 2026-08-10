@@ -356,7 +356,11 @@
     "step_3": "Tout le monde peut partager des fichiers dans le salon",
     "subtitle": "Partager des fichiers avec plusieurs personnes",
     "title": "Salons",
-    "uploading": "Téléversement de {label}…"
+    "uploading": "Téléversement de {label}…",
+    "web_room_title": "Salon navigateur",
+    "web_room_body": "Ce salon a été créé dans un navigateur. Les fichiers vont directement de navigateur à navigateur (P2P), et l'app ne peut pas encore le rejoindre. Ouvrez bishare.app/rooms dans un navigateur, ou demandez à l'hôte de créer un salon Cloud.",
+    "web_room_ok": "Compris",
+    "web_room_open": "Ouvrir dans le navigateur et rejoindre"
   },
   "settings": {
     "about": "À propos",

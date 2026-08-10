@@ -356,7 +356,11 @@
     "step_3": "모두가 룸에서 파일을 공유할 수 있습니다",
     "subtitle": "여러 사람과 파일 공유",
     "title": "룸",
-    "uploading": "{label} 업로드 중…"
+    "uploading": "{label} 업로드 중…",
+    "web_room_title": "브라우저 룸",
+    "web_room_body": "이 룸은 브라우저에서 만들어졌습니다. 파일은 브라우저 간 직접(P2P) 전송되며 앱은 아직 참여할 수 없어요. 브라우저에서 bishare.app/rooms를 열어 참여하거나, 호스트에게 클라우드 룸을 만들어 달라고 하세요.",
+    "web_room_ok": "확인",
+    "web_room_open": "브라우저에서 열어 참여"
   },
   "settings": {
     "about": "정보",

@@ -356,7 +356,11 @@
     "step_3": "Todos pueden compartir archivos en la sala",
     "subtitle": "Comparte archivos con varias personas",
     "title": "Salas",
-    "uploading": "Subiendo {label}…"
+    "uploading": "Subiendo {label}…",
+    "web_room_title": "Sala del navegador",
+    "web_room_body": "Esta sala se creó en un navegador. Los archivos van directos entre navegadores (P2P), y la app aún no puede unirse. Abre bishare.app/rooms en un navegador para unirte, o pide al anfitrión que cree una sala en la nube.",
+    "web_room_ok": "Entendido",
+    "web_room_open": "Abrir en el navegador y unirse"
   },
   "settings": {
     "about": "Acerca de",

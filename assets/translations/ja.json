@@ -356,7 +356,11 @@
     "step_3": "全員がルーム内でファイルを共有可能",
     "subtitle": "複数人でファイルを共有",
     "title": "ルーム",
-    "uploading": "{label} をアップロード中…"
+    "uploading": "{label} をアップロード中…",
+    "web_room_title": "ブラウザのルーム",
+    "web_room_body": "このルームはブラウザで作成されました。ファイルはブラウザ間で直接（P2P）送られ、アプリはまだ参加できません。参加するにはブラウザで bishare.app/rooms を開くか、ホストにクラウドルームを作ってもらってください。",
+    "web_room_ok": "OK",
+    "web_room_open": "ブラウザで開いて参加"
   },
   "settings": {
     "about": "情報",

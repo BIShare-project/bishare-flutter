@@ -356,7 +356,11 @@
     "step_3": "Tout le monde peut partager des fichiers dans le salon",
     "subtitle": "Partager des fichiers avec plusieurs personnes",
     "title": "Salons",
-    "uploading": "Téléversement de {label}…"
+    "uploading": "Téléversement de {label}…",
+    "web_room_title": "ब्राउज़र रूम",
+    "web_room_body": "यह रूम एक ब्राउज़र में बनाया गया था। फ़ाइलें सीधे ब्राउज़र-से-ब्राउज़र (P2P) जाती हैं, और ऐप अभी इसमें शामिल नहीं हो सकता। जुड़ने के लिए ब्राउज़र में bishare.app/rooms खोलें, या होस्ट से क्लाउड रूम बनाने को कहें।",
+    "web_room_ok": "समझ गया",
+    "web_room_open": "ब्राउज़र में खोलें और जुड़ें"
   },
   "settings": {
     "about": "परिचय",
