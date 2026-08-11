@@ -460,7 +460,7 @@
     "search": "ファイルや送信者を検索"
   },
   "onboarding": {
-    "allow": "許可",
+    "perm_continue": "続ける",
     "get_started": "始める",
     "next": "次へ",
     "perm_camera": "カメラ",

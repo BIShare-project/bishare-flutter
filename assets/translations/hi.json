@@ -460,7 +460,7 @@
     "search": "Rechercher des fichiers ou des expéditeurs"
   },
   "onboarding": {
-    "allow": "Autoriser",
+    "perm_continue": "जारी रखें",
     "get_started": "Commencer",
     "next": "Suivant",
     "perm_camera": "Caméra",

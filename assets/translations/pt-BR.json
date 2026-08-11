@@ -460,7 +460,7 @@
     "search": "Pesquisar ficheiros ou remetentes"
   },
   "onboarding": {
-    "allow": "Permitir",
+    "perm_continue": "Continuar",
     "get_started": "Começar",
     "next": "Seguinte",
     "perm_camera": "Câmara",

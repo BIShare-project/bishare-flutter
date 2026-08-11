@@ -460,7 +460,7 @@
     "search": "搜索文件或发送者"
   },
   "onboarding": {
-    "allow": "允许",
+    "perm_continue": "繼續",
     "get_started": "开始使用",
     "next": "下一步",
     "perm_camera": "相机",

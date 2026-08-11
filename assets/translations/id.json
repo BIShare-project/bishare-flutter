@@ -460,7 +460,7 @@
     "search": "Cari file atau pengirim"
   },
   "onboarding": {
-    "allow": "Izinkan",
+    "perm_continue": "Lanjutkan",
     "get_started": "Mulai",
     "next": "Berikutnya",
     "perm_camera": "Kamera",

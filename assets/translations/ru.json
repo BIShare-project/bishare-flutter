@@ -460,7 +460,7 @@
     "search": "Поиск файлов или отправителей"
   },
   "onboarding": {
-    "allow": "Разрешить",
+    "perm_continue": "Продолжить",
     "get_started": "Начать",
     "next": "Далее",
     "perm_camera": "Камера",

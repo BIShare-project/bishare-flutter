@@ -460,7 +460,7 @@
     "search": "Search files or senders"
   },
   "onboarding": {
-    "allow": "Allow",
+    "perm_continue": "Continue",
     "get_started": "Get Started",
     "next": "Next",
     "perm_camera": "Camera",

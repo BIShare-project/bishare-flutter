@@ -5,7 +5,10 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../../core/ui/app_svg_icon.dart';
 
 /// A single permission card on the onboarding permission page: an icon, a title +
-/// rationale, and an "Allow" button that flips to a green check once granted.
+/// rationale, and a "Continue" button that flips to a green check once granted.
+/// The button deliberately does NOT say "Allow" — App Review (guideline
+/// 5.1.1(iv)) rejects pre-permission UI whose button mirrors the system
+/// prompt's consent wording; "Continue"/"Next" is the required phrasing.
 class PermissionRow extends StatelessWidget {
   const PermissionRow({
     super.key,
@@ -84,7 +87,7 @@ class PermissionRow extends StatelessWidget {
               variant: ShadButtonVariant.primary,
               size: ShadButtonSize.sm,
               onPressed: onAllow,
-              child: Text('onboarding.allow'.tr()),
+              child: Text('onboarding.perm_continue'.tr()),
             ),
         ],
       ),
