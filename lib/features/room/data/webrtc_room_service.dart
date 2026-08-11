@@ -117,6 +117,11 @@ class WebrtcRoomService {
 
   WebrtcSignaling? _sig;
   final _sessions = <String, _Session>{}; // sid → session
+  // Trickled `rice` candidates that arrive for a sid BEFORE its session exists
+  // (the roffer handler awaits the ICE-server fetch first). Adopted into the
+  // session's pendingIce when the roffer lands; bounded so junk sids can't grow.
+  final _earlyIce = <String, List<RTCIceCandidate>>{};
+  static const _earlyIceMax = 64;
   final _members = <String, RoomMember>{}; // peerId → member
   String _code = '';
   String? _peerId;
@@ -133,9 +138,13 @@ class WebrtcRoomService {
     for (final sid in _sessions.keys.toList()) {
       _teardown(sid);
     }
+    _earlyIce.clear();
     _members.clear();
     _savedPaths.clear();
     _sig?.close();
+    // Warm the TURN-credential cache now, so answering the first roffer isn't
+    // delayed by a network fetch (that delay is what let candidates race in).
+    unawaited(_iceServers());
     _code = code.trim().toUpperCase();
     _peerId = _identity.fingerprint;
     final self = SignalPeer(
@@ -290,10 +299,17 @@ class WebrtcRoomService {
     if (sid == null) return;
 
     if (m.kind == 'roffer') {
+      // _newPc awaits the ICE-server fetch (network!), and the offerer's
+      // trickled `rice` candidates land while that await is in flight — before
+      // the session exists. They are buffered in [_earlyIce] (see the rice
+      // branch) and adopted below; dropping them stalled ICE forever (web
+      // stuck "uploading", app silent).
       final pc = await _newPc(sid, m.from);
       final meta = (p['meta'] as Map?)?.cast<String, dynamic>();
       final s = _Session(sid, m.from, pc, 'recv')..meta = meta;
       _sessions[sid] = s;
+      final early = _earlyIce.remove(sid);
+      if (early != null) s.pendingIce.addAll(early);
       // Open the output sink up-front (not lazily on the first chunk) so rapid
       // chunks can't race two opens for the same file.
       if (meta != null) s.sink = await _openOutput(s);
@@ -323,10 +339,17 @@ class WebrtcRoomService {
         await _flushIce(sid);
       }
     } else if (m.kind == 'rice') {
-      final s = _sessions[sid];
       final c = (p['candidate'] as Map?)?.cast<String, dynamic>();
-      if (s == null || c == null) return;
+      if (c == null) return;
       final cand = RTCIceCandidate(c['candidate'] as String?, c['sdpMid'] as String?, (c['sdpMLineIndex'] as num?)?.toInt());
+      final s = _sessions[sid];
+      if (s == null) {
+        // Candidate raced ahead of its roffer (the session is still awaiting
+        // the ICE-server fetch) — hold it; the roffer handler adopts it.
+        final held = _earlyIce.putIfAbsent(sid, () => []);
+        if (held.length < _earlyIceMax) held.add(cand);
+        return;
+      }
       if (s.remoteReady) {
         await s.pc.addCandidate(cand);
       } else {
@@ -424,6 +447,7 @@ class WebrtcRoomService {
   }
 
   void _teardown(String sid) {
+    _earlyIce.remove(sid);
     final s = _sessions.remove(sid);
     if (s == null) return;
     try {
