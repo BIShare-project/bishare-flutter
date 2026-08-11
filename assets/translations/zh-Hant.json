@@ -319,7 +319,9 @@
     "share_via_web_off_subtitle": "即時：保持此螢幕開啟，接收方掃描 QR 碼。不會儲存任何內容。",
     "share_via_web_on_subtitle": "24 小時私密連結 — 隨時用代碼或 QR 碼下載。",
     "title": "安全链接",
-    "uploading_to_secure_link": "正在上传至安全链接..."
+    "uploading_to_secure_link": "正在上传至安全链接...",
+    "encrypted_needs_link": "此傳輸為端對端加密。請掃描其 QR code 或開啟完整連結——金鑰位於 # 之後，絕不會傳送到伺服器。",
+    "encrypted_bad_key": "無法解密此傳輸——連結中的金鑰錯誤或檔案已損毀。"
   },
   "room": {
     "connecting_create_local": "正在建立本機房間",

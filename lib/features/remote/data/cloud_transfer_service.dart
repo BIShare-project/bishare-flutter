@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../../../core/constants/cloud.dart';
+import '../../../core/crypto/bse2.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/server/transfer_types.dart';
 import '../../history/data/history_repository.dart';
@@ -99,8 +101,15 @@ class CloudTransferService {
   );
 
   /// `https://bishare.app/transfer/<code>` — a 24h one-time cloud transfer.
+  ///
+  /// Web uploads are end-to-end encrypted by default (the "BSE2" container;
+  /// see [Bse2]): the stored blob is ciphertext and [key] — the link's `#k=`
+  /// fragment, carried by the QR/universal link but never sent to any server —
+  /// is required to decrypt it. A hand-typed code has no key, so an encrypted
+  /// transfer is surfaced honestly instead of saving unreadable bytes.
   Future<ReceivedFile> downloadTransfer(
     String code, {
+    String? key,
     ProgressCb? onProgress,
     CancelToken? cancel,
   }) async {
@@ -128,11 +137,37 @@ class CloudTransferService {
       onReceiveProgress: onProgress,
       cancelToken: cancel,
     );
+    final wasEncrypted = await _decryptIfBse2(target, key);
     return _record(
       target,
       meta['mimeType'] as String?,
       (meta['senderAlias'] as String?) ?? 'Cloud transfer',
+      encrypted: wasEncrypted,
     );
+  }
+
+  /// If [target] is a BSE2 container (an end-to-end-encrypted web upload),
+  /// decrypt it in place using the link-fragment [key]. Returns whether the
+  /// blob was encrypted. Without a valid key the unreadable blob is deleted
+  /// and an honest error is thrown — never silently keep ciphertext.
+  Future<bool> _decryptIfBse2(File target, String? key) async {
+    if (!await Bse2.sniff(target)) return false;
+    final raw = key == null ? null : Bse2.decodeKey(key);
+    if (raw == null) {
+      await target.delete();
+      throw CloudDownloadException('remote.encrypted_needs_link'.tr());
+    }
+    final plain = File('${target.path}.bse2-plain');
+    try {
+      await Bse2.decryptFile(input: target, output: plain, key: raw);
+    } on Bse2Exception {
+      if (await plain.exists()) await plain.delete();
+      await target.delete();
+      throw CloudDownloadException('remote.encrypted_bad_key'.tr());
+    }
+    await target.delete();
+    await plain.rename(target.path);
+    return true;
   }
 
   /// `https://bishare.app/share/<token>` — an authenticated user share-link.
@@ -329,7 +364,12 @@ class CloudTransferService {
     return body;
   }
 
-  Future<ReceivedFile> _record(File file, String? mime, String sender) async {
+  Future<ReceivedFile> _record(
+    File file,
+    String? mime,
+    String sender, {
+    bool encrypted = false,
+  }) async {
     final size = await file.length();
     final received = ReceivedFile(
       fileName: file.uri.pathSegments.last,
@@ -339,7 +379,7 @@ class CloudTransferService {
       receivedAt: DateTime.now(),
       verified: false,
       fileType: mime,
-      encrypted: false,
+      encrypted: encrypted,
     );
     await _history.recordReceived(received);
     return received;

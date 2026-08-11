@@ -319,7 +319,9 @@
     "share_via_web_off_subtitle": "라이브: 이 화면을 열어 두면 받는 사람이 QR을 스캔합니다. 아무것도 저장되지 않습니다.",
     "share_via_web_on_subtitle": "24시간 비공개 링크 — 코드나 QR로 언제든지 다운로드.",
     "title": "안전한 링크",
-    "uploading_to_secure_link": "안전한 링크에 업로드 중..."
+    "uploading_to_secure_link": "안전한 링크에 업로드 중...",
+    "encrypted_needs_link": "이 전송은 종단간 암호화되어 있습니다. QR 코드를 스캔하거나 전체 링크를 여세요 — 키는 # 뒤에 있으며 서버에 절대 전송되지 않습니다.",
+    "encrypted_bad_key": "이 전송을 복호화할 수 없습니다 — 링크의 키가 잘못되었거나 파일이 손상되었습니다."
   },
   "room": {
     "connecting_create_local": "로컬 방을 만드는 중",

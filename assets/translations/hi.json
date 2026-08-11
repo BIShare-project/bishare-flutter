@@ -319,7 +319,9 @@
     "share_via_web_off_subtitle": "लाइव: यह स्क्रीन खुली रखें, पाने वाला QR स्कैन करता है। कुछ भी संग्रहीत नहीं होता।",
     "share_via_web_on_subtitle": "निजी 24-घंटे लिंक — कोड या QR से कभी भी डाउनलोड करें।",
     "title": "Lien sécurisé",
-    "uploading_to_secure_link": "Téléversement vers le lien sécurisé..."
+    "uploading_to_secure_link": "Téléversement vers le lien sécurisé...",
+    "encrypted_needs_link": "यह ट्रांसफ़र एंड-टू-एंड एन्क्रिप्टेड है। इसका QR कोड स्कैन करें या पूरा लिंक खोलें — कुंजी # के बाद रहती है और कभी सर्वर तक नहीं पहुँचती।",
+    "encrypted_bad_key": "इस ट्रांसफ़र को डिक्रिप्ट नहीं किया जा सका — लिंक की कुंजी गलत है या फ़ाइल क्षतिग्रस्त है।"
   },
   "room": {
     "connecting_create_local": "लोकल रूम बनाया जा रहा है",

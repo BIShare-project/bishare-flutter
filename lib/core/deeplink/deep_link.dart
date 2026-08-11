@@ -7,11 +7,14 @@ sealed class DeepLinkAction {
   const DeepLinkAction();
 }
 
-/// `https://bishare.app/transfer/<code>` — download a 24h one-time cloud
-/// transfer by its 6-char code.
+/// `https://bishare.app/transfer/<code>[#k=<key>]` — download a 24h one-time
+/// cloud transfer by its 6-char code. Web uploads are end-to-end encrypted by
+/// default: [key] is the URL-fragment decryption key (base64url, never sent to
+/// the server), present when the link/QR carried one.
 class CloudTransferLink extends DeepLinkAction {
-  const CloudTransferLink(this.code);
+  const CloudTransferLink(this.code, {this.key});
   final String code;
+  final String? key;
 }
 
 /// `https://bishare.app/share/<token>` — download an authenticated user
@@ -78,9 +81,15 @@ class DeepLink {
     }
 
     // Scheme-less web payloads from a QR (e.g. "bishare.app/transfer/AB2C3D").
+    // Split any fragment off first so it can't leak into the code segment.
     final hostIdx = input.indexOf('${CloudConfig.webHost}/');
     if (hostIdx >= 0 && !input.contains('://')) {
-      return _fromWebPath(input.substring(hostIdx + CloudConfig.webHost.length));
+      final rest = input.substring(hostIdx + CloudConfig.webHost.length);
+      final hash = rest.indexOf('#');
+      return _fromWebPath(
+        hash < 0 ? rest : rest.substring(0, hash),
+        fragment: hash < 0 ? '' : rest.substring(hash + 1),
+      );
     }
 
     final uri = Uri.tryParse(input);
@@ -107,7 +116,9 @@ class DeepLink {
 
       case 'http':
       case 'https':
-        if (_isWebHost(uri.host)) return _fromWebPath(uri.path);
+        if (_isWebHost(uri.host)) {
+          return _fromWebPath(uri.path, fragment: uri.fragment);
+        }
         // Any other http(s) link that is a device instant URL.
         if (uri.path.contains(BIShareApi.instant)) return LocalInstantLink(uri);
         return null;
@@ -115,12 +126,14 @@ class DeepLink {
     return null;
   }
 
-  static DeepLinkAction? _fromWebPath(String path) {
+  static DeepLinkAction? _fromWebPath(String path, {String fragment = ''}) {
     final segs = path.split('/').where((s) => s.isNotEmpty).toList();
     if (segs.isEmpty) return null;
     switch (segs[0]) {
       case 'transfer':
-        if (segs.length >= 2) return CloudTransferLink(_code(segs[1]));
+        if (segs.length >= 2) {
+          return CloudTransferLink(_code(segs[1]), key: _keyFrom(fragment));
+        }
         return null;
       case 'share':
         if (segs.length >= 2) return CloudShareLink(segs[1]);
@@ -137,4 +150,11 @@ class DeepLink {
   /// Normalise a code: strip dashes/slashes, uppercase.
   static String _code(String s) =>
       s.replaceAll(RegExp(r'[-/]'), '').toUpperCase();
+
+  /// Pull the E2E key out of a URL fragment (`k=<base64url>`, mirroring the
+  /// web client's `keyFromHash`). Returns null when the fragment has none.
+  static String? _keyFrom(String fragment) {
+    final m = RegExp(r'(?:^|[#&])k=([A-Za-z0-9\-_]+)').firstMatch(fragment);
+    return m?.group(1);
+  }
 }

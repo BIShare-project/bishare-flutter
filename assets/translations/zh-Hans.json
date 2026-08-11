@@ -319,7 +319,9 @@
     "share_via_web_off_subtitle": "实时：保持此屏幕开启，接收方扫描二维码。不存储任何内容。",
     "share_via_web_on_subtitle": "24 小时私密链接 — 随时用代码或二维码下载。",
     "title": "安全链接",
-    "uploading_to_secure_link": "正在上传至安全链接..."
+    "uploading_to_secure_link": "正在上传至安全链接...",
+    "encrypted_needs_link": "此传输为端到端加密。请扫描其二维码或打开完整链接——密钥位于 # 之后，绝不会发送到服务器。",
+    "encrypted_bad_key": "无法解密此传输——链接中的密钥错误或文件已损坏。"
   },
   "room": {
     "connecting_create_local": "正在创建本地房间",

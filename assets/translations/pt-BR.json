@@ -319,7 +319,9 @@
     "share_via_web_off_subtitle": "Ao vivo: mantenha esta tela aberta, o destinatário escaneia o QR. Nada é armazenado.",
     "share_via_web_on_subtitle": "Link privado de 24 h — baixe quando quiser com o código ou QR.",
     "title": "Link Seguro",
-    "uploading_to_secure_link": "A carregar para o link seguro..."
+    "uploading_to_secure_link": "A carregar para o link seguro...",
+    "encrypted_needs_link": "Esta transferência é criptografada de ponta a ponta. Escaneie o código QR ou abra o link completo — a chave vem após o # e nunca chega ao servidor.",
+    "encrypted_bad_key": "Não foi possível descriptografar esta transferência — a chave do link está errada ou o arquivo está corrompido."
   },
   "room": {
     "connecting_create_local": "Criando uma sala local",

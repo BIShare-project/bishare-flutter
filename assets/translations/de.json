@@ -319,7 +319,9 @@
     "share_via_web_off_subtitle": "Live: Diesen Bildschirm offen lassen, Empfänger scannt den QR-Code. Es wird nichts gespeichert.",
     "share_via_web_on_subtitle": "Privater 24-Std-Link – jederzeit mit Code oder QR herunterladen.",
     "title": "Sicherer Link",
-    "uploading_to_secure_link": "Hochladen zum sicheren Link..."
+    "uploading_to_secure_link": "Hochladen zum sicheren Link...",
+    "encrypted_needs_link": "Diese Übertragung ist Ende-zu-Ende-verschlüsselt. Scanne ihren QR-Code oder öffne den vollständigen Link — der Schlüssel steht hinter # und erreicht nie den Server.",
+    "encrypted_bad_key": "Übertragung konnte nicht entschlüsselt werden — der Schlüssel im Link ist falsch oder die Datei ist beschädigt."
   },
   "room": {
     "connecting_create_local": "Lokaler Raum wird erstellt",

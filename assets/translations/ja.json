@@ -319,7 +319,9 @@
     "share_via_web_off_subtitle": "ライブ：この画面を開いたままにし、受信側がQRをスキャンします。何も保存されません。",
     "share_via_web_on_subtitle": "24時間有効の限定リンク — コードまたはQRでいつでもダウンロード。",
     "title": "安全なリンク",
-    "uploading_to_secure_link": "安全なリンクにアップロード中..."
+    "uploading_to_secure_link": "安全なリンクにアップロード中...",
+    "encrypted_needs_link": "この転送はエンドツーエンドで暗号化されています。QRコードをスキャンするか、完全なリンクを開いてください — 鍵は「#」以降にあり、サーバーには届きません。",
+    "encrypted_bad_key": "この転送を復号できませんでした — リンクの鍵が間違っているか、ファイルが破損しています。"
   },
   "room": {
     "connecting_create_local": "ローカルルームを作成中",

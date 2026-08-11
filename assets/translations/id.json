@@ -319,7 +319,9 @@
     "share_via_web_off_subtitle": "Langsung: biarkan layar ini terbuka, penerima memindai QR. Tidak ada yang disimpan.",
     "share_via_web_on_subtitle": "Tautan privat 24 jam — unduh kapan saja dengan kode atau QR.",
     "title": "Tautan Aman",
-    "uploading_to_secure_link": "Mengunggah ke tautan aman..."
+    "uploading_to_secure_link": "Mengunggah ke tautan aman...",
+    "encrypted_needs_link": "Transfer ini terenkripsi end-to-end. Pindai kode QR-nya atau buka tautan lengkapnya — kuncinya ikut setelah # dan tidak pernah sampai ke server.",
+    "encrypted_bad_key": "Tidak bisa mendekripsi transfer ini — kunci tautannya salah atau file rusak."
   },
   "room": {
     "connecting_create_local": "Membuat ruangan lokal",

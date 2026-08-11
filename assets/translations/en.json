@@ -319,7 +319,9 @@
     "share_via_web_off_subtitle": "Live: keep this screen open, receiver scans the QR. Nothing is stored.",
     "share_via_web_on_subtitle": "Private 24h link — download anytime with the code or QR.",
     "title": "Secure Link",
-    "uploading_to_secure_link": "Uploading to secure link..."
+    "uploading_to_secure_link": "Uploading to secure link...",
+    "encrypted_needs_link": "This transfer is end-to-end encrypted. Scan its QR code or open its full link — the key travels after # and never reaches the server.",
+    "encrypted_bad_key": "Couldn't decrypt this transfer — the link's key is wrong or the file is corrupted."
   },
   "room": {
     "connecting_create_local": "Creating a local room",

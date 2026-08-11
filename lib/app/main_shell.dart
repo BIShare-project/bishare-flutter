@@ -31,10 +31,10 @@ import '../features/settings/presentation/settings_page.dart';
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
-  @override
+  @override 
   State<MainShell> createState() => _MainShellState();
 }
-
+ 
 class _MainShellState extends State<MainShell> {
   int _index = 0;
   StreamSubscription<DeepLinkAction>? _linkSub;
@@ -49,7 +49,7 @@ class _MainShellState extends State<MainShell> {
     SettingsPage(),
   ];
 
-  @override
+  @override 
   void initState() {
     super.initState();
     // Subscribe BEFORE start() so the cold-start launch link is delivered.
@@ -98,11 +98,12 @@ class _MainShellState extends State<MainShell> {
     try {
       final cloud = getIt<CloudTransferService>();
       switch (action) {
-        case CloudTransferLink(:final code):
+        case CloudTransferLink(:final code, :final key):
           showRemoteDownload(
             context,
             label: 'nav.transfer_code'.tr(namedArgs: {'code': code}),
-            run: (p, c) => cloud.downloadTransfer(code, onProgress: p, cancel: c),
+            run: (p, c) =>
+                cloud.downloadTransfer(code, key: key, onProgress: p, cancel: c),
           );
         case CloudShareLink(:final token):
           showRemoteDownload(

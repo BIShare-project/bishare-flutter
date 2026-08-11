@@ -319,7 +319,9 @@
     "share_via_web_off_subtitle": "En direct : gardez cet écran ouvert, le destinataire scanne le QR. Rien n'est stocké.",
     "share_via_web_on_subtitle": "Lien privé de 24 h — téléchargez à tout moment avec le code ou le QR.",
     "title": "Lien sécurisé",
-    "uploading_to_secure_link": "Téléversement vers le lien sécurisé..."
+    "uploading_to_secure_link": "Téléversement vers le lien sécurisé...",
+    "encrypted_needs_link": "Ce transfert est chiffré de bout en bout. Scannez son code QR ou ouvrez le lien complet — la clé suit le # et n'atteint jamais le serveur.",
+    "encrypted_bad_key": "Impossible de déchiffrer ce transfert — la clé du lien est incorrecte ou le fichier est corrompu."
   },
   "room": {
     "connecting_create_local": "Création d’un salon local",
