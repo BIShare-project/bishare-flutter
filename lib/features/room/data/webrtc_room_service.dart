@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
-import '../../../core/constants/cloud.dart';
 import '../../../core/identity/device_identity.dart';
+import '../../../core/webrtc/ice_servers.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/server/transfer_types.dart';
 import '../../history/data/history_repository.dart';
@@ -21,53 +20,9 @@ const _bufferHigh = 8 * 1024 * 1024;
 // STUN for direct/same-network paths; TURN as a relay fallback so transfers
 // still connect when the network blocks peer-to-peer (client isolation, strict
 // NAT). Direct paths are preferred — TURN is a last resort.
-/// Direct-only fallback when the TURN mint is unreachable — the pre-TURN
-/// behaviour, so a failure never blocks a join.
-const _stunFallback = <Map<String, dynamic>>[
-  {'urls': 'stun:stun.cloudflare.com:3478'},
-];
-
-/// Cached short-lived TURN credentials from GET /api/v1/webrtc/ice (same
-/// source the web client uses). TURN matters even on one Wi-Fi: the browser
-/// peer hides its host candidates behind mDNS and many routers refuse NAT
-/// hairpinning, so app↔web pairs often need the relay. Refreshed with a
-/// 5-minute margin before the server-reported TTL.
-List<Map<String, dynamic>>? _cachedIce;
-DateTime? _iceExpiresAt;
-
-Future<List<Map<String, dynamic>>> _iceServers() async {
-  final cached = _cachedIce;
-  final expires = _iceExpiresAt;
-  if (cached != null && expires != null && DateTime.now().isBefore(expires)) {
-    return cached;
-  }
-  try {
-    final client = HttpClient();
-    try {
-      final req = await client
-          .getUrl(Uri.parse('${CloudConfig.apiBase}/api/v1/webrtc/ice'));
-      final res = await req.close().timeout(const Duration(seconds: 8));
-      final body = await res.transform(utf8.decoder).join();
-      final json = jsonDecode(body) as Map<String, dynamic>;
-      final data = json['data'] as Map<String, dynamic>?;
-      final servers = (data?['iceServers'] as List?)
-          ?.whereType<Map<String, dynamic>>()
-          .toList();
-      if (res.statusCode == 200 && servers != null && servers.isNotEmpty) {
-        final ttl = (data?['ttl'] as num?)?.toInt() ?? 3600;
-        _cachedIce = servers;
-        _iceExpiresAt =
-            DateTime.now().add(Duration(seconds: max(300, ttl - 300)));
-        return servers;
-      }
-    } finally {
-      client.close(force: true);
-    }
-  } on Object {
-    // fall through to the STUN-only default
-  }
-  return _cachedIce ?? _stunFallback;
-}
+// TURN/STUN come from the shared core/webrtc/ice_servers.dart helper (same
+// GET /api/v1/webrtc/ice source the web client uses), so rooms and the web
+// nearby bridge share one credential cache.
 
 class _Session {
   _Session(this.sid, this.peerId, this.pc, this.role);
@@ -144,7 +99,7 @@ class WebrtcRoomService {
     _sig?.close();
     // Warm the TURN-credential cache now, so answering the first roffer isn't
     // delayed by a network fetch (that delay is what let candidates race in).
-    unawaited(_iceServers());
+    unawaited(fetchWebrtcIceServers());
     _code = code.trim().toUpperCase();
     _peerId = _identity.fingerprint;
     final self = SignalPeer(
@@ -304,6 +259,7 @@ class WebrtcRoomService {
       // the session exists. They are buffered in [_earlyIce] (see the rice
       // branch) and adopted below; dropping them stalled ICE forever (web
       // stuck "uploading", app silent).
+      if (kDebugMode) debugPrint('[wrtc-room] $sid roffer from ${m.from}');
       final pc = await _newPc(sid, m.from);
       final meta = (p['meta'] as Map?)?.cast<String, dynamic>();
       final s = _Session(sid, m.from, pc, 'recv')..meta = meta;
@@ -314,6 +270,7 @@ class WebrtcRoomService {
       // chunks can't race two opens for the same file.
       if (meta != null) s.sink = await _openOutput(s);
       pc.onDataChannel = (channel) {
+        if (kDebugMode) debugPrint('[wrtc-room] $sid dc arrived');
         s.dc = channel;
         channel.onMessage = (msg) => _onData(sid, msg);
       };
@@ -368,12 +325,29 @@ class WebrtcRoomService {
   }
 
   Future<RTCPeerConnection> _newPc(String sid, String peerId) async {
-    final pc = await createPeerConnection({'iceServers': await _iceServers()});
+    final ice = await fetchWebrtcIceServers();
+    if (kDebugMode) {
+      final hasTurn = ice.any((s) => '${s['urls']}'.contains('turn'));
+      debugPrint('[wrtc-room] $sid pc: ice servers=${ice.length} turn=$hasTurn');
+    }
+    final pc = await createPeerConnection({'iceServers': ice});
     pc.onIceCandidate = (c) {
       _sig?.signal(peerId, 'rice', {'sid': sid, 'candidate': c.toMap()});
     };
+    pc.onIceConnectionState = (state) {
+      if (kDebugMode) debugPrint('[wrtc-room] $sid iceState: $state');
+    };
     pc.onConnectionState = (state) {
-      if (state == RTCPeerConnectionState.RTCPeerConnectionStateFailed) _teardown(sid);
+      if (kDebugMode) debugPrint('[wrtc-room] $sid pcState: $state');
+      if (state == RTCPeerConnectionState.RTCPeerConnectionStateFailed) {
+        final s = _sessions[sid];
+        // A receive that dies mid-flight would otherwise leave the "uploading…"
+        // banner spinning forever — clear it honestly.
+        if (s != null && s.role == 'recv' && s.meta != null) {
+          _events.add(const RoomUploadDoneEvent());
+        }
+        _teardown(sid);
+      }
     };
     return pc;
   }
@@ -383,6 +357,9 @@ class WebrtcRoomService {
     final s = _sessions[sid];
     if (s == null || !msg.isBinary || s.sink == null) return;
     final bytes = msg.binary;
+    if (kDebugMode && s.received == 0) {
+      debugPrint('[wrtc-room] $sid first chunk (${bytes.length}B)');
+    }
     s.sink!.add(bytes);
     s.received += bytes.length;
     final total = (s.meta?['size'] as num?)?.toInt() ?? 0;
@@ -399,6 +376,7 @@ class WebrtcRoomService {
   Future<void> _finishReceive(String sid) async {
     final s = _sessions[sid];
     if (s == null || s.outFile == null) return;
+    if (kDebugMode) debugPrint('[wrtc-room] $sid receive complete (${s.received}B)');
     try {
       await s.sink?.flush();
       await s.sink?.close();

@@ -28,10 +28,14 @@ class IncomingSignal {
 /// the WebRTC lives in [WebrtcRoomService]. Lets the app join a room a web
 /// browser hosts (and vice-versa once the app also advertises here).
 class WebrtcSignaling {
-  WebrtcSignaling(this._self, this._code);
+  /// With [_code] the DO room is code-scoped (rooms); without it the server
+  /// keys the room by caller public IP — the same "nearby" grouping the web
+  /// transfer page uses, which is what lets the app appear in a browser's
+  /// Nearby tab.
+  WebrtcSignaling(this._self, [this._code]);
 
   final SignalPeer _self;
-  final String _code;
+  final String? _code;
 
   WebSocketChannel? _ws;
   StreamSubscription<dynamic>? _sub;
@@ -46,7 +50,9 @@ class WebrtcSignaling {
 
   void connect() {
     if (_closed) return;
-    final url = '${CloudConfig.wsBase}/api/v1/nearby/ws?code=${Uri.encodeComponent(_code)}';
+    final code = _code;
+    final url =
+        '${CloudConfig.wsBase}/api/v1/nearby/ws${code == null ? '' : '?code=${Uri.encodeComponent(code)}'}';
     try {
       final channel = WebSocketChannel.connect(Uri.parse(url));
       _ws = channel;
