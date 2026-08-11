@@ -246,12 +246,24 @@ class RoomCubit extends Cubit<RoomState> {
           return;
         }
         if (r != null) {
-          // It IS a browser-hosted (WebRTC) room. Without a TURN relay the app
-          // can't reliably transfer with it, so don't join — surface an
-          // explainer sheet (browser-to-browser; use a browser or a Cloud room).
-          unawaited(_webrtc.leave());
+          // A browser-hosted (WebRTC) room — join it directly. Transfers ride
+          // the same ICE the web uses (GET /api/v1/webrtc/ice): direct paths
+          // when the network allows, Cloudflare TURN relay when it doesn't —
+          // which is what made this reliable enough to re-enable (the old
+          // explainer-sheet fallback predates TURN).
+          _isLocal = false;
+          _isWebrtc = true;
+          _localDual = false;
+          final (session, members, files) = r;
+          emit(
+            RoomState(
+              status: RoomStatus.inRoom,
+              session: session,
+              members: members,
+              files: files,
+            ),
+          );
           done.complete();
-          emit(RoomState(status: RoomStatus.lobby, webRoomHint: true, webRoomCode: trimmed));
         } else {
           webrtcMissed = true;
           failIfBothDone();
