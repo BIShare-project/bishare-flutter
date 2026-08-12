@@ -68,7 +68,13 @@ jobs:
           path: BIShare-*-android.apk
           if-no-files-found: error
 
+  # macOS DMG is SKIPPED for now (owner's call, 2026-08-12): the Mac app ships
+  # via the App Store/TestFlight, and an ad-hoc DMG kept tripping over
+  # restricted entitlements (Sign in with Apple needs a provisioning profile).
+  # To revive: add Developer ID cert + notarytool secrets, drop the ad-hoc
+  # steps below, and put `macos` back in the release job's `needs`.
   macos:
+    if: false
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -184,7 +190,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    needs: [android, macos, windows, linux]
+    needs: [android, windows, linux]
     runs-on: ubuntu-latest
     # A tag creates/refreshes its Release; a manual dispatch with `version`
     # attaches the artifacts to that existing release (e.g. v2.4.5). Dispatch
