@@ -261,7 +261,9 @@
     "stat_received": "Diterima",
     "stat_sent": "Terkirim",
     "title": "Perangkat",
-    "turn_on_auto_accept": "Aktifkan terima otomatis"
+    "turn_on_auto_accept": "Aktifkan terima otomatis",
+    "browsers_nearby": "Browser di sekitar",
+    "browser_subtitle": "Browser web · jaringan yang sama"
   },
   "clipboard": {
     "clear_all": "Hapus riwayat",
@@ -718,5 +720,15 @@
     "done": "Selesai",
     "camera_denied_title": "Perlu akses kamera",
     "camera_denied_msg": "Izinkan akses kamera di Pengaturan untuk memindai QR Beam."
+  },
+  "web_nearby": {
+    "incoming_title": "File masuk",
+    "incoming_from": "Dari {alias} (browser)",
+    "accept": "Terima",
+    "decline": "Tolak",
+    "sent": "{name} terkirim",
+    "send_failed": "Gagal mengirim {name}",
+    "declined": "{name} ditolak",
+    "received": "{name} disimpan ke Kotak Masuk"
   }
 }

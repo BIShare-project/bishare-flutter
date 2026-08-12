@@ -24,6 +24,7 @@ import '../features/remote/presentation/remote_download.dart';
 import '../features/room/presentation/room_page.dart';
 import '../features/send/presentation/tray_cubit.dart';
 import '../features/settings/presentation/settings_page.dart';
+import '../features/web_nearby/data/web_nearby_service.dart';
 
 /// The root tab shell (mirrors native iOS: Share · Inbox · Settings). Tabs are
 /// kept alive in an [IndexedStack] so discovery and the receiver never restart
@@ -38,6 +39,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
   StreamSubscription<DeepLinkAction>? _linkSub;
+  StreamSubscription<WebNearbyEvent>? _webNearbySub;
   StreamSubscription<List<String>>? _shareSub;
   ShareIntentService? _share;
 
@@ -62,6 +64,97 @@ class _MainShellState extends State<MainShell> {
     });
     links.start();
     _initShareIntent();
+    _initWebNearby();
+  }
+
+  /// Browser peers (the app↔web Nearby bridge): surface incoming offers as a
+  /// global accept sheet and settle sends/receives with toasts, whatever tab
+  /// is open.
+  void _initWebNearby() {
+    _webNearbySub = getIt<WebNearbyService>().events.listen((event) {
+      if (!mounted) return;
+      switch (event) {
+        case WebNearbyIncoming(:final request):
+          _showWebNearbyOffer(request);
+        case WebNearbySendDone(:final name):
+          toast(
+            context,
+            'web_nearby.sent'.tr(namedArgs: {'name': name}),
+            type: ToastType.success,
+          );
+        case WebNearbySendError(:final name, :final message):
+          toast(
+            context,
+            message == 'declined'
+                ? 'web_nearby.declined'.tr(namedArgs: {'name': name})
+                : 'web_nearby.send_failed'.tr(namedArgs: {'name': name}),
+            type: ToastType.error,
+          );
+        case WebNearbyReceiveDone(:final file):
+          // Inbox watches the history DB — the new row appears on its own.
+          toast(
+            context,
+            'web_nearby.received'.tr(namedArgs: {'name': file.fileName}),
+            type: ToastType.success,
+          );
+        default:
+          break;
+      }
+    });
+  }
+
+  void _showWebNearbyOffer(WebNearbyIncomingRequest request) {
+    showAppSheet<void>(
+      context,
+      title: 'web_nearby.incoming_title'.tr(),
+      subtitle: 'web_nearby.incoming_from'
+          .tr(namedArgs: {'alias': request.fromAlias}),
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              request.name,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              formatBytes(request.size),
+              style: TextStyle(
+                fontSize: 13,
+                color: ShadTheme.of(sheetContext).colorScheme.mutedForeground,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: ShadButton.outline(
+                    onPressed: () {
+                      request.decline();
+                      Navigator.of(sheetContext).pop();
+                    },
+                    child: Text('web_nearby.decline'.tr()),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ShadButton(
+                    onPressed: () {
+                      request.accept();
+                      Navigator.of(sheetContext).pop();
+                    },
+                    child: Text('web_nearby.accept'.tr()),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Files shared into BIShare from another app's share sheet (mobile only) land
@@ -86,6 +179,7 @@ class _MainShellState extends State<MainShell> {
   @override
   void dispose() {
     _linkSub?.cancel();
+    _webNearbySub?.cancel();
     _shareSub?.cancel();
     _share?.dispose();
     super.dispose();

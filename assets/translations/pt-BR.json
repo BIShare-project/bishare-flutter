@@ -261,7 +261,9 @@
     "stat_received": "Recebidos",
     "stat_sent": "Enviados",
     "title": "Dispositivos",
-    "turn_on_auto_accept": "Ativar aceitação automática"
+    "turn_on_auto_accept": "Ativar aceitação automática",
+    "browsers_nearby": "Navegadores por perto",
+    "browser_subtitle": "Navegador web · mesma rede"
   },
   "clipboard": {
     "clear_all": "Limpar histórico",
@@ -718,5 +720,15 @@
     "done": "Concluído",
     "camera_denied_title": "Acesso à câmera necessário",
     "camera_denied_msg": "Permita o acesso à câmera nos Ajustes para escanear um QR Beam."
+  },
+  "web_nearby": {
+    "incoming_title": "Arquivo recebido",
+    "incoming_from": "De {alias} (navegador)",
+    "accept": "Aceitar",
+    "decline": "Recusar",
+    "sent": "{name} enviado",
+    "send_failed": "Não foi possível enviar {name}",
+    "declined": "{name} foi recusado",
+    "received": "{name} salvo na Caixa de Entrada"
   }
 }

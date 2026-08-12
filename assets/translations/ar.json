@@ -261,7 +261,9 @@
     "stat_received": "المُستلمة",
     "stat_sent": "المُرسلة",
     "title": "الأجهزة",
-    "turn_on_auto_accept": "تشغيل القبول التلقائي"
+    "turn_on_auto_accept": "تشغيل القبول التلقائي",
+    "browsers_nearby": "المتصفحات القريبة",
+    "browser_subtitle": "متصفح ويب · الشبكة نفسها"
   },
   "clipboard": {
     "clear_all": "مسح السجل",
@@ -718,5 +720,15 @@
     "done": "تم",
     "camera_denied_title": "الوصول إلى الكاميرا مطلوب",
     "camera_denied_msg": "اسمح بالوصول إلى الكاميرا في الإعدادات لمسح QR Beam."
+  },
+  "web_nearby": {
+    "incoming_title": "ملف وارد",
+    "incoming_from": "من {alias} (متصفح)",
+    "accept": "قبول",
+    "decline": "رفض",
+    "sent": "تم إرسال {name}",
+    "send_failed": "تعذر إرسال {name}",
+    "declined": "تم رفض {name}",
+    "received": "تم حفظ {name} في الوارد"
   }
 }

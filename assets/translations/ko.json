@@ -261,7 +261,9 @@
     "stat_received": "받음",
     "stat_sent": "보냄",
     "title": "기기",
-    "turn_on_auto_accept": "자동 수락 켜기"
+    "turn_on_auto_accept": "자동 수락 켜기",
+    "browsers_nearby": "주변 브라우저",
+    "browser_subtitle": "웹 브라우저 · 같은 네트워크"
   },
   "clipboard": {
     "clear_all": "기록 지우기",
@@ -718,5 +720,15 @@
     "done": "완료",
     "camera_denied_title": "카메라 접근 권한 필요",
     "camera_denied_msg": "QR Beam을 스캔하려면 설정에서 카메라 접근을 허용하세요."
+  },
+  "web_nearby": {
+    "incoming_title": "파일 수신",
+    "incoming_from": "{alias}에서 (브라우저)",
+    "accept": "수락",
+    "decline": "거절",
+    "sent": "{name} 전송됨",
+    "send_failed": "{name} 전송 실패",
+    "declined": "{name}이(가) 거절됨",
+    "received": "{name}을(를) 받은 함에 저장함"
   }
 }

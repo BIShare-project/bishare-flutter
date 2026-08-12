@@ -261,7 +261,9 @@
     "stat_received": "Получено",
     "stat_sent": "Отправлено",
     "title": "Устройства",
-    "turn_on_auto_accept": "Включить автоприём"
+    "turn_on_auto_accept": "Включить автоприём",
+    "browsers_nearby": "Браузеры рядом",
+    "browser_subtitle": "Веб-браузер · та же сеть"
   },
   "clipboard": {
     "clear_all": "Очистить историю",
@@ -718,5 +720,15 @@
     "done": "Готово",
     "camera_denied_title": "Нужен доступ к камере",
     "camera_denied_msg": "Разрешите доступ к камере в Настройках, чтобы сканировать QR Beam."
+  },
+  "web_nearby": {
+    "incoming_title": "Входящий файл",
+    "incoming_from": "От {alias} (браузер)",
+    "accept": "Принять",
+    "decline": "Отклонить",
+    "sent": "{name} отправлен",
+    "send_failed": "Не удалось отправить {name}",
+    "declined": "{name} отклонён",
+    "received": "{name} сохранён во Входящие"
   }
 }

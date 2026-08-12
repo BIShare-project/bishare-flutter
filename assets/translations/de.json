@@ -261,7 +261,9 @@
     "stat_received": "Empfangen",
     "stat_sent": "Gesendet",
     "title": "Geräte",
-    "turn_on_auto_accept": "Automatisches Annehmen aktivieren"
+    "turn_on_auto_accept": "Automatisches Annehmen aktivieren",
+    "browsers_nearby": "Browser in der Nähe",
+    "browser_subtitle": "Webbrowser · gleiches Netzwerk"
   },
   "clipboard": {
     "clear_all": "Verlauf löschen",
@@ -718,5 +720,15 @@
     "done": "Fertig",
     "camera_denied_title": "Kamerazugriff erforderlich",
     "camera_denied_msg": "Erlaube den Kamerazugriff in den Einstellungen, um einen QR Beam zu scannen."
+  },
+  "web_nearby": {
+    "incoming_title": "Eingehende Datei",
+    "incoming_from": "Von {alias} (Browser)",
+    "accept": "Annehmen",
+    "decline": "Ablehnen",
+    "sent": "{name} gesendet",
+    "send_failed": "{name} konnte nicht gesendet werden",
+    "declined": "{name} wurde abgelehnt",
+    "received": "{name} im Eingang gespeichert"
   }
 }

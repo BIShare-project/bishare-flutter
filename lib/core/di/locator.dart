@@ -27,6 +27,7 @@ import '../../features/remote/data/stream_relay_service.dart';
 import '../../features/room/data/local_room_service.dart';
 import '../../features/room/data/room_service.dart';
 import '../../features/room/data/webrtc_room_service.dart';
+import '../../features/web_nearby/data/web_nearby_service.dart';
 import '../../features/send/data/transfer_client.dart';
 import '../deeplink/deep_link_service.dart';
 import '../desktop/desktop_service.dart';
@@ -180,6 +181,9 @@ Future<void> setupLocator() async {
     )
     ..registerSingleton<WebrtcRoomService>(
       WebrtcRoomService(identity, server, history),
+    )
+    ..registerSingleton<WebNearbyService>(
+      WebNearbyService(identity, server, history),
     )
     ..registerSingleton<StreamRelayService>(
       StreamRelayService(server, history),

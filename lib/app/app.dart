@@ -23,6 +23,7 @@ import '../features/send/presentation/send_cubit.dart';
 import '../features/send/presentation/tray_cubit.dart';
 import '../features/settings/domain/settings.dart';
 import '../features/settings/presentation/settings_cubit.dart';
+import '../features/web_nearby/presentation/web_nearby_cubit.dart';
 
 /// Root widget. Provides the app-scoped BLoCs, the shadcn-themed [ShadApp]
 /// (theme + accent driven by [SettingsCubit]), and drives discovery on the app
@@ -84,6 +85,7 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
         BlocProvider(create: (_) => HistoryCubit(getIt())),
         BlocProvider(create: (_) => RoomCubit(getIt(), getIt(), getIt())),
         BlocProvider(create: (_) => NearbyCubit(getIt(), getIt(), getIt())),
+        BlocProvider(create: (_) => WebNearbyCubit(getIt(), getIt())),
         BlocProvider(
           create: (_) => SettingsCubit(
             getIt(),

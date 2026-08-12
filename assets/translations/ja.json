@@ -261,7 +261,9 @@
     "stat_received": "受信",
     "stat_sent": "送信",
     "title": "デバイス",
-    "turn_on_auto_accept": "自動承認をオンにする"
+    "turn_on_auto_accept": "自動承認をオンにする",
+    "browsers_nearby": "近くのブラウザ",
+    "browser_subtitle": "ウェブブラウザ · 同じネットワーク"
   },
   "clipboard": {
     "clear_all": "履歴を消去",
@@ -718,5 +720,15 @@
     "done": "完了",
     "camera_denied_title": "カメラへのアクセスが必要です",
     "camera_denied_msg": "QR Beam をスキャンするには、設定でカメラへのアクセスを許可してください。"
+  },
+  "web_nearby": {
+    "incoming_title": "ファイル受信",
+    "incoming_from": "{alias} から（ブラウザ）",
+    "accept": "受け入れる",
+    "decline": "拒否",
+    "sent": "{name} を送信しました",
+    "send_failed": "{name} を送信できませんでした",
+    "declined": "{name} は拒否されました",
+    "received": "{name} を受信トレイに保存しました"
   }
 }

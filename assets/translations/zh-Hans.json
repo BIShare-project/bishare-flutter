@@ -261,7 +261,9 @@
     "stat_received": "已接收",
     "stat_sent": "已发送",
     "title": "设备",
-    "turn_on_auto_accept": "开启自动接收"
+    "turn_on_auto_accept": "开启自动接收",
+    "browsers_nearby": "附近的浏览器",
+    "browser_subtitle": "网页浏览器 · 同一网络"
   },
   "clipboard": {
     "clear_all": "清除历史记录",
@@ -718,5 +720,15 @@
     "done": "完成",
     "camera_denied_title": "需要相机权限",
     "camera_denied_msg": "请在“设置”中允许相机权限以扫描 QR Beam。"
+  },
+  "web_nearby": {
+    "incoming_title": "收到文件",
+    "incoming_from": "来自 {alias}（浏览器）",
+    "accept": "接受",
+    "decline": "拒绝",
+    "sent": "已发送 {name}",
+    "send_failed": "无法发送 {name}",
+    "declined": "{name} 被拒绝",
+    "received": "{name} 已保存到收件箱"
   }
 }

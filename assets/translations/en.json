@@ -261,7 +261,9 @@
     "stat_received": "Received",
     "stat_sent": "Sent",
     "title": "Devices",
-    "turn_on_auto_accept": "Turn on auto-accept"
+    "turn_on_auto_accept": "Turn on auto-accept",
+    "browsers_nearby": "Browsers nearby",
+    "browser_subtitle": "Web browser · same network"
   },
   "clipboard": {
     "clear_all": "Clear history",
@@ -718,5 +720,15 @@
     "done": "Done",
     "camera_denied_title": "Camera access needed",
     "camera_denied_msg": "Allow camera access in Settings to scan a QR Beam."
+  },
+  "web_nearby": {
+    "incoming_title": "Incoming file",
+    "incoming_from": "From {alias} (browser)",
+    "accept": "Accept",
+    "decline": "Decline",
+    "sent": "Sent {name}",
+    "send_failed": "Couldn't send {name}",
+    "declined": "{name} was declined",
+    "received": "Saved {name} to Inbox"
   }
 }

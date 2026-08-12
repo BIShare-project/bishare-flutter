@@ -261,7 +261,9 @@
     "stat_received": "已接收",
     "stat_sent": "已傳送",
     "title": "裝置",
-    "turn_on_auto_accept": "開啟自動接收"
+    "turn_on_auto_accept": "開啟自動接收",
+    "browsers_nearby": "附近的瀏覽器",
+    "browser_subtitle": "網頁瀏覽器 · 同一網路"
   },
   "clipboard": {
     "clear_all": "清除記錄",
@@ -718,5 +720,15 @@
     "done": "完成",
     "camera_denied_title": "需要相機權限",
     "camera_denied_msg": "請在「設定」中允許相機權限以掃描 QR Beam。"
+  },
+  "web_nearby": {
+    "incoming_title": "收到檔案",
+    "incoming_from": "來自 {alias}（瀏覽器）",
+    "accept": "接受",
+    "decline": "拒絕",
+    "sent": "已傳送 {name}",
+    "send_failed": "無法傳送 {name}",
+    "declined": "{name} 遭拒絕",
+    "received": "{name} 已儲存到收件匣"
   }
 }

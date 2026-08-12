@@ -261,7 +261,9 @@
     "stat_received": "प्राप्त",
     "stat_sent": "भेजा गया",
     "title": "डिवाइस",
-    "turn_on_auto_accept": "ऑटो-एक्सेप्ट चालू करें"
+    "turn_on_auto_accept": "ऑटो-एक्सेप्ट चालू करें",
+    "browsers_nearby": "आस-पास के ब्राउज़र",
+    "browser_subtitle": "वेब ब्राउज़र · समान नेटवर्क"
   },
   "clipboard": {
     "clear_all": "इतिहास साफ़ करें",
@@ -718,5 +720,15 @@
     "done": "पूर्ण",
     "camera_denied_title": "कैमरा एक्सेस आवश्यक",
     "camera_denied_msg": "QR Beam स्कैन करने के लिए सेटिंग्स में कैमरा एक्सेस की अनुमति दें।"
+  },
+  "web_nearby": {
+    "incoming_title": "आने वाली फ़ाइल",
+    "incoming_from": "{alias} से (ब्राउज़र)",
+    "accept": "स्वीकारें",
+    "decline": "अस्वीकारें",
+    "sent": "{name} भेजा गया",
+    "send_failed": "{name} नहीं भेजा जा सका",
+    "declined": "{name} अस्वीकार किया गया",
+    "received": "{name} इनबॉक्स में सहेजा गया"
   }
 }

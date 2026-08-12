@@ -42,6 +42,12 @@ class FeatureFlags extends ChangeNotifier {
   /// magic-link mailer isn't live yet; existing sessions are unaffected.
   bool get loginEnabled => _boolFlag('login_enabled', orElse: false);
 
+  /// The app↔web Nearby bridge (app appears in the browser Nearby tab on the
+  /// same network, and vice versa). ON by default in code — the remote flag is
+  /// purely a kill-switch (set `app_web_nearby_enabled=false` in admin Flags
+  /// to disable remotely); no flag row is required for the feature to work.
+  bool get webNearbyEnabled => _boolFlag('app_web_nearby_enabled', orElse: true);
+
   /// Load cached flags synchronously-ish, then refresh from the network in the
   /// background (callers listen for changes).
   Future<void> load() async {
