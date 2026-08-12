@@ -77,10 +77,14 @@ jobs:
       - uses: subosito/flutter-action@v2
         with: { channel: stable }
       # The project pins the App Store team; the runner has no cert or
-      # provisioning, so switch every target to ad-hoc local signing.
+      # provisioning, so switch every target to ad-hoc local signing. Style
+      # must become Manual — Automatic hard-errors without a team ("Signing
+      # for Runner requires a development team").
       - name: Ad-hoc code signing (no Apple certs on CI)
         run: |
-          sed -i '' 's/DEVELOPMENT_TEAM = [A-Z0-9]*;/CODE_SIGN_IDENTITY = "-";/g' \
+          sed -i '' \
+            -e 's/DEVELOPMENT_TEAM = [A-Z0-9]*;/CODE_SIGN_IDENTITY = "-";/g' \
+            -e 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' \
             macos/Runner.xcodeproj/project.pbxproj
       - run: flutter pub get
       - name: flutter_rust_bridge codegen
@@ -175,8 +179,10 @@ jobs:
     runs-on: ubuntu-latest
     # A tag creates/refreshes its Release; a manual dispatch with `version`
     # attaches the artifacts to that existing release (e.g. v2.4.5). Dispatch
-    # without a version just leaves downloadable artifacts.
-    if: github.ref_type == 'tag' || inputs.version != ''
+    # without a version just leaves downloadable artifacts. `!cancelled()`
+    # keeps this running when one platform fails — the successful artifacts
+    # still ship, the failed one just isn't in the list.
+    if: ${{ !cancelled() && (github.ref_type == 'tag' || inputs.version != '') }}
     steps:
       - uses: actions/download-artifact@v4
         with: { merge-multiple: true }
