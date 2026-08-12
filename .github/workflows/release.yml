@@ -1,0 +1,179 @@
+name: release
+
+# Builds the installable artifacts for a version tag and attaches them to a
+# GitHub Release: Android APK (release-signed), macOS DMG (ad-hoc signed —
+# Gatekeeper right-click-open until notarization lands), Windows x64 ZIP
+# (unsigned), Linux x64 tar.gz. The Snap has its own workflow (snap.yml) on
+# the same tag.
+#
+# Usage: push a tag like v2.4.5 (or run manually via workflow_dispatch, which
+# names artifacts after the short SHA instead).
+#
+# Shared gotchas (mirrors ci.yml / windows.yml — keep in sync):
+#  - frb_generated.* are gitignored → regenerate with the pinned codegen 2.12.0
+#  - protocol crate is vendored (rust/bishare-protocol) — single checkout
+#  - windows-2022 pin: windows-latest's preview MSVC hard-errors gal /
+#    permission_handler_windows (/await + <experimental/coroutine>)
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+env:
+  FRB_VERSION: "2.12.0"
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: rustfmt }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Restore release signing (from encrypted repo secrets)
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/bishare-release.jks
+          cat > android/key.properties <<'EOF'
+          ${{ secrets.ANDROID_KEY_PROPERTIES }}
+          EOF
+      - run: flutter pub get
+      - name: flutter_rust_bridge codegen
+        run: |
+          cargo install flutter_rust_bridge_codegen --version $FRB_VERSION
+          flutter_rust_bridge_codegen generate
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - name: Build APK (release, universal)
+        run: flutter build apk --release
+      - name: Name artifact
+        run: |
+          VER="${GITHUB_REF_NAME#v}"; [ "$GITHUB_REF_TYPE" = "tag" ] || VER="${GITHUB_SHA::7}"
+          cp build/app/outputs/flutter-apk/app-release.apk "BIShare-$VER-android.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: BIShare-*-android.apk
+          if-no-files-found: error
+
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: rustfmt }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      # The project pins the App Store team; the runner has no cert or
+      # provisioning, so switch every target to ad-hoc local signing.
+      - name: Ad-hoc code signing (no Apple certs on CI)
+        run: |
+          sed -i '' 's/DEVELOPMENT_TEAM = [A-Z0-9]*;/CODE_SIGN_IDENTITY = "-";/g' \
+            macos/Runner.xcodeproj/project.pbxproj
+      - run: flutter pub get
+      - name: flutter_rust_bridge codegen
+        run: |
+          cargo install flutter_rust_bridge_codegen --version $FRB_VERSION
+          flutter_rust_bridge_codegen generate
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - name: Build macOS (release)
+        run: flutter build macos --release
+      - name: Package DMG
+        run: |
+          VER="${GITHUB_REF_NAME#v}"; [ "$GITHUB_REF_TYPE" = "tag" ] || VER="${GITHUB_SHA::7}"
+          APP=$(/bin/ls -d build/macos/Build/Products/Release/*.app | head -1)
+          mkdir dmg-staging
+          cp -R "$APP" dmg-staging/
+          ln -s /Applications dmg-staging/Applications
+          hdiutil create -volname "BIShare" -srcfolder dmg-staging -ov -format UDZO \
+            "BIShare-$VER-macos.dmg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: BIShare-*-macos.dmg
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: rustfmt }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - run: flutter config --enable-windows-desktop
+      - run: flutter pub get
+      - name: flutter_rust_bridge codegen
+        run: |
+          cargo install flutter_rust_bridge_codegen --version $env:FRB_VERSION
+          flutter_rust_bridge_codegen generate
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - name: Build Windows (release)
+        run: flutter build windows --release
+      - name: Package ZIP
+        shell: pwsh
+        run: |
+          $ver = if ($env:GITHUB_REF_TYPE -eq "tag") { $env:GITHUB_REF_NAME.TrimStart("v") } else { $env:GITHUB_SHA.Substring(0,7) }
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "BIShare-$ver-windows-x64.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: BIShare-*-windows-x64.zip
+          if-no-files-found: error
+
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: rustfmt }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Linux desktop build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libayatana-appindicator3-dev \
+            libkeybinder-3.0-dev
+      - run: flutter config --enable-linux-desktop
+      - run: flutter pub get
+      - name: flutter_rust_bridge codegen
+        run: |
+          cargo install flutter_rust_bridge_codegen --version $FRB_VERSION
+          flutter_rust_bridge_codegen generate
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - name: Build Linux (release)
+        run: flutter build linux --release
+      - name: Package tar.gz
+        run: |
+          VER="${GITHUB_REF_NAME#v}"; [ "$GITHUB_REF_TYPE" = "tag" ] || VER="${GITHUB_SHA::7}"
+          tar -C build/linux/x64/release/bundle -czf "BIShare-$VER-linux-x64.tar.gz" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: BIShare-*-linux-x64.tar.gz
+          if-no-files-found: error
+
+  release:
+    needs: [android, macos, windows, linux]
+    runs-on: ubuntu-latest
+    # Only tags create/refresh a Release; manual dispatch just leaves artifacts.
+    if: github.ref_type == 'tag'
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { merge-multiple: true }
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "BIShare $GITHUB_REF_NAME" \
+            --generate-notes \
+            BIShare-* || \
+          gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber BIShare-*
