@@ -1,147 +1,150 @@
 <div align="center">
 
+<img src="https://bishare.app/logo.svg" alt="BIShare logo" width="88">
+
 # BIShare
 
-**Fast, private, cross-platform file sharing — like AirDrop, but for every device.**
+**AirDrop for every device.** Send files between iPhone, Android, Mac, Windows
+& Linux — directly, end-to-end encrypted, at full Wi-Fi speed. The other side
+doesn't even need the app: any browser works.
 
-Send any file between iPhone, Android, Mac, Windows, and Linux. Instant and
-end-to-end encrypted over your local network, or a link the other side opens in
-any browser. No account, no ads, no cloud in the middle.
+No account. No ads. No cloud in the middle. Free & open source.
 
 [![CI](https://github.com/BIShare-project/bishare-flutter/actions/workflows/ci.yml/badge.svg)](https://github.com/BIShare-project/bishare-flutter/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/BIShare-project/bishare-flutter?color=2563eb)](https://github.com/BIShare-project/bishare-flutter/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/BIShare-project/bishare-flutter/total?color=2563eb)](https://github.com/BIShare-project/bishare-flutter/releases)
 ![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-2563eb)
 ![Built with](https://img.shields.io/badge/built%20with-Flutter%20%2B%20Rust-2563eb)
-![Languages](https://img.shields.io/badge/languages-13-2563eb)
-![License](https://img.shields.io/badge/license-MIT-blue)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-**[🌐 bishare.app](https://bishare.app)** &nbsp;·&nbsp; **[📥 Download](https://bishare.app/download)** &nbsp;·&nbsp; **[🚀 Try it in the browser](https://bishare.app/transfer)**
+[![App Store](https://img.shields.io/badge/App_Store-0D96F6?logo=apple&logoColor=white)](https://apps.apple.com/us/app/bishare-file-transfer/id6760924092)
+[![Google Play](https://img.shields.io/badge/Google_Play-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.bishare.app)
+[![Windows](https://img.shields.io/badge/Windows-0078D4?logo=gitforwindows&logoColor=white)](https://github.com/BIShare-project/bishare-flutter/releases/latest)
+[![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black)](https://github.com/BIShare-project/bishare-flutter/releases/latest)
+[![Web App](https://img.shields.io/badge/Web_App-2563eb?logo=googlechrome&logoColor=white)](https://bishare.app/transfer)
 
-[![App Store](https://img.shields.io/badge/Download-App_Store-0D96F6?logo=apple&logoColor=white)](https://apps.apple.com/us/app/bishare-file-transfer/id6760924092)
-[![Google Play](https://img.shields.io/badge/Download-Google_Play-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.bishare.app)
-[![Web App](https://img.shields.io/badge/Try-Web_App-2563eb?logo=googlechrome&logoColor=white)](https://bishare.app/transfer)
+<img src="docs/demo.gif" alt="BIShare — sending a file device-to-device" width="300">
+
+**[🌐 bishare.app](https://bishare.app)** &nbsp;·&nbsp; **[📥 All downloads](https://bishare.app/download)** &nbsp;·&nbsp; **[🚀 Try it in your browser right now](https://bishare.app/transfer)**
 
 </div>
 
 ---
 
-## Why BIShare?
+## Why this exists
 
-AirDrop is Apple-only. Android's Quick Share skips iPhones. WeTransfer caps free
-transfers and routes everything through the cloud. BIShare fills the gap: **one
-app for every platform**, with the file going **directly device-to-device** when
-you're on the same network — no upload, no server, no waiting.
+Every platform solved file sharing — for itself. AirDrop stops at the Apple
+wall. Quick Share skips iPhones. SHAREit buried the feature under ads.
+WeTransfer uploads your file to a server across the continent so it can come
+back down the same street. Meanwhile the two devices are **three meters apart**.
 
-## Demo
+BIShare is the missing neutral ground: **one app for all five platforms**, where
+the file travels **directly device-to-device** over your own network — and when
+the other person has nothing installed, they receive it in a **plain browser
+tab**.
 
-<div align="center">
-  <img src="docs/demo.gif" alt="BIShare — sending a file device-to-device" width="300">
-</div>
+## How it compares
 
-## Download
+|  | BIShare | AirDrop | Quick Share | LocalSend | SHAREit | WeTransfer |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| iPhone ↔ Android ↔ Windows ↔ Mac ↔ Linux | ✅ | ❌ Apple only | ❌ no iOS | ✅ | ✅ | ✅ |
+| Direct LAN transfer (no cloud upload) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Receiver needs **no app** (browser receive) | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Remote share link when you're apart | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| End-to-end encrypted | ✅ | ✅ | ✅ | ⚠️ TLS | ❌ | ❌ |
+| No ads, no account required | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ caps |
+| Open source | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Group rooms · clipboard sync · QR Beam | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
-| Platform | Where |
-|---|---|
-| **iOS & macOS** | [App Store](https://apps.apple.com/us/app/bishare-file-transfer/id6760924092) |
-| **Android** | [Google Play](https://play.google.com/store/apps/details?id=com.bishare.app) |
-| **Web** | Use it in any browser — [bishare.app/transfer](https://bishare.app/transfer) |
-| **Windows & Linux** | Build from source (see [Getting started](#getting-started)) |
+*LocalSend is excellent open-source software and an inspiration — BIShare's
+different bets are the no-app browser path, remote links for far-away
+recipients, and a Rust protocol core shared across every platform.*
 
-Website: **[bishare.app](https://bishare.app)** · All downloads: **[bishare.app/download](https://bishare.app/download)**
+## How fast?
+
+Measured on ordinary hardware (Wi-Fi 5 network, mid-range phones), release
+builds:
+
+| Path | Throughput | 1 GB video takes |
+|---|---|---|
+| **BIShare, same Wi-Fi** | **40–50 MB/s** | **~25 seconds** |
+| Typical cloud service (30 Mbps home upload) | ~3.7 MB/s up, then the download | ~5 minutes before the receiver can even start |
+
+The speed isn't magic — it's the absence of a detour. The file crosses your
+router once instead of crossing the internet twice. Crypto runs on hardware AES
+in a Rust core, so encryption is never the bottleneck — we learned that lesson
+[the hard way](https://bishare.app/blog/transfer-files-from-iphone-to-windows-without-cable)
+when a build flag once silently disabled it.
 
 ## Features
 
-- 🚀 **Local-network transfer** — files stream straight between devices over
-  Wi-Fi at full speed. Nothing is uploaded to a server.
-- 🔒 **End-to-end encrypted** — X25519 key exchange + AES-256-GCM with per-file
-  keys. Only the sender and receiver can read the data.
-- 📡 **Nearby & offline** — devices discover each other automatically over the
-  LAN (mDNS); transfer works even over a phone hotspot with no internet.
-- 🔳 **QR Beam** — send a small file with **no network at all**: the sender's
-  screen shows an animated stream of QR codes and the receiver's camera scans
-  them (purely screen → camera). Great for text, keys, and small docs.
-- 🔗 **Remote share** — for devices that aren't nearby, get a link, QR code, and
-  6-character code the recipient opens in any browser — no app on their end.
-- 👥 **Rooms** — share files with a group in a live, shared room.
-- 📋 **Universal clipboard** — sync clipboard content across your own devices.
-- 📥 **Inbox & history** — received files land in an inbox with a gallery, plus
-  searchable transfer history.
-- 🖥️ **Truly cross-platform** — one Dart/Flutter codebase for **iOS, Android,
-  macOS, Windows, and Linux**.
-- 🙅 **No account, no ads** — nothing to sign up for; ephemeral by design.
-- 🌍 **13 languages** — English, Indonesian, Spanish, French, German, Portuguese
-  (BR), Russian, Arabic, Hindi, Japanese, Korean, and Simplified/Traditional
-  Chinese.
+| | |
+|---|---|
+| 🚀 **Direct LAN transfer** — device-to-device at Wi-Fi speed, nothing uploaded | 🔒 **End-to-end encrypted** — X25519 key exchange + AES-256-GCM per file |
+| 🌐 **Browser receive & send** — the other side needs zero installs | 🔗 **Remote share** — link + QR + 6-char code, auto-expiring |
+| 📡 **Works offline** — phone hotspot is enough; no internet required | 🔳 **QR Beam** — no network at all: file streams screen → camera as animated QR |
+| 👥 **Rooms** — live group sharing with everyone in one place | 📋 **Universal clipboard** — copy on one device, paste on another |
+| 📥 **Inbox & history** — gallery, search, save to Photos, CSV export | 🖥️ **System tray, drag & drop** — real desktop citizenship on Win/Mac/Linux |
+| 🌍 **13 languages** — easiest contribution: add yours! | 🙅 **No account, no ads, no tracking** — ephemeral by design |
+
+## Download
+
+| Platform | Get it |
+|---|---|
+| **iPhone / iPad / Mac** | [App Store](https://apps.apple.com/us/app/bishare-file-transfer/id6760924092) |
+| **Android** | [Google Play](https://play.google.com/store/apps/details?id=com.bishare.app) · [APK from Releases](https://github.com/BIShare-project/bishare-flutter/releases/latest) |
+| **Windows** | [`BIShare-*-windows-x64.zip`](https://github.com/BIShare-project/bishare-flutter/releases/latest) |
+| **Linux** | [`BIShare-*-linux-x64.tar.gz`](https://github.com/BIShare-project/bishare-flutter/releases/latest) |
+| **Any browser** | Nothing to install — [bishare.app/transfer](https://bishare.app/transfer) |
 
 ## How it works
 
-BIShare picks the best path automatically, so sending a file is always one step:
+BIShare picks the best path automatically, so sending is always one step:
 
-1. **On the same Wi-Fi** — devices discover each other over mDNS and the file
-   streams **directly device-to-device**, end-to-end encrypted (X25519 +
-   AES-256-GCM). Nothing is uploaded; it's as fast as your network. Works even
-   over a phone hotspot with no internet.
-2. **Far away** — BIShare gives you a **link, QR code, and 6-character code**. The
-   recipient opens the link in any browser and downloads — no app or account on
-   their end. Links auto-expire.
-3. **No network at all** — **QR Beam** turns a small file into an animated stream
-   of QR codes on the sender's screen; the receiver's camera scans them to
-   rebuild the file. Purely screen → camera, for text, keys, and small docs.
+1. **Same Wi-Fi / hotspot** — devices find each other via mDNS and the file
+   streams directly, end-to-end encrypted. Works with zero internet.
+2. **Far apart** — you get a link, QR code, and 6-character code; the recipient
+   opens it in any browser. Links expire on their own.
+3. **No network at all** — QR Beam turns a small file into an animated stream of
+   QR codes; the receiving camera rebuilds it. Screen → camera, nothing else.
 
-Everything is designed to be **private by default**: nearby transfers never leave
-your local network, there's no account, and nothing lingers on a server.
+```mermaid
+flowchart LR
+    subgraph you["Your device"]
+        UI["Flutter UI<br/>(one codebase, 5 platforms)"]
+        FRB["flutter_rust_bridge"]
+        CORE["Rust core<br/>X25519 · AES-256-GCM<br/>framing · discovery"]
+        UI --> FRB --> CORE
+    end
+    CORE -- "LAN · mDNS + TCP<br/>40–50 MB/s, E2E" --> PEER["Their device<br/>(app)"]
+    CORE -- "expiring link<br/>E2E container" --> BROWSER["Their browser<br/>(no app)"]
+    CORE -- "QR Beam<br/>screen → camera" --> CAM["Their camera<br/>(no network)"]
+```
 
-## Supported platforms
+**Private by default**: nearby transfers never leave your network, there's no
+account, nothing lingers on a server, and the crypto lives in a single
+[Rust crate](https://github.com/BIShare-project/bishare-protocol) shared by
+every platform — one implementation to review instead of five. Details in
+[SECURITY.md](SECURITY.md).
 
-| Android | iOS | macOS | Windows | Linux |
-|:---:|:---:|:---:|:---:|:---:|
-| ✅ | ✅ | ✅ | ✅ | ✅ |
+## Getting started (from source)
 
-## Tech stack
-
-- **[Flutter](https://flutter.dev/)** (Dart) — a single UI codebase across all platforms.
-- **Rust core** via **[flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge)** —
-  the cryptography and protocol primitives (X25519, AES-256-GCM, framing,
-  filename sanitisation) live in a shared Rust crate for correctness and speed.
-- **State & DI** — `flutter_bloc` (Cubit) + `get_it`.
-- **Routing** — `go_router`.
-- **Networking** — `shelf` (receiver server), `dio` (sender client),
-  `bonsoir` (mDNS/Bonjour discovery).
-- **Storage** — `drift` (SQLite) for history + favorites.
-- **QR** — `qr_flutter` (generate) + `mobile_scanner` (scan).
-- **UI** — `shadcn_ui`.
-- **i18n** — `easy_localization`.
-
-## Getting started
-
-### Prerequisites
-
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) (Dart SDK ≥ 3.11).
-- [Rust toolchain](https://rustup.rs/) (`rustc` + `cargo`) — the native crypto
-  core is built from source via flutter_rust_bridge.
-- Platform toolchains for whatever you target (Xcode for iOS/macOS, Android
-  Studio / NDK for Android, Visual Studio for Windows, GTK/Clang for Linux).
-
-### Run
+**Prerequisites**: [Flutter SDK](https://docs.flutter.dev/get-started/install)
+(Dart ≥ 3.11), [Rust toolchain](https://rustup.rs/), plus the platform toolchain
+you target (Xcode / Android Studio / Visual Studio / GTK+Clang).
 
 ```bash
-# 1. Install Dart/Flutter dependencies
 flutter pub get
-
-# 2. Generate the serialization code (*.g.dart)
 dart run build_runner build --delete-conflicting-outputs
-
-# 3. Run on a connected device or desktop
 flutter run -d macos      # or: ios | android | windows | linux
 ```
 
-> The first build compiles the Rust core, so it takes longer than a pure-Dart
-> app. Subsequent builds are incremental.
-
-### Checks
+> First build compiles the Rust core, so it takes a few minutes. After that,
+> builds are incremental.
 
 ```bash
 flutter analyze     # static analysis
-flutter test        # unit tests (incl. crypto round-trip)
+flutter test        # unit tests (incl. crypto round-trip vectors)
 ```
 
 ## Project structure
@@ -149,61 +152,81 @@ flutter test        # unit tests (incl. crypto round-trip)
 ```
 lib/
 ├─ app/                 # app shell, router, bootstrap
-├─ core/                # cross-cutting services
-│  ├─ crypto/           #   E2E crypto (Dart side)
-│  ├─ server/           #   receiver (shelf) — inbox/history pipeline
-│  ├─ identity/         #   device identity, keypair
-│  ├─ rust/             #   flutter_rust_bridge facade
-│  └─ ui/               #   shared design-system widgets
-├─ features/            # feature-first vertical slices
-│  ├─ send/  receive/   #   transfer flows
-│  ├─ nearby/           #   offline device discovery + send
-│  ├─ qr_beam/          #   QR-stream offline transfer
-│  ├─ remote/  room/    #   link/QR/code + group sharing
-│  ├─ inbox/  history/  #   received files + records
-│  └─ ...               #   home, settings, clipboard, file_manager, …
+├─ core/                # crypto, receiver server, identity, rust facade, UI kit
+├─ features/            # feature-first slices:
+│  ├─ send/ receive/ nearby/ qr_beam/     # transfer paths
+│  ├─ remote/ room/ clipboard/            # link share, groups, clipboard
+│  └─ inbox/ history/ file_manager/ …     # received files & records
 └─ src/rust/            # generated flutter_rust_bridge bindings
 
-rust/                   # the native crate (bishare_ffi) exposed to Dart
-assets/translations/    # 13-locale JSON message catalogs
+rust/                   # native crate (bishare_ffi) — crypto + protocol
+assets/translations/    # 13-locale JSON catalogs
 ```
+
+Deep dive: **[ARCHITECTURE.md](ARCHITECTURE.md)**
 
 ## Contributing
 
-Contributions are welcome! New to the codebase? Start with
-**[ARCHITECTURE.md](ARCHITECTURE.md)**, browse
-[`good first issue`](https://github.com/BIShare-project/bishare-flutter/labels/good%20first%20issue),
-and see what's coming in the [**roadmap**](ROADMAP.md).
+Three ways in, smallest first:
 
-1. Fork the repo and create a feature branch (`git checkout -b feat/my-feature`).
-2. Make your change and run `flutter analyze` + `flutter test`.
-3. Keep user-facing strings localized — see [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md).
-4. Open a pull request describing the change.
+1. **🌍 Add or improve a language** — no build needed, just a text editor and
+   ~15 minutes. 13 languages ship today; yours could be next.
+   [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md) has the 3-edit walkthrough.
+2. **🐣 Pick a [`good first issue`](https://github.com/BIShare-project/bishare-flutter/labels/good%20first%20issue)** —
+   scoped, mentored, and labeled by area.
+3. **🧪 Test your platform combo** — five platforms × transports means real
+   devices always beat our matrix. An issue titled "Pixel 6 → Fedora 40: X
+   happened" is genuinely valuable.
 
-See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the full guide. Please open an
-issue first for larger features so we can align on direction.
+Workflow: fork → branch → `flutter analyze` + `flutter test` → PR. Keep
+user-facing strings localized. Full guide in
+**[CONTRIBUTING.md](CONTRIBUTING.md)**; direction lives in the
+[**roadmap**](ROADMAP.md). For larger features, open an issue first so we can
+align.
 
-## Translations 🌍
+## FAQ
 
-BIShare ships in **13 languages** and community translations are hugely welcome —
-it's the easiest way to contribute (just a text editor, no build required).
-Adding a language is 3 small edits; see **[docs/TRANSLATIONS.md](docs/TRANSLATIONS.md)**
-for the step-by-step guide and current status. Verify with:
+**Does the other person need BIShare?**
+No. On the same network they can receive (and send) from a plain browser tab
+via [bishare.app/transfer](https://bishare.app/transfer). Far away, they just
+open your link.
 
-```bash
-dart run tool/check_translations.dart
-```
+**Does it work iPhone → Windows? Android → Mac?**
+Yes — any direction between iOS, Android, macOS, Windows, Linux, and browsers.
+That's the point.
+
+**Is there a file size limit on local transfers?**
+No. LAN transfers are bounded by the receiver's disk, not by us. Multi-gigabyte
+videos are the normal case.
+
+**What does the server see on a local transfer?**
+Nothing — there is no server in the path. Discovery and transfer stay on your
+network. Remote share links use end-to-end encrypted containers with expiry.
+
+**How is this different from LocalSend?**
+See [the comparison](#how-it-compares) — short version: browser receive with no
+app, remote links for far-away recipients, rooms/clipboard/QR Beam, and a Rust
+protocol core. Use whichever fits; both beat the cloud detour.
+
+## Related repositories
+
+| Repo | What it is |
+|---|---|
+| [`bishare-protocol`](https://github.com/BIShare-project/bishare-protocol) | The Rust protocol + crypto crate this app embeds |
+| [`bishare-web`](https://github.com/BIShare-project/bishare-web) | bishare.app — website, browser transfer, rooms |
 
 ## License
 
-Released under the [MIT License](LICENSE) — free to use, modify, and distribute.
+[MIT](LICENSE) — free to use, modify, and distribute.
 
 ---
 
 <div align="center">
 
+**If BIShare saved you an email-to-self today, a ⭐ helps other people find it.**
+
 **[Website](https://bishare.app)** · **[Download](https://bishare.app/download)** · **[App Store](https://apps.apple.com/us/app/bishare-file-transfer/id6760924092)** · **[Google Play](https://play.google.com/store/apps/details?id=com.bishare.app)** · **[Web App](https://bishare.app/transfer)**
 
-Made with Flutter &amp; Rust · [bishare.app](https://bishare.app)
+Made with Flutter & Rust · [bishare.app](https://bishare.app)
 
 </div>
