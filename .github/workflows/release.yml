@@ -86,6 +86,15 @@ jobs:
             -e 's/DEVELOPMENT_TEAM = [A-Z0-9]*;/CODE_SIGN_IDENTITY = "-";/g' \
             -e 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' \
             macos/Runner.xcodeproj/project.pbxproj
+      # Sign in with Apple is a restricted entitlement — it demands a
+      # provisioning profile, which ad-hoc signing can't carry. Strip it from
+      # the DMG build only (login is behind a remote flag anyway; the App
+      # Store build keeps it).
+      - name: Strip provisioning-profile entitlements (ad-hoc build)
+        run: |
+          for f in macos/Runner/DebugProfile.entitlements macos/Runner/Release.entitlements; do
+            /usr/libexec/PlistBuddy -c "Delete :com.apple.developer.applesignin" "$f" || true
+          done
       - run: flutter pub get
       - name: flutter_rust_bridge codegen
         run: |
