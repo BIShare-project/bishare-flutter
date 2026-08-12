@@ -18,13 +18,19 @@ name: release
 on:
   push:
     tags: ["v*"]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Existing version to build + attach to (e.g. 2.4.5, no leading v). Empty = artifacts only, no release."
+        required: false
+        default: ""
 
 permissions:
   contents: write
 
 env:
   FRB_VERSION: "2.12.0"
+  VERSION_INPUT: ${{ inputs.version }}
 
 jobs:
   android:
@@ -53,7 +59,8 @@ jobs:
         run: flutter build apk --release
       - name: Name artifact
         run: |
-          VER="${GITHUB_REF_NAME#v}"; [ "$GITHUB_REF_TYPE" = "tag" ] || VER="${GITHUB_SHA::7}"
+          VER="${GITHUB_REF_NAME#v}"
+          [ "$GITHUB_REF_TYPE" = "tag" ] || VER="${VERSION_INPUT:-${GITHUB_SHA::7}}"
           cp build/app/outputs/flutter-apk/app-release.apk "BIShare-$VER-android.apk"
       - uses: actions/upload-artifact@v4
         with:
@@ -85,7 +92,8 @@ jobs:
         run: flutter build macos --release
       - name: Package DMG
         run: |
-          VER="${GITHUB_REF_NAME#v}"; [ "$GITHUB_REF_TYPE" = "tag" ] || VER="${GITHUB_SHA::7}"
+          VER="${GITHUB_REF_NAME#v}"
+          [ "$GITHUB_REF_TYPE" = "tag" ] || VER="${VERSION_INPUT:-${GITHUB_SHA::7}}"
           APP=$(/bin/ls -d build/macos/Build/Products/Release/*.app | head -1)
           mkdir dmg-staging
           cp -R "$APP" dmg-staging/
@@ -118,7 +126,9 @@ jobs:
       - name: Package ZIP
         shell: pwsh
         run: |
-          $ver = if ($env:GITHUB_REF_TYPE -eq "tag") { $env:GITHUB_REF_NAME.TrimStart("v") } else { $env:GITHUB_SHA.Substring(0,7) }
+          $ver = if ($env:GITHUB_REF_TYPE -eq "tag") { $env:GITHUB_REF_NAME.TrimStart("v") }
+                 elseif ($env:VERSION_INPUT) { $env:VERSION_INPUT }
+                 else { $env:GITHUB_SHA.Substring(0,7) }
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "BIShare-$ver-windows-x64.zip"
       - uses: actions/upload-artifact@v4
         with:
@@ -151,7 +161,8 @@ jobs:
         run: flutter build linux --release
       - name: Package tar.gz
         run: |
-          VER="${GITHUB_REF_NAME#v}"; [ "$GITHUB_REF_TYPE" = "tag" ] || VER="${GITHUB_SHA::7}"
+          VER="${GITHUB_REF_NAME#v}"
+          [ "$GITHUB_REF_TYPE" = "tag" ] || VER="${VERSION_INPUT:-${GITHUB_SHA::7}}"
           tar -C build/linux/x64/release/bundle -czf "BIShare-$VER-linux-x64.tar.gz" .
       - uses: actions/upload-artifact@v4
         with:
@@ -162,18 +173,22 @@ jobs:
   release:
     needs: [android, macos, windows, linux]
     runs-on: ubuntu-latest
-    # Only tags create/refresh a Release; manual dispatch just leaves artifacts.
-    if: github.ref_type == 'tag'
+    # A tag creates/refreshes its Release; a manual dispatch with `version`
+    # attaches the artifacts to that existing release (e.g. v2.4.5). Dispatch
+    # without a version just leaves downloadable artifacts.
+    if: github.ref_type == 'tag' || inputs.version != ''
     steps:
       - uses: actions/download-artifact@v4
         with: { merge-multiple: true }
-      - name: Create GitHub Release
+      - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
+          TAG="$GITHUB_REF_NAME"
+          [ "$GITHUB_REF_TYPE" = "tag" ] || TAG="v${VERSION_INPUT}"
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber BIShare-* || \
+          gh release create "$TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "BIShare $GITHUB_REF_NAME" \
+            --title "BIShare $TAG" \
             --generate-notes \
-            BIShare-* || \
-          gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber BIShare-*
+            BIShare-*
