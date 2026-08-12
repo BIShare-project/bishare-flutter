@@ -170,6 +170,17 @@ class WebNearbyService {
     _connect();
   }
 
+  /// True for peers that are native BIShare apps, not browsers. Apps announce
+  /// `kind: 'app'`; builds that predate the field are caught by their peerId
+  /// shape — apps join with their device fingerprint (a 36-char UUID) while
+  /// browsers mint 6-char session ids. App peers are hidden from the roster:
+  /// app↔app transfers take the native LAN path, and listing them here would
+  /// duplicate every device that discovery already shows.
+  static final _uuidRe = RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+  static bool _isAppPeer(SignalPeer p) =>
+      p.kind == 'app' || (p.kind.isEmpty && _uuidRe.hasMatch(p.peerId));
+
   void _connect() {
     if (!_running) return;
     _sig?.close();
@@ -177,6 +188,7 @@ class WebNearbyService {
       peerId: _identity.fingerprint,
       alias: _identity.alias,
       emoji: (Platform.isAndroid || Platform.isIOS) ? '📱' : '💻',
+      kind: 'app',
     );
     // Warm the TURN cache before any offer can arrive.
     unawaited(fetchWebrtcIceServers());
@@ -184,11 +196,12 @@ class WebNearbyService {
       ..onPeers = (list) {
         _peers
           ..clear()
-          ..addEntries(list.map((p) => MapEntry(
+          ..addEntries(list.where((p) => !_isAppPeer(p)).map((p) => MapEntry(
               p.peerId, WebNearbyPeer(peerId: p.peerId, alias: p.alias, emoji: p.emoji))));
         _emitPeers();
       }
       ..onPeerJoined = (p) {
+        if (_isAppPeer(p)) return;
         _peers[p.peerId] =
             WebNearbyPeer(peerId: p.peerId, alias: p.alias, emoji: p.emoji);
         _emitPeers();

@@ -8,10 +8,20 @@ import '../../../core/constants/cloud.dart';
 
 /// A peer in the WebRTC signaling room.
 class SignalPeer {
-  const SignalPeer({required this.peerId, required this.alias, required this.emoji});
+  const SignalPeer({
+    required this.peerId,
+    required this.alias,
+    required this.emoji,
+    this.kind = '',
+  });
   final String peerId;
   final String alias;
   final String emoji;
+
+  /// 'app' | 'browser' | '' (legacy peers that predate the field). Lets an app
+  /// hide fellow apps from the web-nearby roster — app↔app goes over the native
+  /// LAN path, so bridging it over WebRTC would only duplicate devices.
+  final String kind;
 }
 
 /// An incoming SDP/ICE relay from another peer.
@@ -61,6 +71,7 @@ class WebrtcSignaling {
         'peerId': _self.peerId,
         'alias': _self.alias,
         'emoji': _self.emoji,
+        if (_self.kind.isNotEmpty) 'kind': _self.kind,
       }));
       onOpen?.call();
       _sub = channel.stream.listen(
@@ -90,6 +101,7 @@ class WebrtcSignaling {
                   peerId: str((p as Map)['peerId']),
                   alias: str(p['alias']),
                   emoji: str(p['emoji']),
+                  kind: str(p['kind']),
                 ))
             .where((p) => p.peerId.isNotEmpty)
             .toList();
@@ -100,6 +112,7 @@ class WebrtcSignaling {
           peerId: str(m['peerId']),
           alias: str(m['alias']),
           emoji: str(m['emoji']),
+          kind: str(m['kind']),
         ));
         break;
       case 'peer_left':
