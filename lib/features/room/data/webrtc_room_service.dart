@@ -380,7 +380,14 @@ class WebrtcRoomService {
     try {
       await s.sink?.flush();
       await s.sink?.close();
-    } catch (_) {/* noop */}
+    } catch (e) {
+      // The bytes never made it to disk — clear the banner and stop; claiming
+      // "file added" for a file that doesn't exist would be a lie.
+      if (kDebugMode) debugPrint('[wrtc-room] $sid save FAILED: $e');
+      _events.add(const RoomUploadDoneEvent());
+      _teardown(sid);
+      return;
+    }
     final name = (s.meta?['name'] as String?) ?? s.outFile!.uri.pathSegments.last;
     final mime = (s.meta?['mime'] as String?) ?? 'application/octet-stream';
     final size = (s.meta?['size'] as num?)?.toInt() ?? await s.outFile!.length();
@@ -411,14 +418,19 @@ class WebrtcRoomService {
 
   Future<File> _uniquePath(String fileName) async {
     final dir = _server.saveDirectory;
+    if (!dir.existsSync()) dir.createSync(recursive: true);
+    // dir.path, NOT '$dir' — interpolating the Directory object bakes
+    // "Directory: '/…'" into the path, so every received room file was written
+    // to a garbage location (and downstream consumers crashed opening it).
+    final dirPath = dir.path;
     final safe = fileName.replaceAll(RegExp(r'[/\\]'), '_');
-    var target = File('$dir${Platform.pathSeparator}$safe');
+    var target = File('$dirPath${Platform.pathSeparator}$safe');
     var i = 1;
     final dot = safe.lastIndexOf('.');
     final base = dot > 0 ? safe.substring(0, dot) : safe;
     final ext = dot > 0 ? safe.substring(dot) : '';
     while (await target.exists()) {
-      target = File('$dir${Platform.pathSeparator}$base ($i)$ext');
+      target = File('$dirPath${Platform.pathSeparator}$base ($i)$ext');
       i++;
     }
     return target;
