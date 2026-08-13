@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=BIShare
+GenericName=File Sharing
+Comment=Fast, private, cross-platform file sharing — direct and end-to-end encrypted
+Exec=bishare
+Icon=bishare
+Terminal=false
+Type=Application
+Categories=Utility;Network;FileTransfer;
+Keywords=airdrop;file;share;transfer;wifi;p2p;localsend;
+StartupWMClass=bishare

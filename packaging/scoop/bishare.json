@@ -1,0 +1,21 @@
+{
+    "version": "2.4.5",
+    "description": "Fast, private, cross-platform file sharing — AirDrop for every device",
+    "homepage": "https://bishare.app",
+    "license": "MIT",
+    "url": "https://github.com/BIShare-project/bishare-flutter/releases/download/v2.4.5/BIShare-2.4.5-windows-x64.zip",
+    "hash": "8a0b20095a630ebde5ec5be02adc97d11034c02f0cb35f40eb0f68ea5a73c700",
+    "bin": "bishare.exe",
+    "shortcuts": [
+        [
+            "bishare.exe",
+            "BIShare"
+        ]
+    ],
+    "checkver": {
+        "github": "https://github.com/BIShare-project/bishare-flutter"
+    },
+    "autoupdate": {
+        "url": "https://github.com/BIShare-project/bishare-flutter/releases/download/v$version/BIShare-$version-windows-x64.zip"
+    }
+}

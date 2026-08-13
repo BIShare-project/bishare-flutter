@@ -3,8 +3,9 @@ name: release
 # Builds the installable artifacts for a version tag and attaches them to a
 # GitHub Release: Android APK (release-signed), macOS DMG (ad-hoc signed —
 # Gatekeeper right-click-open until notarization lands), Windows x64 ZIP
-# (unsigned), Linux x64 tar.gz. The Snap has its own workflow (snap.yml) on
-# the same tag.
+# (unsigned), Linux x64 tar.gz + .deb + AppImage. The Snap has its own
+# workflow (snap.yml) on the same tag. winget/Scoop manifests that point at
+# the Windows ZIP live in packaging/.
 #
 # Usage: push a tag like v2.4.5 (or run manually via workflow_dispatch, which
 # names artifacts after the short SHA instead).
@@ -182,11 +183,66 @@ jobs:
         run: |
           VER="${GITHUB_REF_NAME#v}"
           [ "$GITHUB_REF_TYPE" = "tag" ] || VER="${VERSION_INPUT:-${GITHUB_SHA::7}}"
+          echo "VER=$VER" >> "$GITHUB_ENV"
           tar -C build/linux/x64/release/bundle -czf "BIShare-$VER-linux-x64.tar.gz" .
+      # .deb: bundle to /opt/bishare, launcher symlink in /usr/bin, desktop
+      # entry + hicolor icon. Depends mirrors the runtime side of the apt
+      # build deps above.
+      - name: Package .deb
+        run: |
+          STAGE=deb-staging
+          mkdir -p "$STAGE/DEBIAN" "$STAGE/opt/bishare" "$STAGE/usr/bin" \
+                   "$STAGE/usr/share/applications" \
+                   "$STAGE/usr/share/icons/hicolor/512x512/apps"
+          cp -r build/linux/x64/release/bundle/. "$STAGE/opt/bishare/"
+          ln -s /opt/bishare/bishare "$STAGE/usr/bin/bishare"
+          cp linux/packaging/bishare.desktop "$STAGE/usr/share/applications/"
+          cp assets/icon/bishare_icon.png "$STAGE/usr/share/icons/hicolor/512x512/apps/bishare.png"
+          SIZE=$(du -sk "$STAGE" | cut -f1)
+          cat > "$STAGE/DEBIAN/control" <<EOF
+          Package: bishare
+          Version: $VER
+          Architecture: amd64
+          Maintainer: BIShare project <support@billiongroup.net>
+          Section: net
+          Priority: optional
+          Installed-Size: $SIZE
+          Homepage: https://bishare.app
+          Depends: libgtk-3-0, libayatana-appindicator3-1, libkeybinder-3.0-0, liblzma5
+          Description: Fast, private, cross-platform file sharing
+           Direct device-to-device transfers over the local network, end-to-end
+           encrypted. Works with iPhone, Android, macOS, Windows, Linux and any
+           browser. No account, no ads, no cloud in the middle.
+          EOF
+          dpkg-deb --build --root-owner-group "$STAGE" "BIShare-$VER-linux-x64.deb"
+      # AppImage: self-contained AppDir wrapping the same bundle. FUSE is
+      # unavailable on hosted runners, hence --appimage-extract-and-run.
+      - name: Package AppImage
+        run: |
+          APPDIR=BIShare.AppDir
+          mkdir -p "$APPDIR/opt/bishare"
+          cp -r build/linux/x64/release/bundle/. "$APPDIR/opt/bishare/"
+          cp linux/packaging/bishare.desktop "$APPDIR/bishare.desktop"
+          cp assets/icon/bishare_icon.png "$APPDIR/bishare.png"
+          cp assets/icon/bishare_icon.png "$APPDIR/.DirIcon"
+          cat > "$APPDIR/AppRun" <<'EOF'
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "$0")")"
+          exec "$HERE/opt/bishare/bishare" "$@"
+          EOF
+          chmod +x "$APPDIR/AppRun"
+          curl -fsSL -o appimagetool \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+          ARCH=x86_64 ./appimagetool --appimage-extract-and-run "$APPDIR" \
+            "BIShare-$VER-linux-x86_64.AppImage"
       - uses: actions/upload-artifact@v4
         with:
           name: linux
-          path: BIShare-*-linux-x64.tar.gz
+          path: |
+            BIShare-*-linux-x64.tar.gz
+            BIShare-*-linux-x64.deb
+            BIShare-*-linux-x86_64.AppImage
           if-no-files-found: error
 
   release:
