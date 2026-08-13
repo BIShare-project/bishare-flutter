@@ -97,6 +97,12 @@ when a build flag once silently disabled it.
 | **Linux** | [`BIShare-*-linux-x64.tar.gz`](https://github.com/BIShare-project/bishare-flutter/releases/latest) |
 | **Any browser** | Nothing to install — [bishare.app/transfer](https://bishare.app/transfer) |
 
+**Windows via Scoop:**
+
+```powershell
+scoop install https://raw.githubusercontent.com/BIShare-project/bishare-flutter/main/packaging/scoop/bishare.json
+```
+
 ## How it works
 
 BIShare picks the best path automatically, so sending is always one step:
