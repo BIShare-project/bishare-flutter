@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/ui/app_showcase.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../room_cubit.dart';
 import 'how_it_works.dart';
@@ -69,40 +70,52 @@ class Lobby extends StatelessWidget {
           ),
           const SizedBox(height: 28),
           // Primary action buttons in 2x2 grid
-          Row(
-            children: [
-              Expanded(
-                child: _CompactActionCard(
-                  icon: AppIcons.wifi,
-                  label: 'room.local_room'.tr(),
-                  description: 'room.local_desc'.tr(),
-                  color: cs.primary,
-                  onPressed: () =>
-                      context.read<RoomCubit>().createRoom(local: true),
+          AppShowcase(
+            showcaseKey: ShowcaseKeys.roomCreate,
+            title: 'showcase.room_create_title'.tr(),
+            description: 'showcase.room_create_body'.tr(),
+            targetRadius: 18,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _CompactActionCard(
+                    icon: AppIcons.wifi,
+                    label: 'room.local_room'.tr(),
+                    description: 'room.local_desc'.tr(),
+                    color: cs.primary,
+                    onPressed: () =>
+                        context.read<RoomCubit>().createRoom(local: true),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _CompactActionCard(
-                  icon: AppIcons.globePublic,
-                  label: 'room.remote_room'.tr(),
-                  description: 'room.remote_desc'.tr(),
-                  color: cs.primary,
-                  onPressed: () =>
-                      context.read<RoomCubit>().createRoom(local: false),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _CompactActionCard(
+                    icon: AppIcons.globePublic,
+                    label: 'room.remote_room'.tr(),
+                    description: 'room.remote_desc'.tr(),
+                    color: cs.primary,
+                    onPressed: () =>
+                        context.read<RoomCubit>().createRoom(local: false),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 10),
           // Join button with outline style (full width)
-          AppButton(
-            label: 'room.join_with_code'.tr(),
-            icon: AppIcons.logIn,
-            variant: AppButtonVariant.outline,
-            size: AppButtonSize.medium,
-            fullWidth: true,
-            onPressed: () => _showJoin(context),
+          AppShowcase(
+            showcaseKey: ShowcaseKeys.roomJoin,
+            title: 'showcase.room_join_title'.tr(),
+            description: 'showcase.room_join_body'.tr(),
+            targetRadius: 14,
+            child: AppButton(
+              label: 'room.join_with_code'.tr(),
+              icon: AppIcons.logIn,
+              variant: AppButtonVariant.outline,
+              size: AppButtonSize.medium,
+              fullWidth: true,
+              onPressed: () => _showJoin(context),
+            ),
           ),
           const SizedBox(height: 28),
           HowItWorks(),

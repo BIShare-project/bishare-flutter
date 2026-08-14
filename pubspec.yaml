@@ -113,6 +113,7 @@ dependencies:
   flutter_webrtc: ^0.14.1
   flutter_image_compress: ^2.4.0
   flutter_svg: ^2.3.0
+  showcaseview: ^5.1.0
 
 dev_dependencies:
   flutter_test:

@@ -730,5 +730,25 @@
     "send_failed": "Gagal mengirim {name}",
     "declined": "{name} ditolak",
     "received": "{name} disimpan ke Kotak Masuk"
+  },
+  "showcase": {
+    "home_device_title": "Ini perangkat Anda",
+    "home_device_body": "Begini perangkat Anda terlihat oleh sekitar. Ubah nama dan visibilitas di Pengaturan.",
+    "home_tray_title": "Pilih yang mau dikirim",
+    "home_tray_body": "Foto, file, teks, kontak, pesan suara, atau clipboard — menunggu di sini sampai Anda memilih perangkat.",
+    "home_nearby_title": "Perangkat muncul di sini",
+    "home_nearby_body": "Yang satu Wi-Fi muncul otomatis — ketuk untuk mengirim. Belum ada? Undang lewat kode QR.",
+    "home_actions_title": "Cara berbagi lainnya",
+    "home_actions_body": "Pindai kode QR, kirim file kecil offline dengan QR Beam, atau buat tautan yang bisa dibuka dari mana saja.",
+    "home_nav_title": "Sisanya ada di sini",
+    "home_nav_body": "Tab di bawah berisi file yang diterima, room grup, riwayat transfer, dan pengaturan.",
+    "inbox_files_title": "Jelajahi sebagai folder",
+    "inbox_files_body": "Semua yang Anda terima, tertata per folder, pengirim, dan tanggal.",
+    "inbox_web_title": "Buka dari browser",
+    "inbox_web_body": "Akses file yang diterima dari komputer mana pun — lewat jaringan atau tautan cloud 24 jam.",
+    "room_create_title": "Buat room",
+    "room_create_body": "Local tetap di Wi-Fi Anda; Remote lintas internet. Semua anggota room bisa berbagi file.",
+    "room_join_title": "Gabung dengan kode",
+    "room_join_body": "Masukkan kode singkat dari perangkat lain — atau dari bishare.app/rooms di browser."
   }
 }

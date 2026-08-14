@@ -730,5 +730,25 @@
     "send_failed": "{name} 전송 실패",
     "declined": "{name}이(가) 거절됨",
     "received": "{name}을(를) 받은 함에 저장함"
+  },
+  "showcase": {
+    "home_device_title": "내 기기예요",
+    "home_device_body": "주변 기기에는 이렇게 보여요. 이름과 표시 여부는 설정에서 바꿀 수 있어요.",
+    "home_tray_title": "보낼 항목 선택",
+    "home_tray_body": "사진, 파일, 텍스트, 연락처, 음성 메모, 클립보드가 기기를 고를 때까지 여기서 대기해요.",
+    "home_nearby_title": "기기가 여기에 표시돼요",
+    "home_nearby_body": "같은 Wi-Fi의 기기가 자동으로 나타나요. 탭해서 보내세요. 아직 없다면 QR 코드로 초대하세요.",
+    "home_actions_title": "더 많은 공유 방법",
+    "home_actions_body": "QR 코드 스캔, QR Beam으로 오프라인 전송, 어디서나 열리는 링크 만들기까지.",
+    "home_nav_title": "나머지는 여기에",
+    "home_nav_body": "아래 탭에 받은 파일, 그룹 룸, 전송 기록, 설정이 있어요.",
+    "inbox_files_title": "폴더로 보기",
+    "inbox_files_body": "받은 모든 파일을 폴더·보낸 사람·날짜별로 정리해 보여줘요.",
+    "inbox_web_title": "브라우저에서 열기",
+    "inbox_web_body": "받은 파일을 어떤 컴퓨터에서든 — 같은 네트워크나 24시간 클라우드 링크로.",
+    "room_create_title": "룸 만들기",
+    "room_create_body": "로컬은 Wi-Fi 안에서만, 리모트는 인터넷으로. 룸의 모두가 파일을 공유할 수 있어요.",
+    "room_join_title": "코드로 참여",
+    "room_join_body": "다른 기기의 짧은 코드를 입력하세요 — 브라우저 bishare.app/rooms에서도 돼요."
   }
 }

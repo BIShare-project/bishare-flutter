@@ -730,5 +730,25 @@
     "send_failed": "Couldn't send {name}",
     "declined": "{name} was declined",
     "received": "Saved {name} to Inbox"
+  },
+  "showcase": {
+    "home_device_title": "This is you",
+    "home_device_body": "How your device appears to others nearby. Change your name and visibility in Settings.",
+    "home_tray_title": "Pick what to send",
+    "home_tray_body": "Photos, files, text, contacts, voice notes, or your clipboard — they wait here until you choose a device.",
+    "home_nearby_title": "Devices show up here",
+    "home_nearby_body": "Anyone on the same Wi-Fi appears automatically — tap a device to send. Nothing yet? Invite one with a QR code.",
+    "home_actions_title": "More ways to share",
+    "home_actions_body": "Scan a QR code, beam small files offline with QR Beam, or create a link that works from anywhere.",
+    "home_nav_title": "Everything else lives here",
+    "home_nav_body": "The tabs below hold your received files, group rooms, transfer history, and settings.",
+    "inbox_files_title": "Browse as folders",
+    "inbox_files_body": "Everything you've received, organized by folder, sender, and date.",
+    "inbox_web_title": "Open from a browser",
+    "inbox_web_body": "Get your received files on any computer — over your network or with a 24-hour cloud link.",
+    "room_create_title": "Start a room",
+    "room_create_body": "Local stays on your Wi-Fi; Remote works across the internet. Everyone in the room can share files.",
+    "room_join_title": "Join with a code",
+    "room_join_body": "Enter the short code from another device — or from bishare.app/rooms in a browser."
   }
 }

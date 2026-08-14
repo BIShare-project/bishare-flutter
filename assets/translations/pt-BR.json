@@ -730,5 +730,25 @@
     "send_failed": "Não foi possível enviar {name}",
     "declined": "{name} foi recusado",
     "received": "{name} salvo na Caixa de Entrada"
+  },
+  "showcase": {
+    "home_device_title": "Este é você",
+    "home_device_body": "É assim que aparelhos próximos veem você. Mude nome e visibilidade em Ajustes.",
+    "home_tray_title": "Escolha o que enviar",
+    "home_tray_body": "Fotos, arquivos, texto, contatos, notas de voz ou a área de transferência esperam aqui até você escolher um aparelho.",
+    "home_nearby_title": "Aparelhos aparecem aqui",
+    "home_nearby_body": "Quem estiver no mesmo Wi-Fi aparece automaticamente — toque para enviar. Nada ainda? Convide com um código QR.",
+    "home_actions_title": "Mais jeitos de compartilhar",
+    "home_actions_body": "Escaneie um código QR, envie arquivos pequenos offline com o QR Beam ou crie um link que funciona de qualquer lugar.",
+    "home_nav_title": "O resto está aqui",
+    "home_nav_body": "As abas abaixo guardam arquivos recebidos, salas em grupo, histórico e ajustes.",
+    "inbox_files_title": "Navegue por pastas",
+    "inbox_files_body": "Tudo o que você recebeu, organizado por pasta, remetente e data.",
+    "inbox_web_title": "Abra no navegador",
+    "inbox_web_body": "Acesse seus arquivos recebidos de qualquer computador — pela sua rede ou com um link de 24 horas.",
+    "room_create_title": "Crie uma sala",
+    "room_create_body": "Local fica no seu Wi-Fi; Remota atravessa a internet. Todos na sala podem compartilhar arquivos.",
+    "room_join_title": "Entre com um código",
+    "room_join_body": "Digite o código curto de outro aparelho — ou de bishare.app/rooms no navegador."
   }
 }

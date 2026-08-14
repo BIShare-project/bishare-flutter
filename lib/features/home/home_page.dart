@@ -7,6 +7,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../core/di/locator.dart';
 import '../../core/identity/device_identity.dart';
+import '../../core/ui/app_showcase.dart';
 import '../../core/ui/app_ui.dart';
 import '../receive/presentation/incoming_file_request_sheet.dart';
 import '../receive/presentation/incoming_transfer_sheet.dart';
@@ -98,15 +99,33 @@ class HomePage extends StatelessWidget {
                         child: ListView(
                           padding: const EdgeInsets.only(bottom: 28),
                           children: [
-                            BlocBuilder<SettingsCubit, Settings>(
-                              builder: (context, settings) => MyDeviceCard(
-                                alias: settings.alias,
-                                deviceType: identity.deviceType,
-                                hidden: settings.visibility.name == 'hidden',
+                            AppShowcase(
+                              showcaseKey: ShowcaseKeys.homeDevice,
+                              title: 'showcase.home_device_title'.tr(),
+                              description: 'showcase.home_device_body'.tr(),
+                              targetRadius: 22,
+                              child: BlocBuilder<SettingsCubit, Settings>(
+                                builder: (context, settings) => MyDeviceCard(
+                                  alias: settings.alias,
+                                  deviceType: identity.deviceType,
+                                  hidden: settings.visibility.name == 'hidden',
+                                ),
                               ),
                             ),
-                            const ComposeTray(),
-                            const DeviceSection(),
+                            AppShowcase(
+                              showcaseKey: ShowcaseKeys.homeTray,
+                              title: 'showcase.home_tray_title'.tr(),
+                              description: 'showcase.home_tray_body'.tr(),
+                              targetRadius: 22,
+                              child: const ComposeTray(),
+                            ),
+                            AppShowcase(
+                              showcaseKey: ShowcaseKeys.homeNearby,
+                              title: 'showcase.home_nearby_title'.tr(),
+                              description: 'showcase.home_nearby_body'.tr(),
+                              targetRadius: 22,
+                              child: const DeviceSection(),
+                            ),
                           ],
                         ),
                       ),

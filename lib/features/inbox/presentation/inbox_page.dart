@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/storage/app_database.dart';
+import '../../../core/ui/app_showcase.dart';
 import '../../../core/ui/app_ui.dart';
 import 'inbox_cubit.dart';
 import 'web_access_sheet.dart';
@@ -78,13 +79,27 @@ class _InboxPageState extends State<InboxPage> {
                           child: Text('inbox.done'.tr()),
                         )
                       else ...[
-                        AppIconButton(
-                          icon: AppIcons.folder,
-                          onPressed: () => context.push('/files'),
+                        AppShowcase(
+                          showcaseKey: ShowcaseKeys.inboxFiles,
+                          title: 'showcase.inbox_files_title'.tr(),
+                          description: 'showcase.inbox_files_body'.tr(),
+                          targetRadius: 24,
+                          targetPadding: const EdgeInsets.all(2),
+                          child: AppIconButton(
+                            icon: AppIcons.folder,
+                            onPressed: () => context.push('/files'),
+                          ),
                         ),
-                        AppIconButton(
-                          icon: AppIcons.qrShare,
-                          onPressed: () => showWebAccess(context),
+                        AppShowcase(
+                          showcaseKey: ShowcaseKeys.inboxWeb,
+                          title: 'showcase.inbox_web_title'.tr(),
+                          description: 'showcase.inbox_web_body'.tr(),
+                          targetRadius: 24,
+                          targetPadding: const EdgeInsets.all(2),
+                          child: AppIconButton(
+                            icon: AppIcons.qrShare,
+                            onPressed: () => showWebAccess(context),
+                          ),
                         ),
                         if (items.isNotEmpty) ...[
                           if (hasMedia)

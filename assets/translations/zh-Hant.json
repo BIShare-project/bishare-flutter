@@ -730,5 +730,25 @@
     "send_failed": "無法傳送 {name}",
     "declined": "{name} 遭拒絕",
     "received": "{name} 已儲存到收件匣"
+  },
+  "showcase": {
+    "home_device_title": "這是你的裝置",
+    "home_device_body": "附近裝置會這樣看到你。名稱與可見性可在設定中更改。",
+    "home_tray_title": "選擇要傳送的內容",
+    "home_tray_body": "照片、檔案、文字、聯絡人、語音或剪貼簿會先停在這裡，直到你選擇目標裝置。",
+    "home_nearby_title": "裝置會出現在這裡",
+    "home_nearby_body": "同一 Wi-Fi 的裝置會自動出現——點一下即可傳送。還沒有？用 QR Code 邀請一台。",
+    "home_actions_title": "更多分享方式",
+    "home_actions_body": "掃描 QR Code、用 QR Beam 離線傳小檔案，或建立一個到哪都能開的連結。",
+    "home_nav_title": "其餘都在這裡",
+    "home_nav_body": "下方分頁包含收到的檔案、群組房間、傳輸紀錄與設定。",
+    "inbox_files_title": "以資料夾瀏覽",
+    "inbox_files_body": "收到的一切，依資料夾、傳送者與日期整理。",
+    "inbox_web_title": "在瀏覽器開啟",
+    "inbox_web_body": "在任何電腦取得你收到的檔案——透過區網或 24 小時雲端連結。",
+    "room_create_title": "建立房間",
+    "room_create_body": "本地房間不離開你的 Wi-Fi；遠端房間跨網際網路。房間裡的每個人都能分享檔案。",
+    "room_join_title": "以代碼加入",
+    "room_join_body": "輸入另一台裝置的短代碼——或在瀏覽器開啟 bishare.app/rooms。"
   }
 }

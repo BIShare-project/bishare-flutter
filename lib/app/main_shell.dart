@@ -6,6 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:showcaseview/showcaseview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/deeplink/deep_link.dart';
@@ -13,6 +14,7 @@ import '../core/deeplink/deep_link_service.dart';
 import '../core/di/locator.dart';
 import '../core/share/share_intent_service.dart';
 import '../core/storage/app_database.dart';
+import '../core/ui/app_showcase.dart';
 import '../core/ui/app_ui.dart';
 import '../features/history/presentation/history_page.dart';
 import '../features/home/home_page.dart';
@@ -42,6 +44,7 @@ class _MainShellState extends State<MainShell> {
   StreamSubscription<WebNearbyEvent>? _webNearbySub;
   StreamSubscription<List<String>>? _shareSub;
   ShareIntentService? _share;
+  late final ShowcaseView _showcase;
 
   static const _pages = [
     HomePage(),
@@ -51,9 +54,13 @@ class _MainShellState extends State<MainShell> {
     SettingsPage(),
   ];
 
-  @override 
+  @override
   void initState() {
     super.initState();
+    // Register the showcase scope before the first build mounts any target;
+    // kick off the Home tour (first run only) after the first frame.
+    _showcase = registerAppShowcase();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeTour(0));
     // Subscribe BEFORE start() so the cold-start launch link is delivered.
     final links = getIt<DeepLinkService>();
     _linkSub = links.actions.listen((action) {
@@ -178,11 +185,42 @@ class _MainShellState extends State<MainShell> {
 
   @override
   void dispose() {
+    _showcase.unregister();
     _linkSub?.cancel();
     _webNearbySub?.cancel();
     _shareSub?.cancel();
     _share?.dispose();
     super.dispose();
+  }
+
+  /// One-time coach-mark tours: Home right after first launch, Inbox/Rooms on
+  /// their first visit. [maybeStartShowcase] owns the seen-flags and skips
+  /// anything not on screen.
+  void _maybeTour(int index) {
+    if (!mounted) return;
+    switch (index) {
+      case 0:
+        maybeStartShowcase(
+          id: ShowcaseIds.home,
+          keys: [
+            ShowcaseKeys.homeDevice,
+            ShowcaseKeys.homeTray,
+            ShowcaseKeys.homeNearby,
+            ShowcaseKeys.homeActions,
+            ShowcaseKeys.homeNav,
+          ],
+        );
+      case 1:
+        maybeStartShowcase(
+          id: ShowcaseIds.inbox,
+          keys: [ShowcaseKeys.inboxFiles, ShowcaseKeys.inboxWeb],
+        );
+      case 2:
+        maybeStartShowcase(
+          id: ShowcaseIds.rooms,
+          keys: [ShowcaseKeys.roomCreate, ShowcaseKeys.roomJoin],
+        );
+    }
   }
 
   /// Route a parsed link/QR payload to the right action.
@@ -293,7 +331,10 @@ class _MainShellState extends State<MainShell> {
     AppNavItem(icon: AppIcons.settings, label: 'nav.tab_settings'.tr()),
   ];
 
-  void _select(int i) => setState(() => _index = i);
+  void _select(int i) {
+    setState(() => _index = i);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeTour(i));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -305,15 +346,23 @@ class _MainShellState extends State<MainShell> {
     // (phone): a bottom tab bar. Mirrors native iOS (sidebar vs TabView).
     return BlocBuilder<InboxCubit, List<TransferRecord>>(
       builder: (context, items) {
+        // The nav showcase key is shared by the two variants — only one is
+        // ever mounted (wide XOR narrow).
         if (wide) {
           return Scaffold(
             backgroundColor: cs.background,
             body: Row(
               children: [
-                AppNavRail(
-                  items: _items(items.length),
-                  currentIndex: _index,
-                  onTap: _select,
+                AppShowcase(
+                  showcaseKey: ShowcaseKeys.homeNav,
+                  title: 'showcase.home_nav_title'.tr(),
+                  description: 'showcase.home_nav_body'.tr(),
+                  targetRadius: 0,
+                  child: AppNavRail(
+                    items: _items(items.length),
+                    currentIndex: _index,
+                    onTap: _select,
+                  ),
                 ),
                 Expanded(child: content),
               ],
@@ -323,10 +372,16 @@ class _MainShellState extends State<MainShell> {
         return Scaffold(
           backgroundColor: cs.background,
           body: content,
-          bottomNavigationBar: AppBottomNav(
-            items: _items(items.length),
-            currentIndex: _index,
-            onTap: _select,
+          bottomNavigationBar: AppShowcase(
+            showcaseKey: ShowcaseKeys.homeNav,
+            title: 'showcase.home_nav_title'.tr(),
+            description: 'showcase.home_nav_body'.tr(),
+            targetRadius: 0,
+            child: AppBottomNav(
+              items: _items(items.length),
+              currentIndex: _index,
+              onTap: _select,
+            ),
           ),
         );
       },

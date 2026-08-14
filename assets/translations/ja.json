@@ -730,5 +730,25 @@
     "send_failed": "{name} を送信できませんでした",
     "declined": "{name} は拒否されました",
     "received": "{name} を受信トレイに保存しました"
+  },
+  "showcase": {
+    "home_device_title": "これがあなたのデバイス",
+    "home_device_body": "近くのデバイスにはこう表示されます。名前と公開設定は設定で変更できます。",
+    "home_tray_title": "送るものを選ぶ",
+    "home_tray_body": "写真・ファイル・テキスト・連絡先・ボイスメモ・クリップボードは、送信先を選ぶまでここで待機します。",
+    "home_nearby_title": "デバイスはここに表示",
+    "home_nearby_body": "同じWi-Fi上のデバイスが自動で現れます。タップで送信。まだ何もない場合はQRコードで招待を。",
+    "home_actions_title": "その他の共有方法",
+    "home_actions_body": "QRコードをスキャン、QR Beamでオフライン送信、またはどこでも開けるリンクを作成できます。",
+    "home_nav_title": "そのほかはここに",
+    "home_nav_body": "下のタブに受信ファイル、グループルーム、履歴、設定があります。",
+    "inbox_files_title": "フォルダーで見る",
+    "inbox_files_body": "受け取ったすべてをフォルダー・送信者・日付で整理して表示します。",
+    "inbox_web_title": "ブラウザで開く",
+    "inbox_web_body": "受信ファイルをどのPCからでも取得 — 同じネットワーク経由か、24時間有効のリンクで。",
+    "room_create_title": "ルームを作成",
+    "room_create_body": "ローカルはWi-Fi内だけ、リモートはインターネット越しに。ルームの全員がファイルを共有できます。",
+    "room_join_title": "コードで参加",
+    "room_join_body": "他のデバイスに表示された短いコードを入力 — ブラウザのbishare.app/roomsからでも。"
   }
 }

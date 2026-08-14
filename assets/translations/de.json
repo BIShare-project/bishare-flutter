@@ -730,5 +730,25 @@
     "send_failed": "{name} konnte nicht gesendet werden",
     "declined": "{name} wurde abgelehnt",
     "received": "{name} im Eingang gespeichert"
+  },
+  "showcase": {
+    "home_device_title": "Das bist du",
+    "home_device_body": "So sehen dich Geräte in der Nähe. Name und Sichtbarkeit änderst du in den Einstellungen.",
+    "home_tray_title": "Wähle, was du senden willst",
+    "home_tray_body": "Fotos, Dateien, Text, Kontakte, Sprachnotizen oder die Zwischenablage warten hier, bis du ein Gerät auswählst.",
+    "home_nearby_title": "Geräte erscheinen hier",
+    "home_nearby_body": "Alle im selben WLAN tauchen automatisch auf — zum Senden antippen. Noch nichts? Lade per QR-Code ein.",
+    "home_actions_title": "Weitere Wege zu teilen",
+    "home_actions_body": "Scanne einen QR-Code, sende kleine Dateien offline mit QR Beam oder erstelle einen Link, der überall funktioniert.",
+    "home_nav_title": "Alles Weitere ist hier",
+    "home_nav_body": "Die Tabs unten enthalten empfangene Dateien, Gruppenräume, den Verlauf und Einstellungen.",
+    "inbox_files_title": "Als Ordner durchsuchen",
+    "inbox_files_body": "Alles Empfangene, geordnet nach Ordner, Absender und Datum.",
+    "inbox_web_title": "Im Browser öffnen",
+    "inbox_web_body": "Hole empfangene Dateien auf jeden Rechner — über dein Netzwerk oder einen 24-Stunden-Link.",
+    "room_create_title": "Raum erstellen",
+    "room_create_body": "Lokal bleibt in deinem WLAN; Remote geht übers Internet. Alle im Raum können Dateien teilen.",
+    "room_join_title": "Mit Code beitreten",
+    "room_join_body": "Gib den kurzen Code eines anderen Geräts ein — oder über bishare.app/rooms im Browser."
   }
 }

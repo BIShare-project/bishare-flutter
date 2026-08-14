@@ -730,5 +730,25 @@
     "send_failed": "No se pudo enviar {name}",
     "declined": "{name} fue rechazado",
     "received": "{name} guardado en Bandeja"
+  },
+  "showcase": {
+    "home_device_title": "Este es tu dispositivo",
+    "home_device_body": "Así te ven los dispositivos cercanos. Cambia tu nombre y visibilidad en Ajustes.",
+    "home_tray_title": "Elige qué enviar",
+    "home_tray_body": "Fotos, archivos, texto, contactos, notas de voz o el portapapeles esperan aquí hasta que elijas un dispositivo.",
+    "home_nearby_title": "Los dispositivos aparecen aquí",
+    "home_nearby_body": "Quien esté en tu misma Wi-Fi aparece automáticamente: toca uno para enviar. ¿Nada aún? Invita con un código QR.",
+    "home_actions_title": "Más formas de compartir",
+    "home_actions_body": "Escanea un código QR, envía archivos pequeños sin conexión con QR Beam o crea un enlace que funciona desde cualquier lugar.",
+    "home_nav_title": "Todo lo demás está aquí",
+    "home_nav_body": "Las pestañas de abajo guardan tus archivos recibidos, salas de grupo, historial y ajustes.",
+    "inbox_files_title": "Explora como carpetas",
+    "inbox_files_body": "Todo lo recibido, organizado por carpeta, remitente y fecha.",
+    "inbox_web_title": "Ábrelo desde un navegador",
+    "inbox_web_body": "Accede a tus archivos recibidos desde cualquier ordenador: por tu red o con un enlace de 24 horas.",
+    "room_create_title": "Crea una sala",
+    "room_create_body": "Local se queda en tu Wi-Fi; Remota funciona por internet. Todos en la sala pueden compartir archivos.",
+    "room_join_title": "Únete con un código",
+    "room_join_body": "Introduce el código corto de otro dispositivo, o desde bishare.app/rooms en un navegador."
   }
 }

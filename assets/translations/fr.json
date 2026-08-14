@@ -730,5 +730,25 @@
     "send_failed": "Échec de l'envoi de {name}",
     "declined": "{name} a été refusé",
     "received": "{name} enregistré dans la boîte de réception"
+  },
+  "showcase": {
+    "home_device_title": "Voici votre appareil",
+    "home_device_body": "C'est ainsi que les appareils à proximité vous voient. Changez le nom et la visibilité dans les Réglages.",
+    "home_tray_title": "Choisissez quoi envoyer",
+    "home_tray_body": "Photos, fichiers, texte, contacts, notes vocales ou presse-papiers attendent ici jusqu'à ce que vous choisissiez un appareil.",
+    "home_nearby_title": "Les appareils apparaissent ici",
+    "home_nearby_body": "Ceux sur le même Wi-Fi apparaissent automatiquement — touchez-en un pour envoyer. Rien encore ? Invitez avec un code QR.",
+    "home_actions_title": "D'autres façons de partager",
+    "home_actions_body": "Scannez un code QR, envoyez de petits fichiers hors ligne avec QR Beam, ou créez un lien qui fonctionne partout.",
+    "home_nav_title": "Tout le reste est ici",
+    "home_nav_body": "Les onglets ci-dessous regroupent fichiers reçus, salons de groupe, historique et réglages.",
+    "inbox_files_title": "Parcourir en dossiers",
+    "inbox_files_body": "Tout ce que vous avez reçu, classé par dossier, expéditeur et date.",
+    "inbox_web_title": "Ouvrir depuis un navigateur",
+    "inbox_web_body": "Récupérez vos fichiers reçus sur n'importe quel ordinateur — via votre réseau ou un lien cloud de 24 h.",
+    "room_create_title": "Créer un salon",
+    "room_create_body": "Local reste sur votre Wi-Fi ; Distant passe par internet. Tous les membres peuvent partager des fichiers.",
+    "room_join_title": "Rejoindre avec un code",
+    "room_join_body": "Saisissez le code court d'un autre appareil — ou depuis bishare.app/rooms dans un navigateur."
   }
 }

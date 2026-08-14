@@ -730,5 +730,25 @@
     "send_failed": "无法发送 {name}",
     "declined": "{name} 被拒绝",
     "received": "{name} 已保存到收件箱"
+  },
+  "showcase": {
+    "home_device_title": "这是你的设备",
+    "home_device_body": "附近设备会这样看到你。名称和可见性可在设置中修改。",
+    "home_tray_title": "选择要发送的内容",
+    "home_tray_body": "照片、文件、文本、联系人、语音或剪贴板会先停在这里，直到你选择目标设备。",
+    "home_nearby_title": "设备会出现在这里",
+    "home_nearby_body": "同一 Wi-Fi 下的设备会自动出现——点按即可发送。还没有？用二维码邀请一个。",
+    "home_actions_title": "更多分享方式",
+    "home_actions_body": "扫描二维码、用 QR Beam 离线传小文件，或生成一个任何地方都能打开的链接。",
+    "home_nav_title": "其余都在这里",
+    "home_nav_body": "下方标签页包含收到的文件、群组房间、传输历史和设置。",
+    "inbox_files_title": "按文件夹浏览",
+    "inbox_files_body": "收到的一切，按文件夹、发送者和日期整理。",
+    "inbox_web_title": "在浏览器中打开",
+    "inbox_web_body": "在任何电脑上获取你收到的文件——通过局域网或 24 小时云链接。",
+    "room_create_title": "创建房间",
+    "room_create_body": "本地房间不出你的 Wi-Fi；远程房间跨互联网。房间里的每个人都能分享文件。",
+    "room_join_title": "用代码加入",
+    "room_join_body": "输入另一台设备上的短代码——或在浏览器打开 bishare.app/rooms。"
   }
 }

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/desktop/desktop_service.dart';
+import '../../../core/ui/app_showcase.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../discovery/domain/discovered_device.dart';
 import '../../discovery/presentation/discovery_cubit.dart';
@@ -45,32 +46,47 @@ class Header extends StatelessWidget {
               ],
             ),
           ),
-          // Offline Nearby (MultipeerConnectivity radar) — Apple only for now.
-          if (Platform.isIOS || Platform.isMacOS)
-            AppIconButton(
-              icon: AppIcons.wifi,
-              onPressed: () => context.push('/nearby'),
+          AppShowcase(
+            showcaseKey: ShowcaseKeys.homeActions,
+            title: 'showcase.home_actions_title'.tr(),
+            description: 'showcase.home_actions_body'.tr(),
+            targetRadius: 24,
+            targetPadding: const EdgeInsets.all(2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Offline Nearby (MultipeerConnectivity radar) — Apple only
+                // for now.
+                if (Platform.isIOS || Platform.isMacOS)
+                  AppIconButton(
+                    icon: AppIcons.wifi,
+                    onPressed: () => context.push('/nearby'),
+                  ),
+                // Scan a QR to receive a remote transfer / share / room.
+                // Camera scanning is unavailable on Windows/Linux (no
+                // mobile_scanner).
+                if (supportsCameraScan)
+                  AppIconButton(
+                    icon: AppIcons.scanDocument,
+                    onPressed: () => context.push('/scan'),
+                  ),
+                // QR Beam: offline file transfer over a stream of QR codes
+                // (no network).
+                AppIconButton(
+                  icon: AppIcons.qrShare,
+                  onPressed: () => context.push('/qr-beam'),
+                ),
+                // Remote share: send a file as a link + QR that works anywhere.
+                AppIconButton(
+                  icon: AppIcons.send,
+                  onPressed: () => context.push('/remote'),
+                ),
+                AppIconButton(
+                  icon: AppIcons.refreshSync,
+                  onPressed: () => context.read<DiscoveryCubit>().restart(),
+                ),
+              ],
             ),
-          // Scan a QR to receive a remote transfer / share / room.
-          // Camera scanning is unavailable on Windows/Linux (no mobile_scanner).
-          if (supportsCameraScan)
-            AppIconButton(
-              icon: AppIcons.scanDocument,
-              onPressed: () => context.push('/scan'),
-            ),
-          // QR Beam: offline file transfer over a stream of QR codes (no network).
-          AppIconButton(
-            icon: AppIcons.qrShare,
-            onPressed: () => context.push('/qr-beam'),
-          ),
-          // Remote share: send a file as a link + QR that works anywhere.
-          AppIconButton(
-            icon: AppIcons.send,
-            onPressed: () => context.push('/remote'),
-          ),
-          AppIconButton(
-            icon: AppIcons.refreshSync,
-            onPressed: () => context.read<DiscoveryCubit>().restart(),
           ),
         ],
       ),
