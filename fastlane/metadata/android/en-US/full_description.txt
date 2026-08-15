@@ -1,0 +1,16 @@
+BIShare sends files between iPhone, Android, Mac, Windows, and Linux — directly over your own network, end-to-end encrypted, at full Wi-Fi speed. No account, no ads, no cloud in the middle.
+
+<b>How it works</b>
+
+• Devices on the same Wi-Fi (or one phone's hotspot — no internet needed) find each other automatically and transfer directly, encrypted with X25519 + AES-256-GCM.
+• The other side doesn't need the app: any browser on your network can send and receive.
+• Far apart? Create an expiring link with an end-to-end encrypted container.
+• Extras: group transfer rooms, universal clipboard between your devices, inbox with gallery and history, QR Beam (send small files as animated QR codes with no network at all).
+
+<b>About this F-Droid build</b>
+
+• Camera QR scanning is disabled in this build: the upstream scanner library bundles Google's proprietary MLKit, which is excluded here. Showing QR codes (QR Beam sending, share codes) still works — only camera scanning is off.
+• Anonymous usage telemetry (a transfer count and byte total, no IPs or file names) is opt-in in this build and off by default.
+• All local-network features work fully offline. Optional internet features (expiring share links, remote rooms) use BIShare's hosted relay.
+
+Free and open source (MIT). One Dart/Flutter codebase, with all cryptography in a shared Rust core.

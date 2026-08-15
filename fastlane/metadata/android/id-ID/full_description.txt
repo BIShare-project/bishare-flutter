@@ -1,0 +1,16 @@
+BIShare mengirim file antara iPhone, Android, Mac, Windows, dan Linux — langsung lewat jaringan Anda sendiri, terenkripsi end-to-end, dengan kecepatan penuh Wi-Fi. Tanpa akun, tanpa iklan, tanpa cloud di tengah.
+
+<b>Cara kerjanya</b>
+
+• Perangkat di Wi-Fi yang sama (atau hotspot satu ponsel — tanpa internet) saling menemukan otomatis dan mentransfer langsung, terenkripsi X25519 + AES-256-GCM.
+• Sisi lain tidak butuh aplikasi: browser apa pun di jaringan Anda bisa mengirim dan menerima.
+• Berjauhan? Buat tautan kedaluwarsa dengan kontainer terenkripsi end-to-end.
+• Ekstra: room transfer grup, clipboard universal antar perangkat Anda, inbox dengan galeri dan riwayat, QR Beam (kirim file kecil sebagai QR animasi tanpa jaringan sama sekali).
+
+<b>Tentang build F-Droid ini</b>
+
+• Pemindaian QR kamera dinonaktifkan di build ini: pustaka pemindai upstream membundel MLKit milik Google (proprietary), yang dikecualikan di sini. Menampilkan kode QR (kirim QR Beam, kode share) tetap berfungsi — hanya pemindaian kamera yang mati.
+• Telemetri anonim (jumlah transfer dan total byte, tanpa IP atau nama file) bersifat opt-in di build ini dan mati secara default.
+• Semua fitur jaringan lokal bekerja sepenuhnya offline. Fitur internet opsional (tautan share, room jarak jauh) memakai relay milik BIShare.
+
+Gratis dan open source (MIT). Satu basis kode Dart/Flutter dengan seluruh kriptografi di core Rust bersama.
