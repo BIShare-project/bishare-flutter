@@ -8,6 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../config/build_flags.dart';
 import '../server/transfer_server.dart';
 
 /// True on the three desktop platforms (never on web/mobile).
@@ -18,9 +19,11 @@ bool get isDesktop =>
 /// implementation on Android, iOS, and macOS — but NOT on Windows or Linux.
 /// Gate every camera-scan entry point on this so the Windows/Linux builds never
 /// construct a `MobileScannerController` (which throws `MissingPluginException`).
-/// QR Beam stays send-only on Windows/Linux as a result.
+/// QR Beam stays send-only on Windows/Linux as a result. The FOSS (F-Droid)
+/// build disables scanning everywhere: mobile_scanner's Android backend is
+/// Google's proprietary MLKit, so that build ships the stub package instead.
 bool get supportsCameraScan =>
-    !kIsWeb && !(Platform.isWindows || Platform.isLinux);
+    !kIsWeb && !(Platform.isWindows || Platform.isLinux) && !kFossBuild;
 
 /// Desktop-only polish (macOS · Windows · Linux): a native window with a minimum
 /// size that hides to the tray on close (so receiving keeps running in the
