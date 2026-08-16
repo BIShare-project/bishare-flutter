@@ -1,1 +1,0 @@
-First open-source release: direct LAN transfer, browser receive, rooms, clipboard sync, QR Beam, 13 languages.

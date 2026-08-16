@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../config/build_flags.dart';
 import '../constants/cloud.dart';
 
 /// Anonymous, aggregate-only usage telemetry. Reports that a transfer happened
@@ -31,9 +30,7 @@ class TelemetryService {
   /// Shared SharedPreferences key — the Settings toggle writes it, we read it.
   static const prefKey = 'telemetryEnabled';
 
-  /// Default: on for store builds, opt-in (off) for the FOSS/F-Droid build —
-  /// F-Droid policy treats default-on telemetry as a Tracking anti-feature.
-  bool get enabled => _prefs.getBool(prefKey) ?? !kFossBuild;
+  bool get enabled => _prefs.getBool(prefKey) ?? true;
 
   static String get _platform {
     if (kIsWeb) return 'web';

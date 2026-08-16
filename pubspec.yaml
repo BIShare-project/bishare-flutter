@@ -223,7 +223,3 @@ flutter_launcher_icons:
     generate: true
     image_path: "assets/icon/bishare_icon.png"
     icon_size: 256
-# --- FOSS build override (appended by tool/foss_flavor.sh) ---
-dependency_overrides:
-  mobile_scanner:
-    path: fdroid/mobile_scanner_stub
