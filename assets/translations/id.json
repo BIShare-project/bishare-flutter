@@ -5,7 +5,7 @@
       "other": "Ditambahkan {} file untuk dikirim"
     },
     "code_not_found": "Kode tidak ditemukan. Jika ini kiriman langsung, minta pengirim tetap membuka layarnya lalu pindai QR-nya.",
-    "error_processing_link": "Error memproses tautan",
+    "error_processing_link": "Gagal memproses tautan",
     "live_transfer": "Transfer Langsung",
     "shared_file": "File Bersama",
     "tab_history": "Riwayat",
