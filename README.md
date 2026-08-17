@@ -183,6 +183,11 @@ Three ways in, smallest first:
 3. **🧪 Test your platform combo** — five platforms × transports means real
    devices always beat our matrix. An issue titled "Pixel 6 → Fedora 40: X
    happened" is genuinely valuable.
+4. **👍 Vouch for it where people go looking** — if BIShare earned it, a like on
+   [AlternativeTo](https://alternativeto.net/software/bishare/) is how someone
+   searching for "an AirDrop that works on Linux" finds it at all. Only if you
+   actually use it, and only from your own account — a listing caught gaming its
+   votes gets removed.
 
 Workflow: fork → branch → `flutter analyze` + `flutter test` → PR. Keep
 user-facing strings localized. Full guide in
