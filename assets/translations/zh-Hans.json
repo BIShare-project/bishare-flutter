@@ -612,7 +612,7 @@
       "one": "{} link",
       "other": "{} links"
     },
-    "error_storage_limit": "Not enough storage. Free up space or upgrade your plan.",
+    "error_storage_limit": "存储空间不足。请释放一些空间后重试。",
     "error_file_too_large": "This file is too large for your plan.",
     "error_duplicate_name": "A file or folder with that name already exists.",
     "error_depth": "Folders can't be nested that deeply.",

@@ -612,7 +612,7 @@
       "one": "{} tautan",
       "other": "{} tautan"
     },
-    "error_storage_limit": "Penyimpanan tidak cukup. Kosongkan ruang atau tingkatkan paket Anda.",
+    "error_storage_limit": "Penyimpanan tidak cukup. Kosongkan sebagian ruang lalu coba lagi.",
     "error_file_too_large": "File ini terlalu besar untuk paket Anda.",
     "error_duplicate_name": "File atau folder dengan nama itu sudah ada.",
     "error_depth": "Folder tidak bisa dibuat sedalam itu.",
