@@ -138,6 +138,8 @@ dev_dependencies:
   mocktail: ^1.0.5
   convert: ^3.1.2
   flutter_launcher_icons: ^0.14.4
+  # Packages the Windows build as MSIX for the Microsoft Store.
+  msix: ^3.18.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -223,3 +225,35 @@ flutter_launcher_icons:
     generate: true
     image_path: "assets/icon/bishare_icon.png"
     icon_size: 256
+
+# ── Microsoft Store packaging ────────────────────────────────────────────────
+# `dart run msix:create` wraps build/windows/x64/runner/Release into an MSIX.
+#
+# TWO VALUES MUST COME FROM PARTNER CENTER before a Store submission — reserve
+# the app name there, then copy them from "Product identity":
+#   identity_name  → e.g. 12345Publisher.BIShare
+#   publisher      → the exact CN=... string shown for your account
+# The placeholders below produce a VALID sideloadable package (self-signed) for
+# testing, but the Store will reject them: identity must match the reservation.
+#
+# msix_version is deliberately four parts with a trailing 0 — the Store rejects
+# anything else, and it must be raised for every submission.
+msix_config:
+  display_name: BIShare
+  publisher_display_name: Billion Group
+  identity_name: BillionGroup.BIShare
+  publisher: CN=BillionGroup
+  msix_version: 2.4.5.0
+  logo_path: assets/icon/bishare_icon.png
+  architecture: x64
+  # Local transfer is the product: privateNetworkClientServer is what lets the
+  # packaged app run its mDNS discovery and its own TCP listener on the LAN.
+  # Without it the app installs and then silently fails to find any device.
+  capabilities: internetClient, internetClientServer, privateNetworkClientServer
+  # Deep links (bishare://, bishare-remote://, bishare-stream://) so QR scans and
+  # share links open the installed app.
+  protocol_activation: bishare, bishare-remote, bishare-stream
+  app_installer:
+    publish_folder_path: build/windows/installer
+    hours_between_update_checks: 24
+    automatic_background_task: true

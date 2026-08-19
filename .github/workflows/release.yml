@@ -150,10 +150,31 @@ jobs:
                  elseif ($env:VERSION_INPUT) { $env:VERSION_INPUT }
                  else { $env:GITHUB_SHA.Substring(0,7) }
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "BIShare-$ver-windows-x64.zip"
+
+      # MSIX for the Microsoft Store. Built from the SAME Release output the ZIP
+      # wraps, so the two artifacts are always the same binaries.
+      #
+      # Self-signed here on purpose: Partner Center re-signs Store submissions,
+      # so a paid certificate buys nothing for that route. The package is
+      # therefore sideloadable for testing but NOT trusted by SmartScreen —
+      # ship the ZIP for direct downloads and reserve the MSIX for the Store.
+      - name: Package MSIX (Microsoft Store)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $ver = if ($env:GITHUB_REF_TYPE -eq "tag") { $env:GITHUB_REF_NAME.TrimStart("v") }
+                 elseif ($env:VERSION_INPUT) { $env:VERSION_INPUT }
+                 else { "0.0.0" }
+          # The Store demands a four-part version whose last part is 0.
+          dart run msix:create --version "$ver.0" --output-name "BIShare-$ver-windows-x64"
+          Get-ChildItem -Recurse -Filter *.msix | Select-Object FullName, Length
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows
-          path: BIShare-*-windows-x64.zip
+          path: |
+            BIShare-*-windows-x64.zip
+            build/windows/**/*.msix
           if-no-files-found: error
 
   linux:
