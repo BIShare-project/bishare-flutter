@@ -205,6 +205,14 @@ jobs:
           VER="${GITHUB_REF_NAME#v}"
           [ "$GITHUB_REF_TYPE" = "tag" ] || VER="${VERSION_INPUT:-${GITHUB_SHA::7}}"
           echo "VER=$VER" >> "$GITHUB_ENV"
+          # A Debian version MUST start with a digit, so a bare short SHA (what
+          # a manual dispatch without a version falls back to) is rejected by
+          # dpkg-deb. Give the .deb its own version that always starts with one.
+          case "$VER" in
+            [0-9]*) DEB_VER="$VER" ;;
+            *)      DEB_VER="0.0.0+$VER" ;;
+          esac
+          echo "DEB_VER=$DEB_VER" >> "$GITHUB_ENV"
           tar -C build/linux/x64/release/bundle -czf "BIShare-$VER-linux-x64.tar.gz" .
       # .deb: bundle to /opt/bishare, launcher symlink in /usr/bin, desktop
       # entry + hicolor icon. Depends mirrors the runtime side of the apt
@@ -222,7 +230,7 @@ jobs:
           SIZE=$(du -sk "$STAGE" | cut -f1)
           cat > "$STAGE/DEBIAN/control" <<EOF
           Package: bishare
-          Version: $VER
+          Version: $DEB_VER
           Architecture: amd64
           Maintainer: BIShare project <support@billiongroup.net>
           Section: net
