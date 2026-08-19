@@ -166,7 +166,14 @@ jobs:
                  elseif ($env:VERSION_INPUT) { $env:VERSION_INPUT }
                  else { "0.0.0" }
           # The Store demands a four-part version whose last part is 0.
-          dart run msix:create --version "$ver.0" --output-name "BIShare-$ver-windows-x64"
+          # --install-certificate false: msix otherwise asks "install the test
+          # certificate? (y/N)" on stdin. It happened to proceed here, but an
+          # interactive prompt in CI is a hang waiting to happen, and the runner
+          # has no reason to trust the cert.
+          dart run msix:create `
+            --version "$ver.0" `
+            --output-name "BIShare-$ver-windows-x64" `
+            --install-certificate false
           Get-ChildItem -Recurse -Filter *.msix | Select-Object FullName, Length
 
       - uses: actions/upload-artifact@v4
