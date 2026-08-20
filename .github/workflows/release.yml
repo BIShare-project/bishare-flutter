@@ -151,37 +151,77 @@ jobs:
                  else { $env:GITHUB_SHA.Substring(0,7) }
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "BIShare-$ver-windows-x64.zip"
 
-      # MSIX for the Microsoft Store. Built from the SAME Release output the ZIP
-      # wraps, so the two artifacts are always the same binaries.
+      # TWO MSIX variants, because they are not interchangeable.
       #
-      # Self-signed here on purpose: Partner Center re-signs Store submissions,
-      # so a paid certificate buys nothing for that route. The package is
-      # therefore sideloadable for testing but NOT trusted by SmartScreen —
-      # ship the ZIP for direct downloads and reserve the MSIX for the Store.
-      - name: Package MSIX (Microsoft Store)
+      # --store: unsigned, and the Publisher is taken verbatim from
+      # msix_config. This is the one Partner Center accepts — it re-signs
+      # submissions itself, and the manifest Publisher must match the account.
+      #
+      # test: signed with msix's throwaway certificate so it can actually be
+      # INSTALLED for testing. Note the trap this exposes — a signed package
+      # takes its Publisher from the certificate subject, so the test build
+      # reports "CN=Msix Testing, O=Msix Testing Corporation" no matter what
+      # msix_config says. Submitting that one would be rejected outright.
+      - name: Package MSIX — Store submission (unsigned)
         shell: pwsh
-        continue-on-error: true
         run: |
           $ver = if ($env:GITHUB_REF_TYPE -eq "tag") { $env:GITHUB_REF_NAME.TrimStart("v") }
                  elseif ($env:VERSION_INPUT) { $env:VERSION_INPUT }
                  else { "0.0.0" }
-          # The Store demands a four-part version whose last part is 0.
-          # --install-certificate false: msix otherwise asks "install the test
-          # certificate? (y/N)" on stdin. It happened to proceed here, but an
-          # interactive prompt in CI is a hang waiting to happen, and the runner
-          # has no reason to trust the cert.
+          echo "MSIX_VER=$ver" >> $env:GITHUB_ENV
           dart run msix:create `
+            --store `
             --version "$ver.0" `
-            --output-name "BIShare-$ver-windows-x64" `
+            --output-name "BIShare-$ver-windows-x64-store"
+
+      # Fails the build rather than shipping a package the Store will bounce.
+      - name: Verify the Store manifest
+        shell: pwsh
+        run: |
+          $msix = Get-ChildItem -Recurse -Filter "*-store.msix" | Select-Object -First 1
+          if (-not $msix) { throw "no store MSIX produced" }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($msix.FullName)
+          $entry = $zip.Entries | Where-Object { $_.FullName -eq "AppxManifest.xml" }
+          $reader = New-Object System.IO.StreamReader($entry.Open())
+          $xml = [xml]$reader.ReadToEnd(); $reader.Close(); $zip.Dispose()
+          $id = $xml.Package.Identity
+          Write-Host "Identity Name : $($id.Name)"
+          Write-Host "Publisher     : $($id.Publisher)"
+          Write-Host "Version       : $($id.Version)"
+          $caps = $xml.Package.Capabilities.Capability.Name
+          Write-Host "Capabilities  : $($caps -join ', ')"
+          # The Store rejects a publisher that doesn't match the account, and a
+          # test-certificate subject is the classic way that happens silently.
+          if ($id.Publisher -match "Msix Testing") {
+            throw "Store package carries the test certificate publisher — it would be rejected"
+          }
+          if ($id.Version -notmatch '^\d+\.\d+\.\d+\.0$') {
+            throw "Store requires a four-part version ending in 0; got $($id.Version)"
+          }
+          # Local transfer dies in the MSIX sandbox without this one.
+          if ($caps -notcontains "privateNetworkClientServer") {
+            throw "privateNetworkClientServer missing — LAN discovery would silently fail"
+          }
+          Write-Host "Store manifest OK"
+
+      # Installable build for testing on a real machine before submitting.
+      - name: Package MSIX — sideload test build (self-signed)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          dart run msix:create `
+            --version "$env:MSIX_VER.0" `
+            --output-name "BIShare-$env:MSIX_VER-windows-x64-test" `
             --install-certificate false
-          Get-ChildItem -Recurse -Filter *.msix | Select-Object FullName, Length
 
       - uses: actions/upload-artifact@v4
         with:
           name: windows
           path: |
             BIShare-*-windows-x64.zip
-            build/windows/**/*.msix
+            build/windows/**/*-store.msix
+            build/windows/**/*-test.msix
           if-no-files-found: error
 
   linux:
