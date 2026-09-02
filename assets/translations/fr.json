@@ -323,7 +323,16 @@
     "title": "Lien sécurisé",
     "uploading_to_secure_link": "Téléversement vers le lien sécurisé...",
     "encrypted_needs_link": "Ce transfert est chiffré de bout en bout. Scannez son code QR ou ouvrez le lien complet — la clé suit le # et n'atteint jamais le serveur.",
-    "encrypted_bad_key": "Impossible de déchiffrer ce transfert — la clé du lien est incorrecte ou le fichier est corrompu."
+    "encrypted_bad_key": "Impossible de déchiffrer ce transfert — la clé du lien est incorrecte ou le fichier est corrompu.",
+    "e2e_encrypt": "Chiffrement de bout en bout",
+    "e2e_encrypt_on_subtitle": "Scellé sur cet appareil ; la clé ne voyage que dans le lien ou le QR. Personne — pas même nous — ne peut le lire. Le code seul ne l'ouvre pas.",
+    "e2e_encrypt_off_subtitle": "Désactivé : toute personne ayant le code à 6 caractères peut le télécharger, et le fichier est stocké tel quel.",
+    "encrypting": "Chiffrement sur cet appareil…",
+    "done_hint": "Scannez le code ou ouvrez le lien sur n'importe quel appareil.",
+    "done_hint_encrypted": "Scannez le QR ou ouvrez le lien complet. Le code seul ne l'ouvre pas — la clé voyage après # et n'atteint jamais le serveur.",
+    "badge_e2e": "Chiffré de bout en bout",
+    "badge_one_time": "Usage unique",
+    "badge_expires_24h": "Expire dans 24 h"
   },
   "room": {
     "connecting_create_local": "Création d’un salon local",

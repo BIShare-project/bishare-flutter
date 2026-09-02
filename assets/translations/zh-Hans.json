@@ -323,7 +323,16 @@
     "title": "安全链接",
     "uploading_to_secure_link": "正在上传至安全链接...",
     "encrypted_needs_link": "此传输为端到端加密。请扫描其二维码或打开完整链接——密钥位于 # 之后，绝不会发送到服务器。",
-    "encrypted_bad_key": "无法解密此传输——链接中的密钥错误或文件已损坏。"
+    "encrypted_bad_key": "无法解密此传输——链接中的密钥错误或文件已损坏。",
+    "e2e_encrypt": "端到端加密",
+    "e2e_encrypt_on_subtitle": "在本设备上封存；密钥只随链接或二维码传递。任何人（包括我们）都无法读取。仅凭代码无法打开。",
+    "e2e_encrypt_off_subtitle": "关闭：任何持有 6 位代码的人都可以下载，文件按原样存储。",
+    "encrypting": "正在本设备上加密…",
+    "done_hint": "在任意设备上扫描代码或打开链接。",
+    "done_hint_encrypted": "扫描二维码或打开完整链接。仅凭代码无法打开——密钥位于 # 之后，永远不会发送到服务器。",
+    "badge_e2e": "端到端加密",
+    "badge_one_time": "一次性",
+    "badge_expires_24h": "24 小时后过期"
   },
   "room": {
     "connecting_create_local": "正在创建本地房间",

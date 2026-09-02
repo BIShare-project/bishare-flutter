@@ -323,7 +323,16 @@
     "title": "Tautan Aman",
     "uploading_to_secure_link": "Mengunggah ke tautan aman...",
     "encrypted_needs_link": "Transfer ini terenkripsi end-to-end. Pindai kode QR-nya atau buka tautan lengkapnya — kuncinya ikut setelah # dan tidak pernah sampai ke server.",
-    "encrypted_bad_key": "Tidak bisa mendekripsi transfer ini — kunci tautannya salah atau file rusak."
+    "encrypted_bad_key": "Tidak bisa mendekripsi transfer ini — kunci tautannya salah atau file rusak.",
+    "e2e_encrypt": "Enkripsi end-to-end",
+    "e2e_encrypt_on_subtitle": "Dikunci di perangkat ini; kuncinya hanya ikut di dalam tautan atau QR. Tak seorang pun — termasuk kami — bisa membacanya. Kode saja tidak cukup untuk membukanya.",
+    "e2e_encrypt_off_subtitle": "Nonaktif: siapa pun yang punya kode 6 karakter bisa mengunduh, dan file disimpan apa adanya.",
+    "encrypting": "Mengenkripsi di perangkat ini…",
+    "done_hint": "Pindai kode atau buka tautan di perangkat mana pun.",
+    "done_hint_encrypted": "Pindai QR atau buka tautan lengkapnya. Kode saja tidak bisa membukanya — kuncinya ikut setelah # dan tidak pernah sampai ke server.",
+    "badge_e2e": "Terenkripsi end-to-end",
+    "badge_one_time": "Sekali unduh",
+    "badge_expires_24h": "Kedaluwarsa 24 jam"
   },
   "room": {
     "connecting_create_local": "Membuat ruangan lokal",

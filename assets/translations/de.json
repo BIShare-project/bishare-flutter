@@ -323,7 +323,16 @@
     "title": "Sicherer Link",
     "uploading_to_secure_link": "Hochladen zum sicheren Link...",
     "encrypted_needs_link": "Diese Übertragung ist Ende-zu-Ende-verschlüsselt. Scanne ihren QR-Code oder öffne den vollständigen Link — der Schlüssel steht hinter # und erreicht nie den Server.",
-    "encrypted_bad_key": "Übertragung konnte nicht entschlüsselt werden — der Schlüssel im Link ist falsch oder die Datei ist beschädigt."
+    "encrypted_bad_key": "Übertragung konnte nicht entschlüsselt werden — der Schlüssel im Link ist falsch oder die Datei ist beschädigt.",
+    "e2e_encrypt": "Ende-zu-Ende-Verschlüsselung",
+    "e2e_encrypt_on_subtitle": "Auf diesem Gerät versiegelt; der Schlüssel reist nur im Link oder QR mit. Niemand — auch wir nicht — kann es lesen. Der Code allein öffnet es nicht.",
+    "e2e_encrypt_off_subtitle": "Aus: Jeder mit dem 6-stelligen Code kann es herunterladen, und die Datei wird unverändert gespeichert.",
+    "encrypting": "Verschlüsselung auf diesem Gerät…",
+    "done_hint": "Code scannen oder Link auf einem beliebigen Gerät öffnen.",
+    "done_hint_encrypted": "QR scannen oder den vollständigen Link öffnen. Der Code allein öffnet es nicht — der Schlüssel reist nach # mit und erreicht nie den Server.",
+    "badge_e2e": "Ende-zu-Ende-verschlüsselt",
+    "badge_one_time": "Einmalig",
+    "badge_expires_24h": "Läuft in 24 h ab"
   },
   "room": {
     "connecting_create_local": "Lokaler Raum wird erstellt",

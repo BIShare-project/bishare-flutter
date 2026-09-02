@@ -323,7 +323,16 @@
     "title": "Enlace Seguro",
     "uploading_to_secure_link": "Subiendo al enlace seguro...",
     "encrypted_needs_link": "Esta transferencia está cifrada de extremo a extremo. Escanea su código QR o abre el enlace completo: la clave viaja tras # y nunca llega al servidor.",
-    "encrypted_bad_key": "No se pudo descifrar esta transferencia: la clave del enlace es incorrecta o el archivo está dañado."
+    "encrypted_bad_key": "No se pudo descifrar esta transferencia: la clave del enlace es incorrecta o el archivo está dañado.",
+    "e2e_encrypt": "Cifrado de extremo a extremo",
+    "e2e_encrypt_on_subtitle": "Se sella en este dispositivo; la clave viaja solo dentro del enlace o el QR. Nadie — ni siquiera nosotros — puede leerlo. El código por sí solo no lo abre.",
+    "e2e_encrypt_off_subtitle": "Desactivado: cualquiera con el código de 6 caracteres puede descargarlo, y el archivo se guarda tal cual.",
+    "encrypting": "Cifrando en este dispositivo…",
+    "done_hint": "Escanea el código o abre el enlace en cualquier dispositivo.",
+    "done_hint_encrypted": "Escanea el QR o abre el enlace completo. El código por sí solo no lo abre — la clave viaja después de # y nunca llega al servidor.",
+    "badge_e2e": "Cifrado de extremo a extremo",
+    "badge_one_time": "Una sola vez",
+    "badge_expires_24h": "Caduca en 24 h"
   },
   "room": {
     "connecting_create_local": "Creando una sala local",

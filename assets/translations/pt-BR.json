@@ -323,7 +323,16 @@
     "title": "Link Seguro",
     "uploading_to_secure_link": "A carregar para o link seguro...",
     "encrypted_needs_link": "Esta transferência é criptografada de ponta a ponta. Escaneie o código QR ou abra o link completo — a chave vem após o # e nunca chega ao servidor.",
-    "encrypted_bad_key": "Não foi possível descriptografar esta transferência — a chave do link está errada ou o arquivo está corrompido."
+    "encrypted_bad_key": "Não foi possível descriptografar esta transferência — a chave do link está errada ou o arquivo está corrompido.",
+    "e2e_encrypt": "Criptografia de ponta a ponta",
+    "e2e_encrypt_on_subtitle": "Selado neste dispositivo; a chave viaja apenas dentro do link ou do QR. Ninguém — nem mesmo nós — consegue ler. O código sozinho não abre.",
+    "e2e_encrypt_off_subtitle": "Desativado: qualquer pessoa com o código de 6 caracteres pode baixar, e o arquivo é armazenado como está.",
+    "encrypting": "Criptografando neste dispositivo…",
+    "done_hint": "Escaneie o código ou abra o link em qualquer dispositivo.",
+    "done_hint_encrypted": "Escaneie o QR ou abra o link completo. O código sozinho não abre — a chave viaja depois do # e nunca chega ao servidor.",
+    "badge_e2e": "Criptografado de ponta a ponta",
+    "badge_one_time": "Uso único",
+    "badge_expires_24h": "Expira em 24 h"
   },
   "room": {
     "connecting_create_local": "Criando uma sala local",

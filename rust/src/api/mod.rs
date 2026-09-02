@@ -1,3 +1,4 @@
+pub mod bse2;
 pub mod crypto;
 pub mod manifest;
 pub mod quic;

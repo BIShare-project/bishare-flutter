@@ -323,7 +323,16 @@
     "title": "安全链接",
     "uploading_to_secure_link": "正在上传至安全链接...",
     "encrypted_needs_link": "此傳輸為端對端加密。請掃描其 QR code 或開啟完整連結——金鑰位於 # 之後，絕不會傳送到伺服器。",
-    "encrypted_bad_key": "無法解密此傳輸——連結中的金鑰錯誤或檔案已損毀。"
+    "encrypted_bad_key": "無法解密此傳輸——連結中的金鑰錯誤或檔案已損毀。",
+    "e2e_encrypt": "端對端加密",
+    "e2e_encrypt_on_subtitle": "在本裝置上封存；金鑰只隨連結或 QR 碼傳遞。任何人（包括我們）都無法讀取。僅憑代碼無法開啟。",
+    "e2e_encrypt_off_subtitle": "關閉：任何持有 6 位代碼的人都可以下載，檔案按原樣儲存。",
+    "encrypting": "正在本裝置上加密…",
+    "done_hint": "在任何裝置上掃描代碼或開啟連結。",
+    "done_hint_encrypted": "掃描 QR 碼或開啟完整連結。僅憑代碼無法開啟——金鑰位於 # 之後，永遠不會傳送到伺服器。",
+    "badge_e2e": "端對端加密",
+    "badge_one_time": "一次性",
+    "badge_expires_24h": "24 小時後到期"
   },
   "room": {
     "connecting_create_local": "正在建立本機房間",

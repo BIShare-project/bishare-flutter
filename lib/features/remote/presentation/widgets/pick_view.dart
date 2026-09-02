@@ -9,6 +9,8 @@ class PickView extends StatelessWidget {
     super.key,
     required this.oneTime,
     required this.onOneTime,
+    required this.e2e,
+    required this.onE2e,
     required this.shareViaWeb,
     required this.onShareViaWeb,
     required this.onMedia,
@@ -17,6 +19,8 @@ class PickView extends StatelessWidget {
 
   final bool oneTime;
   final ValueChanged<bool> onOneTime;
+  final bool e2e;
+  final ValueChanged<bool> onE2e;
   final bool shareViaWeb;
   final ValueChanged<bool> onShareViaWeb;
   final VoidCallback onMedia;
@@ -105,6 +109,16 @@ class PickView extends StatelessWidget {
                     title: 'remote.one_time_download'.tr(),
                     subtitle: 'remote.one_time_download_subtitle'.tr(),
                     trailing: ShadSwitch(value: oneTime, onChanged: onOneTime),
+                  ),
+                  Divider(height: 1, indent: 56, color: cs.border),
+                  _OptionRow(
+                    icon: AppIcons.passwordLock,
+                    iconColor: const Color(0xFF16A34A),
+                    title: 'remote.e2e_encrypt'.tr(),
+                    subtitle: e2e
+                        ? 'remote.e2e_encrypt_on_subtitle'.tr()
+                        : 'remote.e2e_encrypt_off_subtitle'.tr(),
+                    trailing: ShadSwitch(value: e2e, onChanged: onE2e),
                   ),
                   Divider(height: 1, indent: 56, color: cs.border),
                   _OptionRow(

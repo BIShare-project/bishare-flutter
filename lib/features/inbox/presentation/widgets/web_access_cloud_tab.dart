@@ -63,6 +63,9 @@ class _WebAccessCloudTabState extends State<WebAccessCloudTab> {
         fileName: name,
         mimeType: lookupMimeType(name) ?? 'application/octet-stream',
         senderAlias: getIt<DeviceIdentity>().alias,
+        onEncryptProgress: (done, total) {
+          if (mounted && total > 0) setState(() => _fraction = done / total);
+        },
         onProgress: (sent, total) {
           if (mounted && total > 0) setState(() => _fraction = sent / total);
         },

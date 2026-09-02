@@ -323,7 +323,16 @@
     "title": "안전한 링크",
     "uploading_to_secure_link": "안전한 링크에 업로드 중...",
     "encrypted_needs_link": "이 전송은 종단간 암호화되어 있습니다. QR 코드를 스캔하거나 전체 링크를 여세요 — 키는 # 뒤에 있으며 서버에 절대 전송되지 않습니다.",
-    "encrypted_bad_key": "이 전송을 복호화할 수 없습니다 — 링크의 키가 잘못되었거나 파일이 손상되었습니다."
+    "encrypted_bad_key": "이 전송을 복호화할 수 없습니다 — 링크의 키가 잘못되었거나 파일이 손상되었습니다.",
+    "e2e_encrypt": "종단 간 암호화",
+    "e2e_encrypt_on_subtitle": "이 기기에서 봉인되며 키는 링크 또는 QR 안에서만 이동합니다. 저희를 포함해 누구도 읽을 수 없습니다. 코드만으로는 열 수 없습니다.",
+    "e2e_encrypt_off_subtitle": "꺼짐: 6자리 코드를 아는 누구나 다운로드할 수 있으며 파일은 그대로 저장됩니다.",
+    "encrypting": "이 기기에서 암호화하는 중…",
+    "done_hint": "어떤 기기에서든 코드를 스캔하거나 링크를 여세요.",
+    "done_hint_encrypted": "QR을 스캔하거나 전체 링크를 여세요. 코드만으로는 열 수 없습니다. 키는 # 뒤에 있으며 서버에 전달되지 않습니다.",
+    "badge_e2e": "종단 간 암호화됨",
+    "badge_one_time": "1회용",
+    "badge_expires_24h": "24시간 후 만료"
   },
   "room": {
     "connecting_create_local": "로컬 방을 만드는 중",

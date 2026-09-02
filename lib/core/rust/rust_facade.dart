@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../../src/rust/api/bse2.dart' as rb;
 import '../../src/rust/api/crypto.dart' as rc;
 import '../../src/rust/api/utils.dart' as ru;
 import '../../src/rust/frb_generated.dart';
@@ -77,5 +78,34 @@ class Rust {
     key: key,
     chunkIndex: BigInt.from(chunkIndex),
     baseNonce: baseNonce,
+  );
+
+  // ---- BSE2: the end-to-end-encrypted cloud-link container (shared spec) ----
+  static Uint8List bse2GenerateKey() => rb.bse2GenerateKey();
+  static int bse2CiphertextSize(int plaintextSize) =>
+      rb.bse2CiphertextSize(plaintextSize: BigInt.from(plaintextSize)).toInt();
+
+  /// Seal a file into a fresh container. Progress streams from a Rust thread;
+  /// a failure arrives as a stream error (see [Bse2.encryptFile]).
+  static Stream<rb.Bse2Progress> bse2EncryptFile({
+    required String inputPath,
+    required String outputPath,
+    required List<int> key,
+  }) => rb.bse2EncryptFile(
+    inputPath: inputPath,
+    outputPath: outputPath,
+    key: key,
+  );
+
+  /// Open a container into a plaintext file — same contract as
+  /// [bse2EncryptFile].
+  static Stream<rb.Bse2Progress> bse2DecryptFile({
+    required String inputPath,
+    required String outputPath,
+    required List<int> key,
+  }) => rb.bse2DecryptFile(
+    inputPath: inputPath,
+    outputPath: outputPath,
+    key: key,
   );
 }

@@ -3,3 +3,4 @@ pub mod models;
 pub mod binary;
 pub mod crypto;
 pub mod utils;
+pub mod bse2;

@@ -323,7 +323,16 @@
     "title": "Secure Link",
     "uploading_to_secure_link": "Uploading to secure link...",
     "encrypted_needs_link": "This transfer is end-to-end encrypted. Scan its QR code or open its full link — the key travels after # and never reaches the server.",
-    "encrypted_bad_key": "Couldn't decrypt this transfer — the link's key is wrong or the file is corrupted."
+    "encrypted_bad_key": "Couldn't decrypt this transfer — the link's key is wrong or the file is corrupted.",
+    "e2e_encrypt": "End-to-end encryption",
+    "e2e_encrypt_on_subtitle": "Sealed on this device; the key travels only inside the link or QR. Nobody — not even us — can read it. The code alone won't open it.",
+    "e2e_encrypt_off_subtitle": "Off: anyone with the 6-character code can download it, and the file is stored as-is.",
+    "encrypting": "Encrypting on this device…",
+    "done_hint": "Scan the code or open the link on any device.",
+    "done_hint_encrypted": "Scan the QR or open the full link. The code alone can't open it — the key travels after # and never reaches the server.",
+    "badge_e2e": "End-to-end encrypted",
+    "badge_one_time": "One-time",
+    "badge_expires_24h": "Expires in 24h"
   },
   "room": {
     "connecting_create_local": "Creating a local room",

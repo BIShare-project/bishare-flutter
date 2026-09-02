@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:mime/mime.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/crypto/bse2.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/identity/device_identity.dart';
 import '../../../core/ui/app_ui.dart';
@@ -38,6 +39,8 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
   _Phase _phase = _Phase.pick;
   bool _oneTime = true;
   bool _shareViaWeb = true;
+  bool _e2e = true;
+  bool _encrypting = false;
   double _fraction = 0;
   String _pickedName = '';
   int _pickedSize = 0;
@@ -96,7 +99,11 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
             case StreamSendProgress(:final fraction):
               setState(() => _fraction = fraction);
             case StreamSendComplete():
-              toast(context, 'remote.sent_file'.tr(namedArgs: {'name': _pickedName}), type: ToastType.success);
+              toast(
+                context,
+                'remote.sent_file'.tr(namedArgs: {'name': _pickedName}),
+                type: ToastType.success,
+              );
               Navigator.of(context).maybePop();
             case StreamSendFailed(:final message):
               setState(() {
@@ -119,7 +126,9 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
     // oversized uploads anyway — catch it here before any bytes leave.
     final config = getIt<CloudConfigService>();
     final freeLimit = await config.freeTransferLimit();
-    if (_pickedSize > freeLimit) {
+    // The relay stores ciphertext, so gate on what will actually be uploaded.
+    final uploadSize = _e2e ? Bse2.ciphertextSize(_pickedSize) : _pickedSize;
+    if (uploadSize > freeLimit) {
       final proLimit = await config.proTransferLimit();
       if (!mounted) return;
       toast(
@@ -143,8 +152,22 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
         mimeType: lookupMimeType(name) ?? 'application/octet-stream',
         senderAlias: getIt<DeviceIdentity>().alias,
         oneTime: _oneTime,
+        encrypt: _e2e,
+        onEncryptProgress: (done, total) {
+          if (mounted && total > 0) {
+            setState(() {
+              _encrypting = true;
+              _fraction = done / total;
+            });
+          }
+        },
         onProgress: (sent, total) {
-          if (mounted && total > 0) setState(() => _fraction = sent / total);
+          if (mounted && total > 0) {
+            setState(() {
+              _encrypting = false;
+              _fraction = sent / total;
+            });
+          }
         },
         cancel: _cancel,
       );
@@ -181,12 +204,15 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
                   _Phase.pick => PickView(
                     oneTime: _oneTime,
                     onOneTime: (v) => setState(() => _oneTime = v),
+                    e2e: _e2e,
+                    onE2e: (v) => setState(() => _e2e = v),
                     shareViaWeb: _shareViaWeb,
                     onShareViaWeb: (v) => setState(() => _shareViaWeb = v),
                     onMedia: () => _pick(mediaOnly: true),
                     onFile: () => _pick(mediaOnly: false),
                   ),
                   _Phase.uploading => UploadingView(
+                    title: _encrypting ? 'remote.encrypting'.tr() : null,
                     fraction: _fraction,
                     name: _pickedName,
                     size: _pickedSize,

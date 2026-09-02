@@ -32,7 +32,9 @@ class DoneView extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Scan the code or open the link on any device.',
+            result.encrypted
+                ? 'remote.done_hint_encrypted'.tr()
+                : 'remote.done_hint'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: cs.mutedForeground),
           ),
@@ -42,8 +44,9 @@ class DoneView extends StatelessWidget {
             runSpacing: 8,
             alignment: WrapAlignment.center,
             children: [
-              if (result.oneTime) const AppBadge('One-time'),
-              const AppBadge('Expires in 24h'),
+              if (result.encrypted) AppBadge('remote.badge_e2e'.tr()),
+              if (result.oneTime) AppBadge('remote.badge_one_time'.tr()),
+              AppBadge('remote.badge_expires_24h'.tr()),
             ],
           ),
           const SizedBox(height: 20),
@@ -56,7 +59,11 @@ class DoneView extends StatelessWidget {
                   onPressed: () async {
                     await Clipboard.setData(ClipboardData(text: result.url));
                     if (context.mounted) {
-                      toast(context, 'common.link_copied'.tr(), type: ToastType.success);
+                      toast(
+                        context,
+                        'common.link_copied'.tr(),
+                        type: ToastType.success,
+                      );
                     }
                   },
                   child: Text('common.copy'.tr()),

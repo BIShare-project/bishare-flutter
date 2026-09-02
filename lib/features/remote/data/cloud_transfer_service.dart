@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../core/constants/cloud.dart';
 import '../../../core/crypto/bse2.dart';
@@ -67,6 +68,7 @@ class CloudUploadResult {
     required this.deleteToken,
     this.expiresAt,
     this.oneTime = true,
+    this.key,
   });
 
   /// Human code, e.g. `ABC-DEF`.
@@ -78,8 +80,20 @@ class CloudUploadResult {
   final DateTime? expiresAt;
   final bool oneTime;
 
-  /// The canonical share URL (encoded into the QR).
-  String get url => CloudConfig.transferWebUrl(rawCode);
+  /// The end-to-end key (base64url) when the upload was sealed as a BSE2
+  /// container, else null. It lives ONLY in the link fragment below — never
+  /// in the code, never on the server — so the 6-character code alone cannot
+  /// open an encrypted transfer.
+  final String? key;
+
+  bool get encrypted => key != null;
+
+  /// The canonical share URL (encoded into the QR). For an encrypted upload it
+  /// carries the key after `#`, which browsers never send to any server.
+  String get url {
+    final base = CloudConfig.transferWebUrl(rawCode);
+    return key == null ? base : '$base#k=$key';
+  }
 }
 
 /// Downloads remote links (24h cloud transfers, user share-links, direct LAN
@@ -87,10 +101,14 @@ class CloudUploadResult {
 /// History — so a scanned QR or opened universal link lands like any received
 /// file. Grounded to the Cloudflare Workers endpoints in [CloudConfig].
 class CloudTransferService {
-  CloudTransferService(this._server, this._history);
+  CloudTransferService(this._server, this._history, {String? apiBase})
+    : _apiBase = apiBase ?? CloudConfig.apiBase;
 
   final TransferServer _server;
   final HistoryRepository _history;
+
+  /// Overridable so a test can point the real upload flow at a local server.
+  final String _apiBase;
   final Dio _dio = Dio(
     BaseOptions(
       // Large transfers stream for a while; don't time out mid-download.
@@ -119,13 +137,17 @@ class CloudTransferService {
         _api(CloudConfig.transferStatus(code)),
       );
     } on DioException catch (e) {
-      if (e.response?.statusCode == 404) throw const TransferNotFoundException();
+      if (e.response?.statusCode == 404) {
+        throw const TransferNotFoundException();
+      }
       rethrow;
     }
     final meta = _data(statusRes);
     if (meta == null) throw const TransferNotFoundException();
     if (meta['isDownloaded'] == true) {
-      throw const CloudDownloadException('This transfer was already downloaded');
+      throw const CloudDownloadException(
+        'This transfer was already downloaded',
+      );
     }
     final fileName = (meta['fileName'] as String?)?.trim();
     final target = await _target(
@@ -178,7 +200,9 @@ class CloudTransferService {
     CancelToken? cancel,
   }) async {
     final info = _data(
-      await _dio.getUri<Map<String, dynamic>>(_api(CloudConfig.shareInfo(token))),
+      await _dio.getUri<Map<String, dynamic>>(
+        _api(CloudConfig.shareInfo(token)),
+      ),
     );
     if (info == null) throw const CloudDownloadException('Link not found');
     if (info['is_expired'] == true) {
@@ -241,15 +265,90 @@ class CloudTransferService {
   /// path. Prefers the presigned direct-to-R2 flow (no Worker body-size cap, so
   /// files >200MB work); falls back to the legacy raw-body upload when the
   /// server doesn't have the endpoint yet. Returns the shareable code/URL.
+  ///
+  /// **End-to-end encrypted by default**, exactly like the web client: the file
+  /// is sealed into a BSE2 container (shared Rust code — see [Bse2]) in a
+  /// scratch file, ONLY that ciphertext is uploaded (the server is told the
+  /// ciphertext size, since that is what it stores), and the 32-byte key rides
+  /// in the returned link's `#k=` fragment, which browsers never send to a
+  /// server. The relay therefore stores bytes it cannot read. The scratch file
+  /// is removed whether or not the upload succeeds. [onEncryptProgress]
+  /// reports the sealing pass (plaintext bytes done / total) before
+  /// [onProgress] reports upload bytes.
   Future<CloudUploadResult> uploadTransfer({
     required File file,
     required String fileName,
     required String mimeType,
     required String senderAlias,
     bool oneTime = true,
+    bool encrypt = true,
+    ProgressCb? onEncryptProgress,
     ProgressCb? onProgress,
     CancelToken? cancel,
   }) async {
+    Directory? scratch;
+    var body = file;
+    String? keyFragment;
+    try {
+      if (encrypt) {
+        final raw = Bse2.generateKey();
+        keyFragment = Bse2.encodeKey(raw);
+        scratch = await _scratchDir();
+        body = File('${scratch.path}${Platform.pathSeparator}upload.bse2');
+        await Bse2.encryptFile(
+          input: file,
+          output: body,
+          key: raw,
+          onProgress: onEncryptProgress,
+        );
+      }
+      return await _uploadBody(
+        body: body,
+        fileName: fileName,
+        mimeType: mimeType,
+        senderAlias: senderAlias,
+        oneTime: oneTime,
+        key: keyFragment,
+        onProgress: onProgress,
+        cancel: cancel,
+      );
+    } finally {
+      if (scratch != null) {
+        try {
+          await scratch.delete(recursive: true);
+        } on Object {
+          // Best effort: the OS reclaims its temp dir anyway.
+        }
+      }
+    }
+  }
+
+  /// A private scratch directory for the sealed upload body. The platform temp
+  /// dir when the plugin is available; `Directory.systemTemp` otherwise (unit
+  /// tests, or a platform without the channel).
+  Future<Directory> _scratchDir() async {
+    Directory base;
+    try {
+      base = await getTemporaryDirectory();
+    } on Object {
+      base = Directory.systemTemp;
+    }
+    return base.createTemp('bishare-e2e-');
+  }
+
+  /// The wire part of [uploadTransfer]: [body] is exactly what the relay will
+  /// store (ciphertext when sealed, the file itself otherwise).
+  Future<CloudUploadResult> _uploadBody({
+    required File body,
+    required String fileName,
+    required String mimeType,
+    required String senderAlias,
+    required bool oneTime,
+    required String? key,
+    ProgressCb? onProgress,
+    CancelToken? cancel,
+  }) async {
+    final file = body;
     final length = await file.length();
 
     Map<String, dynamic>? meta;
@@ -281,6 +380,7 @@ class CloudTransferService {
         senderAlias: senderAlias,
         length: length,
         oneTime: oneTime,
+        key: key,
         onProgress: onProgress,
         cancel: cancel,
       );
@@ -294,13 +394,15 @@ class CloudTransferService {
         headers: {
           Headers.contentLengthHeader: length,
           Headers.contentTypeHeader:
-              (meta['uploadHeaders'] as Map<String, dynamic>?)?['Content-Type'] as String? ?? mimeType,
+              (meta['uploadHeaders'] as Map<String, dynamic>?)?['Content-Type']
+                  as String? ??
+              mimeType,
         },
       ),
       onSendProgress: onProgress,
       cancelToken: cancel,
     );
-    return _uploadResult(meta, oneTime);
+    return _uploadResult(meta, oneTime, key: key);
   }
 
   /// Legacy raw-body upload through the Worker (caps out at the Cloudflare
@@ -312,6 +414,7 @@ class CloudTransferService {
     required String senderAlias,
     required int length,
     required bool oneTime,
+    required String? key,
     ProgressCb? onProgress,
     CancelToken? cancel,
   }) async {
@@ -331,12 +434,16 @@ class CloudTransferService {
       onSendProgress: onProgress,
       cancelToken: cancel,
     );
-    return _uploadResult(res.data, oneTime);
+    return _uploadResult(res.data, oneTime, key: key);
   }
 
   /// Both upload flows return the same flat body:
   /// {success, code, rawCode, expiresAt, deleteToken, ...}.
-  CloudUploadResult _uploadResult(Map<String, dynamic>? body, bool oneTime) {
+  CloudUploadResult _uploadResult(
+    Map<String, dynamic>? body,
+    bool oneTime, {
+    required String? key,
+  }) {
     final code = body?['code'] as String?;
     final rawCode = body?['rawCode'] as String?;
     if (code == null || rawCode == null) {
@@ -348,12 +455,13 @@ class CloudTransferService {
       deleteToken: (body?['deleteToken'] as String?) ?? '',
       expiresAt: DateTime.tryParse(body?['expiresAt'] as String? ?? ''),
       oneTime: oneTime,
+      key: key,
     );
   }
 
   // ---- helpers ----
 
-  Uri _api(String path) => Uri.parse('${CloudConfig.apiBase}$path');
+  Uri _api(String path) => Uri.parse('$_apiBase$path');
 
   /// Unwraps the `{success, data}` envelope; tolerates flat bodies.
   Map<String, dynamic>? _data(Response<Map<String, dynamic>> res) {
@@ -417,13 +525,17 @@ class CloudTransferService {
 
   static String? _filenameFromDisposition(String? header) {
     if (header == null) return null;
-    final star = RegExp("filename\\*=(?:UTF-8'')?([^;]+)", caseSensitive: false)
-        .firstMatch(header);
+    final star = RegExp(
+      "filename\\*=(?:UTF-8'')?([^;]+)",
+      caseSensitive: false,
+    ).firstMatch(header);
     if (star != null) {
       return Uri.decodeComponent(star.group(1)!.trim().replaceAll('"', ''));
     }
-    final plain = RegExp('filename="?([^";]+)"?', caseSensitive: false)
-        .firstMatch(header);
+    final plain = RegExp(
+      'filename="?([^";]+)"?',
+      caseSensitive: false,
+    ).firstMatch(header);
     return plain?.group(1)?.trim();
   }
 }
