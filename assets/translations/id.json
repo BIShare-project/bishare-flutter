@@ -332,7 +332,8 @@
     "done_hint_encrypted": "Pindai QR atau buka tautan lengkapnya. Kode saja tidak bisa membukanya — kuncinya ikut setelah # dan tidak pernah sampai ke server.",
     "badge_e2e": "Terenkripsi end-to-end",
     "badge_one_time": "Sekali unduh",
-    "badge_expires_24h": "Kedaluwarsa 24 jam"
+    "badge_expires_24h": "Kedaluwarsa 24 jam",
+    "live_receiver_needs_update": "BIShare di perangkat penerima perlu diperbarui untuk menerima transfer langsung terenkripsi. Perbarui, atau matikan enkripsi end-to-end untuk tetap mengirim."
   },
   "room": {
     "connecting_create_local": "Membuat ruangan lokal",

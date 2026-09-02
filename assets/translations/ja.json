@@ -332,7 +332,8 @@
     "done_hint_encrypted": "QRをスキャンするか、完全なリンクを開いてください。コードだけでは開けません。鍵は#の後ろにあり、サーバーには届きません。",
     "badge_e2e": "エンドツーエンド暗号化",
     "badge_one_time": "1回限り",
-    "badge_expires_24h": "24時間で期限切れ"
+    "badge_expires_24h": "24時間で期限切れ",
+    "live_receiver_needs_update": "相手の端末のBIShareを更新しないと、暗号化されたライブ転送を受け取れません。更新するか、エンドツーエンド暗号化をオフにして送信してください。"
   },
   "room": {
     "connecting_create_local": "ローカルルームを作成中",

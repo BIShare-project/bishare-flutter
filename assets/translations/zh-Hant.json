@@ -332,7 +332,8 @@
     "done_hint_encrypted": "掃描 QR 碼或開啟完整連結。僅憑代碼無法開啟——金鑰位於 # 之後，永遠不會傳送到伺服器。",
     "badge_e2e": "端對端加密",
     "badge_one_time": "一次性",
-    "badge_expires_24h": "24 小時後到期"
+    "badge_expires_24h": "24 小時後到期",
+    "live_receiver_needs_update": "對方裝置上的 BIShare 需要更新才能接收加密的即時傳輸。請更新它，或關閉端對端加密後照常傳送。"
   },
   "room": {
     "connecting_create_local": "正在建立本機房間",

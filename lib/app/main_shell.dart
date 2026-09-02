@@ -34,10 +34,10 @@ import '../features/web_nearby/data/web_nearby_service.dart';
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
-  @override 
+  @override
   State<MainShell> createState() => _MainShellState();
 }
- 
+
 class _MainShellState extends State<MainShell> {
   int _index = 0;
   StreamSubscription<DeepLinkAction>? _linkSub;
@@ -114,8 +114,9 @@ class _MainShellState extends State<MainShell> {
     showAppSheet<void>(
       context,
       title: 'web_nearby.incoming_title'.tr(),
-      subtitle: 'web_nearby.incoming_from'
-          .tr(namedArgs: {'alias': request.fromAlias}),
+      subtitle: 'web_nearby.incoming_from'.tr(
+        namedArgs: {'alias': request.fromAlias},
+      ),
       builder: (sheetContext) => Padding(
         padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
         child: Column(
@@ -234,8 +235,12 @@ class _MainShellState extends State<MainShell> {
           showRemoteDownload(
             context,
             label: 'nav.transfer_code'.tr(namedArgs: {'code': code}),
-            run: (p, c) =>
-                cloud.downloadTransfer(code, key: key, onProgress: p, cancel: c),
+            run: (p, c) => cloud.downloadTransfer(
+              code,
+              key: key,
+              onProgress: p,
+              cancel: c,
+            ),
           );
         case CloudShareLink(:final token):
           showRemoteDownload(
@@ -249,12 +254,16 @@ class _MainShellState extends State<MainShell> {
             label: url.host,
             run: (p, c) => cloud.downloadDirect(url, onProgress: p, cancel: c),
           );
-        case StreamReceiveLink(:final code):
+        case StreamReceiveLink(:final code, :final key):
           showRemoteDownload(
             context,
             label: 'nav.live_transfer'.tr(),
-            run: (p, c) =>
-                getIt<StreamRelayService>().receive(code, onProgress: p, cancel: c),
+            run: (p, c) => getIt<StreamRelayService>().receive(
+              code,
+              key: key,
+              onProgress: p,
+              cancel: c,
+            ),
           );
         case AmbiguousCodeLink(:final code):
           // A hand-typed code carries no hint of its kind, so try both paths:
@@ -267,7 +276,11 @@ class _MainShellState extends State<MainShell> {
             label: 'nav.transfer_code'.tr(namedArgs: {'code': code}),
             run: (p, c) async {
               try {
-                return await cloud.downloadTransfer(code, onProgress: p, cancel: c);
+                return await cloud.downloadTransfer(
+                  code,
+                  onProgress: p,
+                  cancel: c,
+                );
               } on Object catch (e) {
                 if (!_isMissingTransfer(e)) rethrow;
                 // Not a stored transfer — try a live stream with the same code.

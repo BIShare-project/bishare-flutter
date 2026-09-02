@@ -46,6 +46,7 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
   int _pickedSize = 0;
   CloudUploadResult? _result;
   String _streamCode = '';
+  String? _streamKey;
   String _error = '';
   StreamSubscription<StreamSendEvent>? _streamSub;
 
@@ -78,6 +79,7 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
       _pickedSize = file.existsSync() ? file.lengthSync() : 0;
       _fraction = 0;
       _streamCode = '';
+      _streamKey = null;
     });
     _streamSub = getIt<StreamRelayService>()
         .send(
@@ -85,13 +87,15 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
           fileName: name,
           mimeType: lookupMimeType(name) ?? 'application/octet-stream',
           senderAlias: getIt<DeviceIdentity>().alias,
+          encrypt: _e2e,
         )
         .listen((event) {
           if (!mounted) return;
           switch (event) {
-            case StreamCodeReady(:final code):
+            case StreamCodeReady(:final code, :final key):
               setState(() {
                 _streamCode = code;
+                _streamKey = key;
                 _phase = _Phase.streamWaiting;
               });
             case StreamReceiverJoined():
@@ -218,7 +222,10 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
                     size: _pickedSize,
                   ),
                   _Phase.done => DoneView(result: _result!),
-                  _Phase.streamWaiting => StreamWaitingView(code: _streamCode),
+                  _Phase.streamWaiting => StreamWaitingView(
+                    code: _streamCode,
+                    keyFragment: _streamKey,
+                  ),
                   _Phase.streamSending => UploadingView(
                     fraction: _fraction,
                     name: _pickedName,

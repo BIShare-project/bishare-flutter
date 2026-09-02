@@ -3,10 +3,10 @@ import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../../core/constants/cloud.dart';
 import '../../../core/crypto/bse2.dart';
+import '../../../core/io/scratch_dir.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/server/transfer_types.dart';
 import '../../history/data/history_repository.dart';
@@ -312,7 +312,7 @@ class CloudTransferService {
       if (encrypt) {
         final raw = Bse2.generateKey();
         keyFragment = Bse2.encodeKey(raw);
-        scratch = await _scratchDir();
+        scratch = await createScratchDir('bishare-e2e-');
         body = File('${scratch.path}${Platform.pathSeparator}upload.bse2');
         await Bse2.encryptFile(
           input: file,
@@ -340,19 +340,6 @@ class CloudTransferService {
         }
       }
     }
-  }
-
-  /// A private scratch directory for the sealed upload body. The platform temp
-  /// dir when the plugin is available; `Directory.systemTemp` otherwise (unit
-  /// tests, or a platform without the channel).
-  Future<Directory> _scratchDir() async {
-    Directory base;
-    try {
-      base = await getTemporaryDirectory();
-    } on Object {
-      base = Directory.systemTemp;
-    }
-    return base.createTemp('bishare-e2e-');
   }
 
   /// The wire part of [uploadTransfer]: [body] is exactly what the relay will

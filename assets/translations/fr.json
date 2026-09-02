@@ -332,7 +332,8 @@
     "done_hint_encrypted": "Scannez le QR ou ouvrez le lien complet. Le code seul ne l'ouvre pas — la clé voyage après # et n'atteint jamais le serveur.",
     "badge_e2e": "Chiffré de bout en bout",
     "badge_one_time": "Usage unique",
-    "badge_expires_24h": "Expire dans 24 h"
+    "badge_expires_24h": "Expire dans 24 h",
+    "live_receiver_needs_update": "Le BIShare de l'autre appareil doit être mis à jour pour recevoir un transfert en direct chiffré. Mettez-le à jour, ou désactivez le chiffrement de bout en bout pour envoyer quand même."
   },
   "room": {
     "connecting_create_local": "Création d’un salon local",

@@ -332,7 +332,8 @@
     "done_hint_encrypted": "QR을 스캔하거나 전체 링크를 여세요. 코드만으로는 열 수 없습니다. 키는 # 뒤에 있으며 서버에 전달되지 않습니다.",
     "badge_e2e": "종단 간 암호화됨",
     "badge_one_time": "1회용",
-    "badge_expires_24h": "24시간 후 만료"
+    "badge_expires_24h": "24시간 후 만료",
+    "live_receiver_needs_update": "상대 기기의 BIShare를 업데이트해야 암호화된 라이브 전송을 받을 수 있습니다. 업데이트하거나, 종단 간 암호화를 끄고 보내세요."
   },
   "room": {
     "connecting_create_local": "로컬 방을 만드는 중",

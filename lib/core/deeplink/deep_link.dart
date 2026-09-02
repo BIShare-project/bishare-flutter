@@ -34,8 +34,13 @@ class LocalInstantLink extends DeepLinkAction {
 /// `bishare-stream://<code>` / `bishare-remote://<code>` — receive a live
 /// stream-relayed transfer (6-char code).
 class StreamReceiveLink extends DeepLinkAction {
-  const StreamReceiveLink(this.code);
+  const StreamReceiveLink(this.code, {this.key});
   final String code;
+
+  /// The end-to-end key (base64url) from the QR's `#k=` fragment when the
+  /// sender sealed the live transfer. It is never part of the code and never
+  /// reaches the relay; a hand-typed code has none.
+  final String? key;
 }
 
 /// A bare code typed by hand (no scheme/host to say which kind it is). Ambiguous
@@ -99,7 +104,9 @@ class DeepLink {
       case CloudConfig.schemeRemote:
       case CloudConfig.schemeStream:
         final code = _code('${uri.host}${uri.path}');
-        return code.isEmpty ? null : StreamReceiveLink(code);
+        return code.isEmpty
+            ? null
+            : StreamReceiveLink(code, key: _keyFrom(uri.fragment));
 
       case CloudConfig.scheme: // bishare://
         if (uri.host == 'share') return const RescanSharedLink();

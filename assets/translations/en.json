@@ -332,7 +332,8 @@
     "done_hint_encrypted": "Scan the QR or open the full link. The code alone can't open it — the key travels after # and never reaches the server.",
     "badge_e2e": "End-to-end encrypted",
     "badge_one_time": "One-time",
-    "badge_expires_24h": "Expires in 24h"
+    "badge_expires_24h": "Expires in 24h",
+    "live_receiver_needs_update": "The other device's BIShare needs an update to receive an encrypted live transfer. Update it, or turn off end-to-end encryption to send anyway."
   },
   "room": {
     "connecting_create_local": "Creating a local room",

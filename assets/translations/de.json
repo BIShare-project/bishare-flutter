@@ -332,7 +332,8 @@
     "done_hint_encrypted": "QR scannen oder den vollständigen Link öffnen. Der Code allein öffnet es nicht — der Schlüssel reist nach # mit und erreicht nie den Server.",
     "badge_e2e": "Ende-zu-Ende-verschlüsselt",
     "badge_one_time": "Einmalig",
-    "badge_expires_24h": "Läuft in 24 h ab"
+    "badge_expires_24h": "Läuft in 24 h ab",
+    "live_receiver_needs_update": "Das BIShare des anderen Geräts braucht ein Update, um eine verschlüsselte Live-Übertragung zu empfangen. Aktualisiere es, oder schalte die Ende-zu-Ende-Verschlüsselung aus, um trotzdem zu senden."
   },
   "room": {
     "connecting_create_local": "Lokaler Raum wird erstellt",
