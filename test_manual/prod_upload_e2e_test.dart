@@ -34,7 +34,10 @@ void main() {
     )..createSync(recursive: true);
 
     final r = Random.secure();
-    final plain = List<int>.generate(300 * 1024 + 321, (_) => r.nextInt(256));
+    // E2E_SIZE (bytes) selects the path: ≤100 MiB single PUT, above → multipart.
+    final size = int.tryParse(Platform.environment['E2E_SIZE'] ?? '') ?? 300 * 1024 + 321;
+    final plain = List<int>.generate(size, (_) => r.nextInt(256));
+    stdout.writeln('size: $size (${size > CloudTransferService.defaultMultipartThreshold ? "multipart" : "single PUT"})');
     final src = File('${out.path}/original.bin')..writeAsBytesSync(plain);
 
     final service = CloudTransferService(_FakeServer(), _FakeHistory());
@@ -71,5 +74,5 @@ void main() {
     File('${out.path}/key.txt').writeAsStringSync(result.key!);
     File('${out.path}/url.txt').writeAsStringSync(result.url);
     stdout.writeln('E2E_OUT=${out.path}');
-  }, timeout: const Timeout(Duration(minutes: 3)));
+  }, timeout: const Timeout(Duration(minutes: 20)));
 }

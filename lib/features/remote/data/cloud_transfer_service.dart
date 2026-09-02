@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -101,14 +102,32 @@ class CloudUploadResult {
 /// History — so a scanned QR or opened universal link lands like any received
 /// file. Grounded to the Cloudflare Workers endpoints in [CloudConfig].
 class CloudTransferService {
-  CloudTransferService(this._server, this._history, {String? apiBase})
-    : _apiBase = apiBase ?? CloudConfig.apiBase;
+  CloudTransferService(
+    this._server,
+    this._history, {
+    String? apiBase,
+    int? multipartThreshold,
+  }) : _apiBase = apiBase ?? CloudConfig.apiBase,
+       _multipartThreshold = multipartThreshold ?? defaultMultipartThreshold;
 
   final TransferServer _server;
   final HistoryRepository _history;
 
   /// Overridable so a test can point the real upload flow at a local server.
   final String _apiBase;
+
+  /// Bodies above this go up as resumable multipart — one presigned PUT per
+  /// 50 MiB part, retried and re-presigned per part. Below it, a single
+  /// presigned PUT. The threshold matters for more than speed: a single R2
+  /// PUT is capped at 5 GiB, so without multipart the app could accept a
+  /// large file, seal it, and fail at the very end. Mirrors the web client.
+  /// Injectable so tests can exercise multipart with small files.
+  final int _multipartThreshold;
+  static const int defaultMultipartThreshold = 100 * 1024 * 1024;
+
+  /// Per-part attempts before the whole upload fails. A failed attempt drops
+  /// the cached URL so the retry gets a fresh presign in case it expired.
+  static const int _partRetries = 3;
   final Dio _dio = Dio(
     BaseOptions(
       // Large transfers stream for a while; don't time out mid-download.
@@ -351,6 +370,20 @@ class CloudTransferService {
     final file = body;
     final length = await file.length();
 
+    if (length > _multipartThreshold) {
+      return _uploadMultipart(
+        body: file,
+        length: length,
+        fileName: fileName,
+        mimeType: mimeType,
+        senderAlias: senderAlias,
+        oneTime: oneTime,
+        key: key,
+        onProgress: onProgress,
+        cancel: cancel,
+      );
+    }
+
     Map<String, dynamic>? meta;
     try {
       final res = await _dio.postUri<Map<String, dynamic>>(
@@ -403,6 +436,118 @@ class CloudTransferService {
       cancelToken: cancel,
     );
     return _uploadResult(meta, oneTime, key: key);
+  }
+
+  /// Resumable multipart: the server presigns every part up front; each part
+  /// is PUT straight to R2 from a slice of [body], retried per part with a
+  /// fresh presign on failure; then `complete` assembles the object (the
+  /// server reads the part list itself and measures the result) and returns
+  /// the same flat code/URL body as the single-PUT flow.
+  Future<CloudUploadResult> _uploadMultipart({
+    required File body,
+    required int length,
+    required String fileName,
+    required String mimeType,
+    required String senderAlias,
+    required bool oneTime,
+    required String? key,
+    ProgressCb? onProgress,
+    CancelToken? cancel,
+  }) async {
+    final init = await _dio.postUri<Map<String, dynamic>>(
+      _api(CloudConfig.transferMultipartInit),
+      data: {'name': fileName, 'size': length, 'mime_type': mimeType},
+      cancelToken: cancel,
+    );
+    final meta = init.data;
+    final uploadId = meta?['uploadId'] as String?;
+    final storageKey = meta?['storageKey'] as String?;
+    final partSize = (meta?['partSize'] as num?)?.toInt();
+    final totalParts = (meta?['totalParts'] as num?)?.toInt();
+    if (uploadId == null ||
+        storageKey == null ||
+        partSize == null ||
+        partSize <= 0 ||
+        totalParts == null ||
+        totalParts < 1) {
+      throw const CloudDownloadException('Upload failed. Please try again.');
+    }
+    final urls = <int, String>{};
+    for (final p in (meta?['parts'] as List?) ?? const []) {
+      if (p is Map) {
+        final n = (p['part_number'] as num?)?.toInt();
+        final u = p['upload_url'] as String?;
+        if (n != null && u != null) urls[n] = u;
+      }
+    }
+
+    Future<String> urlFor(int part) async {
+      final cached = urls[part];
+      if (cached != null) return cached;
+      final res = await _dio.postUri<Map<String, dynamic>>(
+        _api(CloudConfig.transferMultipartPartUrls),
+        data: {
+          'uploadId': uploadId,
+          'storageKey': storageKey,
+          'partNumbers': [part],
+        },
+        cancelToken: cancel,
+      );
+      final list = res.data?['parts'] as List?;
+      final fresh = list != null && list.isNotEmpty
+          ? (list.first as Map)['upload_url'] as String?
+          : null;
+      if (fresh == null) {
+        throw const CloudDownloadException('Upload failed. Please try again.');
+      }
+      urls[part] = fresh;
+      return fresh;
+    }
+
+    var doneBytes = 0;
+    for (var part = 1; part <= totalParts; part++) {
+      final start = (part - 1) * partSize;
+      final end = min(start + partSize, length);
+      final partLength = end - start;
+      for (var attempt = 0; ; attempt++) {
+        try {
+          final url = await urlFor(part);
+          // A fresh stream per attempt; the slice is re-read from disk on retry.
+          // No Content-Type: part URLs are not signed for one (as on the web).
+          await _dio.put<void>(
+            url,
+            data: body.openRead(start, end),
+            options: Options(
+              headers: {Headers.contentLengthHeader: partLength},
+            ),
+            onSendProgress: (sent, _) =>
+                onProgress?.call(doneBytes + sent, length),
+            cancelToken: cancel,
+          );
+          break;
+        } on DioException catch (e) {
+          if (CancelToken.isCancel(e) || attempt >= _partRetries) rethrow;
+          urls.remove(part); // force a fresh presign in case the URL expired
+        }
+      }
+      doneBytes += partLength;
+      onProgress?.call(doneBytes, length);
+    }
+
+    final done = await _dio.postUri<Map<String, dynamic>>(
+      _api(CloudConfig.transferMultipartComplete),
+      data: {
+        'uploadId': uploadId,
+        'storageKey': storageKey,
+        'name': fileName,
+        'size': length,
+        'mime_type': mimeType,
+        'sender_alias': senderAlias,
+        'one_time': oneTime,
+      },
+      cancelToken: cancel,
+    );
+    return _uploadResult(done.data, oneTime, key: key);
   }
 
   /// Legacy raw-body upload through the Worker (caps out at the Cloudflare

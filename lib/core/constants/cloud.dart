@@ -103,7 +103,16 @@ class CloudConfig {
 
   /// Presigned direct-to-R2 upload (bypasses the Worker body cap; >200MB ok).
   static const String transferUploadUrl = '/api/v1/transfer/upload-url';
-  static String transferDownload(String code) => '/api/v1/transfer/download/$code';
+
+  /// Resumable multipart (bodies above the client threshold): init → one
+  /// presigned PUT per 50 MiB part → complete. Same machinery the web uses.
+  static const String transferMultipartInit = '/api/v1/transfer/multipart/init';
+  static const String transferMultipartPartUrls =
+      '/api/v1/transfer/multipart/part-urls';
+  static const String transferMultipartComplete =
+      '/api/v1/transfer/multipart/complete';
+  static String transferDownload(String code) =>
+      '/api/v1/transfer/download/$code';
   static String transferStatus(String code) => '/api/v1/transfer/status/$code';
   static String transferDelete(String code) => '/api/v1/transfer/delete/$code';
 
