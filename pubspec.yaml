@@ -242,9 +242,9 @@ flutter_launcher_icons:
 # anything else, and it must be raised for every submission.
 msix_config:
   display_name: BIShare
-  publisher_display_name: Billion Group
-  identity_name: BillionGroup.BIShare
-  publisher: CN=BillionGroup
+  publisher_display_name: PT BILLION JAYA GROUP
+  identity_name: 1382PTBILLIONJAYAGROUP.BIShare
+  publisher: CN=AD0EE839-9334-4472-ADA4-13297DF912A6
   msix_version: 2.4.6.0
   logo_path: assets/icon/bishare_icon.png
   architecture: x64
