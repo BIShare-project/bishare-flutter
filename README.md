@@ -72,17 +72,17 @@ builds:
 
 The speed isn't magic — it's the absence of a detour. The file crosses your
 router once instead of crossing the internet twice. Crypto runs on hardware AES
-in a Rust core, so encryption is never the bottleneck — we learned that lesson
-[the hard way](https://bishare.app/blog/transfer-files-from-iphone-to-windows-without-cable)
-when a build flag once silently disabled it.
+in a Rust core, so encryption is never the bottleneck — we learned that the
+hard way when a build flag once silently disabled it on every Apple release
+build.
 
 ## Features
 
 | | |
 |---|---|
 | 🚀 **Direct LAN transfer** — device-to-device at Wi-Fi speed, nothing uploaded | 🔒 **End-to-end encrypted** — X25519 key exchange + AES-256-GCM per file |
-| 🌐 **Browser receive & send** — the other side needs zero installs | 🔗 **Remote share** — link + QR + 6-char code, auto-expiring |
-| 📡 **Works offline** — phone hotspot is enough; no internet required | 🔳 **QR Beam** — no network at all: file streams screen → camera as animated QR |
+| 🌐 **Browser receive & send** — the other side needs zero installs | 🔗 **Remote share** — link + QR + 6-char code, up to 100 GB, auto-expiring |
+| 📡 **Works offline** — phone hotspot is enough; no internet required | 🔳 **QR Beam** — no network at all: file streams screen → camera as animated QR *(receiving needs a camera; send-only on Windows/Linux)* |
 | 👥 **Rooms** — live group sharing with everyone in one place | 📋 **Universal clipboard** — copy on one device, paste on another |
 | 📥 **Inbox & history** — gallery, search, save to Photos, CSV export | 🖥️ **System tray, drag & drop** — real desktop citizenship on Win/Mac/Linux |
 | 🌍 **13 languages** — easiest contribution: add yours! | 🙅 **No account, no ads, no tracking** — ephemeral by design |
@@ -113,6 +113,8 @@ BIShare picks the best path automatically, so sending is always one step:
    opens it in any browser. Links expire on their own.
 3. **No network at all** — QR Beam turns a small file into an animated stream of
    QR codes; the receiving camera rebuilds it. Screen → camera, nothing else.
+   Receiving needs a camera, so Windows and Linux can send this way but not
+   receive.
 
 ```mermaid
 flowchart LR
@@ -206,9 +208,10 @@ open your link.
 Yes — any direction between iOS, Android, macOS, Windows, Linux, and browsers.
 That's the point.
 
-**Is there a file size limit on local transfers?**
-No. LAN transfers are bounded by the receiver's disk, not by us. Multi-gigabyte
-videos are the normal case.
+**Is there a file size limit?**
+On your own network, no — LAN transfers are bounded by the receiver's disk, not
+by us, and multi-gigabyte videos are the normal case. Remote share links go up
+to **100 GB**, free, and a dropped upload resumes instead of starting over.
 
 **What does the server see on a local transfer?**
 Nothing — there is no server in the path. Discovery and transfer stay on your
