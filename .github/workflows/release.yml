@@ -165,9 +165,12 @@ jobs:
       - name: Package MSIX — Store submission (unsigned)
         shell: pwsh
         run: |
+          # A dispatch with no version still has to produce a submittable
+          # package, and 0.0.0.0 is not one — the Store needs a real version.
+          # Fall back to pubspec, which is the version this build actually is.
           $ver = if ($env:GITHUB_REF_TYPE -eq "tag") { $env:GITHUB_REF_NAME.TrimStart("v") }
                  elseif ($env:VERSION_INPUT) { $env:VERSION_INPUT }
-                 else { "0.0.0" }
+                 else { (Select-String -Path pubspec.yaml -Pattern '^version:\s*([0-9]+\.[0-9]+\.[0-9]+)').Matches[0].Groups[1].Value }
           echo "MSIX_VER=$ver" >> $env:GITHUB_ENV
           dart run msix:create `
             --store `
@@ -205,6 +208,22 @@ jobs:
           }
           Write-Host "Store manifest OK"
 
+      # `msix:create` clears its output directory, so the test build below
+      # deletes the store package before the upload step can ever see it —
+      # which is exactly what happened on the first dispatch that used this
+      # workflow. Move the submission copy out of reach first.
+      - name: Set the Store package aside
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $store = Get-ChildItem -Recurse -Filter "*-store.msix" | Select-Object -First 1
+          if (-not $store) { throw "store MSIX vanished before it could be kept" }
+          Move-Item -Force $store.FullName dist/
+          Get-ChildItem dist
+          # Both MSIX variants stay CI artifacts on purpose: the store one
+          # is unsigned and the test one carries a throwaway certificate,
+          # so neither belongs on a public release. The ZIP is the download.
+
       # Installable build for testing on a real machine before submitting.
       - name: Package MSIX — sideload test build (self-signed)
         shell: pwsh
@@ -220,7 +239,7 @@ jobs:
           name: windows
           path: |
             BIShare-*-windows-x64.zip
-            build/windows/**/*-store.msix
+            dist/*-store.msix
             build/windows/**/*-test.msix
           if-no-files-found: error
 
