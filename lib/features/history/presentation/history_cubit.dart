@@ -5,8 +5,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
+import '../../../core/io/scratch_dir.dart';
 import '../../../core/storage/app_database.dart';
 import '../../../core/ui/app_format.dart';
 import '../data/history_repository.dart';
@@ -124,7 +124,7 @@ class HistoryCubit extends Cubit<HistoryState> {
         ]),
       );
     }
-    final dir = await getTemporaryDirectory();
+    final dir = await appTempDir();
     final file = File(p.join(dir.path, 'BIShare_History.csv'));
     await file.writeAsString(buf.toString());
     return file.path;

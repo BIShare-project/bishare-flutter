@@ -4,11 +4,11 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/io/scratch_dir.dart';
 import '../../../core/ui/app_ui.dart';
 
 /// Records a short voice message and returns the temp file path (or null if
@@ -51,7 +51,7 @@ class _VoiceBodyState extends State<_VoiceBody> {
         if (mounted) setState(() => _denied = true);
         return;
       }
-      final dir = await getTemporaryDirectory();
+      final dir = await appTempDir();
       final path = p.join(
         dir.path,
         'voice-${const Uuid().v4().substring(0, 8)}.m4a',

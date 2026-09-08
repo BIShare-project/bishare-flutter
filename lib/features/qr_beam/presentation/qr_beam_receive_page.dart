@@ -4,10 +4,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/di/locator.dart';
+import '../../../core/io/scratch_dir.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/ui/app_ui.dart';
 import '../domain/beam_codec.dart';
@@ -66,7 +66,7 @@ class _QrBeamReceivePageState extends State<QrBeamReceivePage> {
       await _controller.stop();
       final bytes = _collector.assemble();
       final meta = _collector.meta!;
-      final dir = await getTemporaryDirectory();
+      final dir = await appTempDir();
       final tmp = File(
         '${dir.path}/qrbeam_${DateTime.now().millisecondsSinceEpoch}_${meta.name}',
       );

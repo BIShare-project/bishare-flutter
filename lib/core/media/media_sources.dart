@@ -4,8 +4,8 @@ import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import '../io/scratch_dir.dart';
 
 /// Off-UI-isolate media helpers used by the staging tray: zip a folder, stage a
 /// text note, and re-encode images to a smaller JPEG.
@@ -17,7 +17,7 @@ class MediaSources {
   /// Zips [dirPath] into a temp `<folder>.zip` and returns its path. On failure
   /// the half-written archive is closed + deleted (no leaked fd / orphan file).
   static Future<String> zipDirectory(String dirPath) async {
-    final tmp = await getTemporaryDirectory();
+    final tmp = await appTempDir();
     final name = p.basename(dirPath);
     final zipPath = p.join(tmp.path, '$name-${_uuid.v4().substring(0, 8)}.zip');
     final encoder = ZipFileEncoder()..create(zipPath);
@@ -36,7 +36,7 @@ class MediaSources {
   /// Writes [text] to a temp `.txt` and returns its path. The filename always
   /// carries a unique suffix so repeated pastes/notes stage as distinct files.
   static Future<String> writeText(String text, {String? name}) async {
-    final tmp = await getTemporaryDirectory();
+    final tmp = await appTempDir();
     final base = (name != null && name.trim().isNotEmpty)
         ? _safe(name.trim())
         : 'note';
@@ -49,7 +49,7 @@ class MediaSources {
 
   /// Writes a vCard string to a temp `.vcf` and returns its path.
   static Future<String> writeVcf(String vcard, {String? name}) async {
-    final tmp = await getTemporaryDirectory();
+    final tmp = await appTempDir();
     final base = (name != null && name.trim().isNotEmpty)
         ? _safe(name.trim())
         : 'contact-${_uuid.v4().substring(0, 8)}';
@@ -66,7 +66,7 @@ class MediaSources {
     required String appName,
     required String version,
   }) async {
-    final tmp = await getTemporaryDirectory();
+    final tmp = await appTempDir();
     final base = _safe(appName).replaceAll(' ', '_');
     // Keep dots in versions ("2.24.1"), unlike [_safe].
     final ver = version.replaceAll(RegExp(r'[^\w.\-]'), '_');
@@ -96,7 +96,7 @@ class MediaSources {
         quality: quality,
       ));
       if (out == null) return path;
-      final tmp = await getTemporaryDirectory();
+      final tmp = await appTempDir();
       final file = File(
         p.join(tmp.path, 'img-${_uuid.v4().substring(0, 8)}.jpg'),
       );
