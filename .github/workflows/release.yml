@@ -728,3 +728,38 @@ jobs:
             --title "BIShare $TAG" \
             --generate-notes \
             BIShare-*
+
+  # After a tag's assets are on the Release, rewrite every package-manager
+  # manifest (winget, Scoop, Chocolatey, Homebrew cask) to that version and
+  # commit them to main, so `packaging/` is always the current release. With a
+  # TAP_TOKEN secret it also pushes the cask to BIShare-project/homebrew-tap;
+  # without one it just says so. Submitting to winget-pkgs / chocolatey.org
+  # stays manual — see packaging/README.md.
+  packaging:
+    needs: [release]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main, fetch-depth: 0 }
+      - name: Update manifests to ${{ github.ref_name }}
+        run: packaging/bump.sh "${GITHUB_REF_NAME#v}"
+      - name: Commit manifests to main
+        run: |
+          git config user.name "bishare-release"
+          git config user.email "support@billiongroup.net"
+          git add packaging
+          git diff --cached --quiet && { echo "manifests already current"; exit 0; }
+          git commit -m "packaging: manifests for ${GITHUB_REF_NAME} [skip ci]"
+          git push origin HEAD:main
+      - name: Push the cask to the Homebrew tap
+        env:
+          GH_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::TAP_TOKEN not set — run 'packaging/bump.sh ${GITHUB_REF_NAME#v} --tap' locally to update the Homebrew tap"; exit 0
+          fi
+          gh auth setup-git
+          git config --global user.name "bishare-release"
+          git config --global user.email "support@billiongroup.net"
+          packaging/bump.sh "${GITHUB_REF_NAME#v}" --tap

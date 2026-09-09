@@ -2,11 +2,12 @@
 PackageIdentifier: BIShareProject.BIShare
 PackageVersion: 2.4.5
 PackageLocale: en-US
-Publisher: BIShare project
+Publisher: Billion Group
 PublisherUrl: https://bishare.app
 PublisherSupportUrl: https://github.com/BIShare-project/bishare-flutter/issues
 PackageName: BIShare
 PackageUrl: https://bishare.app
+Copyright: Copyright (c) Billion Group
 License: MIT
 LicenseUrl: https://github.com/BIShare-project/bishare-flutter/blob/main/LICENSE
 ShortDescription: Fast, private, cross-platform file sharing — AirDrop for every device
@@ -15,6 +16,7 @@ Description: |-
   end-to-end encrypted, at full Wi-Fi speed. Devices discover each other on
   the local network (mDNS); the receiving side can even use a plain browser.
   No account, no ads, no cloud in the middle.
+ReleaseNotesUrl: https://github.com/BIShare-project/bishare-flutter/releases
 Moniker: bishare
 Tags:
   - airdrop

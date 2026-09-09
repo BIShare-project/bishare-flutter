@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>bishare</id>
+    <version>2.4.5</version>
+    <packageSourceUrl>https://github.com/BIShare-project/bishare-flutter/tree/main/packaging/chocolatey</packageSourceUrl>
+    <owners>Billion Group</owners>
+    <title>BIShare</title>
+    <authors>Billion Group</authors>
+    <projectUrl>https://bishare.app</projectUrl>
+    <iconUrl>https://cdn.jsdelivr.net/gh/BIShare-project/bishare-web@ba5181e1f293e7f8ead6b653d81aba93bd32b55d/public/logo.png</iconUrl>
+    <licenseUrl>https://github.com/BIShare-project/bishare-flutter/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <copyright>Copyright (c) Billion Group</copyright>
+    <projectSourceUrl>https://github.com/BIShare-project/bishare-flutter</projectSourceUrl>
+    <docsUrl>https://bishare.app/how-it-works</docsUrl>
+    <bugTrackerUrl>https://github.com/BIShare-project/bishare-flutter/issues</bugTrackerUrl>
+    <tags>bishare file-transfer file-sharing airdrop p2p encryption cross-platform portable</tags>
+    <summary>Fast, private, cross-platform file sharing — AirDrop for every device</summary>
+    <description><![CDATA[
+Send files between Windows, iPhone, Android, Mac and Linux — directly over your own Wi-Fi, end-to-end encrypted (X25519 + AES-256-GCM), at local network speed. Nothing uploads to the cloud, nothing is recompressed, and the other person needs no account: they can receive in a plain browser.
+
+When they're not nearby, share an encrypted link (up to 100 GB, expires after 24 hours). Free and open source (MIT), no ads, no sign-up.
+
+This package installs the portable Windows build from the official GitHub release and adds a Start Menu shortcut.
+]]></description>
+    <releaseNotes>https://github.com/BIShare-project/bishare-flutter/releases</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
