@@ -34,6 +34,10 @@ on:
         description: "Override the build number (Android versionCode / iOS CFBundleVersion). Must exceed what the store already has. Empty = pubspec."
         required: false
         default: ""
+      build_name:
+        description: "Override the version string (e.g. 2.4.7). Apple closes a version's train once it ships, so a test upload needs an unreleased one. Empty = pubspec."
+        required: false
+        default: ""
       apple_upload:
         description: "Upload the iOS build to TestFlight (tags always do)"
         type: choice
@@ -53,6 +57,7 @@ env:
   VERSION_INPUT: ${{ inputs.version }}
   PLAY_TRACK: ${{ inputs.play_track }}
   BUILD_NUMBER: ${{ inputs.build_number }}
+  BUILD_NAME: ${{ inputs.build_name }}
   APPLE_UPLOAD: ${{ inputs.apple_upload }}
   MAC_UPLOAD: ${{ inputs.mac_upload }}
 
@@ -177,11 +182,9 @@ jobs:
       # the xcodebuild steps, which can pass the API-key arguments Flutter can't.
       - name: Prepare the iOS build
         run: |
-          if [ -n "$BUILD_NUMBER" ]; then
-            flutter build ios --release --no-codesign --build-number="$BUILD_NUMBER"
-          else
-            flutter build ios --release --no-codesign
-          fi
+          flutter build ios --release --no-codesign \
+            ${BUILD_NUMBER:+--build-number="$BUILD_NUMBER"} \
+            ${BUILD_NAME:+--build-name="$BUILD_NAME"}
       - name: Archive (automatic signing via API key)
         run: |
           xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
@@ -203,8 +206,12 @@ jobs:
       - name: Upload to TestFlight
         run: |
           IPA=$(/bin/ls build/ios/ipa/*.ipa | head -1)
-          xcrun altool --upload-app --type ios -f "$IPA" \
-            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+          # altool prints "ERROR:" on a rejected upload but can still exit 0,
+          # which turned a 409 into a green step. Fail on the message itself.
+          OUT=$(xcrun altool --upload-app --type ios -f "$IPA" \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1); RC=$?
+          echo "$OUT"
+          [ $RC -eq 0 ] && ! echo "$OUT" | grep -q "ERROR" || { echo "::error::TestFlight upload failed"; exit 1; }
       - uses: actions/upload-artifact@v4
         with:
           name: ios
@@ -273,11 +280,9 @@ jobs:
       - run: dart run build_runner build --delete-conflicting-outputs
       - name: Prepare the macOS build (configuration only)
         run: |
-          if [ -n "$BUILD_NUMBER" ]; then
-            flutter build macos --release --config-only --build-number="$BUILD_NUMBER"
-          else
-            flutter build macos --release --config-only
-          fi
+          flutter build macos --release --config-only \
+            ${BUILD_NUMBER:+--build-number="$BUILD_NUMBER"} \
+            ${BUILD_NAME:+--build-name="$BUILD_NAME"}
       - name: Archive (automatic signing via API key)
         run: |
           xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release \
@@ -299,8 +304,10 @@ jobs:
       - name: Upload to TestFlight (macOS)
         run: |
           PKG=$(/bin/ls build/macos/pkg/*.pkg | head -1)
-          xcrun altool --upload-app --type macos -f "$PKG" \
-            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+          OUT=$(xcrun altool --upload-app --type macos -f "$PKG" \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1); RC=$?
+          echo "$OUT"
+          [ $RC -eq 0 ] && ! echo "$OUT" | grep -q "ERROR" || { echo "::error::TestFlight upload failed"; exit 1; }
       - uses: actions/upload-artifact@v4
         with:
           name: mac-app-store
