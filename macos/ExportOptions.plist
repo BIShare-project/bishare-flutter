@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Used by CI to export the Mac App Store archive as a signed .pkg. The
+       app is signed with the Apple Distribution certificate and the package
+       with the Mac Installer Distribution one, both from repo secrets; the
+       provisioning profile is fetched by Xcode through the App Store Connect
+       API key (-allowProvisioningUpdates). -->
+  <key>method</key>
+  <string>app-store-connect</string>
+  <key>teamID</key>
+  <string>59T9LR42SG</string>
+  <key>signingStyle</key>
+  <string>automatic</string>
+  <key>destination</key>
+  <string>export</string>
+  <key>uploadSymbols</key>
+  <true/>
+  <key>manageAppVersionAndBuildNumber</key>
+  <false/>
+</dict>
+</plist>
