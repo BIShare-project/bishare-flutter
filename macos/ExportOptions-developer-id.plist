@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Direct-download build (the DMG on GitHub Releases), as opposed to
+       ExportOptions.plist which is the Mac App Store submission. Signed with
+       the Developer ID Application certificate from repo secrets; no
+       provisioning profile is involved because the build carries no
+       restricted entitlements. Notarization happens after export. -->
+  <key>method</key>
+  <string>developer-id</string>
+  <key>teamID</key>
+  <string>59T9LR42SG</string>
+  <key>signingStyle</key>
+  <string>manual</string>
+  <key>signingCertificate</key>
+  <string>Developer ID Application</string>
+  <key>destination</key>
+  <string>export</string>
+</dict>
+</plist>
