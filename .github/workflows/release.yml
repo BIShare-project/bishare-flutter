@@ -25,6 +25,15 @@ on:
         description: "Existing version to build + attach to (e.g. 2.4.5, no leading v). Empty = artifacts only, no release."
         required: false
         default: ""
+      play_track:
+        description: "Upload the Android bundle to this Play track (tags always upload to internal)"
+        type: choice
+        options: ["none", "internal"]
+        default: "none"
+      build_number:
+        description: "Override the Android versionCode (must exceed what Play already has). Empty = pubspec."
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -32,6 +41,8 @@ permissions:
 env:
   FRB_VERSION: "2.12.0"
   VERSION_INPUT: ${{ inputs.version }}
+  PLAY_TRACK: ${{ inputs.play_track }}
+  BUILD_NUMBER: ${{ inputs.build_number }}
 
 jobs:
   android:
@@ -58,16 +69,41 @@ jobs:
       - run: dart run build_runner build --delete-conflicting-outputs
       - name: Build APK (release, universal)
         run: flutter build apk --release
-      - name: Name artifact
+      # Play only accepts bundles, so the store upload builds its own artifact.
+      # The versionCode comes from pubspec (the same number iOS uses), unless a
+      # dispatch overrides it — Play rejects any code it has already seen.
+      - name: Build App Bundle (release)
+        run: |
+          if [ -n "$BUILD_NUMBER" ]; then
+            flutter build appbundle --release --build-number="$BUILD_NUMBER"
+          else
+            flutter build appbundle --release
+          fi
+      - name: Name artifacts
         run: |
           VER="${GITHUB_REF_NAME#v}"
           [ "$GITHUB_REF_TYPE" = "tag" ] || VER="${VERSION_INPUT:-${GITHUB_SHA::7}}"
           cp build/app/outputs/flutter-apk/app-release.apk "BIShare-$VER-android.apk"
+          cp build/app/outputs/bundle/release/app-release.aab "BIShare-$VER-android.aab"
       - uses: actions/upload-artifact@v4
         with:
           name: android
-          path: BIShare-*-android.apk
+          path: |
+            BIShare-*-android.apk
+            BIShare-*-android.aab
           if-no-files-found: error
+      # Every tag lands on the internal track and stops there. Promotion to
+      # production is a button in Play Console, on purpose — a tag should never
+      # be able to reach users on its own.
+      - name: Upload to Google Play (internal track)
+        if: github.ref_type == 'tag' || inputs.play_track == 'internal'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.bishare.app
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
 
   # macOS DMG is SKIPPED for now (owner's call, 2026-08-12): the Mac app ships
   # via the App Store/TestFlight, and an ad-hoc DMG kept tripping over
