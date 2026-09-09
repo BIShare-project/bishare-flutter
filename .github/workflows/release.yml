@@ -125,7 +125,9 @@ jobs:
   # (-allowProvisioningUpdates), so no profile is stored anywhere.
   ios:
     if: github.ref_type == 'tag' || inputs.apple_upload == 'testflight'
-    runs-on: macos-14
+    # The iOS project uses file-system-synchronized groups, which need Xcode 16+;
+    # macos-14 ships Xcode 15 and its xcodebuild aborts on the project file.
+    runs-on: macos-15
     env:
       TEAM_ID: 59T9LR42SG
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
@@ -136,6 +138,10 @@ jobs:
         with: { components: rustfmt }
       - uses: subosito/flutter-action@v2
         with: { channel: stable }
+      - name: Use the newest Xcode on the image
+        run: |
+          XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XC" && xcodebuild -version
       - name: Install the distribution certificate (throwaway keychain)
         env:
           P12_BASE64: ${{ secrets.APPLE_DIST_P12_BASE64 }}
@@ -213,7 +219,9 @@ jobs:
   # job below is a different, still-disabled thing.)
   mac-app-store:
     if: github.ref_type == 'tag' || inputs.mac_upload == 'testflight'
-    runs-on: macos-14
+    # The iOS project uses file-system-synchronized groups, which need Xcode 16+;
+    # macos-14 ships Xcode 15 and its xcodebuild aborts on the project file.
+    runs-on: macos-15
     env:
       TEAM_ID: 59T9LR42SG
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
@@ -224,6 +232,10 @@ jobs:
         with: { components: rustfmt }
       - uses: subosito/flutter-action@v2
         with: { channel: stable }
+      - name: Use the newest Xcode on the image
+        run: |
+          XC=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XC" && xcodebuild -version
       - name: Install the distribution + installer certificates (throwaway keychain)
         env:
           DIST_P12_BASE64: ${{ secrets.APPLE_DIST_P12_BASE64 }}
