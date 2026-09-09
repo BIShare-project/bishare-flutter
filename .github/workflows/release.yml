@@ -102,7 +102,7 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.bishare.app
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
-          track: internal
+          tracks: internal
           status: completed
 
   # macOS DMG is SKIPPED for now (owner's call, 2026-08-12): the Mac app ships
