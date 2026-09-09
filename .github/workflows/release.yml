@@ -256,11 +256,15 @@ jobs:
           security unlock-keychain -p "" "$KC"
           echo "$DIST_P12_BASE64" | base64 -d > "$RUNNER_TEMP/dist.p12"
           echo "$INST_P12_BASE64" | base64 -d > "$RUNNER_TEMP/inst.p12"
-          security import "$RUNNER_TEMP/dist.p12" -k "$KC" -P "$DIST_P12_PASSWORD" \
+          # -A: no per-tool ACL prompt at all. A headless runner cannot click
+          # "Allow", and productbuild asking for the installer key is exactly
+          # what left the export step hanging for 90 minutes.
+          security import "$RUNNER_TEMP/dist.p12" -k "$KC" -P "$DIST_P12_PASSWORD" -A \
             -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/xcodebuild
-          security import "$RUNNER_TEMP/inst.p12" -k "$KC" -P "$INST_P12_PASSWORD" \
-            -T /usr/bin/productsign -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/xcodebuild
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" "$KC" >/dev/null
+          security import "$RUNNER_TEMP/inst.p12" -k "$KC" -P "$INST_P12_PASSWORD" -A \
+            -T /usr/bin/productsign -T /usr/bin/productbuild -T /usr/bin/pkgbuild \
+            -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/xcodebuild
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" "$KC" >/dev/null
           security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
           rm -f "$RUNNER_TEMP/dist.p12" "$RUNNER_TEMP/inst.p12"
           security find-identity -v "$KC" | grep -q "Apple Distribution" || { echo "no Apple Distribution identity"; exit 1; }
@@ -293,14 +297,25 @@ jobs:
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM="$TEAM_ID"
       - name: Export signed pkg
+        # An export that is still running after 20 minutes is waiting on a
+        # dialog nobody can answer. Fail it and keep the log.
+        timeout-minutes: 20
         run: |
+          set -o pipefail
           xcodebuild -exportArchive -archivePath build/macos/Runner.xcarchive \
             -exportOptionsPlist macos/ExportOptions.plist -exportPath build/macos/pkg \
             -allowProvisioningUpdates \
             -authenticationKeyPath "$ASC_KEY_PATH" \
             -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" 2>&1 | tee build/macos/export.log
           ls -la build/macos/pkg
+      - name: Keep the export log when it fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-export-log
+          path: build/macos/export.log
+          if-no-files-found: ignore
       - name: Upload to TestFlight (macOS)
         run: |
           PKG=$(/bin/ls build/macos/pkg/*.pkg | head -1)

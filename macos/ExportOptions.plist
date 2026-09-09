@@ -13,6 +13,10 @@
   <string>59T9LR42SG</string>
   <key>signingStyle</key>
   <string>automatic</string>
+  <key>signingCertificate</key>
+  <string>Apple Distribution</string>
+  <key>installerSigningCertificate</key>
+  <string>3rd Party Mac Developer Installer</string>
   <key>destination</key>
   <string>export</string>
   <key>uploadSymbols</key>
