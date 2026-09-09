@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Used by CI to export the App Store archive. Signing is automatic: the
+       distribution certificate comes from a repo secret, and Xcode fetches the
+       App Store provisioning profile itself through the App Store Connect API
+       key (-allowProvisioningUpdates), so no profile lives in the repo. -->
+  <key>method</key>
+  <string>app-store-connect</string>
+  <key>teamID</key>
+  <string>59T9LR42SG</string>
+  <key>signingStyle</key>
+  <string>automatic</string>
+  <key>destination</key>
+  <string>export</string>
+  <key>uploadSymbols</key>
+  <true/>
+  <key>manageAppVersionAndBuildNumber</key>
+  <false/>
+</dict>
+</plist>
