@@ -87,13 +87,21 @@ parts:
       # Derive the snap version from pubspec.yaml (e.g. "2.4.5+245" -> "2.4.5").
       version="$(grep '^version:' pubspec.yaml | head -1 | sed -E 's/version:\s*//; s/\+.*//')"
       craftctl set version="$version"
-    # The bridge between Dart and Rust is generated, not committed: without
-    # this the Rust crate fails to compile (E0583, missing frb_generated.rs)
-    # and every Dart call site reports an undefined RustLib. `craftctl default`
-    # then runs the plugin's own `flutter build linux`, which is what invokes
-    # cargokit. Mirrors the codegen step in .github/workflows/release.yml —
-    # keep the version in step with FRB_VERSION there.
+    # The bridge between Dart and Rust is generated, not committed: without it
+    # the Rust crate fails to compile (E0583, missing frb_generated.rs) and
+    # every Dart call site reports an undefined RustLib.
+    #
+    # The generator needs a Flutter SDK, and the plugin's own SDK does not exist
+    # yet at this point: it is cloned inside the plugin's build, which is what
+    # `craftctl default` runs at the end of this script. So fetch a shallow SDK
+    # of our own purely to generate, then hand over. Mirrors the codegen step in
+    # .github/workflows/release.yml — keep the version in step with FRB_VERSION
+    # there.
     override-build: |
+      git clone --depth 1 -b stable https://github.com/flutter/flutter.git "$CRAFT_PART_BUILD/flutter-codegen"
+      export PATH="$CRAFT_PART_BUILD/flutter-codegen/bin:$PATH"
+      git config --global --add safe.directory "$CRAFT_PART_BUILD/flutter-codegen"
+      flutter --version
       flutter pub get
       cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
       flutter_rust_bridge_codegen generate
