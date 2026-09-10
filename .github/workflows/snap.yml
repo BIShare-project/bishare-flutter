@@ -53,6 +53,19 @@ jobs:
           snap: ${{ steps.snapcraft.outputs.snap }}
           release: edge
 
+      # Publishing a revision does NOT update the store listing. The store
+      # seeds title, summary, description, licence, website and contact from
+      # the FIRST upload and then leaves them alone, so that a later revision
+      # cannot silently overwrite what someone edited in the dashboard. Ours
+      # was seeded from a revision that carried almost none of it, so push the
+      # metadata explicitly. --force is what tells the store the snap is the
+      # source of truth; drop it if the listing is ever edited by hand.
+      - name: Push the store listing metadata
+        if: (github.ref_type == 'tag' || inputs.publish == 'edge') && env.SNAPCRAFT_STORE_CREDENTIALS != ''
+        run: |
+          sudo snap install snapcraft --classic
+          snapcraft upload-metadata "${{ steps.snapcraft.outputs.snap }}" --force
+
       # Without the secret the build still runs and still uploads its artifact;
       # say why nothing was published rather than letting it look successful.
       - name: Say why publishing was skipped
