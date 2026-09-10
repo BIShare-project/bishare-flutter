@@ -9,6 +9,12 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish the built snap to a channel. The revision takes its version from pubspec, so a manual publish is the same build a tag would make."
+        type: choice
+        options: ["no", "edge"]
+        default: "no"
 
 jobs:
   build:
@@ -34,8 +40,12 @@ jobs:
 
       # Tags publish to `edge` only. Promoting edge to stable is a decision, not
       # a side effect of pushing a tag: `snapcraft release bishare <rev> stable`.
+      # A tag publishes by itself. The manual switch exists for the case where
+      # the snap is behind the other stores: re-pushing a tag would re-run every
+      # upload in release.yml, and Play and Apple both refuse a build number
+      # they have already seen, so a whole run would go red to move one package.
       - name: Publish to the edge channel
-        if: github.ref_type == 'tag' && env.SNAPCRAFT_STORE_CREDENTIALS != ''
+        if: (github.ref_type == 'tag' || inputs.publish == 'edge') && env.SNAPCRAFT_STORE_CREDENTIALS != ''
         uses: snapcore/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
@@ -46,6 +56,6 @@ jobs:
       # Without the secret the build still runs and still uploads its artifact;
       # say why nothing was published rather than letting it look successful.
       - name: Say why publishing was skipped
-        if: github.ref_type == 'tag' && env.SNAPCRAFT_STORE_CREDENTIALS == ''
+        if: (github.ref_type == 'tag' || inputs.publish == 'edge') && env.SNAPCRAFT_STORE_CREDENTIALS == ''
         run: |
           echo "::notice::Snap built but not published: repository secret SNAPCRAFT_STORE_CREDENTIALS is not set. Create it with 'snapcraft export-login --acls package_access,package_push,package_release --snaps bishare creds.txt' once the name is registered."
