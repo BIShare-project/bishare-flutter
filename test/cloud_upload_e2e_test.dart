@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -32,6 +33,7 @@ class _Relay {
   static const int partSize = 1024 * 1024; // small so tests stay small
   Map<String, dynamic>? mpInitBody;
   Map<String, dynamic>? mpCompleteBody;
+  Map<String, dynamic>? mpAbortBody;
   final Map<int, Uint8List> parts = {};
   final List<int> refreshedParts = [];
   final List<int> partPutAttempts = [];
@@ -41,6 +43,12 @@ class _Relay {
 
   /// Part whose EVERY PUT is answered 403 — a presign that never recovers.
   int? alwaysFailPart;
+
+  /// Part whose PUT is held open (body read, no response) until [release]
+  /// completes — lets a test cancel while a part is genuinely in flight.
+  int? holdPart;
+  final Completer<void> held = Completer<void>();
+  final Completer<void> release = Completer<void>();
 
   String get base => 'http://${server.address.address}:${server.port}';
 
@@ -52,6 +60,17 @@ class _Relay {
   }
 
   Future<void> _handle(HttpRequest req) async {
+    try {
+      await _route(req);
+      await req.response.close();
+    } on Object {
+      // The client may drop the connection mid-request (a cancel test does
+      // exactly that); a dead socket must not fail the test as an unhandled
+      // error from the server side.
+    }
+  }
+
+  Future<void> _route(HttpRequest req) async {
     if (req.method == 'POST' && req.uri.path == '/api/v1/transfer/upload-url') {
       createBody =
           jsonDecode(await utf8.decodeStream(req)) as Map<String, dynamic>;
@@ -116,12 +135,23 @@ class _Relay {
         chunks.addAll(c);
       }
       final firstAttempt = partPutAttempts.where((x) => x == n).length == 1;
+      if (holdPart == n) {
+        if (!held.isCompleted) held.complete();
+        await release.future;
+      }
       if (alwaysFailPart == n || (failFirstPutOfPart == n && firstAttempt)) {
         req.response.statusCode = 403; // expired presign
       } else {
         parts[n] = Uint8List.fromList(chunks);
         req.response.statusCode = 200;
       }
+    } else if (req.method == 'POST' &&
+        req.uri.path == '/api/v1/transfer/multipart/abort') {
+      mpAbortBody =
+          jsonDecode(await utf8.decodeStream(req)) as Map<String, dynamic>;
+      req.response
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'success': true}));
     } else if (req.method == 'POST' &&
         req.uri.path == '/api/v1/transfer/multipart/complete') {
       mpCompleteBody =
@@ -153,10 +183,12 @@ class _Relay {
     } else {
       req.response.statusCode = 404;
     }
-    await req.response.close();
   }
 
-  Future<void> close() => server.close(force: true);
+  Future<void> close() async {
+    if (!release.isCompleted) release.complete();
+    await server.close(force: true);
+  }
 }
 
 void main() {
@@ -315,6 +347,7 @@ void main() {
           reason: 'single-PUT flow must not be touched',
         );
         expect(relay.refreshedParts, isEmpty, reason: 'init URLs were enough');
+        expect(relay.mpAbortBody, isNull, reason: 'a finished upload is kept');
 
         // Progress is monotonic and lands exactly on the ciphertext total.
         for (var i = 1; i < progress.length; i++) {
@@ -389,8 +422,47 @@ void main() {
         expect(relay.partPutAttempts.where((p) => p == 2).length, 4);
         expect(relay.refreshedParts, [2, 2, 2]);
         expect(relay.mpCompleteBody, isNull);
+        // …and the parts already on R2 are freed, not left for the 24 h sweep.
+        expect(relay.mpAbortBody, {
+          'uploadId': 'upload-1',
+          'storageKey': 'transfers/abc/holiday.mp4',
+        });
       },
     );
+
+    test('cancelling mid-upload aborts the multipart on the server', () async {
+      final file = await plainFile(_Relay.partSize * 2 + 5);
+      relay.holdPart = 2; // part 1 lands, part 2 is in flight when we cancel
+      final cancel = CancelToken();
+
+      final upload = mp.uploadTransfer(
+        file: file,
+        fileName: 'holiday.mp4',
+        mimeType: 'video/mp4',
+        senderAlias: 'Nima',
+        encrypt: false,
+        cancel: cancel,
+      );
+      await relay.held.future;
+      cancel.cancel();
+
+      await expectLater(
+        upload,
+        throwsA(
+          isA<DioException>().having(
+            (e) => CancelToken.isCancel(e),
+            'cancelled',
+            isTrue,
+          ),
+        ),
+      );
+      expect(relay.parts.keys, [1], reason: 'only part 1 had completed');
+      expect(relay.mpCompleteBody, isNull);
+      expect(relay.mpAbortBody, {
+        'uploadId': 'upload-1',
+        'storageKey': 'transfers/abc/holiday.mp4',
+      }, reason: 'the cancel reached the server as an abort');
+    });
   });
 
   test(

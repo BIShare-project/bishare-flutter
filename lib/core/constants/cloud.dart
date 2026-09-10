@@ -111,6 +111,12 @@ class CloudConfig {
       '/api/v1/transfer/multipart/part-urls';
   static const String transferMultipartComplete =
       '/api/v1/transfer/multipart/complete';
+
+  /// Frees the parts of a multipart upload that will not be finished
+  /// (cancelled or failed) — otherwise they sit on R2 until the server's
+  /// 24 h sweep.
+  static const String transferMultipartAbort =
+      '/api/v1/transfer/multipart/abort';
   static String transferDownload(String code) =>
       '/api/v1/transfer/download/$code';
   static String transferStatus(String code) => '/api/v1/transfer/status/$code';

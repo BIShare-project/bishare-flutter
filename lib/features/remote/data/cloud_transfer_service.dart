@@ -491,50 +491,81 @@ class CloudTransferService {
       return fresh;
     }
 
-    var doneBytes = 0;
-    for (var part = 1; part <= totalParts; part++) {
-      final start = (part - 1) * partSize;
-      final end = min(start + partSize, length);
-      final partLength = end - start;
-      for (var attempt = 0; ; attempt++) {
-        try {
-          final url = await urlFor(part);
-          // A fresh stream per attempt; the slice is re-read from disk on retry.
-          // No Content-Type: part URLs are not signed for one (as on the web).
-          await _dio.put<void>(
-            url,
-            data: body.openRead(start, end),
-            options: Options(
-              headers: {Headers.contentLengthHeader: partLength},
-            ),
-            onSendProgress: (sent, _) =>
-                onProgress?.call(doneBytes + sent, length),
-            cancelToken: cancel,
-          );
-          break;
-        } on DioException catch (e) {
-          if (CancelToken.isCancel(e) || attempt >= _partRetries) rethrow;
-          urls.remove(part); // force a fresh presign in case the URL expired
+    // From here on the upload exists on R2 and only this call can finish it:
+    // its state lives in memory, so whatever stops it — the user, the network,
+    // the server — the parts must be freed rather than left for the sweep.
+    try {
+      var doneBytes = 0;
+      for (var part = 1; part <= totalParts; part++) {
+        final start = (part - 1) * partSize;
+        final end = min(start + partSize, length);
+        final partLength = end - start;
+        for (var attempt = 0; ; attempt++) {
+          try {
+            final url = await urlFor(part);
+            // A fresh stream per attempt; the slice is re-read from disk on
+            // retry. No Content-Type: part URLs are not signed for one (as on
+            // the web).
+            await _dio.put<void>(
+              url,
+              data: body.openRead(start, end),
+              options: Options(
+                headers: {Headers.contentLengthHeader: partLength},
+              ),
+              onSendProgress: (sent, _) =>
+                  onProgress?.call(doneBytes + sent, length),
+              cancelToken: cancel,
+            );
+            break;
+          } on DioException catch (e) {
+            if (CancelToken.isCancel(e) || attempt >= _partRetries) rethrow;
+            urls.remove(part); // force a fresh presign in case the URL expired
+          }
         }
+        doneBytes += partLength;
+        onProgress?.call(doneBytes, length);
       }
-      doneBytes += partLength;
-      onProgress?.call(doneBytes, length);
-    }
 
-    final done = await _dio.postUri<Map<String, dynamic>>(
-      _api(CloudConfig.transferMultipartComplete),
-      data: {
-        'uploadId': uploadId,
-        'storageKey': storageKey,
-        'name': fileName,
-        'size': length,
-        'mime_type': mimeType,
-        'sender_alias': senderAlias,
-        'one_time': oneTime,
-      },
-      cancelToken: cancel,
-    );
-    return _uploadResult(done.data, oneTime, key: key);
+      final done = await _dio.postUri<Map<String, dynamic>>(
+        _api(CloudConfig.transferMultipartComplete),
+        data: {
+          'uploadId': uploadId,
+          'storageKey': storageKey,
+          'name': fileName,
+          'size': length,
+          'mime_type': mimeType,
+          'sender_alias': senderAlias,
+          'one_time': oneTime,
+        },
+        cancelToken: cancel,
+      );
+      return _uploadResult(done.data, oneTime, key: key);
+    } on Object {
+      await _abortMultipart(uploadId, storageKey);
+      rethrow;
+    }
+  }
+
+  /// Best-effort `multipart/abort`: R2 drops the parts now instead of at the
+  /// server's 24 h sweep. Never throws, never uses the caller's cancel token
+  /// (it is usually the reason we are here), and gives up quickly — the sweep
+  /// is the backstop if this doesn't get through. Harmless when `complete`
+  /// already assembled or aborted the upload server-side.
+  Future<void> _abortMultipart(String uploadId, String storageKey) async {
+    try {
+      await _dio
+          .postUri<void>(
+            _api(CloudConfig.transferMultipartAbort),
+            data: {'uploadId': uploadId, 'storageKey': storageKey},
+            options: Options(
+              sendTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+            ),
+          )
+          .timeout(const Duration(seconds: 15));
+    } on Object {
+      // Best effort — see above.
+    }
   }
 
   /// Legacy raw-body upload through the Worker (caps out at the Cloudflare
