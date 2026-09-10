@@ -1,0 +1,23 @@
+// Version numbers for app extensions.
+//
+// An extension's CFBundleShortVersionString and CFBundleVersion must match the
+// app that contains it. When they don't, every upload comes back with warning
+// 90473 from App Store Connect, and Apple is entitled to reject the build over
+// it. The Runner target takes its numbers from pubspec through
+// Generated.xcconfig, but an extension does not inherit that: the project-level
+// configuration points at the CocoaPods files, which know nothing about
+// Flutter. So the extension reads the same generated file directly.
+//
+// Pods are deliberately NOT included here. Pointing the extension at
+// Flutter/Release.xcconfig would drag Pods-Runner's linker flags into a target
+// that must not link the app's pods.
+//
+// The two defaults are a floor for the case where xcodebuild runs without
+// `flutter build` having generated the file (it is generated, never committed).
+// The include overwrites them with the real pubspec values immediately after.
+FLUTTER_BUILD_NAME = 1.0
+FLUTTER_BUILD_NUMBER = 1
+#include? "Generated.xcconfig"
+
+MARKETING_VERSION = $(FLUTTER_BUILD_NAME)
+CURRENT_PROJECT_VERSION = $(FLUTTER_BUILD_NUMBER)
