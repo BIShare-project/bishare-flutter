@@ -1,21 +1,53 @@
 name: bishare
+title: BIShare
 base: core22
 adopt-info: bishare
-summary: Send files across every device — fast, private, offline-capable
+license: MIT
+icon: snap/gui/bishare.png
+website: https://bishare.app
+source-code: https://github.com/BIShare-project/bishare-flutter
+issues: https://github.com/BIShare-project/bishare-flutter/issues
+contact: support@billiongroup.net
+summary: Send large files to any device — free, encrypted, no account
 description: |
-  BIShare moves files directly between your devices — iPhone, Android, Mac,
-  Windows, and Linux — over your local network at full speed, end-to-end
-  encrypted, with no account and no cloud in the middle. When there is no
-  network at all, QR Beam streams a small file over an animated QR code that
-  the other device's camera scans.
+  Send large files to a phone, another computer, or someone else entirely.
+  BIShare is free, needs no account, and encrypts everything end to end.
 
-  Features:
+  Two ways to send, one app:
 
-  * Direct device-to-device transfer over Wi-Fi or a hotspot — no size limit.
-  * End-to-end encryption (X25519 + AES-256-GCM) with per-file keys.
-  * Cross-platform, including the direction AirDrop can't do: iPhone ↔ Android.
-  * QR Beam: send a small file with zero network, screen-to-camera.
-  * Free and open source (MIT).
+  **On the same Wi-Fi** devices find each other by themselves and transfer at
+  local network speed, with nothing uploaded anywhere. Photos and videos
+  arrive as the original file: full resolution, metadata intact, no
+  recompression.
+
+  **Anywhere else** you get a link or a six-character code. The other person
+  opens it in any browser, on any device, with nothing to install and no
+  account to make. Up to 100 GB per transfer. Links expire after 24 hours, or
+  after a single download if you choose.
+
+  What you can send:
+
+  * Photos and videos, as the original file
+  * Documents, PDFs, archives, any file type
+  * A whole folder, sent as a single archive
+  * Text and clipboard content between your own devices
+
+  Privacy by default:
+
+  * End-to-end encryption on every transfer (X25519 + AES-256-GCM)
+  * Files are encrypted before upload; the key stays in the link and never
+    reaches the relay
+  * Local transfers never leave your network
+  * No account, no sign-up, no tracking
+
+  More:
+
+  * Transfer rooms: several people share into one code, in a meeting or a class
+  * An interrupted transfer resumes instead of starting over
+  * QR Beam: with no network at all, one screen plays animated QR codes and
+    another device's camera reads them
+  * Works with Android, iPhone, iPad, Mac and Windows, in any direction
+  * Free and open source under the MIT licence
 
 grade: stable
 confinement: strict
