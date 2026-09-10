@@ -1,7 +1,9 @@
 name: snap
 
 # Build the Linux Snap package. Runs on version tags and can be triggered
-# manually. Publishing is left commented out — add store credentials first.
+# manually. A tag also publishes to the `edge` channel, but only once the
+# SNAPCRAFT_STORE_CREDENTIALS secret exists; until then the build still
+# produces its artifact and says why it published nothing.
 on:
   push:
     tags:
@@ -11,6 +13,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    # Read once here so the publish step can ask whether it exists. A secret
+    # cannot be tested directly in an `if:`, but an env var carrying it can.
+    env:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,13 +32,20 @@ jobs:
           name: bishare-snap
           path: ${{ steps.snapcraft.outputs.snap }}
 
-      # To auto-publish, add a repo secret SNAPCRAFT_STORE_CREDENTIALS
-      # (from `snapcraft export-login`) and uncomment:
-      #
-      # - name: Publish to edge
-      #   uses: snapcore/action-publish@v1
-      #   env:
-      #     SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-      #   with:
-      #     snap: ${{ steps.snapcraft.outputs.snap }}
-      #     release: edge
+      # Tags publish to `edge` only. Promoting edge to stable is a decision, not
+      # a side effect of pushing a tag: `snapcraft release bishare <rev> stable`.
+      - name: Publish to the edge channel
+        if: github.ref_type == 'tag' && env.SNAPCRAFT_STORE_CREDENTIALS != ''
+        uses: snapcore/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        with:
+          snap: ${{ steps.snapcraft.outputs.snap }}
+          release: edge
+
+      # Without the secret the build still runs and still uploads its artifact;
+      # say why nothing was published rather than letting it look successful.
+      - name: Say why publishing was skipped
+        if: github.ref_type == 'tag' && env.SNAPCRAFT_STORE_CREDENTIALS == ''
+        run: |
+          echo "::notice::Snap built but not published: repository secret SNAPCRAFT_STORE_CREDENTIALS is not set. Create it with 'snapcraft export-login --acls package_access,package_push,package_release --snaps bishare creds.txt' once the name is registered."
