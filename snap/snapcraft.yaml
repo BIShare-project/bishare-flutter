@@ -60,8 +60,14 @@ parts:
     flutter-target: lib/main.dart
     # cargo lives under $HOME/.cargo after rustup; expose it to the Flutter
     # build so cargokit can find it.
+    #
+    # The flutter path has to be spelled out too. Setting PATH here REPLACES the
+    # one the flutter plugin contributes, so without it the plugin's own build
+    # still works (it uses its own environment) while anything in override-build
+    # below dies with "flutter: command not found". The plugin clones the SDK
+    # into $CRAFT_PART_BUILD/flutter-distro during pull.
     build-environment:
-      - PATH: "$HOME/.cargo/bin:$PATH"
+      - PATH: "$CRAFT_PART_BUILD/flutter-distro/bin:$HOME/.cargo/bin:$PATH"
     build-packages:
       - clang
       - cmake
