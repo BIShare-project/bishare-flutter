@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
 PackageIdentifier: BIShareProject.BIShare
-PackageVersion: 2.4.5
+PackageVersion: 2.5.0
 PackageLocale: en-US
 Publisher: Billion Group
 PublisherUrl: https://bishare.app

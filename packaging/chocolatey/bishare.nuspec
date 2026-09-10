@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>bishare</id>
-    <version>2.4.5</version>
+    <version>2.5.0</version>
     <packageSourceUrl>https://github.com/BIShare-project/bishare-flutter/tree/main/packaging/chocolatey</packageSourceUrl>
     <owners>Billion Group</owners>
     <title>BIShare</title>
