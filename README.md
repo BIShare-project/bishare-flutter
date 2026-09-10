@@ -19,7 +19,7 @@ No account. No ads. No cloud in the middle. Free & open source.
 
 [![App Store](https://img.shields.io/badge/App_Store-0D96F6?logo=apple&logoColor=white)](https://apps.apple.com/us/app/bishare-file-transfer/id6760924092)
 [![Google Play](https://img.shields.io/badge/Google_Play-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.bishare.app)
-[![Windows](https://img.shields.io/badge/Windows-0078D4?logo=gitforwindows&logoColor=white)](https://github.com/BIShare-project/bishare-flutter/releases/latest)
+[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-0078D4?logo=microsoft&logoColor=white)](https://apps.microsoft.com/detail/9pgx5fsbqzmx)
 [![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black)](https://github.com/BIShare-project/bishare-flutter/releases/latest)
 [![Web App](https://img.shields.io/badge/Web_App-2563eb?logo=googlechrome&logoColor=white)](https://bishare.app/transfer)
 
@@ -93,11 +93,11 @@ build.
 |---|---|
 | **iPhone / iPad / Mac** | [App Store](https://apps.apple.com/us/app/bishare-file-transfer/id6760924092) |
 | **Android** | [Google Play](https://play.google.com/store/apps/details?id=com.bishare.app) · [APK from Releases](https://github.com/BIShare-project/bishare-flutter/releases/latest) |
-| **Windows** | [`BIShare-*-windows-x64.zip`](https://github.com/BIShare-project/bishare-flutter/releases/latest) |
+| **Windows** | [Microsoft Store](https://apps.microsoft.com/detail/9pgx5fsbqzmx) · [`BIShare-*-windows-x64.zip`](https://github.com/BIShare-project/bishare-flutter/releases/latest) |
 | **Linux** | [`BIShare-*-linux-x64.tar.gz`](https://github.com/BIShare-project/bishare-flutter/releases/latest) |
 | **Any browser** | Nothing to install — [bishare.app/transfer](https://bishare.app/transfer) |
 
-**Windows via Scoop:**
+**Windows from the command line**, if you'd rather not use the Store:
 
 ```powershell
 scoop install https://raw.githubusercontent.com/BIShare-project/bishare-flutter/main/packaging/scoop/bishare.json

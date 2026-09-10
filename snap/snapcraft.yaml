@@ -81,3 +81,15 @@ parts:
       # Derive the snap version from pubspec.yaml (e.g. "2.4.5+245" -> "2.4.5").
       version="$(grep '^version:' pubspec.yaml | head -1 | sed -E 's/version:\s*//; s/\+.*//')"
       craftctl set version="$version"
+    # The bridge between Dart and Rust is generated, not committed: without
+    # this the Rust crate fails to compile (E0583, missing frb_generated.rs)
+    # and every Dart call site reports an undefined RustLib. `craftctl default`
+    # then runs the plugin's own `flutter build linux`, which is what invokes
+    # cargokit. Mirrors the codegen step in .github/workflows/release.yml —
+    # keep the version in step with FRB_VERSION there.
+    override-build: |
+      flutter pub get
+      cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
+      flutter_rust_bridge_codegen generate
+      dart run build_runner build --delete-conflicting-outputs
+      craftctl default
