@@ -4,8 +4,8 @@ $toolsDir = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
 $packageArgs = @{
   packageName    = 'bishare'
   unzipLocation  = $toolsDir
-  url64bit       = 'https://github.com/BIShare-project/bishare-flutter/releases/download/v2.5.0/BIShare-2.5.0-windows-x64.zip'
-  checksum64     = 'c158eef9b42f393fc8427bbd77407ce1d36b8a3032639cda22566a98ad6f6eb3'
+  url64bit       = 'https://github.com/BIShare-project/bishare-flutter/releases/download/v2.5.1/BIShare-2.5.1-windows-x64.zip'
+  checksum64     = '62be1f6f907db5d3fc50fd42686b7ea2fddeaba1c33bf55707a4134e36a2dbb1'
   checksumType64 = 'sha256'
 }
 Install-ChocolateyZipPackage @packageArgs
