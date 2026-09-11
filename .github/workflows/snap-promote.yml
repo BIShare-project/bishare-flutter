@@ -1,0 +1,44 @@
+name: snap-promote
+
+# Move a revision that is already in the store to another channel — the
+# `snapcraft release bishare <rev> <channel>` that snap.yml leaves as a
+# deliberate, separate step. Nothing is rebuilt: the revision a tag published
+# to edge is the one that moves. Manual only.
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "Channel to release to"
+        type: choice
+        options: ["stable", "candidate", "beta"]
+        default: "stable"
+      revision:
+        description: "Revision to release. Empty = whatever is on latest/edge right now."
+        type: string
+        default: ""
+
+jobs:
+  promote:
+    runs-on: ubuntu-22.04
+    env:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+    steps:
+      - name: Install snapcraft
+        run: sudo snap install snapcraft --classic
+
+      - name: Release
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          REVISION: ${{ inputs.revision }}
+        run: |
+          test -n "$SNAPCRAFT_STORE_CREDENTIALS" || { echo "::error::SNAPCRAFT_STORE_CREDENTIALS is not set"; exit 1; }
+          snapcraft status bishare
+          if [ -z "$REVISION" ]; then
+            # The edge row of `snapcraft status`: "latest  edge  <version>  <revision>" (track
+            # only on the first row, so match the channel column wherever it sits).
+            REVISION=$(snapcraft status bishare | awk '$0 ~ /(^|[[:space:]])edge[[:space:]]/ { for (i = 1; i <= NF; i++) if ($i == "edge") { print $(i + 2); exit } }')
+          fi
+          echo "Releasing revision '$REVISION' to $CHANNEL"
+          [[ "$REVISION" =~ ^[0-9]+$ ]] || { echo "::error::could not read a revision from latest/edge"; exit 1; }
+          snapcraft release bishare "$REVISION" "$CHANNEL"
+          snapcraft status bishare
