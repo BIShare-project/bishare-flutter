@@ -374,7 +374,12 @@
     "web_room_title": "Sala del navegador",
     "web_room_body": "Esta sala se creó en un navegador. Los archivos van directos entre navegadores (P2P), y la app aún no puede unirse. Abre bishare.app/rooms en un navegador para unirte, o pide al anfitrión que cree una sala en la nube.",
     "web_room_ok": "Entendido",
-    "web_room_open": "Abrir en el navegador y unirse"
+    "web_room_open": "Abrir en el navegador y unirse",
+    "e2e_on": "Cifrado de extremo a extremo",
+    "e2e_waiting": "Esperando a que un miembro comparta la clave de la sala…",
+    "e2e_off": "Sin cifrado de extremo a extremo (creada con una app anterior)",
+    "encrypted_file": "Archivo cifrado",
+    "error_update_required": "Esta sala tiene cifrado de extremo a extremo. Actualiza BIShare para unirte."
   },
   "settings": {
     "about": "Acerca de",

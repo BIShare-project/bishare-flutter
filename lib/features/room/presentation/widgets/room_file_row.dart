@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -59,7 +60,8 @@ class RoomFileRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  file.fileName,
+                  // Encrypted and not opened yet: the wire name is a placeholder.
+                  file.isSealed ? 'room.encrypted_file'.tr() : file.fileName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

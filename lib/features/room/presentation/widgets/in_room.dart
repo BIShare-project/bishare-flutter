@@ -104,7 +104,16 @@ class InRoom extends StatelessWidget {
     );
   }
 
+  /// An encrypted room's files can't be sealed or opened before a member has
+  /// handed this device the room key.
+  bool _keyPending(BuildContext context, {RoomFile? file}) {
+    if (state.security != RoomSecurity.waitingForKey && !(file?.isSealed ?? false)) return false;
+    toast(context, 'room.e2e_waiting'.tr());
+    return true;
+  }
+
   Future<void> _add(BuildContext context, List<String> paths) async {
+    if (_keyPending(context)) return;
     final cubit = context.read<RoomCubit>();
     for (final path in paths) {
       final file = File(path);
@@ -131,6 +140,7 @@ class InRoom extends StatelessWidget {
   }
 
   Future<void> _download(BuildContext context, RoomFile f) async {
+    if (_keyPending(context, file: f)) return;
     final cubit = context.read<RoomCubit>();
     toast(context, 'room.downloading'.tr(namedArgs: {'name': f.fileName}));
     try {
@@ -148,6 +158,7 @@ class InRoom extends StatelessWidget {
 
   /// Tap a file → fetch it to a temp path and open the rich preview.
   Future<void> _open(BuildContext context, RoomFile f) async {
+    if (_keyPending(context, file: f)) return;
     final cubit = context.read<RoomCubit>();
     toast(context, 'room.opening'.tr(namedArgs: {'name': f.fileName}));
     try {

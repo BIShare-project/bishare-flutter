@@ -374,7 +374,12 @@
     "web_room_title": "Sala do navegador",
     "web_room_body": "Esta sala foi criada em um navegador. Os arquivos vão direto entre navegadores (P2P), e o app ainda não consegue entrar. Abra bishare.app/rooms no navegador para entrar, ou peça ao anfitrião para criar uma sala na nuvem.",
     "web_room_ok": "Entendi",
-    "web_room_open": "Abrir no navegador e entrar"
+    "web_room_open": "Abrir no navegador e entrar",
+    "e2e_on": "Criptografia de ponta a ponta",
+    "e2e_waiting": "Aguardando um membro compartilhar a chave da sala…",
+    "e2e_off": "Sem criptografia de ponta a ponta (criada com um app antigo)",
+    "encrypted_file": "Arquivo criptografado",
+    "error_update_required": "Esta sala tem criptografia de ponta a ponta. Atualize o BIShare para entrar."
   },
   "settings": {
     "about": "Sobre",

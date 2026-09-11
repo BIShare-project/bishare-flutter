@@ -7,11 +7,19 @@ library;
 class CloudConfig {
   CloudConfig._();
 
-  /// REST + WebSocket API host (Cloudflare Workers).
-  static const String apiBase = 'https://api.bishare.app';
+  /// REST + WebSocket API host (Cloudflare Workers). Overridable only at
+  /// compile time, for tests against a local worker
+  /// (`--dart-define=BISHARE_API_BASE=http://localhost:8799`).
+  static const String apiBase = String.fromEnvironment(
+    'BISHARE_API_BASE',
+    defaultValue: 'https://api.bishare.app',
+  );
 
   /// WebSocket base (rooms + stream relay).
-  static const String wsBase = 'wss://api.bishare.app';
+  static const String wsBase = String.fromEnvironment(
+    'BISHARE_WS_BASE',
+    defaultValue: 'wss://api.bishare.app',
+  );
 
   /// Web host used in universal links / QR codes (`/transfer`, `/share`, …).
   static const String webBase = 'https://bishare.app';

@@ -374,7 +374,12 @@
     "web_room_title": "Browser-Raum",
     "web_room_body": "Dieser Raum wurde in einem Browser erstellt. Dateien gehen direkt von Browser zu Browser (P2P) — die App kann noch nicht beitreten. Öffne bishare.app/rooms im Browser, oder bitte den Host, einen Cloud-Raum zu erstellen.",
     "web_room_ok": "Verstanden",
-    "web_room_open": "Im Browser öffnen & beitreten"
+    "web_room_open": "Im Browser öffnen & beitreten",
+    "e2e_on": "Ende-zu-Ende verschlüsselt",
+    "e2e_waiting": "Warte darauf, dass ein Mitglied den Raumschlüssel teilt…",
+    "e2e_off": "Nicht Ende-zu-Ende verschlüsselt (mit einer älteren App erstellt)",
+    "encrypted_file": "Verschlüsselte Datei",
+    "error_update_required": "Dieser Raum ist Ende-zu-Ende verschlüsselt. Aktualisiere BIShare, um beizutreten."
   },
   "settings": {
     "about": "Über",

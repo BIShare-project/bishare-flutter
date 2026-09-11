@@ -28,7 +28,20 @@ class RoomMember {
   );
 }
 
+/// The salt and sealed metadata of a file in an end-to-end encrypted room
+/// (see `room_e2e.dart`).
+class RoomFileEnc {
+  const RoomFileEnc({required this.salt, required this.meta});
+  final String salt;
+  final String meta;
+}
+
 /// A file shared into a room. `thumbnail` is a base64 JPEG when present.
+///
+/// In an end-to-end encrypted room the server only knows a placeholder name
+/// and the ciphertext size; [enc] carries the sealed metadata, and
+/// [revealed] turns true once the room key has opened it into the real
+/// name, type, size and preview.
 class RoomFile {
   const RoomFile({
     required this.id,
@@ -38,6 +51,8 @@ class RoomFile {
     required this.ownerFingerprint,
     required this.ownerAlias,
     this.thumbnail,
+    this.enc,
+    this.revealed = false,
   });
 
   final String id;
@@ -47,15 +62,44 @@ class RoomFile {
   final String ownerFingerprint;
   final String ownerAlias;
   final String? thumbnail;
+  final RoomFileEnc? enc;
+  final bool revealed;
 
-  factory RoomFile.fromJson(Map<String, dynamic> j) => RoomFile(
-    id: (j['id'] as String?) ?? '',
-    fileName: (j['fileName'] as String?) ?? 'file',
-    fileType: (j['fileType'] as String?) ?? 'application/octet-stream',
-    size: (j['size'] as num?)?.toInt() ?? 0,
-    ownerFingerprint: (j['ownerFingerprint'] as String?) ?? '',
-    ownerAlias: (j['ownerAlias'] as String?) ?? 'Device',
-    thumbnail: j['thumbnail'] as String?,
+  /// Encrypted, and the room key hasn't opened it (yet).
+  bool get isSealed => enc != null && !revealed;
+
+  factory RoomFile.fromJson(Map<String, dynamic> j) {
+    final enc = j['enc'];
+    return RoomFile(
+      id: (j['id'] as String?) ?? '',
+      fileName: (j['fileName'] as String?) ?? 'file',
+      fileType: (j['fileType'] as String?) ?? 'application/octet-stream',
+      size: (j['size'] as num?)?.toInt() ?? 0,
+      ownerFingerprint: (j['ownerFingerprint'] as String?) ?? '',
+      ownerAlias: (j['ownerAlias'] as String?) ?? 'Device',
+      thumbnail: j['thumbnail'] as String?,
+      enc: enc is Map && enc['salt'] is String && enc['meta'] is String
+          ? RoomFileEnc(salt: enc['salt'] as String, meta: enc['meta'] as String)
+          : null,
+    );
+  }
+
+  /// This file with its sealed metadata opened.
+  RoomFile reveal({
+    required String name,
+    required String type,
+    required int plainSize,
+    String? preview,
+  }) => RoomFile(
+    id: id,
+    fileName: name,
+    fileType: type,
+    size: plainSize,
+    ownerFingerprint: ownerFingerprint,
+    ownerAlias: ownerAlias,
+    thumbnail: preview,
+    enc: enc,
+    revealed: true,
   );
 
   /// Decoded thumbnail bytes, or null.
@@ -80,6 +124,7 @@ class RoomInfo {
     required this.fileCount,
     this.uploadingAlias,
     this.uploadingFileName,
+    this.e2eKid,
   });
 
   final String code;
@@ -90,6 +135,9 @@ class RoomInfo {
   final String? uploadingAlias;
   final String? uploadingFileName;
 
+  /// Key id of an end-to-end encrypted room; null for a plaintext room.
+  final String? e2eKid;
+
   factory RoomInfo.fromJson(Map<String, dynamic> j) => RoomInfo(
     code: (j['code'] as String?) ?? '',
     hostAlias: (j['hostAlias'] as String?) ?? '',
@@ -98,7 +146,30 @@ class RoomInfo {
     fileCount: (j['fileCount'] as num?)?.toInt() ?? 0,
     uploadingAlias: j['uploadingAlias'] as String?,
     uploadingFileName: j['uploadingFileName'] as String?,
+    e2eKid: e2eKidOf(j['e2e']),
   );
+}
+
+/// The kid of a room's `e2e` field (`{v: 1, kid}`), or null.
+String? e2eKidOf(Object? e2e) {
+  if (e2e is! Map || e2e['v'] != 1) return null;
+  final kid = e2e['kid'];
+  return kid is String && kid.length == 22 ? kid : null;
+}
+
+/// Whether a Cloud room's files are end-to-end encrypted, as this device sees it.
+enum RoomSecurity {
+  /// Not a Cloud room, or not known yet.
+  unknown,
+
+  /// A room made by an older app: files are stored as sent.
+  plain,
+
+  /// Encrypted, but no member has handed this device the key yet.
+  waitingForKey,
+
+  /// Encrypted, and this device holds the key.
+  encrypted,
 }
 
 /// The identity of a joined room + whether we host it.

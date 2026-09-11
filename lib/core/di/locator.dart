@@ -175,7 +175,7 @@ Future<void> setupLocator() async {
     // Tier limits from GET /api/v1/config, cached per run (1 GiB fallback).
     // Lazy: no Dio until the remote-share flow first checks the limit.
     ..registerLazySingleton<CloudConfigService>(CloudConfigService.new)
-    ..registerSingleton<RoomService>(RoomService(identity, server, history))
+    ..registerSingleton<RoomService>(RoomService(identity, server, history, prefs))
     ..registerSingleton<LocalRoomService>(
       LocalRoomService(identity, server, history, telemetry),
     )

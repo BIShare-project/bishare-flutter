@@ -374,7 +374,12 @@
     "web_room_title": "浏览器房间",
     "web_room_body": "此房间在浏览器中创建。文件在浏览器之间直接（P2P）传输，App 暂时无法加入。请在浏览器中打开 bishare.app/rooms 加入，或请房主创建一个云房间。",
     "web_room_ok": "知道了",
-    "web_room_open": "在浏览器中打开并加入"
+    "web_room_open": "在浏览器中打开并加入",
+    "e2e_on": "端到端加密",
+    "e2e_waiting": "正在等待成员共享房间密钥…",
+    "e2e_off": "未端到端加密（由旧版应用创建）",
+    "encrypted_file": "加密文件",
+    "error_update_required": "该房间已端到端加密。请更新 BIShare 后加入。"
   },
   "settings": {
     "about": "关于",

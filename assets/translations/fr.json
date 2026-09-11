@@ -374,7 +374,12 @@
     "web_room_title": "Salon navigateur",
     "web_room_body": "Ce salon a été créé dans un navigateur. Les fichiers vont directement de navigateur à navigateur (P2P), et l'app ne peut pas encore le rejoindre. Ouvrez bishare.app/rooms dans un navigateur, ou demandez à l'hôte de créer un salon Cloud.",
     "web_room_ok": "Compris",
-    "web_room_open": "Ouvrir dans le navigateur et rejoindre"
+    "web_room_open": "Ouvrir dans le navigateur et rejoindre",
+    "e2e_on": "Chiffré de bout en bout",
+    "e2e_waiting": "En attente qu'un membre partage la clé du salon…",
+    "e2e_off": "Non chiffré de bout en bout (créé avec une ancienne app)",
+    "encrypted_file": "Fichier chiffré",
+    "error_update_required": "Ce salon est chiffré de bout en bout. Mettez BIShare à jour pour le rejoindre."
   },
   "settings": {
     "about": "À propos",

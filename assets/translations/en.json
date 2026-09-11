@@ -374,7 +374,12 @@
     "web_room_title": "Browser room",
     "web_room_body": "This room was created in a browser. Files go directly browser-to-browser (P2P), which the app can't join yet. Open bishare.app/rooms in a browser to join — or ask the host to make a Cloud room to use the app.",
     "web_room_ok": "Got it",
-    "web_room_open": "Open in browser & join"
+    "web_room_open": "Open in browser & join",
+    "e2e_on": "End-to-end encrypted",
+    "e2e_waiting": "Waiting for a member to share the room key…",
+    "e2e_off": "Not end-to-end encrypted (made with an older app)",
+    "encrypted_file": "Encrypted file",
+    "error_update_required": "This room is end-to-end encrypted. Update BIShare to join it."
   },
   "settings": {
     "about": "About",

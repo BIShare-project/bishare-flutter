@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../remote/data/cloud_transfer_service.dart' show CloudDownloadException;
 import '../data/local_room_service.dart';
+import '../data/room_e2e.dart' show RoomE2E;
 import '../data/room_service.dart';
 import '../data/room_thumbnail.dart';
 import '../data/webrtc_room_service.dart';
@@ -26,6 +27,7 @@ class RoomState {
     this.error = '',
     this.webRoomHint = false,
     this.webRoomCode,
+    this.security = RoomSecurity.unknown,
   });
 
   final RoomStatus status;
@@ -50,6 +52,10 @@ class RoomState {
   /// and join" deep link.
   final String? webRoomCode;
 
+  /// Whether this Cloud room's files are end-to-end encrypted, and whether
+  /// the key has reached this device yet.
+  final RoomSecurity security;
+
   bool get isHost => session?.isHost ?? false;
 
   RoomState copyWith({
@@ -63,6 +69,7 @@ class RoomState {
     String? error,
     bool webRoomHint = false,
     String? webRoomCode,
+    RoomSecurity? security,
   }) => RoomState(
     status: status ?? this.status,
     session: session ?? this.session,
@@ -73,6 +80,7 @@ class RoomState {
     error: error ?? this.error,
     webRoomHint: webRoomHint,
     webRoomCode: webRoomCode ?? this.webRoomCode,
+    security: security ?? this.security,
   );
 }
 
@@ -133,6 +141,7 @@ class RoomCubit extends Cubit<RoomState> {
           session: session,
           members: const [],
           files: const [],
+          security: local ? RoomSecurity.unknown : _remote.security,
         ),
       );
     } on Object {
@@ -226,6 +235,7 @@ class RoomCubit extends Cubit<RoomState> {
             session: session,
             members: members,
             files: files,
+            security: _remote.security,
           ),
         );
         done.complete();
@@ -278,13 +288,15 @@ class RoomCubit extends Cubit<RoomState> {
     try {
       await done.future;
     } on DioException catch (e) {
-      final notFound = e.response?.statusCode == 404;
+      final code = e.response?.statusCode;
       emit(
         state.copyWith(
           status: RoomStatus.error,
-          error: notFound
+          error: code == 404
               ? 'room.error_not_found'.tr()
-              : 'room.error_join'.tr(),
+              : code == 426
+                  ? 'room.error_update_required'.tr()
+                  : 'room.error_join'.tr(),
         ),
       );
     } on Object {
@@ -318,11 +330,19 @@ class RoomCubit extends Cubit<RoomState> {
           state.copyWith(files: [file, ...state.files], clearUploading: true),
         );
       case RoomUploadStartEvent(:final alias, :final fileName):
-        emit(state.copyWith(uploadingLabel: '$alias · $fileName'));
+        // In an encrypted room the name on the wire is a placeholder.
+        emit(state.copyWith(
+          uploadingLabel: fileName == RoomE2E.sealedName ? alias : '$alias · $fileName',
+        ));
       case RoomUploadDoneEvent():
         emit(state.copyWith(clearUploading: true));
       case RoomClosedEvent():
         emit(const RoomState(error: 'The host closed the room.'));
+      case RoomSecurityEvent(:final security):
+        emit(state.copyWith(security: security));
+      case RoomFilesRevealedEvent(:final files):
+        final byId = {for (final f in files) f.id: f};
+        emit(state.copyWith(files: [for (final f in state.files) byId[f.id] ?? f]));
     }
   }
 

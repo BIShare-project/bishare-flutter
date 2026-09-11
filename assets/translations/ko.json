@@ -374,7 +374,12 @@
     "web_room_title": "브라우저 룸",
     "web_room_body": "이 룸은 브라우저에서 만들어졌습니다. 파일은 브라우저 간 직접(P2P) 전송되며 앱은 아직 참여할 수 없어요. 브라우저에서 bishare.app/rooms를 열어 참여하거나, 호스트에게 클라우드 룸을 만들어 달라고 하세요.",
     "web_room_ok": "확인",
-    "web_room_open": "브라우저에서 열어 참여"
+    "web_room_open": "브라우저에서 열어 참여",
+    "e2e_on": "종단간 암호화됨",
+    "e2e_waiting": "멤버가 룸 키를 공유하기를 기다리는 중…",
+    "e2e_off": "종단간 암호화 안 됨 (이전 버전 앱으로 생성)",
+    "encrypted_file": "암호화된 파일",
+    "error_update_required": "이 룸은 종단간 암호화되어 있어요. 참여하려면 BIShare를 업데이트하세요."
   },
   "settings": {
     "about": "정보",
