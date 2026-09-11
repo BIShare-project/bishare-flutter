@@ -567,7 +567,7 @@ class RoomService {
         onSendProgress: onProgress,
         cancelToken: cancel,
       );
-      return _reveal(RoomFile.fromJson(_data(res)!));
+      return await _reveal(RoomFile.fromJson(_data(res)!));
     } finally {
       try {
         await scratch.delete(recursive: true);
