@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/apps/installed_apps_channel.dart';
+import '../../../core/io/media_picker.dart';
 import '../../../core/media/media_sources.dart';
 import '../../settings/domain/settings.dart';
 import '../domain/sendable_file.dart';
@@ -28,14 +29,11 @@ class TrayCubit extends Cubit<List<SendableFile>> {
 
   /// Pick photos/videos, compressing images to the current quality setting.
   Future<void> pickMedia() async {
-    final res = await FilePicker.platform.pickFiles(
-      allowMultiple: true,
-      type: FileType.media,
-    );
-    if (res == null) return;
+    final picked = await pickMediaPaths();
+    if (picked.isEmpty) return;
     final q = _quality.params;
     final resolved = <String>[];
-    for (final path in res.paths.whereType<String>()) {
+    for (final path in picked) {
       if (_isImage(path)) {
         resolved.add(
           await MediaSources.compressImage(

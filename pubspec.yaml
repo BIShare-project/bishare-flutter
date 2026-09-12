@@ -115,6 +115,9 @@ dependencies:
   flutter_image_compress: ^2.4.0
   flutter_svg: ^2.3.0
   showcaseview: ^5.1.0
+  image_picker: ^1.2.3
+  image_picker_android: ^0.8.13+23
+  image_picker_platform_interface: ^2.11.1
 
 dev_dependencies:
   path_provider_platform_interface: ^2.1.3

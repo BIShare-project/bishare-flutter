@@ -11,6 +11,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../core/crypto/bse2.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/identity/device_identity.dart';
+import '../../../core/io/media_picker.dart';
 import '../../../core/ui/app_ui.dart';
 import '../data/cloud_config_service.dart';
 import '../data/cloud_transfer_service.dart';
@@ -58,10 +59,13 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
   }
 
   Future<void> _pick({required bool mediaOnly}) async {
-    final res = await FilePicker.platform.pickFiles(
-      type: mediaOnly ? FileType.media : FileType.any,
-    );
-    final path = res?.files.single.path;
+    final String? path;
+    if (mediaOnly) {
+      path = (await pickMediaPaths(allowMultiple: false)).firstOrNull;
+    } else {
+      final res = await FilePicker.platform.pickFiles();
+      path = res?.files.single.path;
+    }
     if (path == null) return;
     final file = File(path);
     if (_shareViaWeb) {

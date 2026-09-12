@@ -5,6 +5,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/locator.dart';
+import '../../../core/io/media_picker.dart';
 import '../../../core/server/transfer_types.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../discovery/domain/discovered_device.dart';
@@ -46,15 +47,16 @@ class _RequestContentState extends State<_RequestContent> {
   }
 
   Future<void> _pick({required bool photosOnly}) async {
-    final res = await FilePicker.platform.pickFiles(
-      type: photosOnly ? FileType.media : FileType.any,
-      allowMultiple: true,
-    );
-    if (res == null) return;
-    final files = res.files
-        .where((f) => f.path != null)
-        .map((f) => SendableFile.fromPath(f.path!, id: _uuid.v4()))
-        .toList();
+    final List<String> paths;
+    if (photosOnly) {
+      paths = await pickMediaPaths();
+    } else {
+      final res = await FilePicker.platform.pickFiles(allowMultiple: true);
+      paths = res?.paths.whereType<String>().toList() ?? const [];
+    }
+    final files = [
+      for (final p in paths) SendableFile.fromPath(p, id: _uuid.v4()),
+    ];
     if (files.isNotEmpty) setState(() => _selected.addAll(files));
   }
 
@@ -110,7 +112,12 @@ class _RequestContentState extends State<_RequestContent> {
           _header(cs),
           const SizedBox(height: 18),
           if (_done)
-            _status(cs, AppIcons.successSent, kOnlineGreen, 'receive.files_sent'.tr())
+            _status(
+              cs,
+              AppIcons.successSent,
+              kOnlineGreen,
+              'receive.files_sent'.tr(),
+            )
           else if (_sending)
             _status(
               cs,
@@ -332,12 +339,7 @@ class _RequestContentState extends State<_RequestContent> {
     );
   }
 
-  Widget _status(
-    ShadColorScheme cs,
-    String? icon,
-    Color tint,
-    String title,
-  ) {
+  Widget _status(ShadColorScheme cs, String? icon, Color tint, String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
@@ -350,7 +352,10 @@ class _RequestContentState extends State<_RequestContent> {
                     child: SizedBox(
                       width: 34,
                       height: 34,
-                      child: CircularProgressIndicator(strokeWidth: 3, color: tint),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        color: tint,
+                      ),
                     ),
                   )
                 : AppSvgIcon(icon, size: 60, color: tint),

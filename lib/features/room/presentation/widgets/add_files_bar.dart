@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/io/media_picker.dart';
 import '../../../../core/ui/app_ui.dart';
 
 class AddFilesBar extends StatelessWidget {
@@ -10,11 +11,13 @@ class AddFilesBar extends StatelessWidget {
   final ValueChanged<List<String>> onPicked;
 
   Future<void> _pick(bool mediaOnly) async {
-    final res = await FilePicker.platform.pickFiles(
-      allowMultiple: true,
-      type: mediaOnly ? FileType.media : FileType.any,
-    );
-    final paths = res?.paths.whereType<String>().toList() ?? const [];
+    final List<String> paths;
+    if (mediaOnly) {
+      paths = await pickMediaPaths();
+    } else {
+      final res = await FilePicker.platform.pickFiles(allowMultiple: true);
+      paths = res?.paths.whereType<String>().toList() ?? const [];
+    }
     if (paths.isNotEmpty) onPicked(paths);
   }
 
