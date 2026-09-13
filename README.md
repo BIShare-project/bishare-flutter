@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="https://bishare.app/logo.svg" alt="BIShare logo" width="88">
-
-# BIShare
+<img src="docs/github-social-preview-1280x640.png" alt="BIShare — AirDrop for every device. iPhone, Android, Mac, Windows, Linux." width="100%">
 
 **AirDrop for every device.** Send files between iPhone, Android, Mac, Windows
 & Linux — directly, end-to-end encrypted, at full Wi-Fi speed. The other side
