@@ -53,6 +53,9 @@ class WebrtcSignaling {
 
   void Function()? onOpen;
   void Function()? onClose;
+  /// The server refused the hello because its roster is full (30 peers behind
+  /// one address). Fires just before [onClose].
+  void Function()? onFull;
   void Function(List<SignalPeer> peers)? onPeers;
   void Function(SignalPeer peer)? onPeerJoined;
   void Function(String peerId)? onPeerLeft;
@@ -65,6 +68,9 @@ class WebrtcSignaling {
         '${CloudConfig.wsBase}/api/v1/nearby/ws${code == null ? '' : '?code=${Uri.encodeComponent(code)}'}';
     try {
       final channel = WebSocketChannel.connect(Uri.parse(url));
+      // A refused connection surfaces on the stream (onError/onDone); `ready`
+      // fails too, and unobserved it would be an uncaught async error.
+      unawaited(channel.ready.catchError((Object _) {}));
       _ws = channel;
       channel.sink.add(jsonEncode({
         'type': 'hello',
@@ -126,6 +132,7 @@ class WebrtcSignaling {
         ));
         break;
       case 'full':
+        onFull?.call();
         _handleClose();
         break;
     }

@@ -96,6 +96,11 @@ class RoomService {
   String? _code;
   bool _active = false;
 
+  /// Socket attempts in a row that ended without a `sync` (the join never
+  /// went through). Drives the reconnect backoff.
+  int _wsFailures = 0;
+  bool _wsSynced = false;
+
   // ── end-to-end encryption state (per joined room) ──
   RoomKeyPair? _pair; // this join's X25519 pair for the hand-off
   Uint8List? _roomKey; // K, once made here or handed to us
@@ -218,6 +223,7 @@ class RoomService {
   void _connectWs(String code) {
     _code = code;
     _active = true;
+    _wsFailures = 0;
     _pair = null;
     unawaited(
       RoomE2E.newKeyPair().then((p) {
@@ -229,6 +235,7 @@ class RoomService {
 
   void _openSocket() {
     if (!_active || _code == null) return;
+    _wsSynced = false;
     // Tear down any prior socket so reconnects don't stack subscriptions.
     _wsSub?.cancel();
     _wsSub = null;
@@ -238,6 +245,9 @@ class RoomService {
       final channel = WebSocketChannel.connect(
         Uri.parse('${CloudConfig.wsBase}${CloudConfig.roomWs(_code!)}'),
       );
+      // A refused connection surfaces on the stream (onError/onDone → reconnect);
+      // `ready` fails too, and unobserved it would be an uncaught async error.
+      unawaited(channel.ready.catchError((Object _) {}));
       _ws = channel;
       channel.sink.add(
         jsonEncode({
@@ -280,6 +290,8 @@ class RoomService {
     final map = data is Map ? data.cast<String, dynamic>() : const <String, dynamic>{};
     switch (msg['type']) {
       case 'sync':
+        _wsSynced = true;
+        _wsFailures = 0;
         final info = map['info'] is Map
             ? RoomInfo.fromJson((map['info'] as Map).cast<String, dynamic>())
             : null;
@@ -320,9 +332,11 @@ class RoomService {
       case 'upload_done':
         _events.add(const RoomUploadDoneEvent());
       case 'room_closed':
-        final code = _code;
-        if (code != null) _forgetKey(code);
-        _events.add(const RoomClosedEvent());
+        _roomGone();
+      case 'error':
+        // The room expired or was closed between reconnects: end the session
+        // the same way a close does, instead of rejoining forever.
+        if (map['message'] == 'ROOM_NOT_FOUND') _roomGone();
       case 'key_request':
         _answerKeyRequest(map['fingerprint'], map['pub']);
       case 'key_grant':
@@ -474,10 +488,33 @@ class RoomService {
     _wsSub?.cancel();
     _wsSub = null;
     _ws = null;
-    // Reconnect while we're still in the room (mirrors native's 3s retry).
-    if (_active) {
-      Future.delayed(const Duration(seconds: 3), _openSocket);
+    if (!_active) return;
+    if (!_wsSynced) _wsFailures++;
+    unawaited(_reconnect());
+  }
+
+  /// Reconnect while still in the room: 3 s after a drop, doubling for each
+  /// attempt that never got a `sync`, up to 30 s. An expired room refuses the
+  /// upgrade before it can send an `error` frame, so after a few failures ask
+  /// the REST API whether the room still exists and close the session if not —
+  /// rather than retrying every 3 s for as long as the room screen is open.
+  Future<void> _reconnect() async {
+    final code = _code;
+    if (_wsFailures >= 3 && code != null) {
+      try {
+        await _dio.getUri<dynamic>(_api(CloudConfig.roomInfo(code)));
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 404 && _active && _code == code) {
+          _roomGone();
+          return;
+        }
+      } on Object {
+        // offline — keep retrying
+      }
     }
+    final seconds = min(3 * (1 << min(_wsFailures, 4)), 30);
+    await Future<void>.delayed(Duration(seconds: seconds));
+    if (_active && _code == code) _openSocket();
   }
 
   /// Upload [file] into the room (raw body + metadata headers).
@@ -677,6 +714,7 @@ class RoomService {
 
   Future<void> leave(String code) async {
     _active = false;
+    _wsFailures = 0;
     _forgetKey(code);
     _resetE2E();
     _disconnect();
@@ -692,6 +730,7 @@ class RoomService {
 
   Future<void> close(String code, String hostToken) async {
     _active = false;
+    _wsFailures = 0;
     _forgetKey(code);
     _resetE2E();
     _disconnect();
@@ -703,6 +742,21 @@ class RoomService {
     } on Object {
       // best effort
     }
+  }
+
+  /// The room is gone — closed by its host, expired, or no longer found. Stop
+  /// the socket and the reconnect loop here, and tell the UI once: the cubit
+  /// only shows the closed state, it doesn't call [leave], so without this the
+  /// service kept dialling a dead room (and re-announcing it) for as long as
+  /// the app stayed open.
+  void _roomGone() {
+    if (!_active) return;
+    final code = _code;
+    if (code != null) _forgetKey(code);
+    _active = false;
+    _wsFailures = 0;
+    _disconnect();
+    _events.add(const RoomClosedEvent());
   }
 
   void _disconnect() {

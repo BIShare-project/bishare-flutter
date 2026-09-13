@@ -160,6 +160,9 @@ class WebNearbyService {
   bool get running => _running;
   Timer? _retry;
 
+  /// Connections in a row that closed before the server sent its roster.
+  int _failures = 0;
+
   /// Connect to the nearby signaling room. No-op when already running or when
   /// the device has no LAN address (cellular CGNAT would group strangers).
   Future<void> start() async {
@@ -167,6 +170,7 @@ class WebNearbyService {
     final ip = await LocalIp.resolve().catchError((Object _) => '');
     if (ip.isEmpty) return;
     _running = true;
+    _failures = 0;
     _connect();
   }
 
@@ -192,8 +196,15 @@ class WebNearbyService {
     );
     // Warm the TURN cache before any offer can arrive.
     unawaited(fetchWebrtcIceServers());
+    var accepted = false;
+    var full = false;
     final sig = WebrtcSignaling(self)
+      ..onFull = () {
+        full = true;
+      }
       ..onPeers = (list) {
+        accepted = true;
+        _failures = 0;
         _peers
           ..clear()
           ..addEntries(list.where((p) => !_isAppPeer(p)).map((p) => MapEntry(
@@ -217,10 +228,17 @@ class WebNearbyService {
       ..onClose = () {
         _peers.clear();
         _emitPeers();
-        // Keep the bridge alive across blips while enabled.
+        // Keep the bridge alive across blips while enabled — backing off when
+        // the server keeps refusing: 4 s after a drop, doubling per failed
+        // attempt up to 60 s, and 5 min when this address's roster is full
+        // (a campus or office NAT with 30 BIShare users already on it).
         if (_running) {
+          if (!accepted) _failures++;
+          final delay = full
+              ? const Duration(minutes: 5)
+              : Duration(seconds: min(4 * (1 << min(_failures, 4)), 60));
           _retry?.cancel();
-          _retry = Timer(const Duration(seconds: 4), _connect);
+          _retry = Timer(delay, _connect);
         }
       };
     _sig = sig;

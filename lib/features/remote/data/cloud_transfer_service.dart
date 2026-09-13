@@ -39,6 +39,11 @@ String describeDownloadError(Object e) {
     if (status == 404) return 'Not found — the link may have expired.';
     if (status == 410) return 'This transfer was already downloaded.';
     if (status == 403) return 'Access denied for this link.';
+    // Upload rate or daily volume limit for this network — not a server fault,
+    // and "try again" right away would fail the same way.
+    if (status == 429) {
+      return 'Too many uploads from this network right now. Please try again later.';
+    }
     switch (e.type) {
       case DioExceptionType.connectionError:
       case DioExceptionType.connectionTimeout:
