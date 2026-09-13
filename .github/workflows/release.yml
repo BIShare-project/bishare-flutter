@@ -614,6 +614,20 @@ jobs:
           sudo apt-get install -y clang cmake ninja-build pkg-config \
             libgtk-3-dev liblzma-dev libayatana-appindicator3-dev \
             libkeybinder-3.0-dev
+      # flutter_zxing compiles zxing-cpp, which uses C++20 ranges that 22.04's
+      # clang 14 cannot build against libstdc++ 12 ("no matching function for
+      # call to 'construct_at'" in LocalGrid.cpp). Clang 18 from apt.llvm.org
+      # builds it; staying on 22.04 keeps the glibc floor where it was. Flutter
+      # invokes plain `clang`/`clang++`, so they are shimmed ahead on PATH.
+      - name: Clang 18 for the native plugins
+        run: |
+          wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
+          sudo bash /tmp/llvm.sh 18
+          mkdir -p "$RUNNER_TEMP/clang18"
+          ln -sf "$(command -v clang-18)" "$RUNNER_TEMP/clang18/clang"
+          ln -sf "$(command -v clang++-18)" "$RUNNER_TEMP/clang18/clang++"
+          echo "$RUNNER_TEMP/clang18" >> "$GITHUB_PATH"
+      - run: clang++ --version
       - run: flutter config --enable-linux-desktop
       - run: flutter pub get
       - name: flutter_rust_bridge codegen

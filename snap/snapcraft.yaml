@@ -68,6 +68,17 @@ apps:
       - removable-media # save to USB drives / mounted volumes
       - audio-playback  # notification / transfer sounds
 
+# Clang 18 for the native plugins. flutter_zxing compiles zxing-cpp, whose C++20
+# ranges core22's clang 14 cannot build ("no matching function for call to
+# 'construct_at'"). Verified in an Ubuntu 22.04 container: clang 18 builds it
+# against core22's own libstdc++ 11.
+package-repositories:
+  - type: apt
+    url: http://apt.llvm.org/jammy/
+    suites: [llvm-toolchain-jammy-18]
+    components: [main]
+    key-id: 6084F3CF814B57C1CF12EFD515CF4D18AF4F7421
+
 parts:
   # Rust toolchain for the flutter_rust_bridge core. cargokit compiles the
   # `bishare_ffi` crate during `flutter build linux`. The bishare-protocol
@@ -100,7 +111,7 @@ parts:
     build-environment:
       - PATH: "$CRAFT_PART_BUILD/flutter-distro/bin:$HOME/.cargo/bin:$PATH"
     build-packages:
-      - clang
+      - clang-18
       - cmake
       - ninja-build
       - pkg-config
@@ -129,6 +140,11 @@ parts:
     # .github/workflows/release.yml — keep the version in step with FRB_VERSION
     # there.
     override-build: |
+      # Flutter invokes plain `clang`/`clang++`; /usr/local/bin is ahead of
+      # /usr/bin on PATH, so these shims select clang 18 for the whole build.
+      ln -sf /usr/bin/clang-18 /usr/local/bin/clang
+      ln -sf /usr/bin/clang++-18 /usr/local/bin/clang++
+      clang++ --version
       git clone --depth 1 -b stable https://github.com/flutter/flutter.git "$CRAFT_PART_BUILD/flutter-codegen"
       export PATH="$CRAFT_PART_BUILD/flutter-codegen/bin:$PATH"
       git config --global --add safe.directory "$CRAFT_PART_BUILD/flutter-codegen"
