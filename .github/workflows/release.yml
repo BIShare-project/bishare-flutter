@@ -408,13 +408,6 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           printf '%s' "$ASC_API_KEY_P8" > ~/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8
           echo "ASC_KEY_PATH=$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
-      # Sign in with Apple is a restricted entitlement: outside the App Store
-      # it needs a Developer ID provisioning profile. Login is behind a remote
-      # flag anyway, so the direct-download build simply does without it.
-      - name: Strip the App Store-only entitlement
-        run: |
-          /usr/libexec/PlistBuddy -c "Delete :com.apple.developer.applesignin" macos/Runner/Release.entitlements || true
-          plutil -p macos/Runner/Release.entitlements
       - run: flutter pub get
       - name: flutter_rust_bridge codegen
         run: |
