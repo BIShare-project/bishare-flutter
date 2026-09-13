@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 2.5.3+253
+version: 2.5.5+255
 
 environment:
   sdk: ">=3.11.1 <4.0.0"
@@ -250,7 +250,7 @@ msix_config:
   publisher_display_name: PT BILLION JAYA GROUP
   identity_name: 1382PTBILLIONJAYAGROUP.BIShare
   publisher: CN=AD0EE839-9334-4472-ADA4-13297DF912A6
-  msix_version: 2.5.3.0
+  msix_version: 2.5.5.0
   logo_path: assets/icon/bishare_icon.png
   architecture: x64
   # Local transfer is the product: privateNetworkClientServer is what lets the
