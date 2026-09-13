@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mime/mime.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -136,7 +137,7 @@ class InboxRow extends StatelessWidget {
   }
 
   void _openRow(BuildContext context, TransferRecord r) {
-    // Images open the swipeable gallery; other files open externally.
+    // Images open the swipeable gallery; everything else the rich preview.
     final items = context.read<InboxCubit>().state;
     if (_isImage(r.fileType)) {
       final imgs = items.where((x) => _isImage(x.fileType)).toList();
@@ -147,10 +148,10 @@ class InboxRow extends StatelessWidget {
       );
       return;
     }
-    _openExternal(context, r);
+    _preview(context, r);
   }
 
-  Future<void> _openExternal(BuildContext context, TransferRecord r) async {
+  Future<void> _preview(BuildContext context, TransferRecord r) async {
     final path = r.savedPath;
     if (path == null || !File(path).existsSync()) {
       toast(
@@ -160,9 +161,13 @@ class InboxRow extends StatelessWidget {
       );
       return;
     }
-    if (!await openFile(path) && context.mounted) {
-      toast(context, 'common.no_app_open'.tr(), type: ToastType.error);
-    }
+    await showFilePreview(
+      context,
+      path: path,
+      name: r.fileName,
+      mimeType: r.fileType ?? lookupMimeType(r.fileName) ?? 'application/octet-stream',
+      size: r.fileSize,
+    );
   }
 }
 

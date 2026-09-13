@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:mime/mime.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -191,11 +192,13 @@ class _FileManagerPageState extends State<FileManagerPage> {
     );
   }
 
-  Future<void> _open(ManagedFile f) async {
-    if (!await openFile(f.path) && mounted) {
-      toast(context, 'common.no_app_open'.tr(), type: ToastType.error);
-    }
-  }
+  Future<void> _open(ManagedFile f) => showFilePreview(
+    context,
+    path: f.path,
+    name: f.name,
+    mimeType: f.fileType ?? lookupMimeType(f.name) ?? 'application/octet-stream',
+    size: f.size,
+  );
 
   Future<void> _share(ManagedFile f) =>
       SharePlus.instance.share(ShareParams(files: [XFile(f.path)]));

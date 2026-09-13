@@ -91,6 +91,7 @@ class _ImageGalleryPageState extends State<ImageGalleryPage> {
                   ),
                   Expanded(
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           current.fileName,

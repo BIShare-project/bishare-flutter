@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mime/mime.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -102,9 +103,13 @@ class HistoryRow extends StatelessWidget {
       );
       return;
     }
-    if (!await openFile(path) && context.mounted) {
-      toast(context, 'common.no_app_open'.tr(), type: ToastType.error);
-    }
+    await showFilePreview(
+      context,
+      path: path,
+      name: r.fileName,
+      mimeType: r.fileType ?? lookupMimeType(r.fileName) ?? 'application/octet-stream',
+      size: r.fileSize,
+    );
   }
 
   List<AppMenuAction> _actions(BuildContext context, TransferRecord r) {
