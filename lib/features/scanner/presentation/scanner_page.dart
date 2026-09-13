@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/deeplink/deep_link.dart';
 import '../../../core/deeplink/deep_link_service.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/ui/app_ui.dart';
+import 'qr_camera.dart';
 
 /// Full-screen QR scanner — a faithful port of the native iOS `QRScannerView`:
 /// live camera, an accent scan frame with corner brackets, a torch + close bar,
@@ -21,10 +21,7 @@ class ScannerPage extends StatefulWidget {
 }
 
 class _ScannerPageState extends State<ScannerPage> {
-  final MobileScannerController _controller = MobileScannerController(
-    formats: const [BarcodeFormat.qrCode],
-    detectionSpeed: DetectionSpeed.noDuplicates,
-  );
+  final QrCameraController _controller = QrCameraController();
   final TextEditingController _manual = TextEditingController();
   bool _handled = false;
   bool _showManual = false;
@@ -36,15 +33,9 @@ class _ScannerPageState extends State<ScannerPage> {
     super.dispose();
   }
 
-  void _onDetect(BarcodeCapture capture) {
+  void _onCode(String raw) {
     if (_handled) return;
-    for (final barcode in capture.barcodes) {
-      final raw = barcode.rawValue;
-      if (raw != null && DeepLink.looksLikeBiShare(raw)) {
-        _accept(raw);
-        return;
-      }
-    }
+    if (DeepLink.looksLikeBiShare(raw)) _accept(raw);
   }
 
   void _accept(String payload) {
@@ -80,10 +71,10 @@ class _ScannerPageState extends State<ScannerPage> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          MobileScanner(
+          QrCamera(
             controller: _controller,
-            onDetect: _onDetect,
-            errorBuilder: (context, error) => const _CameraDenied(),
+            onCode: _onCode,
+            denied: const _CameraDenied(),
           ),
           const DecoratedBox(
             decoration: BoxDecoration(color: Colors.black26),
@@ -113,7 +104,7 @@ class _ScannerPageState extends State<ScannerPage> {
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.controller});
 
-  final MobileScannerController controller;
+  final QrCameraController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -138,10 +129,9 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          ValueListenableBuilder<MobileScannerState>(
+          ValueListenableBuilder<bool>(
             valueListenable: controller,
-            builder: (context, state, _) {
-              final on = state.torchState == TorchState.on;
+            builder: (context, on, _) {
               return _CircleButton(
                 icon: on ? AppIcons.flashlight : AppIcons.flashlightOff,
                 active: on,

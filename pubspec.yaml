@@ -103,7 +103,12 @@ dependencies:
   qr_flutter: ^4.1.0
   flutter_local_notifications: ^22.0.1
   compact_toast: ^0.0.1
-  mobile_scanner: ^7.2.0
+  # QR scanning: zxing-cpp over the `camera` plugin (CameraX / AVFoundation).
+  # No ML Kit or Play Services in the Android build.
+  flutter_zxing: ^3.0.1
+  # Direct only for FlashMode (torch), which flutter_zxing doesn't re-export.
+  # Keep inside flutter_zxing's `>=0.11.0 <0.13.0` range.
+  camera: ^0.12.1
   url_launcher: ^6.3.2
   web_socket_channel: ^3.0.3
   flutter_webrtc: ^0.14.1

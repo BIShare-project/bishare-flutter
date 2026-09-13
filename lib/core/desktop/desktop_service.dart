@@ -14,13 +14,12 @@ import '../server/transfer_server.dart';
 bool get isDesktop =>
     !kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux);
 
-/// Whether camera-based QR scanning is available. `mobile_scanner` ships an
-/// implementation on Android, iOS, and macOS — but NOT on Windows or Linux.
-/// Gate every camera-scan entry point on this so the Windows/Linux builds never
-/// construct a `MobileScannerController` (which throws `MissingPluginException`).
-/// QR Beam stays send-only on Windows/Linux as a result.
+/// Whether camera-based QR scanning is available. `flutter_zxing` reads the
+/// camera on Android and iOS only; on macOS, Windows and Linux it can decode
+/// image files but has no camera. Gate every camera-scan entry point on this.
+/// QR Beam stays send-only on desktop as a result.
 bool get supportsCameraScan =>
-    !kIsWeb && !(Platform.isWindows || Platform.isLinux);
+    !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
 /// Desktop-only polish (macOS · Windows · Linux): a native window with a minimum
 /// size that hides to the tray on close (so receiving keeps running in the

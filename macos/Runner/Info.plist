@@ -46,8 +46,6 @@
 		<string>_bishare-nearby._tcp</string>
 		<string>_bishare-nearby._udp</string>
 	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>BIShare uses the camera to scan QR codes for transfers, share links and rooms.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>BIShare lets you pick a contact to share it as a vCard with nearby devices.</string>
 	<key>NSHumanReadableCopyright</key>

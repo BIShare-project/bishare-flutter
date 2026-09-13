@@ -63,8 +63,7 @@ class Header extends StatelessWidget {
                     onPressed: () => context.push('/nearby'),
                   ),
                 // Scan a QR to receive a remote transfer / share / room.
-                // Camera scanning is unavailable on Windows/Linux (no
-                // mobile_scanner).
+                // Camera scanning is mobile-only (see supportsCameraScan).
                 if (supportsCameraScan)
                   AppIconButton(
                     icon: AppIcons.scanDocument,

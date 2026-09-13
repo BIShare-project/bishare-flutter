@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/di/locator.dart';
 import '../../../core/io/scratch_dir.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/ui/app_ui.dart';
+import '../../scanner/presentation/qr_camera.dart';
 import '../domain/beam_codec.dart';
 
 /// QR Beam receiver — scans the sender's cycling QR stream, reassembles the
@@ -23,12 +23,7 @@ class QrBeamReceivePage extends StatefulWidget {
 }
 
 class _QrBeamReceivePageState extends State<QrBeamReceivePage> {
-  // unrestricted: deliver every readable frame (noDuplicates/normal would debounce
-  // the cycling stream and drop frames we still need). The collector dedupes.
-  final MobileScannerController _controller = MobileScannerController(
-    formats: const [BarcodeFormat.qrCode],
-    detectionSpeed: DetectionSpeed.unrestricted,
-  );
+  final QrCameraController _controller = QrCameraController();
   final BeamCollector _collector = BeamCollector();
 
   int _received = 0;
@@ -43,14 +38,9 @@ class _QrBeamReceivePageState extends State<QrBeamReceivePage> {
     super.dispose();
   }
 
-  void _onDetect(BarcodeCapture capture) {
+  void _onCode(String raw) {
     if (_finishing) return;
-    var changed = false;
-    for (final b in capture.barcodes) {
-      final raw = b.rawValue;
-      if (raw != null && _collector.add(raw)) changed = true;
-    }
-    if (changed) {
+    if (_collector.add(raw)) {
       setState(() {
         _received = _collector.received;
         _total = _collector.total;
@@ -63,7 +53,6 @@ class _QrBeamReceivePageState extends State<QrBeamReceivePage> {
     if (_finishing) return;
     _finishing = true;
     try {
-      await _controller.stop();
       final bytes = _collector.assemble();
       final meta = _collector.meta!;
       final dir = await appTempDir();
@@ -96,10 +85,14 @@ class _QrBeamReceivePageState extends State<QrBeamReceivePage> {
         fit: StackFit.expand,
         children: [
           if (!done)
-            MobileScanner(
+            // Continuous: read every frame of the cycling stream, repeats
+            // included (a debounced reader would drop frames still needed).
+            // The collector dedupes.
+            QrCamera(
               controller: _controller,
-              onDetect: _onDetect,
-              errorBuilder: (context, error) => const _CameraDenied(),
+              onCode: _onCode,
+              denied: const _CameraDenied(),
+              continuous: true,
             ),
           if (!done) const DecoratedBox(decoration: BoxDecoration(color: Colors.black26)),
           if (!done) const Center(child: _ScanFrame()),
@@ -254,7 +247,7 @@ class _DoneCard extends StatelessWidget {
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.controller, required this.showTorch});
 
-  final MobileScannerController controller;
+  final QrCameraController controller;
   final bool showTorch;
 
   @override
@@ -281,10 +274,9 @@ class _TopBar extends StatelessWidget {
           ),
           const Spacer(),
           if (showTorch)
-            ValueListenableBuilder<MobileScannerState>(
+            ValueListenableBuilder<bool>(
               valueListenable: controller,
-              builder: (context, state, _) {
-                final on = state.torchState == TorchState.on;
+              builder: (context, on, _) {
                 return _CircleButton(
                   icon: on ? AppIcons.flashlight : AppIcons.flashlightOff,
                   active: on,

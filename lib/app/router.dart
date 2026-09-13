@@ -76,8 +76,8 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: 'scan',
-          // Camera QR scanning isn't available on Windows/Linux — never build
-          // the scanner there (constructing it throws MissingPluginException).
+          // Camera QR scanning is mobile-only — never build the scanner on
+          // desktop, where the camera plugin has no implementation.
           redirect: (context, state) => supportsCameraScan ? null : '/',
           builder: (context, state) => const ScannerPage(),
         ),
@@ -99,7 +99,7 @@ final GoRouter appRouter = GoRouter(
             ),
             GoRoute(
               path: 'receive',
-              // QR Beam receive needs a camera — unavailable on Windows/Linux.
+              // QR Beam receive needs a camera — mobile-only.
               redirect: (context, state) => supportsCameraScan ? null : '/',
               builder: (context, state) => const QrBeamReceivePage(),
             ),

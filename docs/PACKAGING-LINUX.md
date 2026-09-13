@@ -24,7 +24,6 @@ in [`snap/gui/`](../snap/gui/).
 |------|-----|
 | `network`, `network-bind` | LAN transfer + the local `shelf` receiver + cloud relay |
 | `avahi-observe` | mDNS discovery via the host avahi daemon (`bonsoir`) |
-| `camera` | QR scanning / QR Beam receive (`mobile_scanner`) |
 | `home`, `removable-media` | open/save the files the user picks |
 | `audio-playback` | notification / transfer sounds |
 

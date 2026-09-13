@@ -64,7 +64,6 @@ apps:
       - network         # LAN transfer + cloud relay (remote share / rooms)
       - network-bind    # local HTTP receiver (shelf listens on a LAN port)
       - avahi-observe   # mDNS device discovery via the host avahi daemon (bonsoir)
-      - camera          # QR scanning / QR Beam receive (mobile_scanner)
       - home            # open/save files the user explicitly picks
       - removable-media # save to USB drives / mounted volumes
       - audio-playback  # notification / transfer sounds

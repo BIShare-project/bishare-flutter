@@ -59,8 +59,8 @@ class QrBeamPage extends StatelessWidget {
                       context.push('/qr-beam/send');
                     },
                   ),
-                  // Receiving needs a camera to scan the QR stream — unavailable
-                  // on Windows/Linux (no mobile_scanner). QR Beam is send-only there.
+                  // Receiving needs a camera to scan the QR stream — mobile-only
+                  // (see supportsCameraScan). QR Beam is send-only on desktop.
                   if (supportsCameraScan)
                     _OptionCard(
                       icon: AppIcons.scanDocument,
