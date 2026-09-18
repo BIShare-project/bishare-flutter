@@ -262,6 +262,10 @@ class DiscoveryService {
       'deviceType': info.deviceType ?? 'mobile',
       'version': info.version,
       'fingerprint': info.fingerprint,
+      // The X25519 public key, so a peer can encrypt to us without first
+      // asking /api/v1/info. Clipboard datagrams are sealed with it; a peer
+      // that does not advertise one is simply not sent to.
+      'pub': info.publicKey ?? '',
       'port': '${BISharePort.main}',
       // Advertise the QUIC port on EVERY platform so a QUIC sender can always
       // reach us — the transport is symmetric (the sender's choice = the
@@ -366,6 +370,7 @@ class DiscoveryService {
       deviceModel: attrs['model'] ?? '',
       deviceType: attrs['deviceType'] ?? 'mobile',
       version: attrs['version'] ?? '2.0',
+      publicKey: attrs['pub'] ?? '',
       // Every BIShare device runs a QUIC server on the fixed [BISharePort.quic];
       // fall back to it when the TXT record omits it so a QUIC-preferred sender
       // isn't silently forced onto TCP.

@@ -2,6 +2,7 @@ package com.bishare.app
 
 import android.app.UiModeManager
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
@@ -98,6 +99,7 @@ class MainActivity : FlutterActivity() {
                     result.success(setClipboardImage(clipboard, bytes, mime))
                 }
                 "changeCount" -> result.success(clipChanges)
+                "isSensitive" -> result.success(clipboardIsSensitive(clipboard))
                 else -> result.notImplemented()
             }
         }
@@ -209,6 +211,20 @@ class MainActivity : FlutterActivity() {
     }
 
     /** Read the primary clip's image (a content:// item) as `{bytes, mime}`, or null. */
+    /// Whether the current clip is flagged as sensitive — a password manager
+    /// or a password field sets `EXTRA_IS_SENSITIVE` (API 33+; the same extra
+    /// is honoured by earlier OEM builds under its literal key). Such a clip is
+    /// never synced: it is exactly the content that must not leave the device.
+    private fun clipboardIsSensitive(clipboard: ClipboardManager): Boolean {
+        val extras = clipboard.primaryClipDescription?.extras ?: return false
+        val key = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ClipDescription.EXTRA_IS_SENSITIVE
+        } else {
+            "android.content.extra.IS_SENSITIVE"
+        }
+        return extras.getBoolean(key, false)
+    }
+
     private fun clipboardImage(clipboard: ClipboardManager): Map<String, Any>? {
         return try {
             val clip = clipboard.primaryClip ?: return null

@@ -72,6 +72,23 @@ class ClipboardImageChannel {
     }
   }
 
+  /// Whether the clipboard is currently flagged as holding a secret — a
+  /// password manager's clip, or a copy out of a password field.
+  ///
+  /// macOS reads the `org.nspasteboard.*` marker types; Android reads
+  /// `EXTRA_IS_SENSITIVE`. iOS exposes no equivalent, so it answers false and
+  /// the caller applies its own judgement. False is also the answer wherever
+  /// the handler is missing: this gates syncing, so an unknown is treated as
+  /// "not marked" rather than blocking the feature outright.
+  static Future<bool> isSensitive() async {
+    if (!isSupported) return false;
+    try {
+      return await _channel.invokeMethod<bool>('isSensitive') ?? false;
+    } on Object {
+      return false;
+    }
+  }
+
   /// A cheap pasteboard generation counter — bumps whenever ANYTHING is copied
   /// (text included). Null when unavailable; callers then fall back to reading
   /// the image every poll.

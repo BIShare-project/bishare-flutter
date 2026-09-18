@@ -12,6 +12,7 @@ import 'package:image/image.dart' as img;
 import '../../../core/clipboard/clipboard_channel.dart';
 import '../../../core/constants/protocol.dart';
 import '../../../core/identity/device_identity.dart';
+import '../../../core/rust/rust_facade.dart';
 import '../../discovery/data/discovery_service.dart';
 import '../../discovery/domain/discovered_device.dart';
 import 'clipboard_history_store.dart';
@@ -47,6 +48,9 @@ class ClipboardService {
 
   /// Optional cloud path (OFF by default). Wired by the DI layer.
   ClipboardRelay? relay;
+
+  /// Wire version of the sealed envelope. Bumped only if the seal changes.
+  static const int _sealedVersion = 2;
 
   RawDatagramSocket? _socket;
   Timer? _poll;
@@ -185,8 +189,10 @@ class ClipboardService {
   Future<void> _pollClipboard() async {
     final text = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
     if (text != null && text.isNotEmpty && text != _lastText) {
+      // Remember it either way, so a secret is not re-examined every poll and
+      // does not go out the moment it stops being marked.
       _lastText = text;
-      _broadcastText(text);
+      if (!await ClipboardImageChannel.isSensitive()) _broadcastText(text);
     }
     await _pollImage();
   }
@@ -200,7 +206,7 @@ class ClipboardService {
       'sender': _identity.fingerprint,
       'alias': _identity.alias,
     };
-    _send(payload, _discovery.current);
+    unawaited(_send(payload, _discovery.current));
     relay?.forward(payload);
     unawaited(
       history?.addText(
@@ -215,10 +221,6 @@ class ClipboardService {
 
   Future<void> _pollImage() async {
     if (!_enabled || !_includeImages || !imagesSupported) return;
-    // TODO(wave-followup): probe native pasteboard concealed/sensitive types
-    // (org.nspasteboard.ConcealedType / Android EXTRA_IS_SENSITIVE) before
-    // syncing, so password-manager clips are never broadcast. Needs handlers on
-    // all three platforms — deferred.
     // Cheap gate: the pasteboard generation bumps on ANY copy; unchanged →
     // nothing new to read (avoids decoding a many-MB image every 1.5s).
     final count = await ClipboardImageChannel.changeCount();
@@ -235,6 +237,9 @@ class ClipboardService {
     if (hash == _lastImageHash || hash == _lastImagePulledHash) return;
     _lastImageHash = hash;
     _lastImagePulledHash = null;
+    // A marked clipboard is skipped, not queued: password managers publish
+    // QR codes and one-time codes as images too.
+    if (await ClipboardImageChannel.isSensitive()) return;
     await _broadcastImage(image);
   }
 
@@ -262,17 +267,21 @@ class ClipboardService {
     // PeerCapabilities.canClipboardBinary here (same min-version rule).
     final capable = _discovery.current
         .where(
-          (d) => BIShareConfig.versionAtLeast(
-            d.version,
-            BIShareConfig.clipboardBinaryMinVersion,
-          ),
+          (d) =>
+              // A peer with no advertised key cannot be sealed to, so minting
+              // it a token would only leave one sitting in the store to expire.
+              d.publicKey.isNotEmpty &&
+              BIShareConfig.versionAtLeast(
+                d.version,
+                BIShareConfig.clipboardBinaryMinVersion,
+              ),
         )
         .toList(growable: false);
     final share = ClipboardShare(bytes: image.bytes, mime: image.mime);
     for (final peer in capable) {
       // Tokens are ONE-SHOT, so each peer gets its own — a second receiver on
       // the LAN isn't starved by the first one's pull.
-      _send({...base, 'token': store.publish(share)}, [peer]);
+      unawaited(_send({...base, 'token': store.publish(share)}, [peer]));
     }
     // Cloud path: small images travel inline (`data`) since a LAN pull token
     // is meaningless across networks. Only encode when it can actually go out
@@ -295,16 +304,73 @@ class ClipboardService {
     );
   }
 
-  void _send(Map<String, dynamic> payload, List<DiscoveredDevice> peers) {
+  /// Send [payload] to [peers], sealed to each one.
+  ///
+  /// The clipboard is the most personal thing this app moves, and a datagram
+  /// is readable by anything listening on the network, so nothing leaves in
+  /// the clear. Each peer gets its own ciphertext under the AES-256 key
+  /// derived from our X25519 private key and that peer's advertised public
+  /// key; the envelope carries only what routing needs.
+  ///
+  /// A peer that advertises no key is skipped rather than sent to in the
+  /// clear. There is no plaintext fallback anywhere in this path — otherwise
+  /// anything claiming to be an old build could ask for one.
+  Future<void> _send(
+    Map<String, dynamic> payload,
+    List<DiscoveredDevice> peers,
+  ) async {
     final socket = _socket;
-    if (socket == null) return;
-    final data = utf8.encode(jsonEncode(payload));
+    if (socket == null || peers.isEmpty) return;
+    final plain = Uint8List.fromList(utf8.encode(jsonEncode(payload)));
     for (final d in peers) {
+      final sealed = await _seal(plain, d);
+      if (sealed == null) continue; // no key, or no crypto engine — never plain
       try {
-        socket.send(data, InternetAddress(d.host), BISharePort.clipboard);
+        socket.send(sealed, InternetAddress(d.host), BISharePort.clipboard);
       } on Object {
         // unreachable host — skip
       }
+    }
+  }
+
+  /// The wire form: `{type, v, sender, box}`. `box` is
+  /// `nonce(12) | ciphertext | tag(16)` from the shared Rust AES-256-GCM, with
+  /// a fresh random nonce per datagram (chunk index 0, so the nonce in the box
+  /// IS the base nonce the receiver derives with).
+  Future<List<int>?> _seal(Uint8List plain, DiscoveredDevice peer) async {
+    if (peer.publicKey.isEmpty) return null;
+    final key = _identity.deriveKey(peer.publicKey);
+    if (key == null) return null;
+    final box = await Rust.encryptChunk(plain, key, 0, Rust.generateBaseNonce());
+    if (box == null) return null;
+    return utf8.encode(
+      jsonEncode({
+        'type': 'clipboard',
+        'v': _sealedVersion,
+        'sender': _identity.fingerprint,
+        'box': base64Encode(box),
+      }),
+    );
+  }
+
+  /// Open a datagram sealed by [peer], or null if it was not for us.
+  Future<Map<String, dynamic>?> _open(String box, DiscoveredDevice peer) async {
+    if (peer.publicKey.isEmpty) return null;
+    final key = _identity.deriveKey(peer.publicKey);
+    if (key == null) return null;
+    Uint8List raw;
+    try {
+      raw = base64Decode(box);
+    } on Object {
+      return null;
+    }
+    if (raw.length < 12) return null;
+    final plain = await Rust.decryptChunk(raw, key, 0, raw.sublist(0, 12));
+    if (plain == null) return null; // wrong key or tampered — drop it
+    try {
+      return jsonDecode(utf8.decode(plain)) as Map<String, dynamic>;
+    } on Object {
+      return null;
     }
   }
 
@@ -314,33 +380,37 @@ class ClipboardService {
     if (event != RawSocketEvent.read) return;
     final dg = _socket?.receive();
     if (dg == null) return;
-    try {
-      final map = jsonDecode(utf8.decode(dg.data)) as Map<String, dynamic>;
-      if (map['type'] != 'clipboard') return;
-      final sender = map['sender'] as String?;
-      if (sender == _identity.fingerprint) return; // ignore our own
-      if (map['kind'] == 'image') {
-        unawaited(_pullImage(map));
-        return;
-      }
-      final text = map['text'] as String? ?? '';
-      if (text.isEmpty) return;
-      final peer = allowedTextSender(
-        _discovery.current,
-        sender,
-        dg.address.address,
-      );
-      if (peer == null) return;
-      _applyText(text, map['alias'] as String? ?? peer.alias, sender);
-    } on Object {
-      // malformed datagram — ignore
-    }
+    unawaited(_handleDatagram(dg));
   }
 
-  /// The discovered peer holding [fingerprint], or null when no peer does.
-  /// A device discovery has not seen cannot reach the clipboard.
-  DiscoveredDevice? _peerFor(String? fingerprint) =>
-      _peerWithFingerprint(_discovery.current, fingerprint);
+  /// Envelope → sender check → decrypt → act.
+  ///
+  /// The sender is verified BEFORE anything is decrypted, because the peer's
+  /// advertised key is what the decryption uses: a datagram that does not come
+  /// from the peer it names cannot be opened at all. An unsealed datagram is
+  /// dropped, whatever it claims to be.
+  Future<void> _handleDatagram(Datagram dg) async {
+    Map<String, dynamic> envelope;
+    try {
+      envelope = jsonDecode(utf8.decode(dg.data)) as Map<String, dynamic>;
+    } on Object {
+      return; // malformed datagram — ignore
+    }
+    final box = sealedBoxOf(envelope, _identity.fingerprint);
+    if (box == null) return;
+    final sender = envelope['sender'] as String?;
+    final peer = allowedTextSender(_discovery.current, sender, dg.address.address);
+    if (peer == null) return;
+    final map = await _open(box, peer);
+    if (map == null) return;
+    if (map['kind'] == 'image') {
+      await _pullImage(map, peer);
+      return;
+    }
+    final text = map['text'] as String? ?? '';
+    if (text.isEmpty) return;
+    _applyText(text, map['alias'] as String? ?? peer.alias, sender);
+  }
 
   static DiscoveredDevice? _peerWithFingerprint(
     Iterable<DiscoveredDevice> peers,
@@ -351,6 +421,26 @@ class ClipboardService {
       if (d.fingerprint == fingerprint) return d;
     }
     return null;
+  }
+
+  /// The sealed payload of an incoming datagram, or null when there is none to
+  /// act on: a different message type, our own echo, or — the case that
+  /// matters — an UNSEALED datagram.
+  ///
+  /// Refusing plaintext is the point. Accepting it "for older peers" would
+  /// hand anyone on the network a downgrade: claim to be an old build, send
+  /// plaintext, and the clipboard is set. An older peer simply does not sync
+  /// until it updates, and it ignores our sealed datagrams in turn (its own
+  /// receive path drops anything with an empty `text`).
+  @visibleForTesting
+  static String? sealedBoxOf(Map<String, dynamic> envelope, String ownFingerprint) {
+    if (envelope['type'] != 'clipboard') return null;
+    final sender = envelope['sender'];
+    if (sender is! String || sender.isEmpty) return null;
+    if (sender == ownFingerprint) return null; // our own datagram, looped back
+    final box = envelope['box'];
+    if (box is! String || box.isEmpty) return null; // unsealed — never applied
+    return box;
   }
 
   /// Whether an incoming TEXT datagram may touch the clipboard, and from whom.
@@ -398,18 +488,16 @@ class ClipboardService {
   /// discovered peer, and the pull targets ONLY that peer's `host` — a forged
   /// datagram from an unknown source is dropped (no `sourceAddress` fallback,
   /// which an attacker on the LAN could otherwise use to feed us its image).
-  Future<void> _pullImage(Map<String, dynamic> map) async {
+  Future<void> _pullImage(Map<String, dynamic> map, DiscoveredDevice peer) async {
     if (!_enabled || !_includeImages || !imagesSupported) return;
     if (_pullingImage) return; // one pull at a time; a newer copy re-announces
     final token = map['token'] as String?;
     if (token == null || token.isEmpty) return;
     final size = map['size'] as int? ?? 0;
     if (size <= 0 || size > _maxImageBytes) return;
-    final sender = map['sender'] as String?;
-    final alias = map['alias'] as String? ?? 'A device';
+    final sender = peer.fingerprint;
+    final alias = map['alias'] as String? ?? peer.alias;
     final mime = map['mime'] as String? ?? 'image/png';
-    final peer = _peerFor(sender);
-    if (peer == null) return; // unknown/spoofed sender — never pull.
     final host = peer.host;
     final port = peer.port;
     _pullingImage = true;

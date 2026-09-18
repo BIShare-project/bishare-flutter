@@ -15,11 +15,13 @@ class DiscoveredDevice extends Equatable {
     this.version = '2.0',
     this.quicPort,
     this.latencyMs = 0,
+    this.publicKey = '',
   });
 
   final String fingerprint;
   final String alias;
   final String host;
+
   final int port;
   final DateTime lastSeen;
 
@@ -33,6 +35,11 @@ class DiscoveredDevice extends Equatable {
   final String version;
   final int? quicPort;
   final int latencyMs;
+
+  /// The peer's base64 X25519 public key, straight from its discovery record.
+  /// Empty for peers that predate the field — clipboard sync refuses those,
+  /// because without a key there is nothing to encrypt to.
+  final String publicKey;
 
   bool get supportsQuic => quicPort != null;
 
@@ -54,6 +61,7 @@ class DiscoveredDevice extends Equatable {
     version: version,
     quicPort: quicPort ?? this.quicPort,
     latencyMs: latencyMs ?? this.latencyMs,
+    publicKey: publicKey,
   );
 
   @override
