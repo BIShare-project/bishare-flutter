@@ -317,18 +317,66 @@ class ClipboardService {
     try {
       final map = jsonDecode(utf8.decode(dg.data)) as Map<String, dynamic>;
       if (map['type'] != 'clipboard') return;
-      if (map['sender'] == _identity.fingerprint) return; // ignore our own
+      final sender = map['sender'] as String?;
+      if (sender == _identity.fingerprint) return; // ignore our own
       if (map['kind'] == 'image') {
         unawaited(_pullImage(map));
         return;
       }
       final text = map['text'] as String? ?? '';
       if (text.isEmpty) return;
-      _applyText(text, map['alias'] as String? ?? 'A device',
-          map['sender'] as String?);
+      final peer = allowedTextSender(
+        _discovery.current,
+        sender,
+        dg.address.address,
+      );
+      if (peer == null) return;
+      _applyText(text, map['alias'] as String? ?? peer.alias, sender);
     } on Object {
       // malformed datagram — ignore
     }
+  }
+
+  /// The discovered peer holding [fingerprint], or null when no peer does.
+  /// A device discovery has not seen cannot reach the clipboard.
+  DiscoveredDevice? _peerFor(String? fingerprint) =>
+      _peerWithFingerprint(_discovery.current, fingerprint);
+
+  static DiscoveredDevice? _peerWithFingerprint(
+    Iterable<DiscoveredDevice> peers,
+    String? fingerprint,
+  ) {
+    if (fingerprint == null || fingerprint.isEmpty) return null;
+    for (final d in peers) {
+      if (d.fingerprint == fingerprint) return d;
+    }
+    return null;
+  }
+
+  /// Whether an incoming TEXT datagram may touch the clipboard, and from whom.
+  ///
+  /// The announced fingerprint must belong to a peer discovery can currently
+  /// see, AND the datagram must have arrived from that peer's address. Both
+  /// halves matter: without the first, anything that can reach this port sets
+  /// the clipboard; without the second, knowing a peer's fingerprint — which
+  /// discovery broadcasts in the clear — is enough to impersonate it.
+  ///
+  /// This is the same rule the image path has always applied before pulling.
+  /// It matters more for text, because text IS the payload: a swapped account
+  /// number or wallet address does not get read, it gets pasted.
+  ///
+  /// Known trade-off: a peer that answers from a second interface (Wi-Fi and
+  /// Ethernet at once) is rejected until discovery re-advertises it from the
+  /// address it is actually sending from.
+  @visibleForTesting
+  static DiscoveredDevice? allowedTextSender(
+    Iterable<DiscoveredDevice> peers,
+    String? fingerprint,
+    String sourceAddress,
+  ) {
+    final peer = _peerWithFingerprint(peers, fingerprint);
+    if (peer == null) return null;
+    return peer.host == sourceAddress ? peer : null;
   }
 
   void _applyText(String text, String alias, String? fingerprint) {
@@ -360,13 +408,7 @@ class ClipboardService {
     final sender = map['sender'] as String?;
     final alias = map['alias'] as String? ?? 'A device';
     final mime = map['mime'] as String? ?? 'image/png';
-    DiscoveredDevice? peer;
-    for (final d in _discovery.current) {
-      if (d.fingerprint == sender) {
-        peer = d;
-        break;
-      }
-    }
+    final peer = _peerFor(sender);
     if (peer == null) return; // unknown/spoofed sender — never pull.
     final host = peer.host;
     final port = peer.port;
