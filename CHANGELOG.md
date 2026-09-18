@@ -3,6 +3,37 @@
 All notable changes to BIShare are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.5.6] — 2026-09-18
+
+### Security
+- **Clipboard sync is now encrypted on your network.** Every clipboard datagram
+  is sealed to one device with AES-256-GCM, under a key derived from the two
+  devices' X25519 keys. Until now it crossed the network as plain text, so
+  anything listening on the same Wi-Fi could read what you copied — and, for
+  images, could redeem the one-shot pull token before the intended device did.
+- **Synced text is only accepted from a device you can see.** The announced
+  fingerprint has to belong to a peer discovery currently lists, and the
+  datagram has to come from that peer's address. Before this, anything able to
+  reach the clipboard port could set your clipboard under any name it chose —
+  and a swapped account number or wallet address gets pasted, not read.
+- **A clip marked secret is never synced.** Password managers flag what they
+  put on the clipboard (`org.nspasteboard.ConcealedType` on macOS,
+  `EXTRA_IS_SENSITIVE` on Android) and those clips now stay on the device. iOS
+  offers no equivalent flag, so nothing changes there.
+
+### Changed
+- Devices advertise their public key over discovery, so sealing a clipboard
+  copy costs no extra round trip.
+
+### Breaking
+- **Clipboard sync no longer works with 2.5.5 and earlier.** There is
+  deliberately no plaintext fallback: one would let anything on the network ask
+  for a downgrade by claiming to be an old build. Update both devices. Nothing
+  errors in the meantime — older and newer builds simply ignore each other's
+  clipboard messages. File transfer, Nearby, Rooms and QR Beam are unaffected.
+
+---
+
 ## [2.4.5] — 2026-08-09
 
 ### Added
