@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
 PackageIdentifier: BIShareProject.BIShare
-PackageVersion: 2.5.6
+PackageVersion: 2.5.7
 InstallerType: zip
 NestedInstallerType: portable
 NestedInstallerFiles:
@@ -8,7 +8,7 @@ NestedInstallerFiles:
     PortableCommandAlias: bishare
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/BIShare-project/bishare-flutter/releases/download/v2.5.6/BIShare-2.5.6-windows-x64.zip
-    InstallerSha256: 2DB3BC32F0EB932950B79BE8E58786EAE30291F771D66DBD3B89EC8C70C05E0C
+    InstallerUrl: https://github.com/BIShare-project/bishare-flutter/releases/download/v2.5.7/BIShare-2.5.7-windows-x64.zip
+    InstallerSha256: ED91D654EC6F5ED46BE17665D72ECEA5D7F101F0ED840D4C4555FA30B0CA1CF1
 ManifestType: installer
 ManifestVersion: 1.6.0
