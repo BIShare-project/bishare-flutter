@@ -8,6 +8,7 @@ import 'package:get_it/get_it.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../review/review_prompter.dart';
 import '../telemetry/telemetry_service.dart';
 
 import '../config/feature_flags.dart';
@@ -160,6 +161,7 @@ Future<void> setupLocator() async {
   getIt
     ..registerSingleton<SharedPreferences>(prefs)
     ..registerSingleton<TelemetryService>(telemetry)
+    ..registerSingleton<ReviewPrompter>(ReviewPrompter(prefs))
     ..registerSingleton<FeatureFlags>(featureFlags)
     ..registerSingleton<DeviceIdentity>(identity)
     ..registerSingleton<AppDatabase>(db)

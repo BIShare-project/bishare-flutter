@@ -75,8 +75,12 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => DiscoveryCubit(getIt())),
-        BlocProvider(create: (_) => ReceiveCubit(getIt(), getIt())),
-        BlocProvider(create: (_) => SendCubit(getIt(), getIt(), getIt())),
+        BlocProvider(
+          create: (_) => ReceiveCubit(getIt(), getIt(), review: getIt()),
+        ),
+        BlocProvider(
+          create: (_) => SendCubit(getIt(), getIt(), getIt(), review: getIt()),
+        ),
         BlocProvider(create: (_) => TrayCubit(getIt())),
         BlocProvider(create: (_) => FavoritesCubit(getIt())),
         BlocProvider(create: (_) => DevicesCubit(getIt(), getIt(), getIt())),

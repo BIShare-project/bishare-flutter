@@ -8,6 +8,7 @@ import '../../../core/error/exceptions.dart';
 import '../../../features/history/data/history_repository.dart';
 import '../../discovery/domain/discovered_device.dart';
 import '../../../core/telemetry/telemetry_service.dart';
+import '../../../core/review/review_prompter.dart';
 import '../data/transfer_client.dart';
 import '../domain/sendable_file.dart';
 
@@ -77,12 +78,18 @@ class SendState extends Equatable {
 /// Cancel notifies the receiver via `/api/v1/cancel`; [retryLast] re-sends the
 /// last batch after a failure.
 class SendCubit extends Cubit<SendState> {
-  SendCubit(this._client, this._history, this._telemetry)
-    : super(const SendState());
+  SendCubit(
+    this._client,
+    this._history,
+    this._telemetry, {
+    ReviewPrompter? review,
+  }) : _review = review,
+       super(const SendState());
 
   final TransferClient _client;
   final HistoryRepository _history;
   final TelemetryService _telemetry;
+  final ReviewPrompter? _review;
   CancelToken? _cancelToken;
   DiscoveredDevice? _device;
   String? _sessionId;
@@ -153,6 +160,7 @@ class SendCubit extends Cubit<SendState> {
         bytes: total,
         transport: state.transport == 'QUIC' ? 'quic' : 'lan',
       );
+      _review?.noteSuccess();
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) {
         emit(state.copyWith(status: SendStatus.idle));

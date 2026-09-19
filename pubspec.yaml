@@ -120,6 +120,7 @@ dependencies:
   universal_file_viewer: ^0.1.7
   video_player: ^2.14.0
   open_file: ^3.5.10
+  in_app_review: ^2.0.12
 
 dev_dependencies:
   path_provider_platform_interface: ^2.1.3

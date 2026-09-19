@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/server/transfer_types.dart';
 import '../../../core/telemetry/telemetry_service.dart';
+import '../../../core/review/review_prompter.dart';
 
 /// UI state for the receiver: a possible pending accept/reject prompt, a pending
 /// file-request (reverse flow), and live receive progress.
@@ -45,7 +46,9 @@ class ReceiveState extends Equatable {
     bool clearProgress = false,
   }) => ReceiveState(
     pending: clearPending ? null : (pending ?? this.pending),
-    pendingRequest: clearRequest ? null : (pendingRequest ?? this.pendingRequest),
+    pendingRequest: clearRequest
+        ? null
+        : (pendingRequest ?? this.pendingRequest),
     progress: clearProgress ? null : (progress ?? this.progress),
     lastReceived: lastReceived ?? this.lastReceived,
     speed: speed ?? this.speed,
@@ -65,7 +68,9 @@ class ReceiveState extends Equatable {
 /// Drives the accept/reject prompt, file-request prompt, and receive progress
 /// from [TransferServer].
 class ReceiveCubit extends Cubit<ReceiveState> {
-  ReceiveCubit(this._server, this._telemetry) : super(const ReceiveState()) {
+  ReceiveCubit(this._server, this._telemetry, {ReviewPrompter? review})
+    : _review = review,
+      super(const ReceiveState()) {
     _incoming = _server.incoming.listen((p) {
       emit(state.copyWith(pending: p));
     });
@@ -117,11 +122,13 @@ class ReceiveCubit extends Cubit<ReceiveState> {
       // Anonymous, opt-out telemetry: a LAN receive is a "download" the relay
       // never sees. Fire-and-forget; the service no-ops when disabled.
       _telemetry.recordReceive(bytes: f.size);
+      _review?.noteSuccess();
     });
   }
 
   final TransferServer _server;
   final TelemetryService _telemetry;
+  final ReviewPrompter? _review;
   // Live-speed clock for the receive card (mirrors send_cubit's `_sw`), keyed by
   // session so a new transfer restarts the measurement.
   final _sw = Stopwatch();

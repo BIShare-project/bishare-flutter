@@ -12,6 +12,13 @@ All notable changes to BIShare are documented here. The format is based on
   the platform and two true/false flags — no device ID, no fingerprint, nothing
   that lets two pings be joined. It follows the existing *Anonymous usage
   stats* switch in Settings, whose description now says so in all 13 languages.
+- **A rating request, at most twice, and only after it has worked.** After the
+  third successful transfer the app asks the App Store or Google Play to show
+  its own rating dialog; much later (fifteen transfers and 120 days) it may ask
+  once more, then never again. A batch of files counts as one transfer, and the
+  request waits until the batch has finished. iPhone, iPad, Mac and Android
+  only — Windows and Linux have no such dialog and are not touched. Builds that
+  did not come from a store (the APK, the DMG) do nothing.
 
 ## [2.5.6] — 2026-09-18
 
