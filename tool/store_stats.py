@@ -8,7 +8,8 @@ picks up the corrections both stores make to recent days.
 
 Each store is optional: one whose settings are missing is skipped with a note,
 so the App Store half can run before the Play half is configured. A store that
-IS configured and fails makes the run fail.
+IS configured and fails makes the run fail — but only after the other store's
+numbers have been posted.
 
 Nothing secret is printed. Set DRY_RUN=1 to see the numbers without posting.
 
@@ -194,24 +195,35 @@ def main() -> int:
     dry = env("DRY_RUN").lower() in ("1", "true", "yes")
     print(f"window: {window(days)[0]} … {window(days)[-1]} ({days} days){'  [dry run]' if dry else ''}")
 
+    # One store failing must not cost the other its numbers: whatever was read
+    # is still posted, and the run is marked failed afterwards so it gets seen.
     daily: dict[str, dict[str, int]] = {}
     gauges: dict[str, int] = {}
-    a = apple(days, verbose=dry)
-    if a:
-        daily["store_units_ios"] = a
-    p = play(days, verbose=dry)
-    if p:
-        if p[0]:
-            daily["store_units_android"] = p[0]
-        if p[1] is not None:
-            gauges["store_active_devices_android"] = p[1]
+    failed: list[str] = []
+    try:
+        a = apple(days, verbose=dry)
+        if a:
+            daily["store_units_ios"] = a
+    except SystemExit as e:
+        failed.append(str(e))
+    try:
+        p = play(days, verbose=dry)
+        if p:
+            if p[0]:
+                daily["store_units_android"] = p[0]
+            if p[1] is not None:
+                gauges["store_active_devices_android"] = p[1]
+    except SystemExit as e:
+        failed.append(str(e))
+    for message in failed:
+        print(f"FAILED — {message}")
 
     if not daily and not gauges:
         print("nothing to post")
-        return 0
+        return 1 if failed else 0
     if dry:
         print(json.dumps({"daily": daily, "gauges": gauges}, indent=1, sort_keys=True))
-        return 0
+        return 1 if failed else 0
 
     token = env("STATS_INGEST_TOKEN")
     if not token:
@@ -220,7 +232,7 @@ def main() -> int:
     status, body = http(url, data=json.dumps({"daily": daily, "gauges": gauges}).encode(),
                         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
     print(f"ingest: HTTP {status} {body[:400].decode('utf8', 'replace')}")
-    return 0 if status == 200 else 1
+    return 0 if status == 200 and not failed else 1
 
 
 if __name__ == "__main__":
