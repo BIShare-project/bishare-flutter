@@ -450,7 +450,7 @@
     "visible_everyone": "Für alle sichtbar",
     "visible_subtitle": "Aus = versteckt, nicht auffindbar",
     "telemetry": "Anonyme Nutzungsstatistik",
-    "telemetry_subtitle": "Sendet eine private Anzahl von Übertragungen, damit die Statistik echte Nutzung zeigt. Keine Dateien, keine persönlichen Daten."
+    "telemetry_subtitle": "Sendet eine private Anzahl von Übertragungen und von Tagen, an denen die App geöffnet wird, damit die Statistik echte Nutzung zeigt. Keine Dateien, keine persönlichen Daten, nichts, was dieses Gerät erkennbar macht."
   },
   "notification": {
     "clipboard_from": "Kopiert von {sender}",

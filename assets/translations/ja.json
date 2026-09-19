@@ -450,7 +450,7 @@
     "visible_everyone": "全員に表示",
     "visible_subtitle": "オフ = 非表示・検出不可",
     "telemetry": "匿名の利用統計",
-    "telemetry_subtitle": "転送回数だけを匿名で送り、公開統計に実際の利用を反映します。ファイルも個人データも送りません。"
+    "telemetry_subtitle": "転送回数と、アプリを開いた日の数だけを匿名で送り、公開統計に実際の利用を反映します。ファイルも個人データも、この端末を特定できる情報も送りません。"
   },
   "notification": {
     "clipboard_from": "{sender}からコピーしました",

@@ -3,6 +3,16 @@
 All notable changes to BIShare are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- **An anonymous "opened today" count.** Once per UTC day the app tells the
+  server that an install was opened, and once per thirty days that it is still
+  in use, so bishare.app/stats can show active installs. The request carries
+  the platform and two true/false flags — no device ID, no fingerprint, nothing
+  that lets two pings be joined. It follows the existing *Anonymous usage
+  stats* switch in Settings, whose description now says so in all 13 languages.
+
 ## [2.5.6] — 2026-09-18
 
 ### Security

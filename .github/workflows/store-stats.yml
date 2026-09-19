@@ -1,0 +1,69 @@
+name: store-stats
+
+# Reads yesterday's downloads from App Store Connect and Google Play and posts
+# them to the BIShare API, which shows the totals on https://bishare.app/stats.
+# It lives here because the store credentials already do (release.yml uses the
+# same secrets); the API never sees them.
+#
+# Runs on a schedule or by hand only — never on a push or a pull request, so a
+# fork can neither trigger it nor read what it uses.
+#
+# Secrets it reads:
+#   already here   ASC_KEY_ID, ASC_ISSUER_ID, ASC_API_KEY_P8, PLAY_SERVICE_ACCOUNT_JSON
+#   added for this ASC_VENDOR_NUMBER    App Store Connect → Payments and Financial Reports
+#                  PLAY_REPORTS_BUCKET  Play Console → Download reports → Statistics →
+#                                       "Copy Cloud Storage URI" (pubsite_prod_rev_…)
+#                  STATS_INGEST_TOKEN   the same value set on the API worker
+# A store whose secrets are missing is skipped, not failed.
+
+on:
+  schedule:
+    # 17:17 UTC. Apple publishes a day's report by about 8 a.m. Pacific the next
+    # day (15:00–16:00 UTC). Every run re-sends the last ten days, so a late
+    # report is simply picked up by the next run.
+    - cron: "17 17 * * *"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Days to read (use ~120 once, to backfill)"
+        default: "10"
+      dry_run:
+        description: "Print the numbers, post nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: store-stats
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: tool/store_stats.py
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install --quiet "pyjwt[crypto]==2.10.1"
+
+      - name: Collect and post
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          ASC_VENDOR_NUMBER: ${{ secrets.ASC_VENDOR_NUMBER }}
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          PLAY_REPORTS_BUCKET: ${{ secrets.PLAY_REPORTS_BUCKET }}
+          STATS_INGEST_TOKEN: ${{ secrets.STATS_INGEST_TOKEN }}
+          DAYS: ${{ inputs.days || '10' }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+        run: python3 tool/store_stats.py

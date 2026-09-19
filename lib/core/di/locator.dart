@@ -153,6 +153,9 @@ Future<void> setupLocator() async {
   // Anonymous telemetry — shared by SendCubit/ReceiveCubit (via getIt) and
   // LocalRoomService (constructor-injected below), so keep one instance.
   final telemetry = TelemetryService(prefs);
+  // One anonymous "opened today" ping per UTC day (honours the telemetry
+  // opt-out). Never awaited: startup does not depend on the network.
+  telemetry.recordActive();
 
   getIt
     ..registerSingleton<SharedPreferences>(prefs)

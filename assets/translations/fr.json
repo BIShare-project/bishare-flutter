@@ -450,7 +450,7 @@
     "visible_everyone": "Visible par tout le monde",
     "visible_subtitle": "Désactivé = masqué, non détectable",
     "telemetry": "Statistiques d’usage anonymes",
-    "telemetry_subtitle": "Envoie un décompte privé des transferts pour que les stats reflètent l’usage réel. Aucun fichier, aucune donnée personnelle."
+    "telemetry_subtitle": "Envoie un décompte privé des transferts et des jours où l’app est ouverte, pour que les stats reflètent l’usage réel. Aucun fichier, aucune donnée personnelle, rien qui identifie cet appareil."
   },
   "notification": {
     "clipboard_from": "Copié depuis {sender}",

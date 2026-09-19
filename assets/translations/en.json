@@ -450,7 +450,7 @@
     "visible_everyone": "Visible to everyone",
     "visible_subtitle": "Off = hidden, not discoverable",
     "telemetry": "Anonymous usage stats",
-    "telemetry_subtitle": "Send a private count of transfers so public stats reflect real usage. No files, no personal data."
+    "telemetry_subtitle": "Send a private count of transfers, and of the days the app is opened, so public stats reflect real usage. No files, no personal data, nothing that identifies this device."
   },
   "notification": {
     "clipboard_from": "Copied from {sender}",
