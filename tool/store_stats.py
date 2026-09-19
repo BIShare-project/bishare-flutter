@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Daily download figures from the App Store and Google Play, for bishare.app/stats.
 
-Reads the last DAYS days from each store and posts them to the BIShare API,
+Reads the last DAYS days (default 35) from each store and posts them to the BIShare API,
 which keeps one row per day and sums them (see server/modules/stats in the API).
 Posting is idempotent, so every run simply re-sends its whole window; that also
 picks up the corrections both stores make to recent days.
@@ -206,21 +206,20 @@ def play(days: int, verbose: bool) -> tuple[dict[str, int], int | None] | None:
         for col in ("Date", "Daily User Installs"):
             if col not in fields:
                 raise SystemExit(f"Google Play: column {col!r} missing in {obj}; has {fields}")
-        month_sum, last_total = 0, ""
+        month_sum = 0
         for r in reader:
             date = (r.get("Date") or "").strip()
             n = int(float(r.get("Daily User Installs") or 0))
             month_sum += n
-            last_total = (r.get("Total User Installs") or "").strip() or last_total
             if date in wanted and n > 0:
                 out[date] = n
             level = (r.get("Active Device Installs") or "").strip()
             if date and level and (active is None or date > active[0]):
                 active = (date, int(float(level)))
         if verbose:
-            # Google's own running total, to check the daily rows against.
-            print(f"    {obj.rsplit('_', 2)[-2]}: daily user installs sum {month_sum}, "
-                  f"'Total User Installs' at month end {last_total or 'n/a'}")
+            # The CSV's own "Total User Installs" column is no use as a check:
+            # Google stopped filling it, and it reads 0 on every row.
+            print(f"    {obj.rsplit('_', 2)[-2]}: {month_sum} user installs")
 
     print(f"Google Play: {sum(out.values())} user installs over {len(out)} day(s) with installs"
           + (f"; {active[1]} active devices as of {active[0]}" if active else ""))
@@ -231,7 +230,7 @@ def play(days: int, verbose: bool) -> tuple[dict[str, int], int | None] | None:
 
 
 def main() -> int:
-    days = max(1, min(int(env("DAYS", "10") or 10), 400))
+    days = max(1, min(int(env("DAYS", "35") or 35), 400))
     dry = env("DRY_RUN").lower() in ("1", "true", "yes")
     print(f"window: {window(days)[0]} … {window(days)[-1]} ({days} days){'  [dry run]' if dry else ''}")
 

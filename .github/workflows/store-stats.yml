@@ -21,14 +21,15 @@ name: store-stats
 on:
   schedule:
     # 17:17 UTC. Apple publishes a day's report by about 8 a.m. Pacific the next
-    # day (15:00–16:00 UTC). Every run re-sends the last ten days, so a late
-    # report is simply picked up by the next run.
+    # day (15:00–16:00 UTC). Play is far slower: on 19 Sep 2026 its newest row
+    # was 8 Sep. So every run re-sends the last 35 days — a ten-day window
+    # would never have seen a Play row at all.
     - cron: "17 17 * * *"
   workflow_dispatch:
     inputs:
       days:
-        description: "Days to read (use ~120 once, to backfill)"
-        default: "10"
+        description: "Days to read (use 365 once, to backfill)"
+        default: "35"
       dry_run:
         description: "Print the numbers, post nothing"
         type: boolean
@@ -67,6 +68,6 @@ jobs:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           PLAY_REPORTS_BUCKET: ${{ secrets.PLAY_REPORTS_BUCKET }}
           STATS_INGEST_TOKEN: ${{ secrets.STATS_INGEST_TOKEN }}
-          DAYS: ${{ inputs.days || '10' }}
+          DAYS: ${{ inputs.days || '35' }}
           DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
         run: python3 tool/store_stats.py
