@@ -3,7 +3,17 @@
 All notable changes to BIShare are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [2.5.7] — 2026-09-19
+
+### Fixed
+- **App Share now sends apps that can actually be installed.** Almost every app
+  from Google Play is installed as a base APK plus config splits, and the base
+  alone refuses to install (`INSTALL_FAILED_MISSING_SPLIT`). App Share sent only
+  the base — on the test phone that meant 31 of 36 apps arrived unusable. A
+  split app is now sent as one `.apks` file holding the base and every split,
+  byte for byte. The receiver installs it with a split-APK installer such as
+  SAI; the picker says so before you send. Apps installed as a single APK are
+  sent as a plain `.apk`, as before. The size shown is now the size sent.
 
 ### Added
 - **An anonymous "opened today" count.** Once per UTC day the app tells the
