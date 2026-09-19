@@ -1,9 +1,12 @@
 name: snap-promote
 
-# Move a revision that is already in the store to another channel — the
-# `snapcraft release bishare <rev> <channel>` that snap.yml leaves as a
-# deliberate, separate step. Nothing is rebuilt: the revision a tag published
-# to edge is the one that moves. Manual only.
+# Move a revision that is already in the store to another channel —
+# `snapcraft release bishare <rev> <channel>`. Nothing is rebuilt.
+#
+# Since 2026-09-19 a tag releases to stable by itself (see snap.yml), so this is
+# no longer part of a normal release. It is the way BACK: if a release turns out
+# bad on Linux, run it with the previous revision number and channel `stable`,
+# and Snap users return to that build within their next refresh. Manual only.
 on:
   workflow_dispatch:
     inputs:

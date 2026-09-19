@@ -1,7 +1,7 @@
 name: snap
 
 # Build the Linux Snap package. Runs on version tags and can be triggered
-# manually. A tag also publishes to the `edge` channel, but only once the
+# manually. A tag publishes straight to `stable` (and `edge`), but only once the
 # SNAPCRAFT_STORE_CREDENTIALS secret exists; until then the build still
 # produces its artifact and says why it published nothing.
 on:
@@ -13,7 +13,7 @@ on:
       publish:
         description: "Publish the built snap to a channel. The revision takes its version from pubspec, so a manual publish is the same build a tag would make."
         type: choice
-        options: ["no", "edge"]
+        options: ["no", "edge", "stable"]
         default: "no"
       push_listing:
         description: "Also overwrite the store listing text from snapcraft.yaml. This DELETES the banner, which the snap cannot carry — re-upload it afterwards."
@@ -43,20 +43,43 @@ jobs:
           name: bishare-snap
           path: ${{ steps.snapcraft.outputs.snap }}
 
-      # Tags publish to `edge` only. Promoting edge to stable is a decision, not
-      # a side effect of pushing a tag: `snapcraft release bishare <rev> stable`.
-      # A tag publishes by itself. The manual switch exists for the case where
-      # the snap is behind the other stores: re-pushing a tag would re-run every
-      # upload in release.yml, and Play and Apple both refuse a build number
-      # they have already seen, so a whole run would go red to move one package.
-      - name: Publish to the edge channel
-        if: (github.ref_type == 'tag' || inputs.publish == 'edge') && env.SNAPCRAFT_STORE_CREDENTIALS != ''
+      # A tag releases to `stable`, and to `edge` with it so edge never trails.
+      #
+      # It used to stop at `edge`, with the move to stable left as a separate
+      # manual run of snap-promote.yml. That step was simply never taken: three
+      # releases in a row (2.5.5, 2.5.6, 2.5.7) sat on edge while every Snap
+      # user stayed on 2.5.1 for eight days, and nobody noticed until the owner
+      # asked why the store had not updated. Owner's call, 2026-09-19: a tag is
+      # already what ships to Play and the App Store, so it ships here too.
+      #
+      # What that gives up: nobody tries the Linux build before Linux users get
+      # it. snap-promote.yml stays as the way back — it can release any earlier
+      # revision to stable without rebuilding.
+      #
+      # The manual switch exists for the case where the snap is behind the other
+      # stores: re-pushing a tag would re-run every upload in release.yml, and
+      # Play and Apple both refuse a build number they have already seen, so a
+      # whole run would go red to move one package. `edge` there means "let me
+      # try this build without shipping it".
+      - name: Decide the channels
+        id: channels
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ] || [ "${{ inputs.publish }}" = "stable" ]; then
+            echo "release=stable,edge" >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.publish }}" = "edge" ]; then
+            echo "release=edge" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to the store
+        if: steps.channels.outputs.release != '' && env.SNAPCRAFT_STORE_CREDENTIALS != ''
         uses: snapcore/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:
           snap: ${{ steps.snapcraft.outputs.snap }}
-          release: edge
+          release: ${{ steps.channels.outputs.release }}
 
       # Publishing a revision does NOT update the store listing, and pushing
       # the listing is destructive in one direction: --force tells the store
@@ -75,6 +98,6 @@ jobs:
       # Without the secret the build still runs and still uploads its artifact;
       # say why nothing was published rather than letting it look successful.
       - name: Say why publishing was skipped
-        if: (github.ref_type == 'tag' || inputs.publish == 'edge') && env.SNAPCRAFT_STORE_CREDENTIALS == ''
+        if: steps.channels.outputs.release != '' && env.SNAPCRAFT_STORE_CREDENTIALS == ''
         run: |
           echo "::notice::Snap built but not published: repository secret SNAPCRAFT_STORE_CREDENTIALS is not set. Create it with 'snapcraft export-login --acls package_access,package_push,package_release --snaps bishare creds.txt' once the name is registered."
