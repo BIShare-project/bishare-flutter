@@ -152,17 +152,45 @@ def play(days: int, verbose: bool) -> tuple[dict[str, int], int | None] | None:
     access = json.loads(body)["access_token"]
 
     wanted = {d.isoformat() for d in window(days)}
-    months = sorted({d.strftime("%Y%m") for d in window(days)})
+    months = {d.strftime("%Y%m") for d in window(days)}
+
+    # Ask the bucket what it holds instead of guessing file names. It also makes
+    # a refusal readable: Cloud Storage answers 403 both for "no access" and for
+    # "no such object" when the caller may not list, so a 403 on a guessed name
+    # says nothing. A 403 on the listing can only mean the first.
+    prefix = f"stats/installs/installs_{package}_"
+    names: list[str] = []
+    page = ""
+    while True:
+        query = urllib.parse.urlencode({"prefix": prefix, "fields": "items(name),nextPageToken",
+                                        **({"pageToken": page} if page else {})})
+        status, body = http(f"https://storage.googleapis.com/storage/v1/b/{bucket}/o?{query}",
+                            headers={"Authorization": f"Bearer {access}"})
+        if status == 403:
+            raise SystemExit(f"Google Play: no access to the reports bucket yet (HTTP 403 listing {prefix}*). "
+                             f"{sa['client_email']} needs the ACCOUNT permission \"View app information and "
+                             "download bulk reports\" in Play Console; Google can take up to a day to apply it.")
+        if status != 200:
+            raise SystemExit(f"Google Play: HTTP {status} listing {prefix}*: {body[:300].decode('utf8', 'replace')}")
+        listing = json.loads(body)
+        names += [i["name"] for i in listing.get("items", [])]
+        page = listing.get("nextPageToken", "")
+        if not page:
+            break
+    overviews = sorted(n for n in names if n.endswith("_overview.csv"))
+    if verbose:
+        print(f"Google Play: {len(names)} install report file(s) in the bucket, {len(overviews)} overview(s)"
+              + (f": {overviews[0].rsplit('/', 1)[-1]} … {overviews[-1].rsplit('/', 1)[-1]}" if overviews else ""))
+
     out: dict[str, int] = {}
     active: tuple[str, int] | None = None
-    for month in months:
-        obj = f"stats/installs/installs_{package}_{month}_overview.csv"
+    for obj in overviews:
+        if obj[len(prefix):len(prefix) + 6] not in months:
+            continue
         status, body = http(
             f"https://storage.googleapis.com/storage/v1/b/{bucket}/o/{urllib.parse.quote(obj, safe='')}?alt=media",
             headers={"Authorization": f"Bearer {access}"},
         )
-        if status == 404:
-            continue  # no file for a month with no installs (or before launch)
         if status != 200:
             raise SystemExit(f"Google Play: HTTP {status} reading {obj}: {body[:300].decode('utf8', 'replace')}")
         text = body.decode("utf-16") if body[:2] in (b"\xff\xfe", b"\xfe\xff") else body.decode("utf8")
