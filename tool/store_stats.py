@@ -201,19 +201,26 @@ def play(days: int, verbose: bool) -> tuple[dict[str, int], int | None] | None:
         text = body.decode("utf-16") if body[:2] in (b"\xff\xfe", b"\xfe\xff") else body.decode("utf8")
         reader = csv.DictReader(io.StringIO(text))
         fields = reader.fieldnames or []
-        if verbose:
-            print(f"Google Play: {obj} columns: {fields}")
+        if verbose and not out and active is None:
+            print(f"Google Play: columns: {fields}")
         for col in ("Date", "Daily User Installs"):
             if col not in fields:
                 raise SystemExit(f"Google Play: column {col!r} missing in {obj}; has {fields}")
+        month_sum, last_total = 0, ""
         for r in reader:
             date = (r.get("Date") or "").strip()
             n = int(float(r.get("Daily User Installs") or 0))
+            month_sum += n
+            last_total = (r.get("Total User Installs") or "").strip() or last_total
             if date in wanted and n > 0:
                 out[date] = n
             level = (r.get("Active Device Installs") or "").strip()
             if date and level and (active is None or date > active[0]):
                 active = (date, int(float(level)))
+        if verbose:
+            # Google's own running total, to check the daily rows against.
+            print(f"    {obj.rsplit('_', 2)[-2]}: daily user installs sum {month_sum}, "
+                  f"'Total User Installs' at month end {last_total or 'n/a'}")
 
     print(f"Google Play: {sum(out.values())} user installs over {len(out)} day(s) with installs"
           + (f"; {active[1]} active devices as of {active[0]}" if active else ""))
