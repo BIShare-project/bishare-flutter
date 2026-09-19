@@ -23,6 +23,7 @@
     "apps_empty": "No se encontraron apps",
     "apps_search": "Buscar apps",
     "apps_split": "APK dividido",
+    "apps_split_hint": "Las apps marcadas como «APK dividido» se envían como un solo archivo .apks con todas sus partes. Quien lo recibe lo instala con un instalador de split APK como SAI; un gestor de archivos por sí solo no puede.",
     "apps_subtitle": "Comparte apps instaladas como archivos APK",
     "ask_device_files": "Pedir archivos a {alias}",
     "auto_accept_on": "Aceptación automática activada",

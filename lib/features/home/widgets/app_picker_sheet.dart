@@ -83,6 +83,22 @@ class _AppPickerBodyState extends State<_AppPickerBody> {
                       itemBuilder: (_, i) => _row(filtered[i]),
                     ),
         ),
+        // Said before sending, not discovered after: the receiving phone's own
+        // file manager cannot open a split bundle.
+        if (apps != null &&
+            apps.any(
+              (a) => a.isSplit && _selected.contains(a.packageName),
+            )) ...[
+          const SizedBox(height: 10),
+          Text(
+            'home.apps_split_hint'.tr(),
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.35,
+              color: cs.mutedForeground,
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         AppButton(
           label: 'home.apps_add'.tr(

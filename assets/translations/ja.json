@@ -23,6 +23,7 @@
     "apps_empty": "アプリが見つかりません",
     "apps_search": "アプリを検索",
     "apps_split": "分割APK",
+    "apps_split_hint": "「分割APK」と表示されたアプリは、すべての部品をまとめた1つの .apks ファイルとして送られます。受け取った側は SAI などの split APK インストーラーで入れます。ファイルマネージャーだけでは入れられません。",
     "apps_subtitle": "インストール済みアプリをAPKファイルとして共有",
     "ask_device_files": "{alias} にファイルをリクエスト",
     "auto_accept_on": "自動受信がオン",

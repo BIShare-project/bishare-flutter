@@ -23,6 +23,7 @@
     "apps_empty": "找不到應用程式",
     "apps_search": "搜尋應用程式",
     "apps_split": "分割 APK",
+    "apps_split_hint": "標有「分割 APK」的 App 會打包成一個包含全部分包的 .apks 檔案傳送。接收方需用 SAI 之類的 split APK 安裝器安裝——僅靠檔案管理器無法安裝。",
     "apps_subtitle": "以 APK 檔案形式分享已安裝的應用程式",
     "ask_device_files": "向 {alias} 请求文件",
     "auto_accept_on": "自动接受已开启",

@@ -23,6 +23,7 @@
     "apps_empty": "No apps found",
     "apps_search": "Search apps",
     "apps_split": "Split APK",
+    "apps_split_hint": "Apps marked Split APK are sent as one .apks file holding every part. The receiver installs it with a split-APK installer such as SAI — a file manager alone cannot.",
     "apps_subtitle": "Share installed apps as APK files",
     "ask_device_files": "Ask {alias} for files",
     "auto_accept_on": "Auto-accept is on",

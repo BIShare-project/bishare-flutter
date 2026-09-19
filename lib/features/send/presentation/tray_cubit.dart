@@ -63,7 +63,8 @@ class TrayCubit extends Cubit<List<SendableFile>> {
     _addPaths([await MediaSources.zipDirectory(dir)]);
   }
 
-  /// Stage installed apps' base APKs (Android "App Share"). Each APK is copied
+  /// Stage installed apps (Android "App Share") — one `.apk`, or one `.apks`
+  /// holding base + splits for an App Bundle install. Each is copied
   /// out of `/data/app` first: that path vanishes if the app updates or
   /// uninstalls mid-transfer, and the copy carries a receiver-friendly name.
   Future<void> stageApks(List<InstalledApp> apps) async {
@@ -75,6 +76,7 @@ class TrayCubit extends Cubit<List<SendableFile>> {
             app.apkPath,
             appName: app.name,
             version: app.version,
+            splitPaths: app.splitPaths,
           ),
         );
       } on FileSystemException {

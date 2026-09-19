@@ -6,6 +6,7 @@ import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 import '../io/scratch_dir.dart';
+import '../server/zip_stream.dart';
 
 /// Off-UI-isolate media helpers used by the staging tray: zip a folder, stage a
 /// text note, and re-encode images to a smaller JPEG.
@@ -58,13 +59,23 @@ class MediaSources {
     return file.path;
   }
 
-  /// Copies an installed app's APK to a temp `<App>_<version>.apk` and returns
-  /// its path. The tray then holds a stable copy with a receiver-friendly name
-  /// (not `/data/app/…/base.apk`, which changes on update and reads as noise).
+  /// Stages an installed app for sending and returns the staged path, under a
+  /// receiver-friendly name (not `/data/app/…/base.apk`, which changes on
+  /// update and reads as noise).
+  ///
+  /// An app installed as one APK is copied to `<App>_<version>.apk`. An App
+  /// Bundle install is a base APK plus config splits, and its base is marked
+  /// `isSplitRequired`: alone it fails with INSTALL_FAILED_MISSING_SPLIT, which
+  /// is what every split app sent before this did. Those are written as
+  /// `<App>_<version>.apks` — a plain store-only zip of `base.apk` and each
+  /// split under its own name, the layout split installers (SAI and the like)
+  /// read. Store-only on purpose: an APK is already a compressed zip, and these
+  /// run to hundreds of megabytes.
   static Future<String> stageApk(
     String apkPath, {
     required String appName,
     required String version,
+    List<String> splitPaths = const [],
   }) async {
     final tmp = await appTempDir();
     final base = _safe(appName).replaceAll(' ', '_');
@@ -74,9 +85,43 @@ class MediaSources {
       if (base.isNotEmpty) base else 'app',
       if (ver.isNotEmpty) ver,
     ].join('_');
-    final out = p.join(tmp.path, '$name.apk');
-    await File(apkPath).copy(out);
-    return out;
+    if (splitPaths.isEmpty) {
+      final out = p.join(tmp.path, '$name.apk');
+      await File(apkPath).copy(out);
+      return out;
+    }
+    final out = File(p.join(tmp.path, '$name.apks'));
+    try {
+      await out.openWrite().addStream(
+        zipStream(apksEntries(apkPath, splitPaths)),
+      );
+    } on Object {
+      if (out.existsSync()) out.deleteSync();
+      rethrow;
+    }
+    return out.path;
+  }
+
+  /// The entries of a `.apks` archive: the base first, as `base.apk`, then
+  /// every split under its installed file name (`split_config.arm64_v8a.apk`).
+  /// Two splits cannot share a name on a device, but a name is de-duplicated
+  /// anyway so a malformed listing can never produce a corrupt archive.
+  @visibleForTesting
+  static List<ZipStreamEntry> apksEntries(
+    String apkPath,
+    List<String> splitPaths,
+  ) {
+    final used = <String>{'base.apk'};
+    final entries = [ZipStreamEntry(name: 'base.apk', file: File(apkPath))];
+    for (final split in splitPaths) {
+      var entry = p.basename(split);
+      if (!entry.toLowerCase().endsWith('.apk')) entry = '$entry.apk';
+      for (var n = 2; !used.add(entry); n++) {
+        entry = '${p.basenameWithoutExtension(p.basename(split))}_$n.apk';
+      }
+      entries.add(ZipStreamEntry(name: entry, file: File(split)));
+    }
+    return entries;
   }
 
   /// Re-encodes the image at [path] to JPEG capped at [maxDimension] px (long

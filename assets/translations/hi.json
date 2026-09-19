@@ -23,6 +23,7 @@
     "apps_empty": "कोई ऐप नहीं मिला",
     "apps_search": "ऐप्स खोजें",
     "apps_split": "स्प्लिट APK",
+    "apps_split_hint": "“स्प्लिट APK” चिह्नित ऐप एक ही .apks फ़ाइल के रूप में भेजे जाते हैं, जिसमें उनके सारे हिस्से होते हैं। पाने वाला इसे SAI जैसे split APK इंस्टॉलर से इंस्टॉल करता है — अकेला फ़ाइल मैनेजर यह नहीं कर सकता।",
     "apps_subtitle": "इंस्टॉल किए गए ऐप्स को APK फ़ाइलों के रूप में साझा करें",
     "ask_device_files": "Demander des fichiers à {alias}",
     "auto_accept_on": "Acceptation automatique activée",

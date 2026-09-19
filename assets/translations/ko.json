@@ -23,6 +23,7 @@
     "apps_empty": "앱을 찾을 수 없음",
     "apps_search": "앱 검색",
     "apps_split": "분할 APK",
+    "apps_split_hint": "“분할 APK”로 표시된 앱은 모든 구성 파일을 담은 .apks 파일 하나로 전송됩니다. 받는 쪽은 SAI 같은 split APK 설치 도구로 설치해야 하며, 파일 관리자만으로는 설치할 수 없습니다.",
     "apps_subtitle": "설치된 앱을 APK 파일로 공유",
     "ask_device_files": "{alias}에게 파일 요청",
     "auto_accept_on": "자동 수락 켜짐",

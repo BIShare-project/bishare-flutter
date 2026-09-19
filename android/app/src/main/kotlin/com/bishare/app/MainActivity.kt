@@ -169,15 +169,22 @@ class MainActivity : FlutterActivity() {
             .filter { it.packageName != packageName }
             .mapNotNull { app ->
                 val apkPath = app.sourceDir ?: return@mapNotNull null
-                val size = File(apkPath).length()
-                if (size <= 0L) return@mapNotNull null
+                val baseSize = File(apkPath).length()
+                if (baseSize <= 0L) return@mapNotNull null
+                // An App Bundle install is a base APK plus config splits (ABI,
+                // density, language) and marks the base `isSplitRequired`: on
+                // its own it fails to install with INSTALL_FAILED_MISSING_SPLIT.
+                // Hand every part to Dart, which bundles them into one archive.
+                val splits = app.splitSourceDirs?.filter { File(it).length() > 0L }.orEmpty()
+                val size = baseSize + splits.sumOf { File(it).length() }
                 mapOf(
                     "name" to app.loadLabel(pm).toString(),
                     "package" to app.packageName,
                     "version" to versionNameOf(app.packageName).orEmpty(),
                     "apkPath" to apkPath,
                     "sizeBytes" to size,
-                    "splitCount" to (app.splitSourceDirs?.size ?: 0),
+                    "splitCount" to splits.size,
+                    "splitPaths" to splits,
                     "icon" to iconPngOf(app),
                 )
             }

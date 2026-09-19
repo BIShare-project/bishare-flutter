@@ -23,6 +23,7 @@
     "apps_empty": "Aplikasi tidak ditemukan",
     "apps_search": "Cari aplikasi",
     "apps_split": "APK Split",
+    "apps_split_hint": "Aplikasi bertanda “APK Split” dikirim sebagai satu file .apks berisi semua bagiannya. Penerima memasangnya dengan pemasang split APK seperti SAI — pengelola file saja tidak bisa.",
     "apps_subtitle": "Bagikan aplikasi terinstal sebagai file APK",
     "ask_device_files": "Minta file dari {alias}",
     "auto_accept_on": "Terima otomatis aktif",

@@ -23,6 +23,7 @@
     "apps_empty": "Aucune appli trouvée",
     "apps_search": "Rechercher des applis",
     "apps_split": "APK fractionné",
+    "apps_split_hint": "Les apps marquées « APK fractionné » sont envoyées en un seul fichier .apks contenant toutes leurs parties. Le destinataire l’installe avec un installateur de split APK comme SAI — un gestionnaire de fichiers seul n’y arrive pas.",
     "apps_subtitle": "Partager les applis installées en fichiers APK",
     "ask_device_files": "Demander des fichiers à {alias}",
     "auto_accept_on": "Acceptation automatique activée",

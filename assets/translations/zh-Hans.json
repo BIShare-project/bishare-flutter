@@ -23,6 +23,7 @@
     "apps_empty": "未找到应用",
     "apps_search": "搜索应用",
     "apps_split": "拆分 APK",
+    "apps_split_hint": "标有“拆分 APK”的应用会打包成一个包含全部分包的 .apks 文件发送。接收方需用 SAI 之类的 split APK 安装器安装——仅靠文件管理器无法安装。",
     "apps_subtitle": "以 APK 文件形式分享已安装的应用",
     "ask_device_files": "向 {alias} 请求文件",
     "auto_accept_on": "自动接受已开启",

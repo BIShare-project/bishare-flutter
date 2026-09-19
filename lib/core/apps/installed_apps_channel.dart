@@ -11,6 +11,7 @@ class InstalledApp {
     required this.apkPath,
     required this.sizeBytes,
     required this.splitCount,
+    this.splitPaths = const [],
     this.icon,
   });
 
@@ -21,18 +22,23 @@ class InstalledApp {
   /// The installed base APK (`ApplicationInfo.sourceDir`).
   final String apkPath;
 
-  /// Size of the base APK — what actually gets sent (splits are not bundled).
+  /// Size of what actually gets sent: the base APK plus every split.
   final int sizeBytes;
 
   /// Number of split APKs beside the base (App Bundle installs).
   final int splitCount;
 
+  /// The installed split APKs (`ApplicationInfo.splitSourceDirs`): the ABI,
+  /// density and language parts of an App Bundle install. Empty for an app
+  /// installed as a single APK.
+  final List<String> splitPaths;
+
   /// Launcher icon rasterized to a small PNG, or null if it couldn't render.
   final Uint8List? icon;
 
-  /// Installed as split APKs: sharing only the base APK may not install
-  /// correctly on the receiving device.
-  bool get isSplit => splitCount > 0;
+  /// Installed as split APKs. Such an app is sent as one `.apks` archive (base
+  /// + splits): the base alone is marked `isSplitRequired` and cannot install.
+  bool get isSplit => splitPaths.isNotEmpty;
 }
 
 /// "App Share" (SHAREit-style): lists launcher apps so their APKs can be
@@ -65,6 +71,11 @@ class InstalledAppsChannel {
           apkPath: m['apkPath'] as String? ?? '',
           sizeBytes: m['sizeBytes'] as int? ?? 0,
           splitCount: m['splitCount'] as int? ?? 0,
+          splitPaths:
+              (m['splitPaths'] as List<Object?>?)
+                  ?.whereType<String>()
+                  .toList() ??
+              const [],
           icon: m['icon'] as Uint8List?,
         );
       }).toList();
