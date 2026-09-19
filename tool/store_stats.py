@@ -15,7 +15,8 @@ Nothing secret is printed. Set DRY_RUN=1 to see the numbers without posting.
 
 App Store   ASC_KEY_ID, ASC_ISSUER_ID, ASC_API_KEY_P8, ASC_VENDOR_NUMBER
             ASC_APP_IDS   comma-separated Apple IDs to count (default: BIShare)
-Google Play PLAY_SERVICE_ACCOUNT_JSON, PLAY_REPORTS_BUCKET (pubsite_prod_rev_…)
+Google Play PLAY_REPORTS_SERVICE_ACCOUNT_JSON (falls back to PLAY_SERVICE_ACCOUNT_JSON),
+            PLAY_REPORTS_BUCKET (pubsite_prod_…)
             PLAY_PACKAGE  (default com.bishare.app)
 API         STATS_INGEST_TOKEN, STATS_INGEST_URL (default production)
 """
@@ -127,9 +128,13 @@ def apple(days: int, verbose: bool) -> dict[str, int] | None:
 
 
 def play(days: int, verbose: bool) -> tuple[dict[str, int], int | None] | None:
-    sa_json, bucket = env("PLAY_SERVICE_ACCOUNT_JSON"), env("PLAY_REPORTS_BUCKET")
+    # Reading reports and publishing releases are different jobs, and need not
+    # be the same account: a reports-only key wins when there is one, so the
+    # release key is never touched for this.
+    sa_json = env("PLAY_REPORTS_SERVICE_ACCOUNT_JSON") or env("PLAY_SERVICE_ACCOUNT_JSON")
+    bucket = env("PLAY_REPORTS_BUCKET")
     if not (sa_json and bucket):
-        missing = [n for n, v in [("PLAY_SERVICE_ACCOUNT_JSON", sa_json), ("PLAY_REPORTS_BUCKET", bucket)] if not v]
+        missing = [n for n, v in [("PLAY_REPORTS_SERVICE_ACCOUNT_JSON", sa_json), ("PLAY_REPORTS_BUCKET", bucket)] if not v]
         print(f"Google Play: skipped, not configured ({', '.join(missing)})")
         return None
     package = env("PLAY_PACKAGE", "com.bishare.app")

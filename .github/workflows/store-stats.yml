@@ -10,7 +10,9 @@ name: store-stats
 #
 # Secrets it reads:
 #   already here   ASC_KEY_ID, ASC_ISSUER_ID, ASC_API_KEY_P8, PLAY_SERVICE_ACCOUNT_JSON
-#   added for this ASC_VENDOR_NUMBER    App Store Connect → Payments and Financial Reports
+#   added for this PLAY_REPORTS_SERVICE_ACCOUNT_JSON  a reports-only key; optional, the
+#                                       release key is used when it is absent
+#                  ASC_VENDOR_NUMBER    App Store Connect → Payments and Financial Reports
 #                  PLAY_REPORTS_BUCKET  Play Console → Download reports → Statistics →
 #                                       "Copy Cloud Storage URI" (pubsite_prod_rev_…)
 #                  STATS_INGEST_TOKEN   the same value set on the API worker
@@ -61,6 +63,7 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
           ASC_VENDOR_NUMBER: ${{ secrets.ASC_VENDOR_NUMBER }}
+          PLAY_REPORTS_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_REPORTS_SERVICE_ACCOUNT_JSON }}
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           PLAY_REPORTS_BUCKET: ${{ secrets.PLAY_REPORTS_BUCKET }}
           STATS_INGEST_TOKEN: ${{ secrets.STATS_INGEST_TOKEN }}
