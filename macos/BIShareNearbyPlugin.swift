@@ -160,10 +160,16 @@ public final class BIShareNearbyPlugin: NSObject, FlutterPlugin {
         guard let path = item["path"] as? String,
               FileManager.default.fileExists(atPath: path) else { continue }
         self.emit(["event": "transferStart", "direction": "send", "fileName": name])
-        let meta: [String: String] = [
+        var meta: [String: String] = [
           "fileName": name, "fileType": type, "size": "\(size)",
           "index": "\(index)", "total": "\(items.count)",
         ]
+        // The file's own modification time (Unix ms), so the receiver can keep
+        // "Date modified". Older receivers ignore unknown keys.
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: path),
+           let modified = attrs[.modificationDate] as? Date {
+          meta["mtimeMs"] = "\(Int64((modified.timeIntervalSince1970 * 1000).rounded()))"
+        }
         let metaJSON = (try? JSONSerialization.data(withJSONObject: meta)) ?? Data()
         let resourceName = "RESOURCE:" + metaJSON.base64EncodedString()
         let sem = DispatchSemaphore(value: 0)
@@ -213,14 +219,16 @@ public final class BIShareNearbyPlugin: NSObject, FlutterPlugin {
   private func emitReceived(tempURL: URL, meta: [String: String], senderAlias: String) {
     let attrs = try? FileManager.default.attributesOfItem(atPath: tempURL.path)
     let size = (attrs?[.size] as? Int) ?? 0
-    emit([
+    var payload: [String: Any] = [
       "event": "received",
       "tempPath": tempURL.path,
       "fileName": meta["fileName"] ?? "file",
       "fileType": meta["fileType"] ?? "application/octet-stream",
       "size": size,
       "senderAlias": senderAlias,
-    ])
+    ]
+    if let raw = meta["mtimeMs"], let ms = Int64(raw) { payload["mtimeMs"] = ms }
+    emit(payload)
   }
 
   private func cleanupRecv(_ peerID: MCPeerID) {

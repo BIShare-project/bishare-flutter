@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/ui/app_ui.dart';
+import '../../../core/io/picked_mtime.dart';
 import '../../send/presentation/tray_cubit.dart';
 import '../../web_nearby/data/web_nearby_service.dart';
 import '../../web_nearby/presentation/web_nearby_cubit.dart';
@@ -29,8 +30,7 @@ class BrowserDeviceRow extends StatelessWidget {
       files = [for (final f in tray) File(f.path)];
     } else {
       final res = await FilePicker.platform.pickFiles(allowMultiple: true);
-      final paths =
-          res?.files.map((f) => f.path).whereType<String>().toList() ?? const [];
+      final paths = await pickedPaths(res);
       if (paths.isEmpty) return;
       files = [for (final p in paths) File(p)];
     }

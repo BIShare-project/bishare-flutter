@@ -8,6 +8,7 @@ import 'package:mime/mime.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/di/locator.dart';
+import '../../../../core/io/picked_mtime.dart';
 import '../../../../core/identity/device_identity.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../../../remote/data/cloud_transfer_service.dart';
@@ -47,7 +48,7 @@ class _WebAccessCloudTabState extends State<WebAccessCloudTab> {
 
   Future<void> _pickAndUpload() async {
     final res = await FilePicker.platform.pickFiles();
-    final path = res?.files.single.path;
+    final path = (await pickedPaths(res)).firstOrNull;
     if (path == null || !mounted) return;
     final file = File(path);
     final name = file.uri.pathSegments.last;

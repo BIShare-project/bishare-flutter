@@ -3,6 +3,25 @@
 All notable changes to BIShare are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.5.9] — 2026-10-03
+
+### Fixed
+- **Received files keep their original "Date modified".** Until now a file
+  arrived stamped with the moment the transfer finished, so a document last
+  edited in March showed today's date on the other device — a deal-breaker
+  for anyone who sorts or syncs by date. The sender now includes the file's
+  modification time with every transfer and the receiver writes it onto the
+  saved file: over Wi-Fi (TCP and QUIC), offline Nearby on iPhone, iPad and
+  Mac, a browser sending to the app, a web link opened in the app, and a
+  cloud link. On Android the file picker hands the app a copy made at that
+  instant, so the app now asks the original file for its date before sending.
+  Transfers from an older version arrive as before. A browser on the
+  receiving end cannot set a download's date — that is the browser, not
+  BIShare; files inside a bundle ZIP do keep their dates.
+- **Turning receiving off from the Mac menu bar no longer hangs.** Stopping
+  the server waited on the QUIC listener to end, which only ends once the
+  server is stopped; it is now stopped first.
+
 ## [2.5.7] — 2026-09-19
 
 ### Fixed

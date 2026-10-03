@@ -5,6 +5,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/locator.dart';
+import '../../../core/io/picked_mtime.dart';
 import '../../../core/io/media_picker.dart';
 import '../../../core/server/transfer_types.dart';
 import '../../../core/ui/app_ui.dart';
@@ -52,7 +53,7 @@ class _RequestContentState extends State<_RequestContent> {
       paths = await pickMediaPaths();
     } else {
       final res = await FilePicker.platform.pickFiles(allowMultiple: true);
-      paths = res?.paths.whereType<String>().toList() ?? const [];
+      paths = await pickedPaths(res);
     }
     final files = [
       for (final p in paths) SendableFile.fromPath(p, id: _uuid.v4()),

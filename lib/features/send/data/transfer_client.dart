@@ -182,6 +182,7 @@ class TransferClient {
         // keep integrity via per-chunk AES-GCM auth; small files still verify.
         sha256: f.size <= _hashSizeLimit ? await _sha256(f) : null,
         relPath: syncRelPaths?[f.id],
+        mtimeMs: f.mtimeMs,
       );
     }
 

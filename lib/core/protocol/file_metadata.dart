@@ -15,6 +15,7 @@ class FileMetadata {
     this.preview,
     this.expiresInSeconds,
     this.relPath,
+    this.mtimeMs,
   });
 
   factory FileMetadata.fromJson(Map<String, dynamic> json) =>
@@ -36,6 +37,12 @@ class FileMetadata {
   /// where a sync payload lands on the receiver. Only present when the prepare
   /// carries a `syncPairId`; the receiver rejects traversal (`..`) segments.
   final String? relPath;
+
+  /// The file's modification time on the sender, Unix milliseconds. The
+  /// receiver stamps the saved file with it so "Date modified" survives the
+  /// transfer. Null from senders older than 2.5.9, which simply leaves the
+  /// write time the filesystem assigns.
+  final int? mtimeMs;
 
   Map<String, dynamic> toJson() => _$FileMetadataToJson(this);
 }

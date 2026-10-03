@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'package:bishare/core/crypto/bse2.dart';
 import 'package:dio/dio.dart';
 import 'package:bishare/core/server/transfer_server.dart';
+import 'package:bishare/core/server/transfer_types.dart';
 import 'package:bishare/features/history/data/history_repository.dart';
 import 'package:bishare/features/remote/data/cloud_transfer_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,6 +38,10 @@ class _Relay {
   final Map<int, Uint8List> parts = {};
   final List<int> refreshedParts = [];
   final List<int> partPutAttempts = [];
+
+  // ── download (receive side) ──
+  Uint8List downloadBody = Uint8List.fromList(utf8.encode('plain notes'));
+  int? downloadMtimeMs;
 
   /// Part whose FIRST PUT is answered 403, as an expired presign would be.
   int? failFirstPutOfPart;
@@ -171,6 +176,33 @@ class _Relay {
                 .toIso8601String(),
           }),
         );
+    } else if (req.method == 'GET' &&
+        req.uri.path.startsWith('/api/v1/transfer/status/')) {
+      req.response
+        ..headers.contentType = ContentType.json
+        ..write(
+          jsonEncode({
+            'success': true,
+            'data': {
+              'code': 'DLCODE',
+              'fileName': 'notes.txt',
+              'fileSize': downloadBody.length,
+              'mimeType': 'text/plain',
+              'oneTime': false,
+              'isDownloaded': false,
+              'expiresAt': DateTime.now()
+                  .add(const Duration(hours: 1))
+                  .toIso8601String(),
+              if (downloadMtimeMs != null) 'mtimeMs': downloadMtimeMs,
+            },
+          }),
+        );
+    } else if (req.method == 'GET' &&
+        req.uri.path.startsWith('/api/v1/transfer/download/')) {
+      req.response
+        ..headers.contentType = ContentType.binary
+        ..headers.contentLength = downloadBody.length
+        ..add(downloadBody);
     } else if (req.method == 'PUT' && req.uri.path == '/r2/object') {
       final chunks = <int>[];
       await for (final c in req) {
@@ -199,6 +231,16 @@ void main() {
 
   setUpAll(() async {
     rust = await initRustForTests();
+    registerFallbackValue(
+      ReceivedFile(
+        fileName: '',
+        savedPath: '',
+        size: 0,
+        senderAlias: '',
+        receivedAt: DateTime(2000),
+        verified: false,
+      ),
+    );
   });
 
   setUp(() async {
@@ -485,6 +527,80 @@ void main() {
       expect(result.url, 'https://bishare.app/transfer/ABCDEF');
     },
   );
+
+  group('Date modified survives the relay', () {
+    const mtime = 1720000000123; // 2024-07-03, far from any test clock
+
+    test(
+      'presigned upload sends the ORIGINAL file mtime, not the sealed copy',
+      () async {
+        if (!rust) return markTestSkipped(rustUnavailableReason);
+        final file = await plainFile(4096);
+        await file.setLastModified(
+          DateTime.fromMillisecondsSinceEpoch(mtime, isUtc: true),
+        );
+        await service.uploadTransfer(
+          file: file,
+          fileName: 'holiday.mp4',
+          mimeType: 'video/mp4',
+          senderAlias: 'Nima',
+        );
+        // The scratch ciphertext was written just now; the body must carry the
+        // user's file time (second precision: not every filesystem keeps ms).
+        expect((relay.createBody!['mtime_ms'] as int) ~/ 1000, mtime ~/ 1000);
+      },
+    );
+
+    test('multipart complete carries mtime_ms too', () async {
+      if (!rust) return markTestSkipped(rustUnavailableReason);
+      final mp = CloudTransferService(
+        _FakeServer(),
+        _FakeHistory(),
+        apiBase: relay.base,
+        multipartThreshold: _Relay.partSize,
+      );
+      final file = await plainFile(_Relay.partSize * 2 + 1);
+      await file.setLastModified(
+        DateTime.fromMillisecondsSinceEpoch(mtime, isUtc: true),
+      );
+      await mp.uploadTransfer(
+        file: file,
+        fileName: 'holiday.mp4',
+        mimeType: 'video/mp4',
+        senderAlias: 'Nima',
+      );
+      expect((relay.mpCompleteBody!['mtime_ms'] as int) ~/ 1000, mtime ~/ 1000);
+    });
+
+    test(
+      'downloadTransfer stamps the saved file with the status mtimeMs',
+      () async {
+        final save = Directory('${tmp.path}/recv')..createSync();
+        final server = _FakeServer();
+        when(() => server.saveDirectory).thenReturn(save);
+        final history = _FakeHistory();
+        when(() => history.recordReceived(any())).thenAnswer((_) async {});
+        final svc = CloudTransferService(server, history, apiBase: relay.base);
+
+        relay.downloadMtimeMs = mtime;
+        final got = await svc.downloadTransfer('DLCODE');
+        final saved = File(got.savedPath);
+        expect(saved.readAsStringSync(), 'plain notes');
+        expect(
+          saved.lastModifiedSync().millisecondsSinceEpoch ~/ 1000,
+          mtime ~/ 1000,
+        );
+
+        // No mtimeMs from an older server → the download keeps its write time.
+        relay.downloadMtimeMs = null;
+        final got2 = await svc.downloadTransfer('DLCODE');
+        final age = DateTime.now().difference(
+          File(got2.savedPath).lastModifiedSync(),
+        );
+        expect(age.inSeconds.abs() < 60, isTrue);
+      },
+    );
+  });
 
   test('an empty file is still sealed (one authenticated tag)', () async {
     if (!rust) return markTestSkipped(rustUnavailableReason);

@@ -26,4 +26,18 @@ class AndroidDownloadsPath {
       return null;
     }
   }
+
+  /// Modification time (Unix ms) of the original file behind a picked content
+  /// [uri], or null when the provider does not say. See `lastModifiedOf` in
+  /// MainActivity.kt.
+  static Future<int?> lastModifiedOf(String uri) async {
+    if (!Platform.isAndroid) return null;
+    try {
+      return await _channel.invokeMethod<int>('lastModifiedOf', {'uri': uri});
+    } on MissingPluginException {
+      return null;
+    } on PlatformException {
+      return null;
+    }
+  }
 }

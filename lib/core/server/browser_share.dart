@@ -302,7 +302,7 @@ String browserPageHtml({
       var last=end>=f.size;
       var hd=H();
       hd['X-Upload-Id']=id;hd['X-Chunk-Offset']=''+off;
-      hd['X-File-Name']=encodeURIComponent(rel);hd['X-File-Size']=''+f.size;hd['X-File-Type']=f.type||'';
+      hd['X-File-Name']=encodeURIComponent(rel);hd['X-File-Size']=''+f.size;hd['X-File-Type']=f.type||'';if(f.lastModified>0)hd['X-File-Mtime']=''+f.lastModified;
       if(last)hd['X-Upload-Complete']='1';
       var r=null,attempt=0;
       for(;;){

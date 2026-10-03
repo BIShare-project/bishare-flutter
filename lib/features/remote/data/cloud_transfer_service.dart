@@ -6,6 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 import '../../../core/constants/cloud.dart';
 import '../../../core/crypto/bse2.dart';
+import '../../../core/io/preserve_mtime.dart';
 import '../../../core/io/scratch_dir.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/server/transfer_types.dart';
@@ -184,6 +185,8 @@ class CloudTransferService {
       cancelToken: cancel,
     );
     final wasEncrypted = await _decryptIfBse2(target, key);
+    // After decryption (which rewrites the file) so the stamp is the last write.
+    await applyReceivedMtime(target, (meta['mtimeMs'] as num?)?.toInt());
     return _record(
       target,
       meta['mimeType'] as String?,
@@ -278,6 +281,10 @@ class CloudTransferService {
     );
     final target = await _target(name ?? 'file');
     await tmp.rename(target.path);
+    await applyReceivedMtime(
+      target,
+      int.tryParse(res.headers.value('x-file-mtime') ?? ''),
+    );
     return _record(
       target,
       res.headers.value(Headers.contentTypeHeader),
@@ -313,6 +320,8 @@ class CloudTransferService {
     Directory? scratch;
     var body = file;
     String? keyFragment;
+    // From the original, not the sealed scratch copy.
+    final mtimeMs = mtimeOf(file);
     try {
       if (encrypt) {
         final raw = Bse2.generateKey();
@@ -333,6 +342,7 @@ class CloudTransferService {
         senderAlias: senderAlias,
         oneTime: oneTime,
         key: keyFragment,
+        mtimeMs: mtimeMs,
         onProgress: onProgress,
         cancel: cancel,
       );
@@ -356,6 +366,7 @@ class CloudTransferService {
     required String senderAlias,
     required bool oneTime,
     required String? key,
+    int? mtimeMs,
     ProgressCb? onProgress,
     CancelToken? cancel,
   }) async {
@@ -371,6 +382,7 @@ class CloudTransferService {
         senderAlias: senderAlias,
         oneTime: oneTime,
         key: key,
+        mtimeMs: mtimeMs,
         onProgress: onProgress,
         cancel: cancel,
       );
@@ -386,6 +398,7 @@ class CloudTransferService {
           'mime_type': mimeType,
           'sender_alias': senderAlias,
           'one_time': oneTime,
+          'mtime_ms': ?mtimeMs,
         },
         cancelToken: cancel,
       );
@@ -406,6 +419,7 @@ class CloudTransferService {
         length: length,
         oneTime: oneTime,
         key: key,
+        mtimeMs: mtimeMs,
         onProgress: onProgress,
         cancel: cancel,
       );
@@ -443,6 +457,7 @@ class CloudTransferService {
     required String senderAlias,
     required bool oneTime,
     required String? key,
+    int? mtimeMs,
     ProgressCb? onProgress,
     CancelToken? cancel,
   }) async {
@@ -541,6 +556,7 @@ class CloudTransferService {
           'mime_type': mimeType,
           'sender_alias': senderAlias,
           'one_time': oneTime,
+          'mtime_ms': ?mtimeMs,
         },
         cancelToken: cancel,
       );
@@ -583,6 +599,7 @@ class CloudTransferService {
     required int length,
     required bool oneTime,
     required String? key,
+    int? mtimeMs,
     ProgressCb? onProgress,
     CancelToken? cancel,
   }) async {
@@ -595,6 +612,7 @@ class CloudTransferService {
           'X-File-Type': mimeType,
           'X-Sender-Alias': senderAlias,
           if (oneTime) 'X-One-Time': 'true',
+          if (mtimeMs != null) 'X-File-Mtime': '$mtimeMs',
           Headers.contentLengthHeader: length,
         },
         contentType: 'application/octet-stream',

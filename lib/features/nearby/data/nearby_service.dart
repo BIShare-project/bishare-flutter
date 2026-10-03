@@ -39,12 +39,16 @@ class NearbyReceived extends NearbyEvent {
     required this.fileType,
     required this.size,
     required this.senderAlias,
+    this.mtimeMs,
   });
   final String tempPath;
   final String fileName;
   final String fileType;
   final int size;
   final String senderAlias;
+
+  /// Sender-side modification time (Unix ms), when the peer sent one.
+  final int? mtimeMs;
 }
 
 class NearbyError extends NearbyEvent {
@@ -98,6 +102,7 @@ class NearbyService {
           fileType: m['fileType'] as String? ?? 'application/octet-stream',
           size: (m['size'] as num?)?.toInt() ?? 0,
           senderAlias: m['senderAlias'] as String? ?? 'Nearby device',
+          mtimeMs: (m['mtimeMs'] as num?)?.toInt(),
         );
       case 'error':
         return NearbyError(m['message'] as String? ?? 'error');

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bishare/core/io/preserve_mtime.dart';
 import 'package:mime/mime.dart';
 
 /// A local file queued to send. Byte content is streamed from [path] — never
@@ -11,6 +12,7 @@ class SendableFile {
     required this.name,
     required this.size,
     required this.mimeType,
+    this.mtimeMs,
   });
 
   /// Builds a [SendableFile] from a filesystem path.
@@ -23,6 +25,7 @@ class SendableFile {
       name: name,
       size: file.lengthSync(),
       mimeType: lookupMimeType(name) ?? 'application/octet-stream',
+      mtimeMs: mtimeOf(file),
     );
   }
 
@@ -31,6 +34,10 @@ class SendableFile {
   final String name;
   final int size;
   final String mimeType;
+
+  /// Modification time on this device (Unix ms), sent so the receiver can keep
+  /// "Date modified". Null when the filesystem has none.
+  final int? mtimeMs;
 
   File get file => File(path);
 }

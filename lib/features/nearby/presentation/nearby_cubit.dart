@@ -138,6 +138,7 @@ class NearbyCubit extends Cubit<NearbyState> {
         :final fileType,
         :final size,
         :final senderAlias,
+        :final mtimeMs,
       ):
         // Finalize through the shared receive pipeline (naming + inbox + history).
         _server.ingestExternalFile(
@@ -146,6 +147,7 @@ class NearbyCubit extends Cubit<NearbyState> {
           fileType: fileType,
           size: size,
           senderAlias: senderAlias,
+          mtimeMs: mtimeMs,
         );
       case NearbyError(:final message):
         emit(state.copyWith(error: message, transferring: false));

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import '../../../core/identity/device_identity.dart';
+import '../../../core/io/preserve_mtime.dart';
 import '../../../core/network/local_ip.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/server/transfer_types.dart';
@@ -298,6 +299,9 @@ class WebNearbyService {
           'name': fileName,
           'size': s.size,
           'mime': mime ?? 'application/octet-stream',
+          // Browsers cannot stamp a download with it, but a web peer relaying
+          // to an app can; harmless to a receiver that ignores it.
+          if (mtimeOf(file) case final int ms) 'mtimeMs': ms,
         },
       });
     } catch (e) {
@@ -459,6 +463,8 @@ class WebNearbyService {
       return;
     }
     s.sink = null;
+    // The web sender's File.lastModified rides in the offer metadata.
+    await applyReceivedMtime(out, (s.meta?['mtimeMs'] as num?)?.toInt());
     final received = ReceivedFile(
       fileName: out.uri.pathSegments.last,
       savedPath: out.path,

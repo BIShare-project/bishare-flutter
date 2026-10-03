@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/apps/installed_apps_channel.dart';
+import '../../../core/io/picked_mtime.dart';
 import '../../../core/io/media_picker.dart';
 import '../../../core/media/media_sources.dart';
 import '../../settings/domain/settings.dart';
@@ -53,7 +54,7 @@ class TrayCubit extends Cubit<List<SendableFile>> {
   Future<void> pickFiles() async {
     final res = await FilePicker.platform.pickFiles(allowMultiple: true);
     if (res == null) return;
-    _addPaths(res.paths.whereType<String>());
+    _addPaths(await pickedPaths(res));
   }
 
   /// Pick a folder → zip it into a single sendable archive.

@@ -15,6 +15,7 @@ import 'package:uuid/uuid.dart';
 import '../constants/protocol.dart';
 import '../identity/device_identity.dart';
 import '../identity/pinned_keys.dart';
+import '../io/preserve_mtime.dart';
 import '../sync/sync_paths.dart';
 import '../../features/clipboard/data/clipboard_token_store.dart';
 import '../protocol/file_metadata.dart';
@@ -143,6 +144,7 @@ class TransferServer {
     }
     // One-time links are consumed before streaming (race-safe).
     if (entry.oneTime) _instantTokens.remove(token);
+    final mtimeMs = mtimeOf(file);
     return Response.ok(
       file.openRead(),
       headers: {
@@ -152,6 +154,8 @@ class TransferServer {
         'content-length': '${file.lengthSync()}',
         'content-disposition':
             'attachment; filename="${_headerSafe(entry.fileName)}"',
+        // An app pulling this link keeps "Date modified"; browsers ignore it.
+        if (mtimeMs != null) 'x-file-mtime': '$mtimeMs',
         'access-control-allow-origin': '*',
       },
     );
@@ -339,9 +343,14 @@ class TransferServer {
     _uploadReaper = null;
     await _server?.close(force: true);
     _server = null;
+    // Close the QUIC endpoint BEFORE cancelling its event subscription: the
+    // Rust accept loop (and with it the event sink) only ends once the endpoint
+    // is closed, and cancelling the bridge stream waits for that sink to go —
+    // the other order never returned, which left the desktop tray's "receiving"
+    // toggle hanging mid-switch.
+    quic.quicStop(port: BISharePort.quic);
     await _quicSub?.cancel();
     _quicSub = null;
-    quic.quicStop(port: BISharePort.quic);
     for (final id in _sessions.keys) {
       quic.quicRevokeSession(sessionId: id);
     }
@@ -583,6 +592,9 @@ class TransferServer {
       await tmp.copy(saved.path);
       if (tmp.existsSync()) tmp.deleteSync();
     }
+    // The QUIC stream carries no timestamp; the prepare metadata (kept on the
+    // session, which QUIC progress keeps alive) does.
+    await applyReceivedMtime(saved, meta.mtimeMs);
     debugPrint(
       '[Server] QUIC received "${meta.fileName}" (${size}B) '
       'verified=$verified → ${saved.path}',
@@ -636,6 +648,7 @@ class TransferServer {
     required int size,
     required String senderAlias,
     String? senderFingerprint,
+    int? mtimeMs,
   }) async {
     final tmp = File(tempPath);
     if (!tmp.existsSync()) return null;
@@ -644,6 +657,7 @@ class TransferServer {
       fileName: fileName,
       size: size,
       fileType: fileType,
+      mtimeMs: mtimeMs,
     );
     final saved = ReceiveNaming.targetFile(_saveDir, meta, senderAlias);
     try {
@@ -652,6 +666,7 @@ class TransferServer {
       await tmp.copy(saved.path);
       if (tmp.existsSync()) tmp.deleteSync();
     }
+    await applyReceivedMtime(saved, mtimeMs);
     debugPrint(
       '[Server] Nearby received "$fileName" (${size}B) → ${saved.path}',
     );
@@ -1039,6 +1054,9 @@ class TransferServer {
       await tmp.copy(saved.path);
       if (tmp.existsSync()) tmp.deleteSync();
     }
+    // Last step on purpose: the file is closed and at its final path, so the
+    // sender's "Date modified" survives (a later write would overwrite it).
+    await applyReceivedMtime(saved, meta.mtimeMs);
 
     session.completedFileIds.add(fileId);
     debugPrint(
@@ -1417,7 +1435,8 @@ class TransferServer {
   // browser upload (feature #11). Headers: X-Upload-Id (browser UUID),
   // X-Chunk-Offset (must equal the current `.part` length, else 409 with the
   // expected offset), X-File-Name/-Size/-Type (metadata, re-sent every chunk
-  // so a server restart loses nothing), X-Upload-Complete: 1 on the final
+  // so a server restart loses nothing), X-File-Mtime (the browser File's
+  // lastModified, Unix ms; optional), X-Upload-Complete: 1 on the final
   // chunk — which finalizes through the exact same end-state as the classic
   // browser upload above (ReceiveNaming + [_received] → history/notification).
   Future<Response> _handleBrowserUploadChunk(Request request) async {
@@ -1521,6 +1540,11 @@ class TransferServer {
       await part.copy(target.path);
       if (part.existsSync()) part.deleteSync();
     }
+    // The header rides on every chunk, so the final one has it.
+    await applyReceivedMtime(
+      target,
+      int.tryParse(request.headers['x-file-mtime'] ?? ''),
+    );
     final savedName = target.uri.pathSegments.last;
     _uploads.forget(id);
     // Remember this finalize so a retried final chunk (lost success response)

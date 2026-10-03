@@ -100,6 +100,12 @@ pub struct FileMetadata {
     /// primary | companion
     #[serde(rename = "pairRole", skip_serializing_if = "Option::is_none")]
     pub pair_role: Option<String>,
+    /// Sender-side modification time, Unix milliseconds (v2.4.1). Receivers
+    /// stamp the saved file with it so "Date modified" survives a transfer;
+    /// absent from older senders, in which case the receiver leaves the
+    /// filesystem's own write time.
+    #[serde(rename = "mtimeMs", skip_serializing_if = "Option::is_none")]
+    pub mtime_ms: Option<i64>,
 }
 
 // ── Transfer Types ──
@@ -465,6 +471,7 @@ mod tests {
             paired_id: None,
             asset_kind: None,
             pair_role: None,
+            mtime_ms: None,
         };
         let json = serde_json::to_string(&meta).unwrap();
         assert!(json.contains("\"fileName\""));
@@ -577,6 +584,7 @@ mod tests {
             paired_id: Some("f2".to_string()),
             asset_kind: Some("livePhotoStill".to_string()),
             pair_role: Some("primary".to_string()),
+            mtime_ms: None,
         };
         let json = serde_json::to_string(&meta).unwrap();
         assert!(json.contains("\"pairedId\":\"f2\""));
@@ -597,6 +605,23 @@ mod tests {
         assert!(!json.contains("pairedId"));
         assert!(!json.contains("assetKind"));
         assert!(!json.contains("pairRole"));
+    }
+
+    #[test]
+    fn test_file_metadata_mtime_ms() {
+        // v2.4.1: the sender's modification time rides along as Unix millis.
+        let json = r#"{"id":"f1","fileName":"a.txt","size":1,"fileType":"text/plain","mtimeMs":1720000000123}"#;
+        let parsed: FileMetadata = serde_json::from_str(json).unwrap();
+        assert_eq!(parsed.mtime_ms, Some(1720000000123));
+        let json = serde_json::to_string(&parsed).unwrap();
+        assert!(json.contains("\"mtimeMs\":1720000000123"));
+
+        // Older senders never send it → None, and it stays off the wire so an
+        // older receiver sees exactly the JSON it always did.
+        let json = r#"{"id":"f1","fileName":"a.txt","size":1,"fileType":"text/plain"}"#;
+        let parsed: FileMetadata = serde_json::from_str(json).unwrap();
+        assert_eq!(parsed.mtime_ms, None);
+        assert!(!serde_json::to_string(&parsed).unwrap().contains("mtimeMs"));
     }
 
     #[test]
@@ -685,6 +710,7 @@ mod tests {
             paired_id: None,
             asset_kind: None,
             pair_role: None,
+            mtime_ms: None,
         });
         let req = BroadcastPrepareRequest {
             info: DeviceInfo { alias: "Mac".to_string(), fingerprint: "FP".to_string(), ..Default::default() },

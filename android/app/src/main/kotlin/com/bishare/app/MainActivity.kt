@@ -79,6 +79,15 @@ class MainActivity : FlutterActivity() {
                     val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                     result.success(downloadsDir.absolutePath)
                 }
+                // The modification time (Unix ms) of the ORIGINAL behind a picked
+                // content URI. The file picker hands Dart a copy in the cache,
+                // whose mtime is the moment of copying; the receiver is supposed
+                // to get the real "Date modified", so Dart asks for it here and
+                // stamps the copy. Null when the provider has no such column.
+                "lastModifiedOf" -> {
+                    val uri = call.argument<String>("uri")?.let { Uri.parse(it) }
+                    result.success(uri?.let { lastModifiedOf(it) })
+                }
                 else -> result.notImplemented()
             }
         }
@@ -376,5 +385,32 @@ class MainActivity : FlutterActivity() {
             if (idx >= 0 && c.moveToFirst()) name = c.getString(idx)
         }
         return name
+    }
+
+    private fun lastModifiedOf(uri: Uri): Long? {
+        // DocumentsProvider rows (Files app, Drive, …) expose `last_modified` in
+        // ms; MediaStore rows expose `date_modified` in seconds. Ask for both,
+        // use whichever the provider filled in. A provider may throw on an
+        // unknown column, so the two are queried separately.
+        val cols = listOf(
+            android.provider.DocumentsContract.Document.COLUMN_LAST_MODIFIED to 1L,
+            android.provider.MediaStore.MediaColumns.DATE_MODIFIED to 1000L,
+        )
+        for ((column, scale) in cols) {
+            try {
+                contentResolver.query(uri, arrayOf(column), null, null, null)?.use { c ->
+                    if (c.moveToFirst()) {
+                        val i = c.getColumnIndex(column)
+                        if (i >= 0 && !c.isNull(i)) {
+                            val v = c.getLong(i) * scale
+                            if (v > 0) return v
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+                // Column unsupported by this provider — try the next.
+            }
+        }
+        return null
     }
 }

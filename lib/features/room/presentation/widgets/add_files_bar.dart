@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/io/media_picker.dart';
+import '../../../../core/io/picked_mtime.dart';
 import '../../../../core/ui/app_ui.dart';
 
 class AddFilesBar extends StatelessWidget {
@@ -16,7 +17,7 @@ class AddFilesBar extends StatelessWidget {
       paths = await pickMediaPaths();
     } else {
       final res = await FilePicker.platform.pickFiles(allowMultiple: true);
-      paths = res?.paths.whereType<String>().toList() ?? const [];
+      paths = await pickedPaths(res);
     }
     if (paths.isNotEmpty) onPicked(paths);
   }
