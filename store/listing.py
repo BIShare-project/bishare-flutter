@@ -8,6 +8,8 @@ macOS) and Google Play. Adapted from the games repo's store_listing.py.
   python3 store/listing.py --play --dry-run [--screenshots <dir>]
   python3 store/listing.py --play [--screenshots <dir>]
   python3 store/listing.py --play-notes production --dry-run
+  python3 store/listing.py --asc-submit [--dry-run]
+  python3 store/listing.py --play [--screenshots <dir>] --play-release production [--dry-run]
 
 --check        limits (App Store name 30 / subtitle 30 / keywords 100 /
                promotional 170 / description 4000 / what's new 4000; Play
@@ -25,6 +27,13 @@ macOS) and Google Play. Adapted from the games repo's store_listing.py.
                with --screenshots, phone (play_phone) and 7"/10" tablet
                (play_tablet) screenshots; committed at the end.
 --play-notes T sets what's new on the newest release of track T.
+--play-release T  in the same edit as --play: the internal-track release of
+               this pubspec build goes to track T, fully rolled out, with
+               what's new; one commit, one review for listing and release.
+--asc-submit   for IOS and MAC_OS: the processed build of this pubspec build
+               number is attached to the editable version (export compliance
+               "no non-exempt encryption", as every earlier build) and the
+               version is submitted for review.
 --dry-run      prints what would be sent, calls nothing (except reading the
                App Store version list, which changes nothing).
 
@@ -73,6 +82,12 @@ def load() -> dict:
     return json.loads((HERE / "listing.json").read_text())
 
 
+def build_number() -> str:
+    """The +N of pubspec's version, the build the stores know."""
+    m = re.search(r"^version:\s*([0-9.]+)\+([0-9]+)", (HERE.parent / "pubspec.yaml").read_text(), re.M)
+    return m.group(2)
+
+
 # ---------------------------------------------------------------- check
 def words(s: str) -> set[str]:
     return {w for w in re.split(r"[\s:：,，·・、]+", s.lower()) if w}
@@ -108,17 +123,40 @@ def check(listing: dict) -> int:
 
 # ---------------------------------------------------------------- http
 def call(method: str, url: str, token: str, body: bytes | None = None, ctype: str = "application/json") -> tuple[int, dict]:
-    req = urllib.request.Request(url, method=method, data=body, headers={"Authorization": "Bearer " + token, "Content-Type": ctype})
-    try:
-        with urllib.request.urlopen(req, timeout=900) as r:
-            raw = r.read()
-            return r.status, (json.loads(raw) if raw else {})
-    except urllib.error.HTTPError as e:
-        raw = e.read()
+    for attempt in range(4):
+        req = urllib.request.Request(url, method=method, data=body, headers={"Authorization": "Bearer " + token, "Content-Type": ctype})
         try:
-            return e.code, json.loads(raw)
-        except ValueError:
-            return e.code, {"raw": raw[:300].decode(errors="replace")}
+            with urllib.request.urlopen(req, timeout=900) as r:
+                raw = r.read()
+                return r.status, (json.loads(raw) if raw else {})
+        except urllib.error.HTTPError as e:
+            raw = e.read()
+            if e.code >= 500 and attempt < 3:
+                time.sleep(5 * (attempt + 1))
+                continue
+            try:
+                return e.code, json.loads(raw)
+            except ValueError:
+                return e.code, {"raw": raw[:300].decode(errors="replace")}
+        except (urllib.error.URLError, OSError) as e:  # a dropped connection
+            if attempt == 3:
+                raise
+            print(f"    retry after {type(e).__name__}")
+            time.sleep(5 * (attempt + 1))
+    raise RuntimeError("unreachable")
+
+
+def put_chunk(op: dict, chunk: bytes) -> None:
+    for attempt in range(4):
+        try:
+            req = urllib.request.Request(op["url"], method=op["method"], data=chunk, headers={h["name"]: h["value"] for h in op["requestHeaders"]})
+            with urllib.request.urlopen(req, timeout=300) as r:
+                r.read()
+            return
+        except (urllib.error.URLError, OSError):
+            if attempt == 3:
+                raise
+            time.sleep(5 * (attempt + 1))
 
 
 def asc_token() -> str:
@@ -191,6 +229,11 @@ def replace_set(localization_id: str, display: str, files: list[pathlib.Path]) -
         st, d = asc("POST", "/v1/appScreenshotSets", {"data": {"type": "appScreenshotSets", "attributes": {"screenshotDisplayType": display}, "relationships": {"appStoreVersionLocalization": {"data": {"type": "appStoreVersionLocalizations", "id": localization_id}}}}})
         set_id = d["data"]["id"]
     st, existing = asc("GET", f"/v1/appScreenshotSets/{set_id}/appScreenshots?limit=50")
+    done = [(x["attributes"]["fileName"], x["attributes"]["sourceFileChecksum"], (x["attributes"].get("assetDeliveryState") or {}).get("state")) for x in existing.get("data", [])]
+    want = [(f.name, hashlib.md5(f.read_bytes()).hexdigest(), "COMPLETE") for f in files]
+    if done == want:  # a rerun after a dropped connection: this set is already in
+        print("    ", display, "already uploaded")
+        return
     for shot in existing.get("data", []):
         asc("DELETE", f"/v1/appScreenshots/{shot['id']}")
     for f in files:
@@ -201,10 +244,7 @@ def replace_set(localization_id: str, display: str, files: list[pathlib.Path]) -
             continue
         shot = d["data"]
         for op in shot["attributes"]["uploadOperations"]:
-            chunk = data[op["offset"]: op["offset"] + op["length"]]
-            req = urllib.request.Request(op["url"], method=op["method"], data=chunk, headers={h["name"]: h["value"] for h in op["requestHeaders"]})
-            with urllib.request.urlopen(req, timeout=300) as r:
-                r.read()
+            put_chunk(op, data[op["offset"]: op["offset"] + op["length"]])
         st, d = asc("PATCH", f"/v1/appScreenshots/{shot['id']}", {"data": {"type": "appScreenshots", "id": shot["id"], "attributes": {"uploaded": True, "sourceFileChecksum": hashlib.md5(data).hexdigest()}}})
         print("    ", display, f.name, st)
 
@@ -261,14 +301,58 @@ def push_asc(listing: dict, root: pathlib.Path | None, whats_new: bool, create: 
     return 0
 
 
+def asc_submit(listing: dict, dry: bool) -> int:
+    code = build_number()
+    rc = 0
+    for platform in PLATFORMS:
+        st, vers = asc("GET", f"/v1/apps/{APP}/appStoreVersions?filter[platform]={platform}&filter[versionString]={listing['version']}")
+        ver = next((v for v in vers.get("data", []) if v["attributes"]["appStoreState"] in EDITABLE), None)
+        if ver is None:
+            print(f"asc {platform}: no editable version {listing['version']}")
+            rc = 1
+            continue
+        st, builds = asc("GET", f"/v1/builds?filter[app]={APP}&filter[version]={code}&filter[preReleaseVersion.platform]={platform}&filter[preReleaseVersion.version]={listing['version']}")
+        build = next((b for b in builds.get("data", []) if b["attributes"]["processingState"] == "VALID"), None)
+        if build is None:
+            states = [b["attributes"]["processingState"] for b in builds.get("data", [])]
+            print(f"asc {platform}: build {code} not processed yet ({states or 'not uploaded'})")
+            rc = 1
+            continue
+        print(f"asc {platform}: attach build {code} to {listing['version']} and submit")
+        if dry:
+            continue
+        if build["attributes"].get("usesNonExemptEncryption") is None:
+            st, d = asc("PATCH", f"/v1/builds/{build['id']}", {"data": {"type": "builds", "id": build["id"], "attributes": {"usesNonExemptEncryption": False}}})
+            print("  export compliance:", st)
+        st, d = asc("PATCH", f"/v1/appStoreVersions/{ver['id']}/relationships/build", {"data": {"type": "builds", "id": build["id"]}})
+        print("  attach:", st, "" if st == 204 else str(d.get("errors", d))[:200])
+        st, sub = asc("POST", "/v1/reviewSubmissions", {"data": {"type": "reviewSubmissions", "attributes": {"platform": platform}, "relationships": {"app": {"data": {"type": "apps", "id": APP}}}}})
+        if st != 201:
+            print("  review submission:", st, str(sub.get("errors", sub))[:300])
+            rc = 1
+            continue
+        sid = sub["data"]["id"]
+        st, d = asc("POST", "/v1/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems", "relationships": {"reviewSubmission": {"data": {"type": "reviewSubmissions", "id": sid}}, "appStoreVersion": {"data": {"type": "appStoreVersions", "id": ver["id"]}}}}})
+        print("  item:", st, "" if st == 201 else str(d.get("errors", d))[:300])
+        if st != 201:
+            rc = 1
+            continue
+        st, d = asc("PATCH", f"/v1/reviewSubmissions/{sid}", {"data": {"type": "reviewSubmissions", "id": sid, "attributes": {"submitted": True}}})
+        print("  submitted:", st, "" if st == 200 else str(d.get("errors", d))[:300])
+        rc |= st != 200
+    return rc
+
+
 # ---------------------------------------------------------------- play
-def push_play(listing: dict, root: pathlib.Path | None, dry: bool) -> int:
+def push_play(listing: dict, root: pathlib.Path | None, dry: bool, release_track: str | None = None) -> int:
     if dry:
         for lang, l in listing["play"].items():
             print(f"play {lang}: title/short/full")
             for image_type, folder in PLAY_SETS.items():
                 if root:
                     print(f"  {image_type}: {len(shots(root, l['shots'], folder)[:8])} from {l['shots']}/{folder}")
+        if release_track:
+            print(f"play {release_track}: release build {build_number()} from internal, completed, what's new in {len(listing['play'])} languages")
         return 0
     token = play_token()
     base = f"{PLAY}/{PACKAGE}"
@@ -290,6 +374,19 @@ def push_play(listing: dict, root: pathlib.Path | None, dry: bool) -> int:
                     st, d = call("POST", f"{PLAY_UPLOAD}/{PACKAGE}/edits/{edit}/listings/{lang}/{image_type}?uploadType=media", token, f.read_bytes(), ctype="image/png")
                     print(f"  {image_type} {f.name}: {st} {d.get('error', {}).get('message', '')[:120]}")
                     failed += st != 200
+    if release_track and not failed:
+        code = build_number()
+        st, internal = call("GET", f"{base}/edits/{edit}/tracks/internal", token)
+        rel = next((r for r in internal.get("releases", []) if code in r.get("versionCodes", [])), None)
+        if rel is None:
+            print(f"play: build {code} is not on the internal track yet")
+            failed += 1
+        else:
+            notes = [{"language": lang, "text": l["whatsNew"]} for lang, l in listing["play"].items()]
+            body = {"track": release_track, "releases": [{"name": f"{listing['version']} ({code})", "versionCodes": [code], "status": "completed", "releaseNotes": notes}]}
+            st, d = call("PUT", f"{base}/edits/{edit}/tracks/{release_track}", token, json.dumps(body).encode())
+            print(f"play {release_track} release {code}: {st} {d.get('error', {}).get('message', '')[:200]}")
+            failed += st != 200
     if failed:
         call("DELETE", f"{base}/edits/{edit}", token)
         print("edit discarded")
@@ -331,6 +428,8 @@ def main() -> int:
     ap.add_argument("--asc", action="store_true")
     ap.add_argument("--play", action="store_true")
     ap.add_argument("--play-notes", metavar="TRACK")
+    ap.add_argument("--play-release", metavar="TRACK")
+    ap.add_argument("--asc-submit", action="store_true")
     ap.add_argument("--screenshots", metavar="DIR", help="store-screenshots folder (<lang>/<target>/*.png)")
     ap.add_argument("--whats-new", action="store_true")
     ap.add_argument("--create-version", action="store_true")
@@ -338,13 +437,15 @@ def main() -> int:
     args = ap.parse_args()
     listing = load()
     rc = check(listing)
-    if rc or (args.check and not (args.asc or args.play or args.play_notes)):
+    if rc or (args.check and not (args.asc or args.play or args.play_notes or args.asc_submit)):
         return rc
     root = pathlib.Path(args.screenshots) if args.screenshots else None
     if args.asc:
         rc |= push_asc(listing, root, args.whats_new, args.create_version, args.dry_run)
     if args.play:
-        rc |= push_play(listing, root, args.dry_run)
+        rc |= push_play(listing, root, args.dry_run, args.play_release)
+    if args.asc_submit:
+        rc |= asc_submit(listing, args.dry_run)
     if args.play_notes:
         rc |= play_notes(listing, args.play_notes, args.dry_run)
     return rc
