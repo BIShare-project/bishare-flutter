@@ -8,7 +8,7 @@ PublisherSupportUrl: https://github.com/BIShare-project/bishare-flutter/issues
 PackageName: BIShare
 PackageUrl: https://bishare.app
 Copyright: Copyright (c) Billion Group
-License: MIT
+License: Apache-2.0
 LicenseUrl: https://github.com/BIShare-project/bishare-flutter/blob/main/LICENSE
 ShortDescription: Fast, private, cross-platform file sharing — AirDrop for every device
 Description: |-

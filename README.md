@@ -13,7 +13,7 @@ No account. No ads. No cloud in the middle. Free & open source.
 [![Downloads](https://img.shields.io/github/downloads/BIShare-project/bishare-flutter/total?color=2563eb)](https://github.com/BIShare-project/bishare-flutter/releases)
 ![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-2563eb)
 ![Built with](https://img.shields.io/badge/built%20with-Flutter%20%2B%20Rust-2563eb)
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
 [![App Store](https://img.shields.io/badge/App_Store-0D96F6?logo=apple&logoColor=white)](https://apps.apple.com/us/app/bishare-file-transfer/id6760924092)
 [![Google Play](https://img.shields.io/badge/Google_Play-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.bishare.app)
@@ -229,7 +229,7 @@ protocol core. Use whichever fits; both beat the cloud detour.
 
 ## License
 
-[MIT](LICENSE) — free to use, modify, and distribute.
+[Apache License 2.0](LICENSE): free to use, modify and distribute. Keep the [NOTICE](NOTICE) file with any copy. The BIShare name, logo and app icon are not covered by the license; forks need their own (see [TRADEMARKS.md](TRADEMARKS.md)). Releases before 7 October 2026 were MIT-licensed.
 
 ---
 

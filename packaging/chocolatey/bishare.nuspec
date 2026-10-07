@@ -20,7 +20,7 @@
     <description><![CDATA[
 Send files between Windows, iPhone, Android, Mac and Linux — directly over your own Wi-Fi, end-to-end encrypted (X25519 + AES-256-GCM), at local network speed. Nothing uploads to the cloud, nothing is recompressed, and the other person needs no account: they can receive in a plain browser.
 
-When they're not nearby, share an encrypted link (up to 100 GB, expires after 24 hours). Free and open source (MIT), no ads, no sign-up.
+When they're not nearby, share an encrypted link (up to 100 GB, expires after 24 hours). Free and open source (Apache 2.0), no ads, no sign-up.
 
 This package installs the portable Windows build from the official GitHub release and adds a Start Menu shortcut.
 ]]></description>

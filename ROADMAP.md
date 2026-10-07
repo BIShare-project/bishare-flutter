@@ -11,7 +11,7 @@ item.
 
 - **QR Beam** — offline file transfer over an animated stream of QR codes (no
   network at all).
-- **Open source** — the client is now MIT-licensed and public.
+- **Open source** — the client is public under the Apache License 2.0 (MIT until 7 October 2026).
 - **Cross-platform** — one codebase on iOS, Android, macOS, Windows, Linux.
 - **End-to-end encryption** — X25519 + AES-256-GCM with per-file keys.
 

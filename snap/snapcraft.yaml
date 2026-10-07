@@ -2,7 +2,7 @@ name: bishare
 title: BIShare
 base: core22
 adopt-info: bishare
-license: MIT
+license: Apache-2.0
 icon: snap/gui/bishare.png
 website: https://bishare.app
 source-code: https://github.com/BIShare-project/bishare-flutter
@@ -47,7 +47,7 @@ description: |
   * QR Beam: with no network at all, one screen plays animated QR codes and
     another device's camera reads them
   * Works with Android, iPhone, iPad, Mac and Windows, in any direction
-  * Free and open source under the MIT licence
+  * Free and open source under the Apache 2.0 licence
 
 grade: stable
 confinement: strict

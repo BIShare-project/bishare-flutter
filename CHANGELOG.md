@@ -3,6 +3,14 @@
 All notable changes to BIShare are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+- **License: MIT → Apache License 2.0** (2026-10-07). Copies of earlier
+  releases obtained under MIT keep those terms. Forks must keep the new
+  `NOTICE` file, and the BIShare name, logo and app icon are not licensed for
+  use by forks; see `TRADEMARKS.md`.
+
 ## [2.5.9] — 2026-10-03
 
 ### Fixed
