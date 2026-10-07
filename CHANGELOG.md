@@ -5,6 +5,23 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.6.0] — 2026-10-07
+
+### Fixed
+- **Hindi, Traditional Chinese and Brazilian Portuguese now read as those
+  languages.** In Hindi, 234 of the app's 514 strings were French and about 50
+  were English; all of them are Hindi now. Traditional Chinese showed about
+  half its text in Simplified characters with mainland wording (文件, 设置);
+  it now uses Traditional characters and Taiwan terms (檔案, 設定).
+  Brazilian Portuguese was largely European Portuguese (ficheiro, Partilhar,
+  Definições); it now says arquivo, Compartilhar, Ajustes.
+- **Settings is translated everywhere.** The Theme row with its Auto, Light
+  and Dark options and the "This device · tap to rename" line were English
+  in every language.
+- **The tab bar no longer overflows in Spanish.** A label that needed two
+  lines pushed the bar past its height; labels stay on one line and the Inbox
+  tab has a shorter name in Spanish, French and Brazilian Portuguese.
+
 ### Changed
 - **License: MIT → Apache License 2.0** (2026-10-07). Copies of earlier
   releases obtained under MIT keep those terms. Forks must keep the new
