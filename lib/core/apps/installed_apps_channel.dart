@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// A launcher app installed on this device, shareable as its APK file.
@@ -54,7 +53,8 @@ class InstalledAppsChannel {
   static const _channel = MethodChannel('app.bishare/apps');
 
   /// Whether installed apps can be listed on this platform.
-  static bool get isSupported => Platform.isAndroid;
+  static bool get isSupported =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
   /// All launcher apps (excluding BIShare itself), sorted by name. Empty on
   /// unsupported platforms or any native failure — listing is best-effort.

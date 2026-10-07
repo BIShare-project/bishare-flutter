@@ -10,16 +10,23 @@ import 'package:window_manager/window_manager.dart';
 
 import '../server/transfer_server.dart';
 
-/// True on the three desktop platforms (never on web/mobile).
+/// True on the three desktop platforms (never on web/mobile). Reads
+/// [defaultTargetPlatform], which is the host OS in every build; only a test
+/// can override it (the store screenshots render the phone UI on a Mac).
 bool get isDesktop =>
-    !kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux);
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux);
 
 /// Whether camera-based QR scanning is available. `flutter_zxing` reads the
 /// camera on Android and iOS only; on macOS, Windows and Linux it can decode
 /// image files but has no camera. Gate every camera-scan entry point on this.
 /// QR Beam stays send-only on desktop as a result.
 bool get supportsCameraScan =>
-    !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS);
 
 /// Desktop-only polish (macOS · Windows · Linux): a native window with a minimum
 /// size that hides to the tray on close (so receiving keeps running in the

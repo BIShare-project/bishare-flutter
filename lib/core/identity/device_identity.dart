@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -29,6 +29,20 @@ class DeviceIdentity {
     required SharedPreferences prefs,
   }) : _alias = alias,
        _prefs = prefs;
+
+  /// A fixed identity with no storage behind it and no Rust engine, for
+  /// widget tests and the store screenshots (test/preview).
+  @visibleForTesting
+  DeviceIdentity.forTesting({
+    required this.fingerprint,
+    required String alias,
+    required this.crypto,
+    required this.deviceModel,
+    required this.deviceType,
+    required SharedPreferences prefs,
+  }) : _alias = alias,
+       _prefs = prefs,
+       rustEngine = null;
 
   static const _kFingerprint = 'deviceFingerprint';
   static const _kAlias = 'deviceAlias';
