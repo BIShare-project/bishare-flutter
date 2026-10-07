@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -44,7 +45,7 @@ class ProfileCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'This device · tap to rename',
+                  'settings.this_device_rename'.tr(),
                   style: TextStyle(fontSize: 13, color: cs.mutedForeground),
                 ),
               ],

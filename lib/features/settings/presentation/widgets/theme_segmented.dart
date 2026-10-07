@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -7,9 +8,9 @@ class ThemeSegmented extends StatelessWidget {
   final ValueChanged<ThemeMode> onChanged;
 
   static const _options = {
-    ThemeMode.system: 'Auto',
-    ThemeMode.light: 'Light',
-    ThemeMode.dark: 'Dark',
+    ThemeMode.system: 'settings.theme_auto',
+    ThemeMode.light: 'settings.theme_light',
+    ThemeMode.dark: 'settings.theme_dark',
   };
 
   @override
@@ -47,7 +48,7 @@ class ThemeSegmented extends StatelessWidget {
                       : null,
                 ),
                 child: Text(
-                  e.value,
+                  e.value.tr(),
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: value == e.key

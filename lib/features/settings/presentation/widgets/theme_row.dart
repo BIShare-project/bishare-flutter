@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -20,7 +21,7 @@ class ThemeRow extends StatelessWidget {
           const Glyph(AppIcons.sunMoon),
           const SizedBox(width: 14),
           Text(
-            'Theme',
+            'settings.theme'.tr(),
             style: TextStyle(
               fontSize: 15.5,
               fontWeight: FontWeight.w600,

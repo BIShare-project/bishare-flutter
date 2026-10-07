@@ -125,8 +125,12 @@ class _NavButton extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 3),
+          // One line, always: a long label ("Bandeja de entrada") wrapped to
+          // two lines and pushed the bar 3 px past its height.
           Text(
             item.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 11,
               fontWeight: active ? FontWeight.w700 : FontWeight.w500,

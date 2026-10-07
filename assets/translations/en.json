@@ -385,6 +385,11 @@
   "settings": {
     "about": "About",
     "appearance": "Appearance",
+    "theme": "Theme",
+    "theme_auto": "Auto",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "this_device_rename": "This device · tap to rename",
     "auto_accept": "Auto-accept",
     "auto_accept_all": "Accept all",
     "auto_ask": "Always ask",
