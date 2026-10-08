@@ -30,18 +30,28 @@ class AppLinks {
   static const String appStore =
       'https://apps.apple.com/us/app/bishare-file-transfer/id6760924092';
 
+  /// The App Store's write-a-review sheet, opened straight from a button
+  /// (Apple's documented way for a user-initiated review).
+  static const String appStoreReview =
+      'https://apps.apple.com/app/id6760924092?action=write-review';
+
+  /// The Microsoft Store's rating page for this app (product 9PGX5FSBQZMX).
+  static const String windowsReview =
+      'ms-windows-store://review/?ProductId=9PGX5FSBQZMX';
+
   /// A pre-filled `mailto:` for the support inbox.
   static Uri get supportMailto =>
       Uri(scheme: 'mailto', path: supportEmail, query: 'subject=BIShare Support');
 
-  /// The store (or website) URL to open for "Rate BIShare".
-  ///
-  /// Android points at the Play Store listing; every other platform falls back
-  /// to the website until per-store listings exist.
+  /// The store page to open for "Rate BIShare": the review form where a store
+  /// has one (App Store, Microsoft Store), the Play listing on Android, the
+  /// website on Linux (the Snap Store has no ratings).
   static String get rateUrl => Platform.isAndroid
-      ? 'https://play.google.com/store/apps/details?id=$androidPackage'
+      ? playStore
       : (Platform.isIOS || Platform.isMacOS)
-      ? appStore
+      ? appStoreReview
+      : Platform.isWindows
+      ? windowsReview
       : website;
 
   /// The message shared by "Share BIShare".

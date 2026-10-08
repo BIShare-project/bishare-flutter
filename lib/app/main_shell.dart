@@ -27,6 +27,8 @@ import '../features/room/presentation/room_page.dart';
 import '../features/send/presentation/tray_cubit.dart';
 import '../features/settings/presentation/settings_page.dart';
 import '../features/web_nearby/data/web_nearby_service.dart';
+import '../core/constants/app_links.dart';
+import '../core/review/review_prompter.dart';
 
 /// The root tab shell (mirrors native iOS: Share · Inbox · Settings). Tabs are
 /// kept alive in an [IndexedStack] so discovery and the receiver never restart
@@ -70,6 +72,7 @@ class _MainShellState extends State<MainShell> {
       });
     });
     links.start();
+    getIt<ReviewPrompter>().onWindowsAsk = _askWindowsRating;
     _initShareIntent();
     _initWebNearby();
   }
@@ -84,6 +87,7 @@ class _MainShellState extends State<MainShell> {
         case WebNearbyIncoming(:final request):
           _showWebNearbyOffer(request);
         case WebNearbySendDone(:final name):
+          noteTransferSuccess();
           toast(
             context,
             'web_nearby.sent'.tr(namedArgs: {'name': name}),
@@ -98,6 +102,7 @@ class _MainShellState extends State<MainShell> {
             type: ToastType.error,
           );
         case WebNearbyReceiveDone(:final file):
+          noteTransferSuccess();
           // Inbox watches the history DB — the new row appears on its own.
           toast(
             context,
@@ -186,6 +191,7 @@ class _MainShellState extends State<MainShell> {
 
   @override
   void dispose() {
+    getIt<ReviewPrompter>().onWindowsAsk = null;
     _showcase.unregister();
     _linkSub?.cancel();
     _webNearbySub?.cancel();
@@ -324,6 +330,26 @@ class _MainShellState extends State<MainShell> {
         toast(context, 'nav.error_processing_link'.tr());
       }
     }
+  }
+
+  /// The Microsoft Store has no in-app rating dialog for this plugin, so a
+  /// Store install on Windows gets this banner when [ReviewPrompter] says it
+  /// is time; the button opens the Store's own rating page.
+  bool _askWindowsRating() {
+    if (!mounted) return false;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return false;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('review.windows_ask'.tr()),
+        duration: const Duration(seconds: 12),
+        action: SnackBarAction(
+          label: 'review.rate'.tr(),
+          onPressed: () => launchUrl(Uri.parse(AppLinks.windowsReview)),
+        ),
+      ),
+    );
+    return true;
   }
 
   /// True only when the transfer *lookup* found no such stored transfer — the

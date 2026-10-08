@@ -12,6 +12,7 @@ import '../data/room_service.dart';
 import '../data/room_thumbnail.dart';
 import '../data/webrtc_room_service.dart';
 import '../domain/room_models.dart';
+import '../../../core/review/review_prompter.dart';
 
 enum RoomStatus { lobby, connecting, inRoom, error }
 
@@ -378,6 +379,7 @@ class RoomCubit extends Cubit<RoomState> {
           thumbnailBase64: thumb,
         );
       }
+      noteTransferSuccess();
     } on Object {
       // Clear any stuck "uploading…" indicator, then let the UI report it.
       emit(state.copyWith(clearUploading: true));
@@ -386,7 +388,13 @@ class RoomCubit extends Cubit<RoomState> {
   }
 
   /// Download a shared file to the save directory (records it in the Inbox).
-  Future<File> download(RoomFile file) {
+  Future<File> download(RoomFile file) =>
+      _download(file).then((saved) {
+        noteTransferSuccess();
+        return saved;
+      });
+
+  Future<File> _download(RoomFile file) {
     final code = state.session?.code;
     if (code == null) throw const CloudDownloadException('You left the room.');
     if (_isWebrtc) return _webrtc.downloadFile(file);

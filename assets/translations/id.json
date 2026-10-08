@@ -771,5 +771,9 @@
     "room_create_body": "Local tetap di Wi-Fi Anda; Remote lintas internet. Semua anggota room bisa berbagi file.",
     "room_join_title": "Gabung dengan kode",
     "room_join_body": "Masukkan kode singkat dari perangkat lain — atau dari bishare.app/rooms di browser."
+  },
+  "review": {
+    "windows_ask": "BIShare membantu? Rating di Microsoft Store membantu orang lain menemukannya.",
+    "rate": "Beri rating"
   }
 }

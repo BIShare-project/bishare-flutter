@@ -771,5 +771,9 @@
     "room_create_body": "Local se queda en tu Wi-Fi; Remota funciona por internet. Todos en la sala pueden compartir archivos.",
     "room_join_title": "Únete con un código",
     "room_join_body": "Introduce el código corto de otro dispositivo, o desde bishare.app/rooms en un navegador."
+  },
+  "review": {
+    "windows_ask": "¿Te resulta útil BIShare? Una valoración en Microsoft Store ayuda a que otros lo encuentren.",
+    "rate": "Valorar"
   }
 }

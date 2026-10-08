@@ -33,19 +33,25 @@ void main() {
   int daysAgo(int d) => now.subtract(Duration(days: d)).millisecondsSinceEpoch;
 
   group('shouldAsk', () {
-    test('not before the third successful transfer', () {
-      expect(ReviewPrompter.shouldAsk(successes: 2, asks: 0, lastAskMs: null, now: now), isFalse);
-      expect(ReviewPrompter.shouldAsk(successes: 3, asks: 0, lastAskMs: null, now: now), isTrue);
+    test('first ask once it has worked twice', () {
+      expect(ReviewPrompter.shouldAsk(successes: 1, asks: 0, lastAskMs: null, now: now), isFalse);
+      expect(ReviewPrompter.shouldAsk(successes: 2, asks: 0, lastAskMs: null, now: now), isTrue);
     });
 
-    test('the second ask needs both more use and 120 days', () {
-      expect(ReviewPrompter.shouldAsk(successes: 40, asks: 1, lastAskMs: daysAgo(119), now: now), isFalse);
-      expect(ReviewPrompter.shouldAsk(successes: 14, asks: 1, lastAskMs: daysAgo(400), now: now), isFalse);
-      expect(ReviewPrompter.shouldAsk(successes: 15, asks: 1, lastAskMs: daysAgo(120), now: now), isTrue);
+    test('the second ask needs 8 transfers and 30 days', () {
+      expect(ReviewPrompter.shouldAsk(successes: 40, asks: 1, lastAskMs: daysAgo(29), now: now), isFalse);
+      expect(ReviewPrompter.shouldAsk(successes: 7, asks: 1, lastAskMs: daysAgo(400), now: now), isFalse);
+      expect(ReviewPrompter.shouldAsk(successes: 8, asks: 1, lastAskMs: daysAgo(30), now: now), isTrue);
     });
 
-    test('never a third time', () {
-      expect(ReviewPrompter.shouldAsk(successes: 9999, asks: 2, lastAskMs: daysAgo(900), now: now), isFalse);
+    test('the third ask needs 20 transfers and 90 days after the second', () {
+      expect(ReviewPrompter.shouldAsk(successes: 50, asks: 2, lastAskMs: daysAgo(89), now: now), isFalse);
+      expect(ReviewPrompter.shouldAsk(successes: 19, asks: 2, lastAskMs: daysAgo(400), now: now), isFalse);
+      expect(ReviewPrompter.shouldAsk(successes: 20, asks: 2, lastAskMs: daysAgo(90), now: now), isTrue);
+    });
+
+    test('never a fourth time', () {
+      expect(ReviewPrompter.shouldAsk(successes: 9999, asks: 3, lastAskMs: daysAgo(900), now: now), isFalse);
     });
   });
 
@@ -67,13 +73,14 @@ void main() {
       expect(review.requests, 0);
     });
 
-    test('asks once, after the third transfer has gone quiet', () async {
+    test('asks once, after the second transfer has gone quiet', () async {
       final review = _FakeReview()..prefs = prefs;
       final p = ReviewPrompter(prefs, review: review, supported: true, quiet: _quiet);
       for (var t = 0; t < 5; t++) {
         p.noteSuccess();
         await _settle();
       }
+      // successes 2..5: due at 2, and the second ask waits for 8 + 30 days
       expect(prefs.getInt('reviewSuccesses'), 5);
       expect(review.requests, 1);
       // Saved BEFORE the dialog: the OS never reports whether it was shown.

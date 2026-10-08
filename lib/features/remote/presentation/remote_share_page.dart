@@ -22,6 +22,7 @@ import 'widgets/pick_view.dart';
 import 'widgets/remote_share_header.dart';
 import 'widgets/stream_waiting_view.dart';
 import 'widgets/uploading_view.dart';
+import '../../../core/review/review_prompter.dart';
 
 /// Remote share — a faithful port of the native `RemoteShareView`. Opens with no
 /// preconditions: pick a photo/video or file right here, choose one-time, and
@@ -107,6 +108,7 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
             case StreamSendProgress(:final fraction):
               setState(() => _fraction = fraction);
             case StreamSendComplete():
+              noteTransferSuccess();
               toast(
                 context,
                 'remote.sent_file'.tr(namedArgs: {'name': _pickedName}),
@@ -179,6 +181,7 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
         },
         cancel: _cancel,
       );
+      noteTransferSuccess();
       if (!mounted) return;
       setState(() {
         _result = result;

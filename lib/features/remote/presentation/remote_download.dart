@@ -6,6 +6,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../core/server/transfer_types.dart';
 import '../../../core/ui/app_ui.dart';
 import '../data/cloud_transfer_service.dart';
+import '../../../core/review/review_prompter.dart';
 
 /// Runs a remote download behind a premium glass progress modal (determinate
 /// ring + Cancel). On success shows a success toast (the file is already in the
@@ -29,6 +30,7 @@ Future<void> showRemoteDownload(
   if (result == null || !messenger.mounted) return;
   switch (result) {
     case _DownloadOk(:final file):
+      noteTransferSuccess();
       toast(
         messenger,
         'remote.saved_file'.tr(namedArgs: {'name': file.fileName}),

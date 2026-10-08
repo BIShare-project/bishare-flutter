@@ -8,6 +8,7 @@ import '../../../core/server/transfer_server.dart';
 import '../../send/domain/sendable_file.dart';
 import '../data/nearby_service.dart';
 import '../domain/nearby_peer.dart';
+import '../../../core/review/review_prompter.dart';
 
 /// UI state for the offline Nearby (MultipeerConnectivity) radar.
 class NearbyState extends Equatable {
@@ -131,6 +132,7 @@ class NearbyCubit extends Cubit<NearbyState> {
           progress: progress,
         ));
       case NearbyTransferDone():
+        noteTransferSuccess();
         emit(state.copyWith(transferring: false, progress: 0, clearFile: true));
       case NearbyReceived(
         :final tempPath,

@@ -771,5 +771,9 @@
     "room_create_body": "Local reste sur votre Wi-Fi ; Distant passe par internet. Tous les membres peuvent partager des fichiers.",
     "room_join_title": "Rejoindre avec un code",
     "room_join_body": "Saisissez le code court d'un autre appareil — ou depuis bishare.app/rooms dans un navigateur."
+  },
+  "review": {
+    "windows_ask": "BIShare vous est utile ? Une note dans le Microsoft Store aide d'autres personnes à le trouver.",
+    "rate": "Noter"
   }
 }

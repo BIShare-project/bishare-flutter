@@ -771,5 +771,9 @@
     "room_create_body": "Local stays on your Wi-Fi; Remote works across the internet. Everyone in the room can share files.",
     "room_join_title": "Join with a code",
     "room_join_body": "Enter the short code from another device — or from bishare.app/rooms in a browser."
+  },
+  "review": {
+    "windows_ask": "Finding BIShare useful? A rating in the Microsoft Store helps other people find it.",
+    "rate": "Rate"
   }
 }

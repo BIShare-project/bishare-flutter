@@ -771,5 +771,9 @@
     "room_create_body": "本地房間不離開你的 Wi-Fi；遠端房間跨網際網路。房間裡的每個人都能分享檔案。",
     "room_join_title": "以代碼加入",
     "room_join_body": "輸入另一台裝置的短代碼——或在瀏覽器開啟 bishare.app/rooms。"
+  },
+  "review": {
+    "windows_ask": "BIShare 對你有幫助嗎？在 Microsoft Store 評分，能讓更多人找到它。",
+    "rate": "評分"
   }
 }

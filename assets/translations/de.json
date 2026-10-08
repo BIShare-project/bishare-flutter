@@ -771,5 +771,9 @@
     "room_create_body": "Lokal bleibt in deinem WLAN; Remote geht übers Internet. Alle im Raum können Dateien teilen.",
     "room_join_title": "Mit Code beitreten",
     "room_join_body": "Gib den kurzen Code eines anderen Geräts ein — oder über bishare.app/rooms im Browser."
+  },
+  "review": {
+    "windows_ask": "Ist BIShare nützlich? Eine Bewertung im Microsoft Store hilft anderen, die App zu finden.",
+    "rate": "Bewerten"
   }
 }

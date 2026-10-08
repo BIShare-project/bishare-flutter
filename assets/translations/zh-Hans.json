@@ -771,5 +771,9 @@
     "room_create_body": "本地房间不出你的 Wi-Fi；远程房间跨互联网。房间里的每个人都能分享文件。",
     "room_join_title": "用代码加入",
     "room_join_body": "输入另一台设备上的短代码——或在浏览器打开 bishare.app/rooms。"
+  },
+  "review": {
+    "windows_ask": "BIShare 对你有帮助吗？在 Microsoft Store 评分，能让更多人找到它。",
+    "rate": "评分"
   }
 }

@@ -771,5 +771,9 @@
     "room_create_body": "Local आपके Wi-Fi में रहता है; Remote इंटरनेट पर चलता है। रूम में सभी फ़ाइलें साझा कर सकते हैं।",
     "room_join_title": "कोड से जुड़ें",
     "room_join_body": "दूसरे डिवाइस का छोटा कोड डालें — या ब्राउज़र में bishare.app/rooms से।"
+  },
+  "review": {
+    "windows_ask": "BIShare काम का लगा? Microsoft Store में रेटिंग देने से दूसरों को इसे ढूँढने में मदद मिलती है।",
+    "rate": "रेटिंग दें"
   }
 }

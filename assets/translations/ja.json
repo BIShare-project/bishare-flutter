@@ -771,5 +771,9 @@
     "room_create_body": "ローカルはWi-Fi内だけ、リモートはインターネット越しに。ルームの全員がファイルを共有できます。",
     "room_join_title": "コードで参加",
     "room_join_body": "他のデバイスに表示された短いコードを入力 — ブラウザのbishare.app/roomsからでも。"
+  },
+  "review": {
+    "windows_ask": "BIShareは役に立っていますか？Microsoft Storeで評価すると、ほかの人が見つけやすくなります。",
+    "rate": "評価する"
   }
 }

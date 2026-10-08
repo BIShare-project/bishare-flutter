@@ -771,5 +771,9 @@
     "room_create_body": "Local fica no seu Wi-Fi; Remota atravessa a internet. Todos na sala podem compartilhar arquivos.",
     "room_join_title": "Entre com um código",
     "room_join_body": "Digite o código curto de outro aparelho — ou de bishare.app/rooms no navegador."
+  },
+  "review": {
+    "windows_ask": "O BIShare está sendo útil? Uma avaliação na Microsoft Store ajuda outras pessoas a encontrá-lo.",
+    "rate": "Avaliar"
   }
 }

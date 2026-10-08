@@ -5,6 +5,21 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
+### Changed
+- **The rating request reaches people who use BIShare.** It used to count
+  only Wi-Fi transfers, so anyone who mostly sent links, used rooms or
+  Nearby was never asked; every kind of transfer counts now (Secure Link,
+  live links, rooms, Nearby, browser peers, links opened in the app). The
+  first request comes after the second transfer instead of the third, and
+  there can be three over time (after 8 transfers and 30 days, and after 20
+  transfers and 90 days) instead of two. On iPhone, iPad, Mac and Android it
+  is still the system's own dialog, which the system may decide not to show.
+- **Windows asks too.** A Microsoft Store install shows a short banner at the
+  same moments, with a button to the Store's rating page.
+- **"Rate BIShare" in Settings opens the review form.** On iPhone, iPad and
+  Mac it now opens the App Store's write-a-review sheet, and on Windows the
+  Microsoft Store rating page, instead of the store listing or the website.
+
 ## [2.6.0] — 2026-10-07
 
 ### Fixed
