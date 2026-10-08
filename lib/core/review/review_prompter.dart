@@ -6,8 +6,8 @@ import 'package:get_it/get_it.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Asks for a store rating at the one moment it is fair to: right after a
-/// transfer has worked, for someone who has seen it work before.
+/// Asks for a store rating the moment a transfer has worked: right after the
+/// first one, then again for people who keep using the app.
 ///
 /// On iOS, macOS and Android the dialog is the operating system's own (App
 /// Store / Google Play), so there is no copy of ours in it, and the OS applies
@@ -41,9 +41,10 @@ class ReviewPrompter {
   static const _asksKey = 'reviewAsks';
   static const _lastAskKey = 'reviewLastAskAt';
 
-  /// Successful transfers before each ask: once it has worked twice, again
-  /// for someone who kept using it, and a last time for a regular.
-  static const askAfter = [2, 8, 20];
+  /// Successful transfers before each ask: right after the first one that
+  /// works, again for someone who kept using it, and a last time for a
+  /// regular.
+  static const askAfter = [1, 8, 20];
 
   /// Each later ask also waits this long after the one before.
   static const askGaps = [Duration(days: 30), Duration(days: 90)];

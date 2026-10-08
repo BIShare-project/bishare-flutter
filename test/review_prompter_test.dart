@@ -33,9 +33,9 @@ void main() {
   int daysAgo(int d) => now.subtract(Duration(days: d)).millisecondsSinceEpoch;
 
   group('shouldAsk', () {
-    test('first ask once it has worked twice', () {
-      expect(ReviewPrompter.shouldAsk(successes: 1, asks: 0, lastAskMs: null, now: now), isFalse);
-      expect(ReviewPrompter.shouldAsk(successes: 2, asks: 0, lastAskMs: null, now: now), isTrue);
+    test('first ask right after the first transfer that works', () {
+      expect(ReviewPrompter.shouldAsk(successes: 0, asks: 0, lastAskMs: null, now: now), isFalse);
+      expect(ReviewPrompter.shouldAsk(successes: 1, asks: 0, lastAskMs: null, now: now), isTrue);
     });
 
     test('the second ask needs 8 transfers and 30 days', () {
@@ -62,7 +62,7 @@ void main() {
       prefs = await SharedPreferences.getInstance();
     });
 
-    test('fifty files in one receive count as one transfer', () async {
+    test('fifty files in one receive count as one transfer, asked once', () async {
       final review = _FakeReview();
       final p = ReviewPrompter(prefs, review: review, supported: true, quiet: _quiet);
       for (var i = 0; i < 50; i++) {
@@ -70,17 +70,17 @@ void main() {
       }
       await _settle();
       expect(prefs.getInt('reviewSuccesses'), 1);
-      expect(review.requests, 0);
+      expect(review.requests, 1);
     });
 
-    test('asks once, after the second transfer has gone quiet', () async {
+    test('asks once, after the first transfer has gone quiet', () async {
       final review = _FakeReview()..prefs = prefs;
       final p = ReviewPrompter(prefs, review: review, supported: true, quiet: _quiet);
       for (var t = 0; t < 5; t++) {
         p.noteSuccess();
         await _settle();
       }
-      // successes 2..5: due at 2, and the second ask waits for 8 + 30 days
+      // due at 1; the second ask waits for 8 transfers and 30 days
       expect(prefs.getInt('reviewSuccesses'), 5);
       expect(review.requests, 1);
       // Saved BEFORE the dialog: the OS never reports whether it was shown.

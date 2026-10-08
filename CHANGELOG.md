@@ -5,13 +5,15 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.6.1] — 2026-10-08
+
 ### Changed
 - **The rating request reaches people who use BIShare.** It used to count
   only Wi-Fi transfers, so anyone who mostly sent links, used rooms or
   Nearby was never asked; every kind of transfer counts now (Secure Link,
   live links, rooms, Nearby, browser peers, links opened in the app). The
-  first request comes after the second transfer instead of the third, and
-  there can be three over time (after 8 transfers and 30 days, and after 20
+  first request comes right after the first transfer that works instead of
+  the third, and there can be three over time (after 8 transfers and 30 days, and after 20
   transfers and 90 days) instead of two. On iPhone, iPad, Mac and Android it
   is still the system's own dialog, which the system may decide not to show.
 - **Windows asks too.** A Microsoft Store install shows a short banner at the
