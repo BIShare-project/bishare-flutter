@@ -37,54 +37,7 @@ class CloudConfig {
   /// Remote stream-relay receive (`bishare-stream://<code>`).
   static const String schemeStream = 'bishare-stream';
 
-  // ---- Auth (magic-link + OAuth google/apple) — §B ----
-  /// Request a 6-char sign-in code by email (`{email}` → 200 `{message,expires_in}`).
-  static const String authMagicLink = '/api/v1/auth/magic-link';
-
-  /// Exchange `{email,code[,device_name,device_id]}` for `{access_token,refresh_token,user}`.
-  static const String authMagicLinkVerify = '/api/v1/auth/magic-link/verify';
-
-  /// Exchange a provider `{provider,id_token[,name,device_name,device_id]}` for the
-  /// SAME `{access_token,refresh_token,user}` envelope as magic-link verify.
-  static const String authOauth = '/api/v1/auth/oauth';
-
-  /// Rotate an access token: `{refresh_token}` → `{access_token[,refresh_token]}`.
-  static const String authRefresh = '/api/v1/auth/refresh';
-
-  /// Best-effort refresh-token revoke (Bearer access token required).
-  static const String authLogout = '/api/v1/auth/logout';
-
-  /// Current user (Bearer): GET reads, PATCH updates, DELETE soft-deletes.
-  /// Consumed by Fase B (Drive) via the authenticated Dio.
-  static const String userMe = '/api/v1/user/me';
-
-  // ---- Drive: storage + folders + files + shares (§C/§D/§E, Bearer) ----
-  /// Storage quota + by-type breakdown (`{total,used,limit,tier,used_percent,by_type}`).
-  static const String storageUsage = '/api/v1/storage/usage';
-
-  /// 20 most-recent files (bare array).
-  static const String storageRecent = '/api/v1/storage/recent';
-
-  /// Folders: `GET ?parent_id` lists children (root when absent); `POST` creates.
-  static const String folders = '/api/v1/folders';
-  static String folder(String id) => '/api/v1/folders/$id';
-
-  /// Root-first ancestor chain of a folder.
-  static String folderBreadcrumb(String id) => '/api/v1/folders/$id/breadcrumb';
-
-  /// Files: `GET` (paginated `?folder_id&page&per_page&sort&order`) / trash / etc.
-  static const String files = '/api/v1/files';
-  static const String filesTrash = '/api/v1/files/trash';
-
-  /// Small (<=50 MiB) presigned upload: url → PUT R2 → confirm.
-  static const String filesUploadUrl = '/api/v1/files/upload-url';
-  static const String filesConfirmUpload = '/api/v1/files/confirm-upload';
-
-  /// Large (>50 MiB) multipart upload: init → PUT parts → complete.
-  static const String filesMultipartInit = '/api/v1/files/multipart/init';
-  static const String filesMultipartComplete =
-      '/api/v1/files/multipart/complete';
-
+  // ---- Folder sync: cloud endpoints (Bearer) ----
   /// Content dedup: `{hashes:[sha256…]}` (1–500, lowercase hex) → exists map.
   /// Folder-sync M3 checks CIPHERTEXT hashes here (idempotent re-push, §7.1).
   static const String filesCheckExists = '/api/v1/files/check-exists';
@@ -92,15 +45,6 @@ class CloudConfig {
   /// Cheap change beacon: `{last_sync_at,total_files,total_size,…}` — the
   /// fingerprint triple folder-sync polls to know "pull the manifest" (§5.2).
   static const String filesSyncStatus = '/api/v1/files/sync-status';
-
-  static String file(String id) => '/api/v1/files/$id';
-  static String fileDownloadUrl(String id) => '/api/v1/files/$id/download-url';
-  static String filePermanent(String id) => '/api/v1/files/$id/permanent';
-  static String fileRestore(String id) => '/api/v1/files/$id/restore';
-
-  /// Authenticated share-links: `POST` create, `GET` list, `DELETE :id` revoke.
-  static const String shares = '/api/v1/shares';
-  static String share(String id) => '/api/v1/shares/$id';
 
   // ---- REST paths (relative to [apiBase]) ----
   /// Server config: tier limits at `data.limits.transfer_max_file_size_*`.
@@ -132,7 +76,6 @@ class CloudConfig {
 
   /// Authenticated user share-links (public read at `/s/<token>`).
   static String shareInfo(String token) => '/s/$token';
-  static String shareVerify(String token) => '/s/$token/verify';
   static String shareDownload(String token) => '/s/$token/download';
 
   // ---- Rooms (REST) ----

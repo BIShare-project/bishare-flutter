@@ -31,16 +31,9 @@ class FeatureFlags extends ChangeNotifier {
     return v is bool ? v : orElse;
   }
 
-  /// Drive (cloud storage UI) visibility — pre-launch it stays hidden.
-  bool get driveEnabled => _boolFlag('drive_enabled', orElse: false);
-
   /// Folder-sync cloud fallback free-for-everyone (pre-IAP period). When false
   /// the Pro tier gate applies.
   bool get cloudSyncFree => _boolFlag('cloud_sync_free', orElse: false);
-
-  /// Sign-in surfaces (Settings row, Drive CTA). Hidden pre-launch — the
-  /// magic-link mailer isn't live yet; existing sessions are unaffected.
-  bool get loginEnabled => _boolFlag('login_enabled', orElse: false);
 
   /// The app↔web Nearby bridge (app appears in the browser Nearby tab on the
   /// same network, and vice versa). ON by default in code — the remote flag is
