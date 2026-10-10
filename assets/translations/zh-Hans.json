@@ -646,5 +646,15 @@
   "review": {
     "windows_ask": "BIShare 对你有帮助吗？在 Microsoft Store 评分，能让更多人找到它。",
     "rate": "评分"
+  },
+  "interest": {
+    "eyebrow": "来自开发者的一个问题",
+    "title": "你会使用 BIShare Drive 吗？",
+    "body": "为你想保留的文件提供加密存储，100 GB 每月约 1.99 美元。发送文件仍然免费。",
+    "yes_paid": "会，我愿意付费",
+    "yes_free": "免费的话才会",
+    "no": "不需要",
+    "thanks": "谢谢。你的回答有助于决定接下来开发什么。",
+    "close": "关闭"
   }
 }

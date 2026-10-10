@@ -646,5 +646,15 @@
   "review": {
     "windows_ask": "Ist BIShare nützlich? Eine Bewertung im Microsoft Store hilft anderen, die App zu finden.",
     "rate": "Bewerten"
+  },
+  "interest": {
+    "eyebrow": "Eine Frage vom Entwickler",
+    "title": "Würdest du BIShare Drive nutzen?",
+    "body": "Verschlüsselter Speicher für Dateien, die du behalten willst, etwa 1,99 $ im Monat für 100 GB. Dateien senden bleibt kostenlos.",
+    "yes_paid": "Ja, dafür würde ich zahlen",
+    "yes_free": "Nur, wenn es kostenlos wäre",
+    "no": "Nichts für mich",
+    "thanks": "Danke. Deine Antwort hilft bei der Entscheidung, was als Nächstes gebaut wird.",
+    "close": "Schließen"
   }
 }

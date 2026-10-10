@@ -63,6 +63,15 @@ class TelemetryService {
     unawaited(_post(kind: 'room', bytes: 0, transport: 'lan'));
   }
 
+  /// Fire-and-forget; one tally for the question in the Drive interest card:
+  /// that it was shown ('view') or which answer was tapped ('yes_paid',
+  /// 'yes_free', 'no', 'dismiss'). A count and the platform, nothing else. The
+  /// card asks once per install, so each event is sent at most once.
+  void recordInterest(String event, {String topic = 'drive'}) {
+    if (!enabled) return;
+    unawaited(_postInterest(topic: topic, event: event));
+  }
+
   /// Last UTC date (`YYYY-MM-DD`) this install reported itself active.
   static const _activeDayKey = 'telemetryActiveDay';
 
@@ -124,6 +133,17 @@ class TelemetryService {
       }
     } catch (_) {
       // best-effort — the next launch reports instead
+    }
+  }
+
+  Future<void> _postInterest({required String topic, required String event}) async {
+    try {
+      await _dio.post<void>(
+        '/api/v1/telemetry/interest',
+        data: {'topic': topic, 'event': event, 'platform': _platform},
+      );
+    } catch (_) {
+      // best-effort — never surfaced to the user
     }
   }
 

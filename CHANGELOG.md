@@ -7,6 +7,15 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [2.6.1] — 2026-10-08
 
+### Added
+- **One question about a possible paid storage feature.** When it is turned
+  on from the server, Home shows a single card asking whether you would use
+  encrypted storage at a stated price, only if it were free, or not at all.
+  It is asked once and can be closed. The answer is counted anonymously (a
+  tally per answer and per platform, nothing that identifies a device), and
+  sending files stays free. The card never appears when usage statistics are
+  off in Settings, and never on the first launch.
+
 ### Changed
 - **The rating request reaches people who use BIShare.** It used to count
   only Wi-Fi transfers, so anyone who mostly sent links, used rooms or

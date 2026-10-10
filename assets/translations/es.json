@@ -646,5 +646,15 @@
   "review": {
     "windows_ask": "¿Te resulta útil BIShare? Una valoración en Microsoft Store ayuda a que otros lo encuentren.",
     "rate": "Valorar"
+  },
+  "interest": {
+    "eyebrow": "Una pregunta del desarrollador",
+    "title": "¿Usarías BIShare Drive?",
+    "body": "Almacenamiento cifrado para los archivos que quieres conservar, unos 1,99 $ al mes por 100 GB. Enviar archivos sigue siendo gratis.",
+    "yes_paid": "Sí, pagaría por ello",
+    "yes_free": "Solo si fuera gratis",
+    "no": "No es para mí",
+    "thanks": "Gracias. Tu respuesta ayuda a decidir qué se desarrolla después.",
+    "close": "Cerrar"
   }
 }

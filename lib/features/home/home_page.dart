@@ -18,6 +18,7 @@ import '../settings/domain/settings.dart' show Settings;
 import '../settings/presentation/settings_cubit.dart';
 import 'widgets/compose_tray.dart';
 import 'widgets/device_section.dart';
+import 'widgets/drive_interest_card.dart';
 import 'widgets/floating_transfers.dart';
 import 'widgets/header.dart';
 import 'widgets/my_device_card.dart';
@@ -126,6 +127,7 @@ class HomePage extends StatelessWidget {
                               targetRadius: 22,
                               child: const DeviceSection(),
                             ),
+                            const DriveInterestCard(),
                           ],
                         ),
                       ),

@@ -646,5 +646,15 @@
   "review": {
     "windows_ask": "BIShare vous est utile ? Une note dans le Microsoft Store aide d'autres personnes à le trouver.",
     "rate": "Noter"
+  },
+  "interest": {
+    "eyebrow": "Une question du développeur",
+    "title": "Utiliseriez-vous BIShare Drive ?",
+    "body": "Un stockage chiffré pour les fichiers que vous voulez garder, environ 1,99 $ par mois pour 100 Go. L'envoi de fichiers reste gratuit.",
+    "yes_paid": "Oui, je paierais pour ça",
+    "yes_free": "Seulement si c'était gratuit",
+    "no": "Pas pour moi",
+    "thanks": "Merci. Votre réponse aide à décider de ce qui sera développé ensuite.",
+    "close": "Fermer"
   }
 }

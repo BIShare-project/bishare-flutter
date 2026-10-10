@@ -646,5 +646,15 @@
   "review": {
     "windows_ask": "Finding BIShare useful? A rating in the Microsoft Store helps other people find it.",
     "rate": "Rate"
+  },
+  "interest": {
+    "eyebrow": "A question from the developer",
+    "title": "Would you use BIShare Drive?",
+    "body": "Encrypted storage for the files you want to keep, about $1.99 a month for 100 GB. Sending files stays free.",
+    "yes_paid": "Yes, I'd pay for it",
+    "yes_free": "Only if it were free",
+    "no": "Not for me",
+    "thanks": "Thank you. Your answer helps decide what gets built next.",
+    "close": "Close"
   }
 }

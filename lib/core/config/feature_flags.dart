@@ -35,6 +35,11 @@ class FeatureFlags extends ChangeNotifier {
   /// the Pro tier gate applies.
   bool get cloudSyncFree => _boolFlag('cloud_sync_free', orElse: false);
 
+  /// The one-time question about a paid storage product (the card in
+  /// `features/home/widgets/drive_interest_card.dart`). Off unless an admin
+  /// turns `drive_interest_enabled` on.
+  bool get driveInterestEnabled => _boolFlag('drive_interest_enabled', orElse: false);
+
   /// The app↔web Nearby bridge (app appears in the browser Nearby tab on the
   /// same network, and vice versa). ON by default in code — the remote flag is
   /// purely a kill-switch (set `app_web_nearby_enabled=false` in admin Flags
