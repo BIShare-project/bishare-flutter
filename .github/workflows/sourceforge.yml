@@ -1,0 +1,70 @@
+name: sourceforge
+
+# Copies a release's installers to the SourceForge project
+# (sourceforge.net/projects/bishare-flutter) with packaging/sourceforge.sh.
+#
+# Runs by itself when the `release` workflow has finished for a version tag,
+# and by hand for any version that already has a GitHub release (that is how
+# a version the project missed gets there).
+#
+# Secrets it reads, all set by the repository owner:
+#   SOURCEFORGE_USER      the SourceForge account name
+#   SOURCEFORGE_SSH_KEY   private half of a key whose public half is in that
+#                         account (Account Settings, SSH Settings)
+#   SOURCEFORGE_API_KEY   optional: Releases API key, to make the new files the
+#                         default download for each OS
+# Without the first two the job says so and stops; it does not fail a release.
+on:
+  workflow_run:
+    workflows: ["release"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Released version to publish (e.g. 2.6.1, no leading v)"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sourceforge
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # After `release`: only a successful run that a version tag started.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          sparse-checkout: |
+            packaging/sourceforge.sh
+            CHANGELOG.md
+          sparse-checkout-cone-mode: false
+
+      - name: Publish to SourceForge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCEFORGE_USER: ${{ secrets.SOURCEFORGE_USER }}
+          SOURCEFORGE_SSH_KEY: ${{ secrets.SOURCEFORGE_SSH_KEY }}
+          SOURCEFORGE_API_KEY: ${{ secrets.SOURCEFORGE_API_KEY }}
+          VERSION_INPUT: ${{ inputs.version }}
+          RUN_TAG: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          VERSION="${VERSION_INPUT:-${RUN_TAG#v}}"; VERSION="${VERSION#v}"
+          echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::not a version: '$VERSION'"; exit 1; }
+          if [ -z "$SOURCEFORGE_USER" ] || [ -z "$SOURCEFORGE_SSH_KEY" ]; then
+            echo "::notice::SOURCEFORGE_USER / SOURCEFORGE_SSH_KEY not set — $VERSION was not published to SourceForge"; exit 0
+          fi
+          install -m 600 /dev/null "$RUNNER_TEMP/sourceforge_key"
+          printf '%s\n' "$SOURCEFORGE_SSH_KEY" > "$RUNNER_TEMP/sourceforge_key"
+          SOURCEFORGE_SSH_KEY_FILE="$RUNNER_TEMP/sourceforge_key" packaging/sourceforge.sh "$VERSION"
+          rm -f "$RUNNER_TEMP/sourceforge_key"

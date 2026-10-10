@@ -9,7 +9,8 @@ are built by `.github/workflows/release.yml`; the Snap by `snap.yml`.
 | Scoop | `scoop/bishare.json` | works today, no submission needed |
 | winget | `winget/*.yaml` (1.6.0, portable zip) | one-time PR to `microsoft/winget-pkgs` |
 | Chocolatey | `chocolatey/` | one-time `choco push` |
-| Homebrew | `homebrew/bishare.rb` (cask, DMG) | third-party tap now; `homebrew/cask` once notable |
+| Homebrew | `homebrew/bishare.rb` (cask, DMG) | tap `BIShare-project/homebrew-tap`, live since 2.6.1; `homebrew/cask` once notable |
+| SourceForge | `sourceforge.sh` (the installers themselves) | project `bishare-flutter`; `sourceforge.yml` copies each release there |
 
 **Every manifest is rewritten automatically on each tag** by the `packaging`
 job in `release.yml`, which runs `packaging/bump.sh <version>`: it downloads
@@ -24,6 +25,22 @@ packaging/bump.sh 2.4.7 --tap    # …and push the cask to BIShare-project/homeb
 The asset names are load-bearing — `BIShare-<ver>-windows-x64.zip` and
 `BIShare-<ver>-macos.dmg` — Scoop `autoupdate`, the winget update flow, the
 cask URL and `bump.sh` all derive URLs from them. Don't rename artifacts.
+
+## SourceForge
+
+`sourceforge.net/projects/bishare-flutter` carries the same installers as the
+GitHub release. `.github/workflows/sourceforge.yml` copies them after every
+tagged release, and by hand (Run workflow, with a version) for a release it
+missed. Locally:
+
+```bash
+DRY_RUN=1 packaging/sourceforge.sh 2.6.1                 # download and list only
+SOURCEFORGE_USER=<name> packaging/sourceforge.sh 2.6.1   # upload
+```
+
+It needs an SSH key registered in the SourceForge account; with a Releases API
+key it also sets the default download for each OS. The licence shown on the
+project page is set in the project's admin pages, not from here.
 
 ## Scoop
 
