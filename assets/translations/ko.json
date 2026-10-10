@@ -7,7 +7,6 @@
     "code_not_found": "코드를 찾을 수 없습니다. 라이브 공유라면 보내는 사람의 화면을 열어 두고 QR을 스캔하세요.",
     "error_processing_link": "링크를 처리하는 중 오류가 발생했습니다",
     "live_transfer": "실시간 전송",
-    "shared_file": "공유 파일",
     "tab_history": "기록",
     "tab_inbox": "받은 파일",
     "tab_rooms": "룸",
@@ -310,7 +309,6 @@
     "choose_photo_video": "사진 또는 동영상 선택",
     "expires_24h": "24시간 후 만료",
     "expires_24h_subtitle": "링크는 24시간 후에 만료됩니다",
-    "free_limit_exceeded": "파일이 무료 한도 {limit}를 초과했습니다 — Pro(출시 예정)에서는 {pro_limit}까지 가능합니다",
     "one_time_download": "일회성 다운로드",
     "one_time_download_subtitle": "파일은 한 번만 다운로드할 수 있습니다",
     "saved_file": "{name} 저장됨",
@@ -334,7 +332,8 @@
     "badge_e2e": "종단 간 암호화됨",
     "badge_one_time": "1회용",
     "badge_expires_24h": "24시간 후 만료",
-    "live_receiver_needs_update": "상대 기기의 BIShare를 업데이트해야 암호화된 라이브 전송을 받을 수 있습니다. 업데이트하거나, 종단 간 암호화를 끄고 보내세요."
+    "live_receiver_needs_update": "상대 기기의 BIShare를 업데이트해야 암호화된 라이브 전송을 받을 수 있습니다. 업데이트하거나, 종단 간 암호화를 끄고 보내세요.",
+    "limit_exceeded": "파일이 링크 한도 {limit}를 초과했습니다 — 대신 근처 기기로 Wi-Fi 전송하면 용량 제한이 없습니다"
   },
   "room": {
     "connecting_create_local": "로컬 방을 만드는 중",

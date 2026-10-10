@@ -132,23 +132,16 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
       _pickedName = name;
       _pickedSize = file.existsSync() ? file.lengthSync() : 0;
     });
-    // FREE-tier size gate (no login yet, so everyone is FREE): backend rejects
-    // oversized uploads anyway — catch it here before any bytes leave.
-    final config = getIt<CloudConfigService>();
-    final freeLimit = await config.freeTransferLimit();
+    // Size gate: the backend rejects oversized uploads anyway — catch it here
+    // before any bytes leave.
+    final limit = await getIt<CloudConfigService>().transferLimit();
     // The relay stores ciphertext, so gate on what will actually be uploaded.
     final uploadSize = _e2e ? Bse2.ciphertextSize(_pickedSize) : _pickedSize;
-    if (uploadSize > freeLimit) {
-      final proLimit = await config.proTransferLimit();
+    if (uploadSize > limit) {
       if (!mounted) return;
       toast(
         context,
-        'remote.free_limit_exceeded'.tr(
-          namedArgs: {
-            'limit': formatBytes(freeLimit),
-            'pro_limit': formatBytes(proLimit),
-          },
-        ),
+        'remote.limit_exceeded'.tr(namedArgs: {'limit': formatBytes(limit)}),
         type: ToastType.warning,
       );
       setState(() => _phase = _Phase.pick);

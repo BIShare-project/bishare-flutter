@@ -7,7 +7,6 @@
     "code_not_found": "Code introuvable. S'il s'agit d'un partage en direct, gardez l'écran de l'expéditeur ouvert et scannez le QR.",
     "error_processing_link": "Erreur lors du traitement du lien",
     "live_transfer": "Transfert en direct",
-    "shared_file": "Fichier partagé",
     "tab_history": "Historique",
     "tab_inbox": "Reçus",
     "tab_rooms": "Salons",
@@ -310,7 +309,6 @@
     "choose_photo_video": "Choisir une photo ou une vidéo",
     "expires_24h": "Expire dans 24 heures",
     "expires_24h_subtitle": "Le lien expirera après 24 heures",
-    "free_limit_exceeded": "Le fichier dépasse la limite gratuite de {limit} — Pro (bientôt disponible) la porte à {pro_limit}",
     "one_time_download": "Téléchargement unique",
     "one_time_download_subtitle": "Le fichier ne peut être téléchargé qu'une seule fois",
     "saved_file": "{name} enregistré",
@@ -334,7 +332,8 @@
     "badge_e2e": "Chiffré de bout en bout",
     "badge_one_time": "Usage unique",
     "badge_expires_24h": "Expire dans 24 h",
-    "live_receiver_needs_update": "Le BIShare de l'autre appareil doit être mis à jour pour recevoir un transfert en direct chiffré. Mettez-le à jour, ou désactivez le chiffrement de bout en bout pour envoyer quand même."
+    "live_receiver_needs_update": "Le BIShare de l'autre appareil doit être mis à jour pour recevoir un transfert en direct chiffré. Mettez-le à jour, ou désactivez le chiffrement de bout en bout pour envoyer quand même.",
+    "limit_exceeded": "Le fichier dépasse la limite de {limit} pour les liens — envoyez-le plutôt en Wi-Fi à un appareil proche, sans limite de taille"
   },
   "room": {
     "connecting_create_local": "Création d’un salon local",

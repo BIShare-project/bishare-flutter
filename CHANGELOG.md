@@ -5,6 +5,14 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
+### Removed
+- **Two leftovers of the old account system.** Links of the form
+  `bishare.app/share/…` and `bishare.app/request/…` no longer open the app
+  (neither page nor API exists any more; they used to fail with an error),
+  and the "file too large" message for a link no longer promises a "Pro"
+  plan. It now says what works instead: sending nearby over Wi-Fi, which has
+  no size limit.
+
 ## [2.6.1] — 2026-10-10
 
 ### Added

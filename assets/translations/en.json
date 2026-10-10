@@ -7,7 +7,6 @@
     "code_not_found": "Code not found. If it's a live share, keep the sender's screen open and scan the QR.",
     "error_processing_link": "Error processing link",
     "live_transfer": "Live Transfer",
-    "shared_file": "Shared File",
     "tab_history": "History",
     "tab_inbox": "Inbox",
     "tab_rooms": "Rooms",
@@ -310,7 +309,6 @@
     "choose_photo_video": "Choose photo or video",
     "expires_24h": "Expires in 24 hours",
     "expires_24h_subtitle": "Link will expire after 24 hours",
-    "free_limit_exceeded": "File is larger than the {limit} free limit — Pro (coming soon) raises it to {pro_limit}",
     "one_time_download": "One-time download",
     "one_time_download_subtitle": "File can only be downloaded once",
     "saved_file": "Saved {name}",
@@ -334,7 +332,8 @@
     "badge_e2e": "End-to-end encrypted",
     "badge_one_time": "One-time",
     "badge_expires_24h": "Expires in 24h",
-    "live_receiver_needs_update": "The other device's BIShare needs an update to receive an encrypted live transfer. Update it, or turn off end-to-end encryption to send anyway."
+    "live_receiver_needs_update": "The other device's BIShare needs an update to receive an encrypted live transfer. Update it, or turn off end-to-end encryption to send anyway.",
+    "limit_exceeded": "File is larger than the {limit} link limit — send it nearby over Wi-Fi instead, with no size limit"
   },
   "room": {
     "connecting_create_local": "Creating a local room",

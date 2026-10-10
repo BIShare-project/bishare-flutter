@@ -7,7 +7,6 @@
     "code_not_found": "找不到該代碼。如果是即時分享，請讓傳送方保持螢幕開啟，然後掃描其 QR 碼。",
     "error_processing_link": "處理連結時發生錯誤",
     "live_transfer": "即時傳輸",
-    "shared_file": "共享檔案",
     "tab_history": "歷史記錄",
     "tab_inbox": "收件匣",
     "tab_rooms": "房間",
@@ -310,7 +309,6 @@
     "choose_photo_video": "選擇照片或影片",
     "expires_24h": "24 小時後失效",
     "expires_24h_subtitle": "連結將在 24 小時後失效",
-    "free_limit_exceeded": "檔案超過 {limit} 的免費限制 — Pro（即將推出）可提升至 {pro_limit}",
     "one_time_download": "一次性下載",
     "one_time_download_subtitle": "檔案只能下載一次",
     "saved_file": "已儲存 {name}",
@@ -334,7 +332,8 @@
     "badge_e2e": "端對端加密",
     "badge_one_time": "一次性",
     "badge_expires_24h": "24 小時後到期",
-    "live_receiver_needs_update": "對方裝置上的 BIShare 需要更新才能接收加密的即時傳輸。請更新它，或關閉端對端加密後照常傳送。"
+    "live_receiver_needs_update": "對方裝置上的 BIShare 需要更新才能接收加密的即時傳輸。請更新它，或關閉端對端加密後照常傳送。",
+    "limit_exceeded": "檔案超過連結的 {limit} 限制 — 改用 Wi-Fi 傳送到附近裝置，沒有大小限制"
   },
   "room": {
     "connecting_create_local": "正在建立本機房間",

@@ -248,12 +248,6 @@ class _MainShellState extends State<MainShell> {
               cancel: c,
             ),
           );
-        case CloudShareLink(:final token):
-          showRemoteDownload(
-            context,
-            label: 'nav.shared_file'.tr(),
-            run: (p, c) => cloud.downloadShare(token, onProgress: p, cancel: c),
-          );
         case LocalInstantLink(:final url):
           showRemoteDownload(
             context,
@@ -317,8 +311,6 @@ class _MainShellState extends State<MainShell> {
               }
             },
           );
-        case OpenExternalLink(:final url):
-          launchUrl(url, mode: LaunchMode.externalApplication);
         case RescanSharedLink():
           _select(0); // jump to the Share tab
       }

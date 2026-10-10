@@ -103,7 +103,7 @@ class CloudUploadResult {
   }
 }
 
-/// Downloads remote links (24h cloud transfers, user share-links, direct LAN
+/// Downloads remote links (24h cloud transfers, direct LAN
 /// instant URLs) into the app's save directory and records them in the Inbox /
 /// History — so a scanned QR or opened universal link lands like any received
 /// file. Grounded to the Cloudflare Workers endpoints in [CloudConfig].
@@ -219,47 +219,8 @@ class CloudTransferService {
     return true;
   }
 
-  /// `https://bishare.app/share/<token>` — an authenticated user share-link.
-  /// The server returns a presigned URL, which we then stream.
-  Future<ReceivedFile> downloadShare(
-    String token, {
-    ProgressCb? onProgress,
-    CancelToken? cancel,
-  }) async {
-    final info = _data(
-      await _dio.getUri<Map<String, dynamic>>(
-        _api(CloudConfig.shareInfo(token)),
-      ),
-    );
-    if (info == null) throw const CloudDownloadException('Link not found');
-    if (info['is_expired'] == true) {
-      throw const CloudDownloadException('This link has expired');
-    }
-    if (info['has_password'] == true) {
-      throw const CloudDownloadException('This link is password-protected');
-    }
-    final fileName = (info['file_name'] as String?)?.trim();
-    final resolved = _data(
-      await _dio.getUri<Map<String, dynamic>>(
-        _api(CloudConfig.shareDownload(token)),
-      ),
-    );
-    final url = resolved?['download_url'] as String?;
-    if (url == null) throw const CloudDownloadException('Download unavailable');
-    final target = await _target(
-      fileName == null || fileName.isEmpty ? 'shared-file' : fileName,
-    );
-    await _dio.download(
-      url,
-      target.path,
-      onReceiveProgress: onProgress,
-      cancelToken: cancel,
-    );
-    return _record(target, info['mime_type'] as String?, 'Cloud share');
-  }
-
-  /// A direct URL download (a device instant-share `bishare://download`, a raw
-  /// `.../api/v1/instant?token=…`, or a presigned Drive `download-url`). The
+  /// A direct URL download (a device instant-share `bishare://download` or a
+  /// raw `.../api/v1/instant?token=…`). The
   /// filename comes from Content-Disposition; [senderLabel] tags the Inbox row.
   Future<ReceivedFile> downloadDirect(
     Uri url, {

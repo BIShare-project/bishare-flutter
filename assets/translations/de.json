@@ -7,7 +7,6 @@
     "code_not_found": "Code nicht gefunden. Bei einer Live-Freigabe den Bildschirm des Absenders offen lassen und den QR-Code scannen.",
     "error_processing_link": "Fehler beim Verarbeiten des Links",
     "live_transfer": "Live-Übertragung",
-    "shared_file": "Geteilte Datei",
     "tab_history": "Verlauf",
     "tab_inbox": "Posteingang",
     "tab_rooms": "Räume",
@@ -310,7 +309,6 @@
     "choose_photo_video": "Foto oder Video auswählen",
     "expires_24h": "Läuft in 24 Stunden ab",
     "expires_24h_subtitle": "Der Link läuft nach 24 Stunden ab",
-    "free_limit_exceeded": "Die Datei überschreitet das kostenlose Limit von {limit} — Pro (bald verfügbar) erhöht es auf {pro_limit}",
     "one_time_download": "Einmaliger Download",
     "one_time_download_subtitle": "Die Datei kann nur einmal heruntergeladen werden",
     "saved_file": "{name} gespeichert",
@@ -334,7 +332,8 @@
     "badge_e2e": "Ende-zu-Ende-verschlüsselt",
     "badge_one_time": "Einmalig",
     "badge_expires_24h": "Läuft in 24 h ab",
-    "live_receiver_needs_update": "Das BIShare des anderen Geräts braucht ein Update, um eine verschlüsselte Live-Übertragung zu empfangen. Aktualisiere es, oder schalte die Ende-zu-Ende-Verschlüsselung aus, um trotzdem zu senden."
+    "live_receiver_needs_update": "Das BIShare des anderen Geräts braucht ein Update, um eine verschlüsselte Live-Übertragung zu empfangen. Aktualisiere es, oder schalte die Ende-zu-Ende-Verschlüsselung aus, um trotzdem zu senden.",
+    "limit_exceeded": "Die Datei überschreitet das Link-Limit von {limit} — sende sie stattdessen in der Nähe über WLAN, ohne Größenlimit"
   },
   "room": {
     "connecting_create_local": "Lokaler Raum wird erstellt",

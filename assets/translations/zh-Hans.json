@@ -7,7 +7,6 @@
     "code_not_found": "未找到该代码。如果是实时分享，请让发送方保持屏幕开启，然后扫描其二维码。",
     "error_processing_link": "处理链接时出错",
     "live_transfer": "实时传输",
-    "shared_file": "共享文件",
     "tab_history": "历史记录",
     "tab_inbox": "收件箱",
     "tab_rooms": "房间",
@@ -310,7 +309,6 @@
     "choose_photo_video": "选择照片或视频",
     "expires_24h": "24小时后过期",
     "expires_24h_subtitle": "链接将在24小时后过期",
-    "free_limit_exceeded": "文件超过 {limit} 的免费限制 — Pro（即将推出）可提升至 {pro_limit}",
     "one_time_download": "一次性下载",
     "one_time_download_subtitle": "文件只能下载一次",
     "saved_file": "已保存 {name}",
@@ -334,7 +332,8 @@
     "badge_e2e": "端到端加密",
     "badge_one_time": "一次性",
     "badge_expires_24h": "24 小时后过期",
-    "live_receiver_needs_update": "对方设备上的 BIShare 需要更新才能接收加密的实时传输。请更新它，或关闭端到端加密后照常发送。"
+    "live_receiver_needs_update": "对方设备上的 BIShare 需要更新才能接收加密的实时传输。请更新它，或关闭端到端加密后照常发送。",
+    "limit_exceeded": "文件超过链接的 {limit} 限制 — 改用 Wi-Fi 发送到附近设备，没有大小限制"
   },
   "room": {
     "connecting_create_local": "正在创建本地房间",

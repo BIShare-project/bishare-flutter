@@ -7,7 +7,6 @@
     "code_not_found": "Código no encontrado. Si es un envío en vivo, mantén abierta la pantalla del remitente y escanea el QR.",
     "error_processing_link": "Error al procesar el enlace",
     "live_transfer": "Transferencia en vivo",
-    "shared_file": "Archivo compartido",
     "tab_history": "Historial",
     "tab_inbox": "Recibidos",
     "tab_rooms": "Salas",
@@ -310,7 +309,6 @@
     "choose_photo_video": "Elegir foto o vídeo",
     "expires_24h": "Caduca en 24 horas",
     "expires_24h_subtitle": "El enlace caducará después de 24 horas",
-    "free_limit_exceeded": "El archivo supera el límite gratuito de {limit} — Pro (próximamente) lo aumenta a {pro_limit}",
     "one_time_download": "Descarga única",
     "one_time_download_subtitle": "El archivo solo se puede descargar una vez",
     "saved_file": "Guardado {name}",
@@ -334,7 +332,8 @@
     "badge_e2e": "Cifrado de extremo a extremo",
     "badge_one_time": "Una sola vez",
     "badge_expires_24h": "Caduca en 24 h",
-    "live_receiver_needs_update": "El BIShare del otro dispositivo necesita una actualización para recibir una transferencia en vivo cifrada. Actualízalo, o desactiva el cifrado de extremo a extremo para enviar de todos modos."
+    "live_receiver_needs_update": "El BIShare del otro dispositivo necesita una actualización para recibir una transferencia en vivo cifrada. Actualízalo, o desactiva el cifrado de extremo a extremo para enviar de todos modos.",
+    "limit_exceeded": "El archivo supera el límite de {limit} para enlaces — envíalo por Wi-Fi a un dispositivo cercano, sin límite de tamaño"
   },
   "room": {
     "connecting_create_local": "Creando una sala local",

@@ -17,13 +17,6 @@ class CloudTransferLink extends DeepLinkAction {
   final String? key;
 }
 
-/// `https://bishare.app/share/<token>` — download an authenticated user
-/// share-link (follows the presigned URL the server returns).
-class CloudShareLink extends DeepLinkAction {
-  const CloudShareLink(this.token);
-  final String token;
-}
-
 /// A direct LAN instant-share URL — `bishare://download?host&port&token`, or a
 /// raw `http://host:port/api/v1/instant?token=…` payload. Downloaded in place.
 class LocalInstantLink extends DeepLinkAction {
@@ -51,13 +44,6 @@ class StreamReceiveLink extends DeepLinkAction {
 class AmbiguousCodeLink extends DeepLinkAction {
   const AmbiguousCodeLink(this.code);
   final String code;
-}
-
-/// `https://bishare.app/request/<code>` — a web file-request page; opened in
-/// the system browser.
-class OpenExternalLink extends DeepLinkAction {
-  const OpenExternalLink(this.url);
-  final Uri url;
 }
 
 /// `bishare://share` — the OS share-sheet handed us files; re-scan the inbox.
@@ -142,12 +128,9 @@ class DeepLink {
           return CloudTransferLink(_code(segs[1]), key: _keyFrom(fragment));
         }
         return null;
-      case 'share':
-        if (segs.length >= 2) return CloudShareLink(segs[1]);
-        return null;
-      case 'request':
-        return OpenExternalLink(Uri.parse('${CloudConfig.webBase}/$path'));
     }
+    // /share/<token> and /request/<code> were the old account system's
+    // links; neither exists on the site or the API any more.
     return null;
   }
 

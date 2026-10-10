@@ -7,7 +7,6 @@
     "code_not_found": "コードが見つかりません。ライブ共有の場合は、送信側の画面を開いたままにしてQRをスキャンしてください。",
     "error_processing_link": "リンクの処理中にエラーが発生しました",
     "live_transfer": "ライブ転送",
-    "shared_file": "共有ファイル",
     "tab_history": "履歴",
     "tab_inbox": "受信トレイ",
     "tab_rooms": "ルーム",
@@ -310,7 +309,6 @@
     "choose_photo_video": "写真または動画を選択",
     "expires_24h": "24時間後に期限切れ",
     "expires_24h_subtitle": "リンクは24時間後に期限切れになります",
-    "free_limit_exceeded": "ファイルが無料版の上限 {limit} を超えています — Pro（近日公開）なら {pro_limit} まで送れます",
     "one_time_download": "1回限りのダウンロード",
     "one_time_download_subtitle": "ファイルは1回だけダウンロードできます",
     "saved_file": "{name} を保存しました",
@@ -334,7 +332,8 @@
     "badge_e2e": "エンドツーエンド暗号化",
     "badge_one_time": "1回限り",
     "badge_expires_24h": "24時間で期限切れ",
-    "live_receiver_needs_update": "相手の端末のBIShareを更新しないと、暗号化されたライブ転送を受け取れません。更新するか、エンドツーエンド暗号化をオフにして送信してください。"
+    "live_receiver_needs_update": "相手の端末のBIShareを更新しないと、暗号化されたライブ転送を受け取れません。更新するか、エンドツーエンド暗号化をオフにして送信してください。",
+    "limit_exceeded": "ファイルがリンクの上限 {limit} を超えています — 近くの端末へ Wi-Fi で送れば、サイズ制限はありません"
   },
   "room": {
     "connecting_create_local": "ローカルルームを作成中",

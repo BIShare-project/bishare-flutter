@@ -81,14 +81,12 @@
                 <data android:scheme="bishare-remote"/>
                 <data android:scheme="bishare-stream"/>
             </intent-filter>
-            <!-- Verified App Links: https://bishare.app/{transfer,share,request}/… -->
+            <!-- Verified App Links: https://bishare.app/transfer/… -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https" android:host="bishare.app" android:pathPrefix="/transfer"/>
-                <data android:scheme="https" android:host="bishare.app" android:pathPrefix="/share"/>
-                <data android:scheme="https" android:host="bishare.app" android:pathPrefix="/request"/>
             </intent-filter>
             <!-- Share-target: receive files/text from another app's share sheet -->
             <intent-filter>

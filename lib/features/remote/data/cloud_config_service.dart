@@ -2,19 +2,16 @@ import 'package:dio/dio.dart';
 
 import '../../../core/constants/cloud.dart';
 
-/// Backend-enforced transfer limits, fetched once per app run from
-/// `GET /api/v1/config` (`data.limits.*`). The app has no login yet, so every
-/// user is effectively FREE tier — [freeTransferLimit] is the one to enforce.
+/// The backend's transfer size limit, fetched once per app run from
+/// `GET /api/v1/config` (`data.limits.transfer_max_file_size_free` — the key
+/// keeps its historical name; there is one limit and no tiers).
 ///
 /// Any failure (offline, timeout, unexpected shape) falls back to the known
-/// backend defaults so the share flow never blocks on this fetch. Only a
+/// backend default so the share flow never blocks on this fetch. Only a
 /// successful fetch is cached; a failed one retries on the next call.
 class CloudConfigService {
-  /// FREE-tier max transfer size enforced by the backend: 1 GiB.
-  static const int defaultFreeTransferLimit = 1073741824;
-
-  /// PRO-tier max transfer size (used in upsell copy): 5 GiB.
-  static const int defaultProTransferLimit = 5368709120;
+  /// The backend's default when the flag is unset: 1 GiB.
+  static const int defaultTransferLimit = 1073741824;
 
   final Dio _dio = Dio(
     BaseOptions(
@@ -24,22 +21,17 @@ class CloudConfigService {
     ),
   );
 
-  ({int free, int pro})? _cached;
-  Future<({int free, int pro})>? _inflight;
+  int? _cached;
+  Future<int>? _inflight;
 
-  /// The FREE-tier max transfer size in bytes. Never throws.
-  Future<int> freeTransferLimit() async => (await _limits()).free;
-
-  /// The PRO-tier max transfer size in bytes. Never throws.
-  Future<int> proTransferLimit() async => (await _limits()).pro;
-
-  Future<({int free, int pro})> _limits() {
+  /// The max transfer size in bytes. Never throws.
+  Future<int> transferLimit() {
     final cached = _cached;
     if (cached != null) return Future.value(cached);
     return _inflight ??= _fetch().whenComplete(() => _inflight = null);
   }
 
-  Future<({int free, int pro})> _fetch() async {
+  Future<int> _fetch() async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         '${CloudConfig.apiBase}${CloudConfig.config}',
@@ -47,18 +39,12 @@ class CloudConfigService {
       final data = res.data?['data'];
       final limits = data is Map<String, dynamic> ? data['limits'] : null;
       if (limits is Map<String, dynamic>) {
-        final free = (limits['transfer_max_file_size_free'] as num?)?.toInt();
-        final pro = (limits['transfer_max_file_size_pro'] as num?)?.toInt();
-        if (free != null && free > 0) {
-          return _cached = (
-            free: free,
-            pro: (pro != null && pro > 0) ? pro : defaultProTransferLimit,
-          );
-        }
+        final limit = (limits['transfer_max_file_size_free'] as num?)?.toInt();
+        if (limit != null && limit > 0) return _cached = limit;
       }
     } on Object catch (_) {
-      // Fall through to the defaults below.
+      // Fall through to the default below.
     }
-    return (free: defaultFreeTransferLimit, pro: defaultProTransferLimit);
+    return defaultTransferLimit;
   }
 }

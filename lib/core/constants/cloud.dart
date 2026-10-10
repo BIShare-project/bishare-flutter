@@ -74,10 +74,6 @@ class CloudConfig {
   static String transferStatus(String code) => '/api/v1/transfer/status/$code';
   static String transferDelete(String code) => '/api/v1/transfer/delete/$code';
 
-  /// Authenticated user share-links (public read at `/s/<token>`).
-  static String shareInfo(String token) => '/s/$token';
-  static String shareDownload(String token) => '/s/$token/download';
-
   // ---- Rooms (REST) ----
   static const String rooms = '/api/v1/rooms';
   static String room(String code) => '/api/v1/rooms/$code';
