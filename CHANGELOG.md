@@ -5,7 +5,7 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
-## [2.6.1] — 2026-10-08
+## [2.6.1] — 2026-10-10
 
 ### Added
 - **One question about a possible paid storage feature.** When it is turned
