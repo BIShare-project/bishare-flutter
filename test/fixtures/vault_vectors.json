@@ -1,0 +1,72 @@
+{
+  "device": {
+    "deviceId": "aIlNWPGPLDTUnrL0sRDgQg",
+    "publicKey": "F0VTtFbd38aQjsqxwQH-arIeK6oGF3lbfUOmNIKZP9U",
+    "seed": "YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn8",
+    "signinNonce": "fUFJRaV5Rpw7qnlfAH5S6j-34fgCJVMfjpSL2uJotIQ"
+  },
+  "dir": {
+    "encMeta": "mJmam5ydnp-goaKj2UhI6Qa9QnVexlTvhrwucL1OxymbFbIC8wdT7oBxfspCui_B2AzSyrnhNI7TocCNOXeOEaycJiJvOCUcNXBCm97UL8U3BZxUDWtp0WyK",
+    "meta": {
+      "kind": "dir",
+      "mtimeMs": 1727000000000,
+      "name": "Photos 2026",
+      "parent": null
+    },
+    "metaJson": "{\"v\":1,\"k\":\"dir\",\"n\":\"Photos 2026\",\"p\":null,\"m\":1727000000000}",
+    "nonce": "mJmam5ydnp-goaKj",
+    "objectId": "oKGio6SlpqeoqaqrrK2urw"
+  },
+  "file": {
+    "encMeta": "kJGSk5SVlpeYmZqbzXL_vBckMAlngubxmD8YiyVIG0AGXBnRS8AD4j3QPw1FqFHShyqE5KnyrtM7XJVzXzeiTVGgxM4kOSaEfcLEdZdFIYgQB3dB8O-82OoJEq_N7gAa7aZeIlA7sQkCIjLwLPBVzCp2C3jlxFWb84MYFobEJ8RG_iYk19S6djHhIfmTV4eAovICHCHGW_Su4vktv-rCJLHor4oXSM8pmbnyDxsGeJuUlu-YhsxfAMziabS_0-pZta6P4vuU5oY0ihu2vV0fmM6w_vBdWXiTHoOM42czObp4w0DSC_8vER696t5iVyyMmm3P7M3c2kSCSBgusMc",
+    "encThumbnail": "sLGys7S1tre4ubq7OXdRsu-oA5ZWiBm4bGAXsmfPR_Pyoq46zaW7gPCSq4NDxUDIaBMI2A-qLRLhcKU_BVWOpWF-2auKKFvCxILDdw",
+    "fileKey": "gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp8",
+    "meta": {
+      "hash": "uyhq1gZDHMXdNuwLm-e64ohnRdD5u9yGS1Fi0mgY5Tg",
+      "kind": "file",
+      "mime": "application/pdf",
+      "mtimeMs": 1728000000123,
+      "name": "Résumé 📄 final.pdf",
+      "parent": "oKGio6SlpqeoqaqrrK2urw",
+      "size": 138
+    },
+    "metaJson": "{\"v\":1,\"k\":\"file\",\"n\":\"Résumé 📄 final.pdf\",\"p\":\"oKGio6SlpqeoqaqrrK2urw\",\"m\":1728000000123,\"s\":138,\"t\":\"application/pdf\",\"fk\":\"gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp8\",\"h\":\"uyhq1gZDHMXdNuwLm-e64ohnRdD5u9yGS1Fi0mgY5Tg\"}",
+    "nonce": "kJGSk5SVlpeYmZqb",
+    "objectId": "cHFyc3R1dnd4eXp7fH1-fw",
+    "plaintext": "QklTaGFyZSB2YXVsdCB2ZWN0b3Ig4oCUIHRoZSBieXRlcyBvZiBhIGZpbGUuCkJJU2hhcmUgdmF1bHQgdmVjdG9yIOKAlCB0aGUgYnl0ZXMgb2YgYSBmaWxlLgpCSVNoYXJlIHZhdWx0IHZlY3RvciDigJQgdGhlIGJ5dGVzIG9mIGEgZmlsZS4K",
+    "thumbKey": "R6SvvKyx51aufBWw5eTW_NRsFSz3t-OZD1htOrUMkMg",
+    "thumbNonce": "sLGys7S1tre4ubq7",
+    "thumbnail": "wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t_g4eLj5OXm5-jp6uvs7e7v"
+  },
+  "grant": {
+    "box": "8PHy8_T19vf4-fr7ochukULkwRBr-qYIGegQeSv4xAj-cozz-CUKTxoCSdnJWnLMajVQkiNJDm3xbUKl",
+    "granterPriv": "4OHi4-Tl5ufo6err7O3u7_Dx8vP09fb3-Pn6-_z9_v8",
+    "granterPub": "c2hF1U6H3gnWuxFKpwQsUKSgFb2ZAdGgAm9ZVlM6FRk",
+    "newPriv": "0NHS09TV1tfY2drb3N3e3-Dh4uPk5ebn6Onq6-zt7u8",
+    "newPub": "az7mdGNYPL49wI_p0HZcJmb_UhDdUnydhwXkSSfIDVU",
+    "nonce": "8PHy8_T19vf4-fr7",
+    "wrapKey": "sW4Xrjd9phi9CZEovLFsLeYs5vLuh7ARhZpPvf3pmNU"
+  },
+  "keyCheck": "HaAzMxxzPNbc3TZdwB9C_Q",
+  "keyCopy": {
+    "backupKey": "k2gZwd7JSJYxLmkRHhhexxKNpNyZhwWTAN2RAGbcwUM",
+    "blob": "QlNWSwFQUVJTVFVWV1hZWlvsN5jJnMZCvyXCcF52DezNgbQQrVM77TboPvK4gGrMyjQ_xXNyjZEmET3ZA7SGALQ",
+    "nonce": "UFFSU1RVVldYWVpb",
+    "serverHalf": "MDEyMzQ1Njc4OTo7PD0-P0BBQkNERUZHSElKS0xNTk8"
+  },
+  "metaKey": "Is2lcLEY7mbNh7cs8nhA492NOpcvlntJZWXU-UejQX0",
+  "note": "Written by the Rust tests in bishare-flutter/rust/bishare-protocol/src/vault.rs (VAULT-SPEC.md). Binary values are base64url without padding; 'seq' inputs are consecutive bytes.",
+  "phrase": "avoid mass luggage choice fabric argue gather cash brand thought elegant dinner acoustic much milk lucky change deer apart february ready bird reward van",
+  "request": {
+    "authorization": "BIShare-Vault v=1,vault=aaaqeayeaudaocajbifqydiob4,device=aIlNWPGPLDTUnrL0sRDgQg,ts=1728000000,sig=3I8marqCDyVibG8LxNXo1JKnGgKfHY0SCdC21HkwlE0YZiXAuo1pSYXCmSf3xFobgqFBPvJTLYYfro9INbz9DA",
+    "body": "{\"ops\":[]}",
+    "bodySha256": "b2f0effc1a37cecc88986e93381ca24c017e5b7a288ea14a9462ae9b4c466f0c",
+    "message": "bishare-vault-req-v1\nPOST\n/api/v1/vault/aaaqeayeaudaocajbifqydiob4/ops?x=1\n1728000000\nb2f0effc1a37cecc88986e93381ca24c017e5b7a288ea14a9462ae9b4c466f0c",
+    "method": "POST",
+    "pathAndQuery": "/api/v1/vault/aaaqeayeaudaocajbifqydiob4/ops?x=1",
+    "signature": "3I8marqCDyVibG8LxNXo1JKnGgKfHY0SCdC21HkwlE0YZiXAuo1pSYXCmSf3xFobgqFBPvJTLYYfro9INbz9DA",
+    "ts": 1728000000
+  },
+  "vaultId": "aaaqeayeaudaocajbifqydiob4",
+  "vaultKey": "EBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8"
+}

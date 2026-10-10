@@ -5,6 +5,7 @@ pub mod quic;
 pub mod scanner;
 pub mod signal;
 pub mod utils;
+pub mod vault;
 
 /// Runs once when the Rust library is initialised from Dart (`RustLib.init()`).
 #[flutter_rust_bridge::frb(init)]

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import '../../src/rust/api/bse2.dart' as rb;
 import '../../src/rust/api/crypto.dart' as rc;
 import '../../src/rust/api/utils.dart' as ru;
+import '../../src/rust/api/vault.dart' as rv;
 import '../../src/rust/frb_generated.dart';
 
 /// Ergonomic Dart-side wrapper over the generated flutter_rust_bridge bindings.
@@ -107,5 +108,172 @@ class Rust {
     inputPath: inputPath,
     outputPath: outputPath,
     key: key,
+  );
+
+  // ---- Vault (BIShare Drive): keys, envelopes and signatures (VAULT-SPEC.md) ----
+  static Uint8List vaultGenerateKey() => rv.vaultGenerateKey();
+  static Uint8List vaultGenerateFileKey() => rv.vaultGenerateFileKey();
+  static String vaultGenerateObjectId() => rv.vaultGenerateObjectId();
+  static bool vaultIsVaultId(String id) => rv.vaultIsVaultId(id: id);
+  static bool vaultIsObjectId(String id) => rv.vaultIsObjectId(id: id);
+  static String vaultKeyCheck(List<int> vaultKey) =>
+      rv.vaultKeyCheck(vaultKey: vaultKey);
+  static Uint8List vaultMetaKey(List<int> vaultKey) =>
+      rv.vaultMetaKey(vaultKey: vaultKey);
+  static Uint8List vaultThumbKey(List<int> fileKey) =>
+      rv.vaultThumbKey(fileKey: fileKey);
+  static String vaultPhraseFromKey(List<int> vaultKey) =>
+      rv.vaultPhraseFromKey(vaultKey: vaultKey);
+  static Uint8List vaultKeyFromPhrase(String phrase) =>
+      rv.vaultKeyFromPhrase(phrase: phrase);
+  static Uint8List vaultSealKeyCopy({
+    required List<int> serverHalf,
+    required String vaultId,
+    required List<int> vaultKey,
+  }) => rv.vaultSealKeyCopy(
+    serverHalf: serverHalf,
+    vaultId: vaultId,
+    vaultKey: vaultKey,
+  );
+  static Uint8List vaultOpenKeyCopy({
+    required List<int> serverHalf,
+    required String vaultId,
+    required List<int> keyCopy,
+  }) => rv.vaultOpenKeyCopy(
+    serverHalf: serverHalf,
+    vaultId: vaultId,
+    keyCopy: keyCopy,
+  );
+  static String vaultSealMeta({
+    required List<int> metaKey,
+    required String vaultId,
+    required String objectId,
+    required rv.VaultMeta meta,
+  }) => rv.vaultSealMeta(
+    metaKey: metaKey,
+    vaultId: vaultId,
+    objectId: objectId,
+    meta: meta,
+  );
+  static rv.VaultMeta vaultOpenMeta({
+    required List<int> metaKey,
+    required String vaultId,
+    required String objectId,
+    required String encMeta,
+  }) => rv.vaultOpenMeta(
+    metaKey: metaKey,
+    vaultId: vaultId,
+    objectId: objectId,
+    encMeta: encMeta,
+  );
+  static Uint8List vaultSealThumbnail({
+    required List<int> fileKey,
+    required String vaultId,
+    required String objectId,
+    required List<int> jpeg,
+  }) => rv.vaultSealThumbnail(
+    fileKey: fileKey,
+    vaultId: vaultId,
+    objectId: objectId,
+    jpeg: jpeg,
+  );
+  static Uint8List vaultOpenThumbnail({
+    required List<int> fileKey,
+    required String vaultId,
+    required String objectId,
+    required List<int> sealed,
+  }) => rv.vaultOpenThumbnail(
+    fileKey: fileKey,
+    vaultId: vaultId,
+    objectId: objectId,
+    sealed: sealed,
+  );
+  static rv.VaultGrantKey vaultGrantKeyGenerate() => rv.vaultGrantKeyGenerate();
+  static Uint8List vaultGrant({
+    required List<int> vaultKey,
+    required String vaultId,
+    required List<int> mineSecret,
+    required List<int> newPub,
+  }) => rv.vaultGrant(
+    vaultKey: vaultKey,
+    vaultId: vaultId,
+    mineSecret: mineSecret,
+    newPub: newPub,
+  );
+  static Uint8List vaultAcceptGrant({
+    required String vaultId,
+    required List<int> mineSecret,
+    required List<int> granterPub,
+    required List<int> boxed,
+    required String expectedKeyCheck,
+  }) => rv.vaultAcceptGrant(
+    vaultId: vaultId,
+    mineSecret: mineSecret,
+    granterPub: granterPub,
+    boxed: boxed,
+    expectedKeyCheck: expectedKeyCheck,
+  );
+  static Uint8List vaultDeviceKeyGenerate() => rv.vaultDeviceKeyGenerate();
+  static Uint8List vaultDevicePublicKey(List<int> seed) =>
+      rv.vaultDevicePublicKey(seed: seed);
+  static String vaultDeviceId(List<int> publicKey) =>
+      rv.vaultDeviceId(publicKey: publicKey);
+  static String vaultSigninNonce(List<int> publicKey) =>
+      rv.vaultSigninNonce(publicKey: publicKey);
+  static String vaultRequestMessage({
+    required String method,
+    required String pathAndQuery,
+    required int ts,
+    required List<int> body,
+  }) => rv.vaultRequestMessage(
+    method: method,
+    pathAndQuery: pathAndQuery,
+    ts: ts,
+    body: body,
+  );
+  static String vaultSignRequest({
+    required List<int> seed,
+    required String method,
+    required String pathAndQuery,
+    required int ts,
+    required List<int> body,
+  }) => rv.vaultSignRequest(
+    seed: seed,
+    method: method,
+    pathAndQuery: pathAndQuery,
+    ts: ts,
+    body: body,
+  );
+  static String vaultAuthorization({
+    required List<int> seed,
+    required String vaultId,
+    required String method,
+    required String pathAndQuery,
+    required int ts,
+    required List<int> body,
+  }) => rv.vaultAuthorization(
+    seed: seed,
+    vaultId: vaultId,
+    method: method,
+    pathAndQuery: pathAndQuery,
+    ts: ts,
+    body: body,
+  );
+
+  /// Throws with the reason when the signature does not verify.
+  static void vaultVerifyRequest({
+    required List<int> publicKey,
+    required String method,
+    required String pathAndQuery,
+    required int ts,
+    required List<int> body,
+    required String signature,
+  }) => rv.vaultVerifyRequest(
+    publicKey: publicKey,
+    method: method,
+    pathAndQuery: pathAndQuery,
+    ts: ts,
+    body: body,
+    signature: signature,
   );
 }
