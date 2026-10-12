@@ -333,7 +333,8 @@
     "badge_one_time": "Sekali unduh",
     "badge_expires_24h": "Kedaluwarsa 24 jam",
     "live_receiver_needs_update": "BIShare di perangkat penerima perlu diperbarui untuk menerima transfer langsung terenkripsi. Perbarui, atau matikan enkripsi end-to-end untuk tetap mengirim.",
-    "limit_exceeded": "File melebihi batas tautan {limit} — kirim lewat Wi-Fi ke perangkat terdekat saja, tanpa batas ukuran"
+    "limit_exceeded": "File melebihi batas tautan {limit} — kirim lewat Wi-Fi ke perangkat terdekat saja, tanpa batas ukuran",
+    "share_message": "Ini {name} ({size}). Unduh di browser apa saja, tanpa aplikasi. Tautan berlaku 24 jam. Dikirim lewat BIShare, gratis dan open source: {url}"
   },
   "room": {
     "connecting_create_local": "Membuat ruangan lokal",
@@ -455,7 +456,8 @@
     "visible_everyone": "Terlihat oleh semua",
     "visible_subtitle": "Mati = tersembunyi, tidak dapat ditemukan",
     "telemetry": "Statistik penggunaan anonim",
-    "telemetry_subtitle": "Kirim hitungan transfer, dan hari saat aplikasi dibuka, secara privat agar statistik publik mencerminkan pemakaian nyata. Tanpa file, tanpa data pribadi, tanpa apa pun yang mengenali perangkat ini."
+    "telemetry_subtitle": "Kirim hitungan transfer, dan hari saat aplikasi dibuka, secara privat agar statistik publik mencerminkan pemakaian nyata. Tanpa file, tanpa data pribadi, tanpa apa pun yang mengenali perangkat ini.",
+    "share_app_message": "Coba BIShare. Kirim file antar perangkatmu tanpa perlu internet. Gratis dan open source: {url}"
   },
   "notification": {
     "clipboard_from": "Disalin dari {sender}",

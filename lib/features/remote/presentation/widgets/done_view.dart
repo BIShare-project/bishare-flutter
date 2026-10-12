@@ -7,6 +7,19 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../../data/cloud_transfer_service.dart';
 
+/// What the Share button sends: the file's name and size, how long the link
+/// lasts, a line saying what BIShare is, then the link. Most people who get a
+/// BIShare link have never heard of it, and a bare URL told them nothing.
+/// Copy still copies the bare link, for pasting into a browser.
+String _shareMessage(CloudUploadResult result) {
+  final name = result.fileName;
+  final size = result.fileSize;
+  if (name == null || size == null) return result.url;
+  return 'remote.share_message'.tr(
+    namedArgs: {'name': name, 'size': formatBytes(size), 'url': result.url},
+  );
+}
+
 class DoneView extends StatelessWidget {
   const DoneView({super.key, required this.result});
 
@@ -74,8 +87,12 @@ class DoneView extends StatelessWidget {
                 child: ShadButton(
                   size: ShadButtonSize.lg,
                   leading: const AppSvgIcon(AppIcons.shareLink, size: 18),
-                  onPressed: () =>
-                      SharePlus.instance.share(ShareParams(text: result.url)),
+                  onPressed: () => SharePlus.instance.share(
+                    ShareParams(
+                      text: _shareMessage(result),
+                      subject: result.fileName,
+                    ),
+                  ),
                   child: Text('common.share'.tr()),
                 ),
               ),

@@ -57,8 +57,13 @@ class _InviteBody extends StatelessWidget {
               AppSheetAction(
                 icon: AppIcons.shareLink,
                 label: 'invite.share'.tr(),
-                onTap: () =>
-                    SharePlus.instance.share(ShareParams(text: AppLinks.shareMessage)),
+                onTap: () => SharePlus.instance.share(
+                  ShareParams(
+                    text: 'settings.share_app_message'.tr(
+                      namedArgs: {'url': AppLinks.shareUrl},
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

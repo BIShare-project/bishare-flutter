@@ -333,7 +333,8 @@
     "badge_one_time": "1회용",
     "badge_expires_24h": "24시간 후 만료",
     "live_receiver_needs_update": "상대 기기의 BIShare를 업데이트해야 암호화된 라이브 전송을 받을 수 있습니다. 업데이트하거나, 종단 간 암호화를 끄고 보내세요.",
-    "limit_exceeded": "파일이 링크 한도 {limit}를 초과했습니다 — 대신 근처 기기로 Wi-Fi 전송하면 용량 제한이 없습니다"
+    "limit_exceeded": "파일이 링크 한도 {limit}를 초과했습니다 — 대신 근처 기기로 Wi-Fi 전송하면 용량 제한이 없습니다",
+    "share_message": "{name}({size}) 보내요. 앱 없이 어떤 브라우저에서든 다운로드할 수 있어요. 링크는 24시간 동안 유효해요. BIShare로 보냄, 무료 오픈 소스: {url}"
   },
   "room": {
     "connecting_create_local": "로컬 방을 만드는 중",
@@ -455,7 +456,8 @@
     "visible_everyone": "모두에게 표시",
     "visible_subtitle": "끄기 = 숨김, 검색 불가",
     "telemetry": "익명 사용 통계",
-    "telemetry_subtitle": "전송 횟수와 앱을 연 날의 수만 익명으로 보내 공개 통계에 실제 사용을 반영합니다. 파일도, 개인정보도, 이 기기를 식별할 정보도 없습니다."
+    "telemetry_subtitle": "전송 횟수와 앱을 연 날의 수만 익명으로 보내 공개 통계에 실제 사용을 반영합니다. 파일도, 개인정보도, 이 기기를 식별할 정보도 없습니다.",
+    "share_app_message": "BIShare를 써 보세요. 인터넷 없이 내 기기끼리 파일을 보낼 수 있어요. 무료 오픈 소스: {url}"
   },
   "notification": {
     "clipboard_from": "{sender}에서 복사됨",

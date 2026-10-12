@@ -5,6 +5,17 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
+### Changed
+- **Shared links say what they are.** The Share button after a link upload
+  now sends the file's name and size, how long the link lasts and a line on
+  what BIShare is, before the link itself; it used to send the bare link.
+  Copy still copies only the link. "Share BIShare" in Settings and in the
+  invite sheet sends its message in the app's language and points at the
+  download page.
+- **The browser page for nearby devices names BIShare.** The page a browser
+  on the same network opens to get or send files now ends with a line on
+  what BIShare is and a link to get it.
+
 ### Removed
 - **Two leftovers of the old account system.** Links of the form
   `bishare.app/share/…` and `bishare.app/request/…` no longer open the app

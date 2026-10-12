@@ -76,6 +76,8 @@ class CloudUploadResult {
     this.expiresAt,
     this.oneTime = true,
     this.key,
+    this.fileName,
+    this.fileSize,
   });
 
   /// Human code, e.g. `ABC-DEF`.
@@ -93,7 +95,24 @@ class CloudUploadResult {
   /// open an encrypted transfer.
   final String? key;
 
+  /// The shared file's name and plaintext size, for the message the Share
+  /// button sends with the link. Null when the result was not built by
+  /// [CloudTransferService.uploadTransfer].
+  final String? fileName;
+  final int? fileSize;
+
   bool get encrypted => key != null;
+
+  CloudUploadResult _withFile(String name, int size) => CloudUploadResult(
+    code: code,
+    rawCode: rawCode,
+    deleteToken: deleteToken,
+    expiresAt: expiresAt,
+    oneTime: oneTime,
+    key: key,
+    fileName: name,
+    fileSize: size,
+  );
 
   /// The canonical share URL (encoded into the QR). For an encrypted upload it
   /// carries the key after `#`, which browsers never send to any server.
@@ -283,6 +302,7 @@ class CloudTransferService {
     String? keyFragment;
     // From the original, not the sealed scratch copy.
     final mtimeMs = mtimeOf(file);
+    final plainSize = await file.length();
     try {
       if (encrypt) {
         final raw = Bse2.generateKey();
@@ -296,7 +316,7 @@ class CloudTransferService {
           onProgress: onEncryptProgress,
         );
       }
-      return await _uploadBody(
+      final result = await _uploadBody(
         body: body,
         fileName: fileName,
         mimeType: mimeType,
@@ -307,6 +327,7 @@ class CloudTransferService {
         onProgress: onProgress,
         cancel: cancel,
       );
+      return result._withFile(fileName, plainSize);
     } finally {
       if (scratch != null) {
         try {

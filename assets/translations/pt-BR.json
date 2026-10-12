@@ -333,7 +333,8 @@
     "badge_one_time": "Uso único",
     "badge_expires_24h": "Expira em 24 h",
     "live_receiver_needs_update": "O BIShare do outro dispositivo precisa de uma atualização para receber uma transferência ao vivo criptografada. Atualize-o, ou desative a criptografia de ponta a ponta para enviar mesmo assim.",
-    "limit_exceeded": "O arquivo excede o limite de {limit} para links — envie pelo Wi-Fi para um aparelho próximo, sem limite de tamanho"
+    "limit_exceeded": "O arquivo excede o limite de {limit} para links — envie pelo Wi-Fi para um aparelho próximo, sem limite de tamanho",
+    "share_message": "Aqui está {name} ({size}). Baixe em qualquer navegador, sem app. O link funciona por 24 horas. Enviado pelo BIShare, grátis e de código aberto: {url}"
   },
   "room": {
     "connecting_create_local": "Criando uma sala local",
@@ -455,7 +456,8 @@
     "visible_everyone": "Visível para todos",
     "visible_subtitle": "Desligado = oculto, não detectável",
     "telemetry": "Estatísticas de uso anônimas",
-    "telemetry_subtitle": "Envia uma contagem privada de transferências e dos dias em que o app é aberto, para as estatísticas refletirem o uso real. Sem arquivos, sem dados pessoais, nada que identifique este aparelho."
+    "telemetry_subtitle": "Envia uma contagem privada de transferências e dos dias em que o app é aberto, para as estatísticas refletirem o uso real. Sem arquivos, sem dados pessoais, nada que identifique este aparelho.",
+    "share_app_message": "Conheça o BIShare. Ele envia arquivos entre seus aparelhos sem precisar de internet. Grátis e de código aberto: {url}"
   },
   "notification": {
     "clipboard_from": "Copiado de {sender}",

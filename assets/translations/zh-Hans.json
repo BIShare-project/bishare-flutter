@@ -333,7 +333,8 @@
     "badge_one_time": "一次性",
     "badge_expires_24h": "24 小时后过期",
     "live_receiver_needs_update": "对方设备上的 BIShare 需要更新才能接收加密的实时传输。请更新它，或关闭端到端加密后照常发送。",
-    "limit_exceeded": "文件超过链接的 {limit} 限制 — 改用 Wi-Fi 发送到附近设备，没有大小限制"
+    "limit_exceeded": "文件超过链接的 {limit} 限制 — 改用 Wi-Fi 发送到附近设备，没有大小限制",
+    "share_message": "给你发了 {name}（{size}）。用任意浏览器即可下载，无需安装应用。链接 24 小时内有效。通过 BIShare 发送，免费开源：{url}"
   },
   "room": {
     "connecting_create_local": "正在创建本地房间",
@@ -455,7 +456,8 @@
     "visible_everyone": "对所有人可见",
     "visible_subtitle": "关闭 = 隐藏，不可发现",
     "telemetry": "匿名使用统计",
-    "telemetry_subtitle": "匿名发送传输次数和打开应用的天数，让公开统计反映真实使用。不含文件，不含个人数据，也不含任何可识别此设备的信息。"
+    "telemetry_subtitle": "匿名发送传输次数和打开应用的天数，让公开统计反映真实使用。不含文件，不含个人数据，也不含任何可识别此设备的信息。",
+    "share_app_message": "试试 BIShare。无需联网，就能在你的设备之间传文件。免费开源：{url}"
   },
   "notification": {
     "clipboard_from": "已从 {sender} 复制",

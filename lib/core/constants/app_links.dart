@@ -54,7 +54,7 @@ class AppLinks {
       ? windowsReview
       : website;
 
-  /// The message shared by "Share BIShare".
-  static const String shareMessage =
-      'Check out BIShare — share files between your devices, no internet needed. $website';
+  /// The link in the "Share BIShare" message (settings.share_app_message):
+  /// the download page, which points each visitor at their own store.
+  static const String shareUrl = '$website/download';
 }

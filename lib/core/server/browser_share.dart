@@ -24,6 +24,10 @@ class BrowserFile {
 /// so a killed tab resumes where it left off), per-file progress bars, and
 /// folder uploads (webkitdirectory picker + drag-and-drop traversal).
 ///
+/// The footer says what BIShare is and links to the download page: whoever
+/// opens this page has no BIShare yet, and it was the one place a transfer
+/// reached a new person without saying where it came from.
+///
 /// NOTE ON LANGUAGE: the page's strings are deliberately English-only. It is
 /// served to arbitrary external browsers, outside the app's easy_localization
 /// runtime — this matches the page's existing convention (all prior strings
@@ -76,6 +80,8 @@ String browserPageHtml({
   .hidden{display:none}
   #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:20px;opacity:0;transition:.2s;pointer-events:none;font-size:14px}
   #toast.show{opacity:.95}
+  .foot{color:var(--muted);font-size:13px;text-align:center;margin:28px 0 0}
+  .foot a{color:var(--accent);font-weight:600;text-decoration:none}
 </style>
 </head>
 <body>
@@ -122,6 +128,8 @@ String browserPageHtml({
       </div>
     </div>
   </div>
+
+  <p class="foot">Shared with BIShare, the free, open-source app for sending files between iPhone, Android, Windows, Mac and Linux. <a href="https://bishare.app/download" target="_blank" rel="noopener">Get BIShare</a></p>
 </div>
 <div id="toast"></div>
 

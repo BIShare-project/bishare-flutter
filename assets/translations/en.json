@@ -333,7 +333,8 @@
     "badge_one_time": "One-time",
     "badge_expires_24h": "Expires in 24h",
     "live_receiver_needs_update": "The other device's BIShare needs an update to receive an encrypted live transfer. Update it, or turn off end-to-end encryption to send anyway.",
-    "limit_exceeded": "File is larger than the {limit} link limit — send it nearby over Wi-Fi instead, with no size limit"
+    "limit_exceeded": "File is larger than the {limit} link limit — send it nearby over Wi-Fi instead, with no size limit",
+    "share_message": "Here’s {name} ({size}). Download it in any browser, no app needed. The link works for 24 hours. Sent with BIShare, free and open source: {url}"
   },
   "room": {
     "connecting_create_local": "Creating a local room",
@@ -455,7 +456,8 @@
     "visible_everyone": "Visible to everyone",
     "visible_subtitle": "Off = hidden, not discoverable",
     "telemetry": "Anonymous usage stats",
-    "telemetry_subtitle": "Send a private count of transfers, and of the days the app is opened, so public stats reflect real usage. No files, no personal data, nothing that identifies this device."
+    "telemetry_subtitle": "Send a private count of transfers, and of the days the app is opened, so public stats reflect real usage. No files, no personal data, nothing that identifies this device.",
+    "share_app_message": "Check out BIShare. It sends files between your devices, no internet needed. Free and open source: {url}"
   },
   "notification": {
     "clipboard_from": "Copied from {sender}",

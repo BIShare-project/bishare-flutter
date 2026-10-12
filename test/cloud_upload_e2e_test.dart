@@ -313,6 +313,10 @@ void main() {
       expect(result.key, hasLength(43));
       expect(result.url, 'https://bishare.app/transfer/ABCDEF#k=${result.key}');
       expect(result.code, 'ABC-DEF');
+      // The Share button's message names the file and its own size, not the
+      // size of the sealed container.
+      expect(result.fileName, 'holiday.mp4');
+      expect(result.fileSize, plain.length);
 
       final sealed = File('${tmp.path}/sealed.bse2')..writeAsBytesSync(body);
       final out = File('${tmp.path}/out.mp4');

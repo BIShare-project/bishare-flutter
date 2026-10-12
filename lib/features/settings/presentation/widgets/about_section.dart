@@ -66,7 +66,11 @@ class AboutSection extends StatelessWidget {
                 label: 'settings.share_app'.tr(),
                 external: false,
                 onTap: () => SharePlus.instance.share(
-                  ShareParams(text: AppLinks.shareMessage),
+                  ShareParams(
+                    text: 'settings.share_app_message'.tr(
+                      namedArgs: {'url': AppLinks.shareUrl},
+                    ),
+                  ),
                 ),
               ),
             ],
