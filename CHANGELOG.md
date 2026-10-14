@@ -5,6 +5,8 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.6.2] — 2026-10-14
+
 ### Changed
 - **Shared links say what they are.** The Share button after a link upload
   now sends the file's name and size, how long the link lasts and a line on
