@@ -83,7 +83,12 @@
     "type_something": "Ketik sesuatu...",
     "visible_ready": "Terlihat - Siap",
     "voice": "Suara",
-    "refresh": "Muat ulang"
+    "refresh": "Muat ulang",
+    "other_ways": "Tidak ada perangkat di dekat Anda?",
+    "send_link": "Kirim sebagai tautan",
+    "send_link_sub": "Bisa di mana saja. Penerima tidak perlu aplikasinya.",
+    "use_browser": "Pakai browser",
+    "use_browser_sub": "Di perangkat lain, buka bishare.app/transfer di Wi-Fi ini. Perangkat itu akan muncul di sini."
   },
   "send": {
     "cancel": "Batal",
@@ -335,7 +340,32 @@
     "badge_expires_24h": "Kedaluwarsa 24 jam",
     "live_receiver_needs_update": "BIShare di perangkat penerima perlu diperbarui untuk menerima transfer langsung terenkripsi. Perbarui, atau matikan enkripsi end-to-end untuk tetap mengirim.",
     "limit_exceeded": "File melebihi batas tautan {limit} — kirim lewat Wi-Fi ke perangkat terdekat saja, tanpa batas ukuran",
-    "share_message": "Ini {name} ({size}). Unduh di browser apa saja, tanpa aplikasi. Tautan berlaku 24 jam. Dikirim lewat BIShare, gratis dan open source: {url}"
+    "share_message": "Ini {name} ({size}). Unduh di browser apa saja, tanpa aplikasi. Tautan berlaku 24 jam. Dikirim lewat BIShare, gratis dan open source: {url}",
+    "err_not_found": "Transfer tidak ditemukan",
+    "err_expired": "Tidak ditemukan — tautan mungkin sudah kedaluwarsa.",
+    "err_already_downloaded": "Transfer ini sudah diunduh.",
+    "err_access_denied": "Akses ke tautan ini ditolak.",
+    "err_rate_limited": "Terlalu banyak unggahan dari jaringan ini saat ini. Coba lagi nanti.",
+    "err_no_server": "Tidak bisa menghubungi server. Periksa koneksi internet Anda.",
+    "err_timeout": "Waktu koneksi habis. Silakan coba lagi.",
+    "err_certificate": "Koneksi aman gagal (sertifikat).",
+    "err_server": "Kesalahan server ({code}). Silakan coba lagi.",
+    "err_cancelled": "Dibatalkan.",
+    "err_download_failed": "Unduhan gagal: {error}",
+    "err_unknown": "kesalahan tidak diketahui",
+    "err_upload_failed": "Unggahan gagal. Silakan coba lagi.",
+    "err_stalled": "Transfer macet — silakan coba lagi.",
+    "err_verify_failed": "Verifikasi transfer gagal",
+    "err_no_response": "Perangkat lain tidak merespons tepat waktu",
+    "err_connection_failed": "Koneksi gagal. Silakan coba lagi.",
+    "err_declined": "Transfer ditolak",
+    "err_disconnected": "Perangkat lain terputus",
+    "err_stream": "Kesalahan streaming",
+    "sender_cloud": "Transfer cloud",
+    "sender_nearby": "Perangkat terdekat",
+    "waiting_scan": "Menunggu penerima memindai…",
+    "keep_open": "Biarkan layar ini tetap terbuka. File dialirkan langsung — tidak ada yang disimpan secara online.",
+    "create_link": "Buat tautan"
   },
   "room": {
     "connecting_create_local": "Membuat ruangan lokal",
@@ -665,5 +695,10 @@
     "hint_body": "Transfer, tautan berbagi, dan ruangan",
     "enter_code": "Masukkan kode secara manual",
     "camera_denied": "Akses kamera diperlukan untuk memindai kode QR"
+  },
+  "instant": {
+    "scan_hint": "Pindai dengan BIShare di perangkat mana pun di Wi-Fi ini untuk mengunduh.",
+    "one_time_24h": "Sekali · 24 jam",
+    "timed_5min": "Berwaktu · 5 menit"
   }
 }

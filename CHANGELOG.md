@@ -5,7 +5,18 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- **Another way when no device is found.** While the Share screen is still
+  looking for devices, it now offers "Send as a link" (opens Secure Link with
+  the file you picked, ready for "Create link") and "Use a browser" (copies
+  bishare.app/transfer for the other device; a browser on the same Wi-Fi then
+  shows up in the list).
+
 ### Fixed
+- **Secure Link and live-transfer messages speak your language.** Error
+  messages (expired link, already downloaded, timeouts, server errors), the
+  live "waiting for the receiver" screen and the nearby QR share options were
+  English in every language.
 - **No notification prompt before the welcome screens.** On a first launch
   Android and iOS asked for notifications over the splash screen, before
   BIShare had said what it is. The question now comes on the permissions page

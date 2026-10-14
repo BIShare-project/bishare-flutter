@@ -28,7 +28,11 @@ import '../../../core/review/review_prompter.dart';
 /// preconditions: pick a photo/video or file right here, choose one-time, and
 /// get a private link + QR that works anywhere (no same-network requirement).
 class RemoteSharePage extends StatefulWidget {
-  const RemoteSharePage({super.key});
+  const RemoteSharePage({super.key, this.initialPath});
+
+  /// A file already chosen on the Share screen ("Send as a link"). The page
+  /// still shows its options; "Create link" sends this file.
+  final String? initialPath;
 
   @override
   State<RemoteSharePage> createState() => _RemoteSharePageState();
@@ -68,7 +72,18 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
       path = res?.files.single.path;
     }
     if (path == null) return;
+    _send(File(path));
+  }
+
+  /// The file handed over from the Share screen, if it still exists.
+  File? get _presetFile {
+    final path = widget.initialPath;
+    if (path == null) return null;
     final file = File(path);
+    return file.existsSync() ? file : null;
+  }
+
+  void _send(File file) {
     if (_shareViaWeb) {
       _upload(file);
     } else {
@@ -214,6 +229,10 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
                     onShareViaWeb: (v) => setState(() => _shareViaWeb = v),
                     onMedia: () => _pick(mediaOnly: true),
                     onFile: () => _pick(mediaOnly: false),
+                    presetName: _presetFile?.uri.pathSegments.last,
+                    onPreset: _presetFile == null
+                        ? null
+                        : () => _send(_presetFile!),
                   ),
                   _Phase.uploading => UploadingView(
                     title: _encrypting ? 'remote.encrypting'.tr() : null,

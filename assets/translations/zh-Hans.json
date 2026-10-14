@@ -83,7 +83,12 @@
     "type_something": "输入内容...",
     "visible_ready": "可见 - 已就绪",
     "voice": "语音",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "other_ways": "附近没有设备？",
+    "send_link": "以链接发送",
+    "send_link_sub": "随处可用，对方无需安装应用。",
+    "use_browser": "使用浏览器",
+    "use_browser_sub": "在另一台设备上连接此 Wi-Fi 并打开 bishare.app/transfer，它就会显示在这里。"
   },
   "send": {
     "cancel": "取消",
@@ -335,7 +340,32 @@
     "badge_expires_24h": "24 小时后过期",
     "live_receiver_needs_update": "对方设备上的 BIShare 需要更新才能接收加密的实时传输。请更新它，或关闭端到端加密后照常发送。",
     "limit_exceeded": "文件超过链接的 {limit} 限制 — 改用 Wi-Fi 发送到附近设备，没有大小限制",
-    "share_message": "给你发了 {name}（{size}）。用任意浏览器即可下载，无需安装应用。链接 24 小时内有效。通过 BIShare 发送，免费开源：{url}"
+    "share_message": "给你发了 {name}（{size}）。用任意浏览器即可下载，无需安装应用。链接 24 小时内有效。通过 BIShare 发送，免费开源：{url}",
+    "err_not_found": "未找到传输",
+    "err_expired": "未找到 — 链接可能已过期。",
+    "err_already_downloaded": "此传输已被下载。",
+    "err_access_denied": "拒绝访问此链接。",
+    "err_rate_limited": "此网络当前上传次数过多，请稍后再试。",
+    "err_no_server": "无法连接服务器，请检查网络连接。",
+    "err_timeout": "连接超时，请重试。",
+    "err_certificate": "安全连接失败（证书）。",
+    "err_server": "服务器错误（{code}），请重试。",
+    "err_cancelled": "已取消。",
+    "err_download_failed": "下载失败：{error}",
+    "err_unknown": "未知错误",
+    "err_upload_failed": "上传失败，请重试。",
+    "err_stalled": "传输停滞 — 请重试。",
+    "err_verify_failed": "传输校验失败",
+    "err_no_response": "对方设备未及时响应",
+    "err_connection_failed": "连接失败，请重试。",
+    "err_declined": "传输被拒绝",
+    "err_disconnected": "对方设备已断开连接",
+    "err_stream": "流传输错误",
+    "sender_cloud": "云端传输",
+    "sender_nearby": "附近的设备",
+    "waiting_scan": "等待接收方扫描…",
+    "keep_open": "请保持此页面打开。文件直接传输，不会在线保存任何内容。",
+    "create_link": "创建链接"
   },
   "room": {
     "connecting_create_local": "正在创建本地房间",
@@ -665,5 +695,10 @@
     "hint_body": "传输、分享链接和房间",
     "enter_code": "手动输入代码",
     "camera_denied": "需要相机权限才能扫描二维码"
+  },
+  "instant": {
+    "scan_hint": "在此 Wi-Fi 下的任意设备上用 BIShare 扫描即可下载。",
+    "one_time_24h": "一次性 · 24 小时",
+    "timed_5min": "限时 · 5 分钟"
   }
 }

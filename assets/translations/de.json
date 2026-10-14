@@ -83,7 +83,12 @@
     "type_something": "Etwas eingeben...",
     "visible_ready": "Sichtbar – Bereit",
     "voice": "Sprache",
-    "refresh": "Aktualisieren"
+    "refresh": "Aktualisieren",
+    "other_ways": "Kein Gerät in der Nähe?",
+    "send_link": "Als Link senden",
+    "send_link_sub": "Funktioniert überall. Die andere Person braucht die App nicht.",
+    "use_browser": "Browser verwenden",
+    "use_browser_sub": "Öffne auf dem anderen Gerät bishare.app/transfer in diesem WLAN. Es erscheint dann hier."
   },
   "send": {
     "cancel": "Abbrechen",
@@ -335,7 +340,32 @@
     "badge_expires_24h": "Läuft in 24 h ab",
     "live_receiver_needs_update": "Das BIShare des anderen Geräts braucht ein Update, um eine verschlüsselte Live-Übertragung zu empfangen. Aktualisiere es, oder schalte die Ende-zu-Ende-Verschlüsselung aus, um trotzdem zu senden.",
     "limit_exceeded": "Die Datei überschreitet das Link-Limit von {limit} — sende sie stattdessen in der Nähe über WLAN, ohne Größenlimit",
-    "share_message": "Hier ist {name} ({size}). Lade es in jedem Browser herunter, ganz ohne App. Der Link gilt 24 Stunden. Gesendet mit BIShare, kostenlos und Open Source: {url}"
+    "share_message": "Hier ist {name} ({size}). Lade es in jedem Browser herunter, ganz ohne App. Der Link gilt 24 Stunden. Gesendet mit BIShare, kostenlos und Open Source: {url}",
+    "err_not_found": "Übertragung nicht gefunden",
+    "err_expired": "Nicht gefunden – der Link ist vielleicht abgelaufen.",
+    "err_already_downloaded": "Diese Übertragung wurde bereits heruntergeladen.",
+    "err_access_denied": "Zugriff auf diesen Link verweigert.",
+    "err_rate_limited": "Gerade zu viele Uploads aus diesem Netzwerk. Bitte versuche es später erneut.",
+    "err_no_server": "Server nicht erreichbar. Prüfe deine Internetverbindung.",
+    "err_timeout": "Zeitüberschreitung der Verbindung. Bitte versuche es erneut.",
+    "err_certificate": "Sichere Verbindung fehlgeschlagen (Zertifikat).",
+    "err_server": "Serverfehler ({code}). Bitte versuche es erneut.",
+    "err_cancelled": "Abgebrochen.",
+    "err_download_failed": "Download fehlgeschlagen: {error}",
+    "err_unknown": "unbekannter Fehler",
+    "err_upload_failed": "Upload fehlgeschlagen. Bitte versuche es erneut.",
+    "err_stalled": "Die Übertragung stockt – bitte erneut versuchen.",
+    "err_verify_failed": "Überprüfung der Übertragung fehlgeschlagen",
+    "err_no_response": "Das andere Gerät hat nicht rechtzeitig geantwortet",
+    "err_connection_failed": "Verbindung fehlgeschlagen. Bitte versuche es erneut.",
+    "err_declined": "Die Übertragung wurde abgelehnt",
+    "err_disconnected": "Das andere Gerät hat die Verbindung getrennt",
+    "err_stream": "Stream-Fehler",
+    "sender_cloud": "Cloud-Übertragung",
+    "sender_nearby": "Gerät in der Nähe",
+    "waiting_scan": "Warte, bis der Empfänger scannt …",
+    "keep_open": "Lass diesen Bildschirm geöffnet. Die Datei wird direkt gestreamt – nichts wird online gespeichert.",
+    "create_link": "Link erstellen"
   },
   "room": {
     "connecting_create_local": "Lokaler Raum wird erstellt",
@@ -665,5 +695,10 @@
     "hint_body": "Übertragungen, Freigabelinks und Räume",
     "enter_code": "Code manuell eingeben",
     "camera_denied": "Zum Scannen von QR-Codes wird Kamerazugriff benötigt"
+  },
+  "instant": {
+    "scan_hint": "Scanne mit BIShare auf einem beliebigen Gerät in diesem WLAN, um herunterzuladen.",
+    "one_time_24h": "Einmalig · 24 h",
+    "timed_5min": "Befristet · 5 Min."
   }
 }

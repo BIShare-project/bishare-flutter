@@ -83,7 +83,12 @@
     "type_something": "Tapez quelque chose...",
     "visible_ready": "Visible - Prêt",
     "voice": "Voix",
-    "refresh": "Actualiser"
+    "refresh": "Actualiser",
+    "other_ways": "Aucun appareil à proximité ?",
+    "send_link": "Envoyer un lien",
+    "send_link_sub": "Fonctionne partout. L'autre personne n'a pas besoin de l'app.",
+    "use_browser": "Utiliser un navigateur",
+    "use_browser_sub": "Sur l'autre appareil, ouvrez bishare.app/transfer sur ce Wi-Fi. Il apparaîtra ici."
   },
   "send": {
     "cancel": "Annuler",
@@ -335,7 +340,32 @@
     "badge_expires_24h": "Expire dans 24 h",
     "live_receiver_needs_update": "Le BIShare de l'autre appareil doit être mis à jour pour recevoir un transfert en direct chiffré. Mettez-le à jour, ou désactivez le chiffrement de bout en bout pour envoyer quand même.",
     "limit_exceeded": "Le fichier dépasse la limite de {limit} pour les liens — envoyez-le plutôt en Wi-Fi à un appareil proche, sans limite de taille",
-    "share_message": "Voici {name} ({size}). Téléchargez-le dans n’importe quel navigateur, sans appli. Le lien fonctionne pendant 24 heures. Envoyé avec BIShare, gratuit et open source : {url}"
+    "share_message": "Voici {name} ({size}). Téléchargez-le dans n’importe quel navigateur, sans appli. Le lien fonctionne pendant 24 heures. Envoyé avec BIShare, gratuit et open source : {url}",
+    "err_not_found": "Transfert introuvable",
+    "err_expired": "Introuvable — le lien a peut-être expiré.",
+    "err_already_downloaded": "Ce transfert a déjà été téléchargé.",
+    "err_access_denied": "Accès refusé pour ce lien.",
+    "err_rate_limited": "Trop d'envois depuis ce réseau en ce moment. Réessayez plus tard.",
+    "err_no_server": "Impossible de joindre le serveur. Vérifiez votre connexion Internet.",
+    "err_timeout": "La connexion a expiré. Veuillez réessayer.",
+    "err_certificate": "Échec de la connexion sécurisée (certificat).",
+    "err_server": "Erreur serveur ({code}). Veuillez réessayer.",
+    "err_cancelled": "Annulé.",
+    "err_download_failed": "Échec du téléchargement : {error}",
+    "err_unknown": "erreur inconnue",
+    "err_upload_failed": "Échec de l'envoi. Veuillez réessayer.",
+    "err_stalled": "Le transfert est bloqué — veuillez réessayer.",
+    "err_verify_failed": "Échec de la vérification du transfert",
+    "err_no_response": "L'autre appareil n'a pas répondu à temps",
+    "err_connection_failed": "La connexion a échoué. Veuillez réessayer.",
+    "err_declined": "Le transfert a été refusé",
+    "err_disconnected": "L'autre appareil s'est déconnecté",
+    "err_stream": "Erreur de flux",
+    "sender_cloud": "Transfert cloud",
+    "sender_nearby": "Appareil à proximité",
+    "waiting_scan": "En attente du scan par le destinataire…",
+    "keep_open": "Gardez cet écran ouvert. Le fichier est diffusé directement — rien n'est stocké en ligne.",
+    "create_link": "Créer le lien"
   },
   "room": {
     "connecting_create_local": "Création d’un salon local",
@@ -665,5 +695,10 @@
     "hint_body": "Transferts, liens de partage et salons",
     "enter_code": "Saisir le code manuellement",
     "camera_denied": "L'accès à l'appareil photo est nécessaire pour scanner les QR codes"
+  },
+  "instant": {
+    "scan_hint": "Scannez avec BIShare sur n'importe quel appareil de ce Wi-Fi pour télécharger.",
+    "one_time_24h": "Usage unique · 24 h",
+    "timed_5min": "Limité · 5 min"
   }
 }

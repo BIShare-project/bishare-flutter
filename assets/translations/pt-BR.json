@@ -83,7 +83,12 @@
     "type_something": "Escreva algo...",
     "visible_ready": "Visível - Pronto",
     "voice": "Voz",
-    "refresh": "Atualizar"
+    "refresh": "Atualizar",
+    "other_ways": "Nenhum aparelho por perto?",
+    "send_link": "Enviar como link",
+    "send_link_sub": "Funciona em qualquer lugar. A outra pessoa não precisa do app.",
+    "use_browser": "Usar um navegador",
+    "use_browser_sub": "No outro aparelho, abra bishare.app/transfer neste Wi-Fi. Ele aparece aqui."
   },
   "send": {
     "cancel": "Cancelar",
@@ -335,7 +340,32 @@
     "badge_expires_24h": "Expira em 24 h",
     "live_receiver_needs_update": "O BIShare do outro dispositivo precisa de uma atualização para receber uma transferência ao vivo criptografada. Atualize-o, ou desative a criptografia de ponta a ponta para enviar mesmo assim.",
     "limit_exceeded": "O arquivo excede o limite de {limit} para links — envie pelo Wi-Fi para um aparelho próximo, sem limite de tamanho",
-    "share_message": "Aqui está {name} ({size}). Baixe em qualquer navegador, sem app. O link funciona por 24 horas. Enviado pelo BIShare, grátis e de código aberto: {url}"
+    "share_message": "Aqui está {name} ({size}). Baixe em qualquer navegador, sem app. O link funciona por 24 horas. Enviado pelo BIShare, grátis e de código aberto: {url}",
+    "err_not_found": "Transferência não encontrada",
+    "err_expired": "Não encontrado — o link pode ter expirado.",
+    "err_already_downloaded": "Esta transferência já foi baixada.",
+    "err_access_denied": "Acesso negado para este link.",
+    "err_rate_limited": "Muitos envios desta rede agora. Tente de novo mais tarde.",
+    "err_no_server": "Não foi possível acessar o servidor. Verifique sua conexão com a internet.",
+    "err_timeout": "A conexão expirou. Tente de novo.",
+    "err_certificate": "Falha na conexão segura (certificado).",
+    "err_server": "Erro no servidor ({code}). Tente de novo.",
+    "err_cancelled": "Cancelado.",
+    "err_download_failed": "Falha no download: {error}",
+    "err_unknown": "erro desconhecido",
+    "err_upload_failed": "Falha no envio. Tente de novo.",
+    "err_stalled": "A transferência travou — tente de novo.",
+    "err_verify_failed": "Falha na verificação da transferência",
+    "err_no_response": "O outro aparelho não respondeu a tempo",
+    "err_connection_failed": "A conexão falhou. Tente de novo.",
+    "err_declined": "A transferência foi recusada",
+    "err_disconnected": "O outro aparelho se desconectou",
+    "err_stream": "Erro de transmissão",
+    "sender_cloud": "Transferência pela nuvem",
+    "sender_nearby": "Aparelho próximo",
+    "waiting_scan": "Aguardando o destinatário escanear…",
+    "keep_open": "Mantenha esta tela aberta. O arquivo é transmitido direto — nada fica salvo on-line.",
+    "create_link": "Criar link"
   },
   "room": {
     "connecting_create_local": "Criando uma sala local",
@@ -665,5 +695,10 @@
     "hint_body": "Transferências, links de compartilhamento e salas",
     "enter_code": "Digitar o código manualmente",
     "camera_denied": "É preciso acesso à câmera para escanear códigos QR"
+  },
+  "instant": {
+    "scan_hint": "Escaneie com o BIShare em qualquer aparelho neste Wi-Fi para baixar.",
+    "one_time_24h": "Uso único · 24 h",
+    "timed_5min": "Temporário · 5 min"
   }
 }

@@ -56,15 +56,14 @@ class StreamWaitingView extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(
-                'Waiting for the receiver to scan…',
+                'remote.waiting_scan'.tr(),
                 style: TextStyle(fontSize: 13.5, color: cs.mutedForeground),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
-            'Keep this screen open. The file streams directly — nothing is '
-            'stored online.',
+            'remote.keep_open'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12.5,

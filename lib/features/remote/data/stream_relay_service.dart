@@ -250,7 +250,8 @@ class StreamRelayService {
       );
       final fileName = (info['fileName'] as String?) ?? 'file';
       final total = (info['totalSize'] as num?)?.toInt() ?? 0;
-      final senderAlias = (info['senderAlias'] as String?) ?? 'Nearby device';
+      final senderAlias =
+          (info['senderAlias'] as String?) ?? 'remote.sender_nearby'.tr();
       conn.sendText({'type': 'accept'});
       // Announce what this receiver can do. The relay forwards it untouched;
       // a legacy sender simply ignores it.
@@ -292,9 +293,8 @@ class StreamRelayService {
       // Fail cleanly if the stream stalls (peer vanished) rather than hang.
       final stream = conn.binary.timeout(
         const Duration(seconds: 45),
-        onTimeout: (sink) => sink.addError(
-          const CloudDownloadException('The transfer stalled — please retry.'),
-        ),
+        onTimeout: (sink) =>
+            sink.addError(CloudDownloadException('remote.err_stalled'.tr())),
       );
       await for (final data in stream) {
         if (cancel != null && cancel.isCancelled) {
@@ -368,7 +368,7 @@ class StreamRelayService {
           finalDigest != null &&
           finalDigest.toString() != expectedSha) {
         await target.delete().catchError((_) => target!);
-        throw const CloudDownloadException('Transfer verification failed');
+        throw CloudDownloadException('remote.err_verify_failed'.tr());
       }
 
       final saved = ReceivedFile(
@@ -422,9 +422,9 @@ class StreamRelayService {
   static String _message(Object e) {
     if (e is CloudDownloadException) return e.message;
     if (e is TimeoutException) {
-      return 'The other device didn\'t respond in time';
+      return 'remote.err_no_response'.tr();
     }
-    return 'The connection failed. Please try again.';
+    return 'remote.err_connection_failed'.tr();
   }
 }
 
@@ -456,9 +456,7 @@ class _Conn {
       try {
         await c.future.timeout(timeout);
       } on TimeoutException {
-        throw const CloudDownloadException(
-          'The transfer stalled — please retry.',
-        );
+        throw CloudDownloadException('remote.err_stalled'.tr());
       }
     }
   }
@@ -472,9 +470,7 @@ class _Conn {
       try {
         await c.future.timeout(timeout);
       } on TimeoutException {
-        throw const CloudDownloadException(
-          'The transfer stalled — please retry.',
-        );
+        throw CloudDownloadException('remote.err_stalled'.tr());
       }
     }
   }
@@ -524,10 +520,10 @@ class _Conn {
     if (type == 'error' || type == 'rejected' || type == 'peer-left') {
       _fatal = CloudDownloadException(
         type == 'rejected'
-            ? 'The transfer was declined'
+            ? 'remote.err_declined'.tr()
             : type == 'peer-left'
-            ? 'The other device disconnected'
-            : (data['message'] as String?) ?? 'Stream error',
+            ? 'remote.err_disconnected'.tr()
+            : (data['message'] as String?) ?? 'remote.err_stream'.tr(),
       );
       // Fail any outstanding text waiter immediately.
       for (final c in _waiters.values) {

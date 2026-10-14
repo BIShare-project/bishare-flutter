@@ -83,7 +83,9 @@ final GoRouter appRouter = GoRouter(
         ),
         GoRoute(
           path: 'remote',
-          builder: (context, state) => const RemoteSharePage(),
+          builder: (context, state) => RemoteSharePage(
+            initialPath: state.extra is String ? state.extra! as String : null,
+          ),
         ),
         GoRoute(
           path: 'nearby',

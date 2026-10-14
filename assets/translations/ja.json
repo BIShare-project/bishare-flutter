@@ -83,7 +83,12 @@
     "type_something": "入力してください...",
     "visible_ready": "表示中 - 準備完了",
     "voice": "音声",
-    "refresh": "更新"
+    "refresh": "更新",
+    "other_ways": "近くにデバイスがありませんか？",
+    "send_link": "リンクで送る",
+    "send_link_sub": "どこでも使えます。相手にアプリは不要です。",
+    "use_browser": "ブラウザを使う",
+    "use_browser_sub": "相手のデバイスで、このWi-Fiにつないで bishare.app/transfer を開くと、ここに表示されます。"
   },
   "send": {
     "cancel": "キャンセル",
@@ -335,7 +340,32 @@
     "badge_expires_24h": "24時間で期限切れ",
     "live_receiver_needs_update": "相手の端末のBIShareを更新しないと、暗号化されたライブ転送を受け取れません。更新するか、エンドツーエンド暗号化をオフにして送信してください。",
     "limit_exceeded": "ファイルがリンクの上限 {limit} を超えています — 近くの端末へ Wi-Fi で送れば、サイズ制限はありません",
-    "share_message": "{name}（{size}）をお送りします。アプリ不要で、どのブラウザでもダウンロードできます。リンクの有効期限は24時間です。BIShareで送信（無料・オープンソース）：{url}"
+    "share_message": "{name}（{size}）をお送りします。アプリ不要で、どのブラウザでもダウンロードできます。リンクの有効期限は24時間です。BIShareで送信（無料・オープンソース）：{url}",
+    "err_not_found": "転送が見つかりません",
+    "err_expired": "見つかりません — リンクの有効期限が切れた可能性があります。",
+    "err_already_downloaded": "この転送はすでにダウンロードされています。",
+    "err_access_denied": "このリンクへのアクセスは拒否されました。",
+    "err_rate_limited": "このネットワークからのアップロードが多すぎます。しばらくしてからもう一度お試しください。",
+    "err_no_server": "サーバーに接続できません。インターネット接続を確認してください。",
+    "err_timeout": "接続がタイムアウトしました。もう一度お試しください。",
+    "err_certificate": "安全な接続に失敗しました（証明書）。",
+    "err_server": "サーバーエラー（{code}）。もう一度お試しください。",
+    "err_cancelled": "キャンセルしました。",
+    "err_download_failed": "ダウンロードに失敗しました: {error}",
+    "err_unknown": "不明なエラー",
+    "err_upload_failed": "アップロードに失敗しました。もう一度お試しください。",
+    "err_stalled": "転送が止まりました — もう一度お試しください。",
+    "err_verify_failed": "転送の検証に失敗しました",
+    "err_no_response": "相手のデバイスが時間内に応答しませんでした",
+    "err_connection_failed": "接続に失敗しました。もう一度お試しください。",
+    "err_declined": "転送は拒否されました",
+    "err_disconnected": "相手のデバイスとの接続が切れました",
+    "err_stream": "ストリームエラー",
+    "sender_cloud": "クラウド転送",
+    "sender_nearby": "近くのデバイス",
+    "waiting_scan": "受信側のスキャンを待っています…",
+    "keep_open": "この画面を開いたままにしてください。ファイルは直接送られ、オンラインには何も保存されません。",
+    "create_link": "リンクを作成"
   },
   "room": {
     "connecting_create_local": "ローカルルームを作成中",
@@ -665,5 +695,10 @@
     "hint_body": "転送、共有リンク、ルーム",
     "enter_code": "コードを手動で入力",
     "camera_denied": "QRコードをスキャンするにはカメラへのアクセスが必要です"
+  },
+  "instant": {
+    "scan_hint": "このWi-Fi上の任意のデバイスでBIShareを使ってスキャンするとダウンロードできます。",
+    "one_time_24h": "1回限り · 24時間",
+    "timed_5min": "期限付き · 5分"
   }
 }

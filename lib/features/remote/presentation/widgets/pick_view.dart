@@ -15,6 +15,8 @@ class PickView extends StatelessWidget {
     required this.onShareViaWeb,
     required this.onMedia,
     required this.onFile,
+    this.presetName,
+    this.onPreset,
   });
 
   final bool oneTime;
@@ -25,6 +27,11 @@ class PickView extends StatelessWidget {
   final ValueChanged<bool> onShareViaWeb;
   final VoidCallback onMedia;
   final VoidCallback onFile;
+
+  /// A file handed over from the Share screen (e.g. "Send as a link"): shown
+  /// with a primary "Create link" button, so the options above still apply.
+  final String? presetName;
+  final VoidCallback? onPreset;
 
   @override
   Widget build(BuildContext context) {
@@ -132,14 +139,53 @@ class PickView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
+          if (presetName != null && onPreset != null) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AppSvgIcon(
+                  AppIcons.fileDocument,
+                  size: 16,
+                  color: cs.mutedForeground,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    presetName!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13.5, color: cs.mutedForeground),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: ShadButton(
+                size: ShadButtonSize.lg,
+                leading: const AppSvgIcon(AppIcons.send, size: 18),
+                onPressed: onPreset,
+                child: Text('remote.create_link'.tr()),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
           SizedBox(
             width: double.infinity,
-            child: ShadButton(
-              size: ShadButtonSize.lg,
-              leading: const AppSvgIcon(AppIcons.image, size: 18),
-              onPressed: onMedia,
-              child: Text('remote.choose_photo_video'.tr()),
-            ),
+            child: presetName != null && onPreset != null
+                ? ShadButton.outline(
+                    size: ShadButtonSize.lg,
+                    leading: const AppSvgIcon(AppIcons.image, size: 18),
+                    onPressed: onMedia,
+                    child: Text('remote.choose_photo_video'.tr()),
+                  )
+                : ShadButton(
+                    size: ShadButtonSize.lg,
+                    leading: const AppSvgIcon(AppIcons.image, size: 18),
+                    onPressed: onMedia,
+                    child: Text('remote.choose_photo_video'.tr()),
+                  ),
           ),
           const SizedBox(height: 10),
           SizedBox(

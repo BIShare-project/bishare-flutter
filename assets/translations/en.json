@@ -83,7 +83,12 @@
     "type_something": "Type something...",
     "visible_ready": "Visible - Ready",
     "voice": "Voice",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "other_ways": "No device nearby?",
+    "send_link": "Send as a link",
+    "send_link_sub": "Works anywhere. The other person doesn't need the app.",
+    "use_browser": "Use a browser",
+    "use_browser_sub": "On the other device, open bishare.app/transfer on this Wi-Fi. It shows up here."
   },
   "send": {
     "cancel": "Cancel",
@@ -335,7 +340,32 @@
     "badge_expires_24h": "Expires in 24h",
     "live_receiver_needs_update": "The other device's BIShare needs an update to receive an encrypted live transfer. Update it, or turn off end-to-end encryption to send anyway.",
     "limit_exceeded": "File is larger than the {limit} link limit — send it nearby over Wi-Fi instead, with no size limit",
-    "share_message": "Here’s {name} ({size}). Download it in any browser, no app needed. The link works for 24 hours. Sent with BIShare, free and open source: {url}"
+    "share_message": "Here’s {name} ({size}). Download it in any browser, no app needed. The link works for 24 hours. Sent with BIShare, free and open source: {url}",
+    "err_not_found": "Transfer not found",
+    "err_expired": "Not found — the link may have expired.",
+    "err_already_downloaded": "This transfer was already downloaded.",
+    "err_access_denied": "Access denied for this link.",
+    "err_rate_limited": "Too many uploads from this network right now. Please try again later.",
+    "err_no_server": "Can't reach the server. Check your internet connection.",
+    "err_timeout": "The connection timed out. Please try again.",
+    "err_certificate": "Secure connection failed (certificate).",
+    "err_server": "Server error ({code}). Please try again.",
+    "err_cancelled": "Cancelled.",
+    "err_download_failed": "Download failed: {error}",
+    "err_unknown": "unknown error",
+    "err_upload_failed": "Upload failed. Please try again.",
+    "err_stalled": "The transfer stalled — please retry.",
+    "err_verify_failed": "Transfer verification failed",
+    "err_no_response": "The other device didn't respond in time",
+    "err_connection_failed": "The connection failed. Please try again.",
+    "err_declined": "The transfer was declined",
+    "err_disconnected": "The other device disconnected",
+    "err_stream": "Stream error",
+    "sender_cloud": "Cloud transfer",
+    "sender_nearby": "Nearby device",
+    "waiting_scan": "Waiting for the receiver to scan…",
+    "keep_open": "Keep this screen open. The file streams directly — nothing is stored online.",
+    "create_link": "Create link"
   },
   "room": {
     "connecting_create_local": "Creating a local room",
@@ -665,5 +695,10 @@
     "hint_body": "Transfers, share links and rooms",
     "enter_code": "Enter code manually",
     "camera_denied": "Camera access is needed to scan QR codes"
+  },
+  "instant": {
+    "scan_hint": "Scan with BIShare on any device on this Wi-Fi to download.",
+    "one_time_24h": "One-time · 24h",
+    "timed_5min": "Timed · 5 min"
   }
 }

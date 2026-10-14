@@ -21,11 +21,8 @@ Future<void> showInstantShare(
 }) {
   return showGlassModal<void>(
     context,
-    builder: (ctx) => _InstantShareSheet(
-      path: path,
-      fileName: fileName,
-      mimeType: mimeType,
-    ),
+    builder: (ctx) =>
+        _InstantShareSheet(path: path, fileName: fileName, mimeType: mimeType),
   );
 }
 
@@ -72,8 +69,7 @@ class _InstantShareSheetState extends State<_InstantShareSheet> {
       oneTime: _oneTime,
     );
     setState(() {
-      _url =
-          'http://$ip:${BISharePort.main}${BIShareApi.instant}?token=$token';
+      _url = 'http://$ip:${BISharePort.main}${BIShareApi.instant}?token=$token';
     });
   }
 
@@ -107,7 +103,7 @@ class _InstantShareSheetState extends State<_InstantShareSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Scan with BIShare on any device on this Wi-Fi to download.',
+            'instant.scan_hint'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12.5, color: cs.mutedForeground),
           ),
@@ -143,7 +139,11 @@ class _InstantShareSheetState extends State<_InstantShareSheet> {
                     onPressed: () async {
                       await Clipboard.setData(ClipboardData(text: url));
                       if (context.mounted) {
-                        toast(context, 'common.link_copied'.tr(), type: ToastType.success);
+                        toast(
+                          context,
+                          'common.link_copied'.tr(),
+                          type: ToastType.success,
+                        );
                       }
                     },
                   ),
@@ -174,8 +174,20 @@ class _ModeToggle extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _seg(cs, 'One-time · 24h', AppIcons.flame, oneTime, () => onChanged(true)),
-          _seg(cs, 'Timed · 5 min', AppIcons.clock, !oneTime, () => onChanged(false)),
+          _seg(
+            cs,
+            'instant.one_time_24h'.tr(),
+            AppIcons.flame,
+            oneTime,
+            () => onChanged(true),
+          ),
+          _seg(
+            cs,
+            'instant.timed_5min'.tr(),
+            AppIcons.clock,
+            !oneTime,
+            () => onChanged(false),
+          ),
         ],
       ),
     );

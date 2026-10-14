@@ -83,7 +83,12 @@
     "type_something": "輸入內容...",
     "visible_ready": "可見 - 已就緒",
     "voice": "語音",
-    "refresh": "重新整理"
+    "refresh": "重新整理",
+    "other_ways": "附近沒有裝置？",
+    "send_link": "以連結傳送",
+    "send_link_sub": "任何地方都能用，對方不需要安裝 App。",
+    "use_browser": "使用瀏覽器",
+    "use_browser_sub": "在另一台裝置上連到此 Wi-Fi 並開啟 bishare.app/transfer，它就會出現在這裡。"
   },
   "send": {
     "cancel": "取消",
@@ -335,7 +340,32 @@
     "badge_expires_24h": "24 小時後到期",
     "live_receiver_needs_update": "對方裝置上的 BIShare 需要更新才能接收加密的即時傳輸。請更新它，或關閉端對端加密後照常傳送。",
     "limit_exceeded": "檔案超過連結的 {limit} 限制 — 改用 Wi-Fi 傳送到附近裝置，沒有大小限制",
-    "share_message": "傳給你 {name}（{size}）。用任何瀏覽器即可下載，無需安裝 App。連結 24 小時內有效。透過 BIShare 傳送，免費開源：{url}"
+    "share_message": "傳給你 {name}（{size}）。用任何瀏覽器即可下載，無需安裝 App。連結 24 小時內有效。透過 BIShare 傳送，免費開源：{url}",
+    "err_not_found": "找不到傳輸",
+    "err_expired": "找不到 — 連結可能已過期。",
+    "err_already_downloaded": "此傳輸已被下載。",
+    "err_access_denied": "拒絕存取此連結。",
+    "err_rate_limited": "此網路目前上傳次數過多，請稍後再試。",
+    "err_no_server": "無法連線到伺服器，請檢查網路連線。",
+    "err_timeout": "連線逾時，請重試。",
+    "err_certificate": "安全連線失敗（憑證）。",
+    "err_server": "伺服器錯誤（{code}），請重試。",
+    "err_cancelled": "已取消。",
+    "err_download_failed": "下載失敗：{error}",
+    "err_unknown": "未知錯誤",
+    "err_upload_failed": "上傳失敗，請重試。",
+    "err_stalled": "傳輸停滯 — 請重試。",
+    "err_verify_failed": "傳輸驗證失敗",
+    "err_no_response": "對方裝置未及時回應",
+    "err_connection_failed": "連線失敗，請重試。",
+    "err_declined": "傳輸遭到拒絕",
+    "err_disconnected": "對方裝置已中斷連線",
+    "err_stream": "串流錯誤",
+    "sender_cloud": "雲端傳輸",
+    "sender_nearby": "附近的裝置",
+    "waiting_scan": "正在等待接收方掃描…",
+    "keep_open": "請保持此畫面開啟。檔案直接傳送，不會在線上儲存任何內容。",
+    "create_link": "建立連結"
   },
   "room": {
     "connecting_create_local": "正在建立本機房間",
@@ -665,5 +695,10 @@
     "hint_body": "傳輸、分享連結和房間",
     "enter_code": "手動輸入代碼",
     "camera_denied": "需要相機權限才能掃描 QR 碼"
+  },
+  "instant": {
+    "scan_hint": "在此 Wi-Fi 上的任何裝置用 BIShare 掃描即可下載。",
+    "one_time_24h": "一次性 · 24 小時",
+    "timed_5min": "限時 · 5 分鐘"
   }
 }

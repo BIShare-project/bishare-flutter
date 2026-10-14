@@ -27,7 +27,7 @@ class CloudDownloadException implements Exception {
 /// back to a live stream) apart from other download failures without matching
 /// on the message text — the two sites can't silently drift.
 class TransferNotFoundException extends CloudDownloadException {
-  const TransferNotFoundException() : super('Transfer not found');
+  TransferNotFoundException() : super('remote.err_not_found'.tr());
 }
 
 /// Turns any download/transfer error into a specific, honest message — so the
@@ -37,33 +37,37 @@ String describeDownloadError(Object e) {
   if (e is CloudDownloadException) return e.message;
   if (e is DioException) {
     final status = e.response?.statusCode;
-    if (status == 404) return 'Not found — the link may have expired.';
-    if (status == 410) return 'This transfer was already downloaded.';
-    if (status == 403) return 'Access denied for this link.';
+    if (status == 404) return 'remote.err_expired'.tr();
+    if (status == 410) return 'remote.err_already_downloaded'.tr();
+    if (status == 403) return 'remote.err_access_denied'.tr();
     // Upload rate or daily volume limit for this network — not a server fault,
     // and "try again" right away would fail the same way.
     if (status == 429) {
-      return 'Too many uploads from this network right now. Please try again later.';
+      return 'remote.err_rate_limited'.tr();
     }
     switch (e.type) {
       case DioExceptionType.connectionError:
       case DioExceptionType.connectionTimeout:
-        return 'Can\'t reach the server. Check your internet connection.';
+        return 'remote.err_no_server'.tr();
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.sendTimeout:
-        return 'The connection timed out. Please try again.';
+        return 'remote.err_timeout'.tr();
       case DioExceptionType.badCertificate:
-        return 'Secure connection failed (certificate).';
+        return 'remote.err_certificate'.tr();
       case DioExceptionType.badResponse:
-        return 'Server error (${status ?? '?'}). Please try again.';
+        return 'remote.err_server'.tr(namedArgs: {'code': '${status ?? '?'}'});
       case DioExceptionType.cancel:
-        return 'Cancelled.';
+        return 'remote.err_cancelled'.tr();
       case DioExceptionType.unknown:
       case DioExceptionType.transformTimeout:
-        return 'Download failed: ${e.message ?? e.error ?? 'unknown error'}';
+        return 'remote.err_download_failed'.tr(
+          namedArgs: {
+            'error': '${e.message ?? e.error ?? 'remote.err_unknown'.tr()}',
+          },
+        );
     }
   }
-  return 'Download failed: $e';
+  return 'remote.err_download_failed'.tr(namedArgs: {'error': '$e'});
 }
 
 /// The result of a 24h cloud transfer upload — everything needed to present a
@@ -182,16 +186,14 @@ class CloudTransferService {
       );
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
-        throw const TransferNotFoundException();
+        throw TransferNotFoundException();
       }
       rethrow;
     }
     final meta = _data(statusRes);
-    if (meta == null) throw const TransferNotFoundException();
+    if (meta == null) throw TransferNotFoundException();
     if (meta['isDownloaded'] == true) {
-      throw const CloudDownloadException(
-        'This transfer was already downloaded',
-      );
+      throw CloudDownloadException('remote.err_already_downloaded'.tr());
     }
     final fileName = (meta['fileName'] as String?)?.trim();
     final target = await _target(
@@ -209,7 +211,7 @@ class CloudTransferService {
     return _record(
       target,
       meta['mimeType'] as String?,
-      (meta['senderAlias'] as String?) ?? 'Cloud transfer',
+      (meta['senderAlias'] as String?) ?? 'remote.sender_cloud'.tr(),
       encrypted: wasEncrypted,
     );
   }
@@ -245,7 +247,7 @@ class CloudTransferService {
     Uri url, {
     ProgressCb? onProgress,
     CancelToken? cancel,
-    String senderLabel = 'Nearby device',
+    String? senderLabel,
   }) async {
     final tmp = File(
       '${_server.saveDirectory.path}${Platform.pathSeparator}.bishare-dl-${DateTime.now().microsecondsSinceEpoch}',
@@ -268,7 +270,7 @@ class CloudTransferService {
     return _record(
       target,
       res.headers.value(Headers.contentTypeHeader),
-      senderLabel,
+      senderLabel ?? 'remote.sender_nearby'.tr(),
     );
   }
 
@@ -459,7 +461,7 @@ class CloudTransferService {
         partSize <= 0 ||
         totalParts == null ||
         totalParts < 1) {
-      throw const CloudDownloadException('Upload failed. Please try again.');
+      throw CloudDownloadException('remote.err_upload_failed'.tr());
     }
     final urls = <int, String>{};
     for (final p in (meta?['parts'] as List?) ?? const []) {
@@ -487,7 +489,7 @@ class CloudTransferService {
           ? (list.first as Map)['upload_url'] as String?
           : null;
       if (fresh == null) {
-        throw const CloudDownloadException('Upload failed. Please try again.');
+        throw CloudDownloadException('remote.err_upload_failed'.tr());
       }
       urls[part] = fresh;
       return fresh;
@@ -615,7 +617,7 @@ class CloudTransferService {
     final code = body?['code'] as String?;
     final rawCode = body?['rawCode'] as String?;
     if (code == null || rawCode == null) {
-      throw const CloudDownloadException('Upload failed. Please try again.');
+      throw CloudDownloadException('remote.err_upload_failed'.tr());
     }
     return CloudUploadResult(
       code: code,
