@@ -2624,6 +2624,8 @@ mod tests {
                 let conn = server_ep.accept().await.unwrap().await.unwrap();
                 let (tx, mut rx) =
                     tokio::sync::mpsc::unbounded_channel::<Result<QuicServerEvent, String>>();
+                // Same close race as in quic_concurrent_files_one_connection.
+                let mut tx = Some(tx);
                 loop {
                     tokio::select! {
                         ev = rx.recv() => {
@@ -2631,10 +2633,13 @@ mod tests {
                             conn.closed().await;
                             return ev;
                         }
-                        accepted = conn.accept_bi() => {
-                            let (send, recv) = accepted.expect("connection closed early");
+                        accepted = conn.accept_bi(), if tx.is_some() => {
+                            let Ok((send, recv)) = accepted else {
+                                tx = None;
+                                continue;
+                            };
                             let dir = dir_recv.clone();
-                            let tx = tx.clone();
+                            let tx = tx.clone().unwrap();
                             runtime().spawn(async move {
                                 match stream_dispatch(send, recv, &dir, None, IDLE_TIMEOUT).await {
                                     Ok(Some(ev)) => { let _ = tx.send(Ok(ev)); }
@@ -2746,13 +2751,18 @@ mod tests {
                 let conn = server_ep.accept().await.unwrap().await.unwrap();
                 let (tx, mut rx) =
                     tokio::sync::mpsc::unbounded_channel::<Result<QuicServerEvent, String>>();
+                // Same close race as in quic_concurrent_files_one_connection.
+                let mut tx = Some(tx);
                 loop {
                     tokio::select! {
                         ev = rx.recv() => { let ev = ev.expect("closed"); conn.closed().await; return ev; }
-                        accepted = conn.accept_bi() => {
-                            let (send, recv) = accepted.expect("conn closed early");
+                        accepted = conn.accept_bi(), if tx.is_some() => {
+                            let Ok((send, recv)) = accepted else {
+                                tx = None;
+                                continue;
+                            };
                             let dir = dir_recv.clone();
-                            let tx = tx.clone();
+                            let tx = tx.clone().unwrap();
                             runtime().spawn(async move {
                                 match stream_dispatch(send, recv, &dir, None, IDLE_TIMEOUT).await {
                                     Ok(Some(ev)) => { let _ = tx.send(Ok(ev)); }
@@ -2865,6 +2875,11 @@ mod tests {
                 let (tx, mut rx) =
                     tokio::sync::mpsc::unbounded_channel::<Result<QuicServerEvent, String>>();
                 let mut events = Vec::new();
+                // The client closes as soon as its last stream is acknowledged, which can be
+                // before the receiver has verified that file. Stop accepting then, but keep
+                // reading events; dropping our sender lets the channel close (and the test
+                // fail) if a dispatch task never reports.
+                let mut tx = Some(tx);
                 loop {
                     tokio::select! {
                         ev = rx.recv() => {
@@ -2874,10 +2889,13 @@ mod tests {
                                 return events;
                             }
                         }
-                        accepted = conn.accept_bi() => {
-                            let (send, recv) = accepted.expect("connection closed early");
+                        accepted = conn.accept_bi(), if tx.is_some() => {
+                            let Ok((send, recv)) = accepted else {
+                                tx = None;
+                                continue;
+                            };
                             let dir = dir_recv.clone();
-                            let tx = tx.clone();
+                            let tx = tx.clone().unwrap();
                             runtime().spawn(async move {
                                 match stream_dispatch(send, recv, &dir, None, IDLE_TIMEOUT).await {
                                     Ok(Some(ev)) => { let _ = tx.send(Ok(ev)); }
