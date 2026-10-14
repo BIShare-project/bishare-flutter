@@ -82,7 +82,8 @@
     "turn_on_auto_accept": "Activer l'acceptation automatique",
     "type_something": "Tapez quelque chose...",
     "visible_ready": "Visible - Prêt",
-    "voice": "Voix"
+    "voice": "Voix",
+    "refresh": "Actualiser"
   },
   "send": {
     "cancel": "Annuler",
@@ -657,5 +658,12 @@
     "no": "Pas pour moi",
     "thanks": "Merci. Votre réponse aide à décider de ce qui sera développé ensuite.",
     "close": "Fermer"
+  },
+  "scanner": {
+    "title": "Scanner un QR code",
+    "hint_title": "Visez un QR code BIShare",
+    "hint_body": "Transferts, liens de partage et salons",
+    "enter_code": "Saisir le code manuellement",
+    "camera_denied": "L'accès à l'appareil photo est nécessaire pour scanner les QR codes"
   }
 }

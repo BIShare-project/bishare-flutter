@@ -82,7 +82,8 @@
     "turn_on_auto_accept": "자동 수락 켜기",
     "type_something": "입력하세요...",
     "visible_ready": "표시됨 - 준비 완료",
-    "voice": "음성"
+    "voice": "음성",
+    "refresh": "새로고침"
   },
   "send": {
     "cancel": "취소",
@@ -657,5 +658,12 @@
     "no": "필요 없어요",
     "thanks": "감사합니다. 답변은 다음에 무엇을 만들지 정하는 데 도움이 됩니다.",
     "close": "닫기"
+  },
+  "scanner": {
+    "title": "QR 코드 스캔",
+    "hint_title": "BIShare QR 코드를 비춰 주세요",
+    "hint_body": "전송, 공유 링크, 룸",
+    "enter_code": "코드 직접 입력",
+    "camera_denied": "QR 코드를 스캔하려면 카메라 접근 권한이 필요합니다"
   }
 }

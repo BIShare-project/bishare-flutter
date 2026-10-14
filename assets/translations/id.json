@@ -82,7 +82,8 @@
     "turn_on_auto_accept": "Aktifkan terima otomatis",
     "type_something": "Ketik sesuatu...",
     "visible_ready": "Terlihat - Siap",
-    "voice": "Suara"
+    "voice": "Suara",
+    "refresh": "Muat ulang"
   },
   "send": {
     "cancel": "Batal",
@@ -657,5 +658,12 @@
     "no": "Tidak perlu",
     "thanks": "Terima kasih. Jawaban Anda membantu menentukan apa yang dibangun berikutnya.",
     "close": "Tutup"
+  },
+  "scanner": {
+    "title": "Pindai kode QR",
+    "hint_title": "Arahkan ke kode QR BIShare",
+    "hint_body": "Transfer, tautan berbagi, dan ruangan",
+    "enter_code": "Masukkan kode secara manual",
+    "camera_denied": "Akses kamera diperlukan untuk memindai kode QR"
   }
 }

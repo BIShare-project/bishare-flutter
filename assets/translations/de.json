@@ -82,7 +82,8 @@
     "turn_on_auto_accept": "Automatisches Akzeptieren aktivieren",
     "type_something": "Etwas eingeben...",
     "visible_ready": "Sichtbar – Bereit",
-    "voice": "Sprache"
+    "voice": "Sprache",
+    "refresh": "Aktualisieren"
   },
   "send": {
     "cancel": "Abbrechen",
@@ -657,5 +658,12 @@
     "no": "Nichts für mich",
     "thanks": "Danke. Deine Antwort hilft bei der Entscheidung, was als Nächstes gebaut wird.",
     "close": "Schließen"
+  },
+  "scanner": {
+    "title": "QR-Code scannen",
+    "hint_title": "Auf einen BIShare-QR-Code richten",
+    "hint_body": "Übertragungen, Freigabelinks und Räume",
+    "enter_code": "Code manuell eingeben",
+    "camera_denied": "Zum Scannen von QR-Codes wird Kamerazugriff benötigt"
   }
 }

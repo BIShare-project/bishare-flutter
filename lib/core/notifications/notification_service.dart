@@ -14,7 +14,9 @@ class NotificationService {
   int _id = 0;
   bool _ready = false;
 
-  Future<void> init() async {
+  /// [requestNow] is false on a first run: the onboarding permission page asks
+  /// for notifications in context, instead of a system prompt over the splash.
+  Future<void> init({bool requestNow = true}) async {
     try {
       _ready =
           await _plugin.initialize(
@@ -52,10 +54,40 @@ class NotificationService {
       // in the manifest is not enough); iOS/macOS need the Darwin grant. Without
       // this, notifications silently never appear. Safe on every launch — the OS
       // only prompts once.
-      await requestPermission();
+      if (requestNow) await requestPermission();
     } on Object {
       _ready = false;
     }
+  }
+
+  /// Whether the OS currently allows our notifications, without prompting.
+  Future<bool> isPermitted() async {
+    try {
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (android != null) {
+        return await android.areNotificationsEnabled() ?? false;
+      }
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      if (ios != null) {
+        return (await ios.checkPermissions())?.isEnabled ?? false;
+      }
+      final mac = _plugin
+          .resolvePlatformSpecificImplementation<
+            MacOSFlutterLocalNotificationsPlugin
+          >();
+      if (mac != null) {
+        return (await mac.checkPermissions())?.isEnabled ?? false;
+      }
+    } on Object {
+      // best-effort
+    }
+    return false;
   }
 
   /// Request the OS notification permission. Idempotent (the OS prompts once).

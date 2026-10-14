@@ -60,6 +60,7 @@ class Header extends StatelessWidget {
                     defaultTargetPlatform == TargetPlatform.macOS)
                   AppIconButton(
                     icon: AppIcons.wifi,
+                    tooltip: 'nearby.title'.tr(),
                     onPressed: () => context.push('/nearby'),
                   ),
                 // Scan a QR to receive a remote transfer / share / room.
@@ -67,21 +68,25 @@ class Header extends StatelessWidget {
                 if (supportsCameraScan)
                   AppIconButton(
                     icon: AppIcons.scanDocument,
+                    tooltip: 'scanner.title'.tr(),
                     onPressed: () => context.push('/scan'),
                   ),
                 // QR Beam: offline file transfer over a stream of QR codes
                 // (no network).
                 AppIconButton(
                   icon: AppIcons.qrShare,
+                  tooltip: 'qr_beam.title'.tr(),
                   onPressed: () => context.push('/qr-beam'),
                 ),
                 // Remote share: send a file as a link + QR that works anywhere.
                 AppIconButton(
                   icon: AppIcons.send,
+                  tooltip: 'remote.title'.tr(),
                   onPressed: () => context.push('/remote'),
                 ),
                 AppIconButton(
                   icon: AppIcons.refreshSync,
+                  tooltip: 'home.refresh'.tr(),
                   onPressed: () => context.read<DiscoveryCubit>().restart(),
                 ),
               ],

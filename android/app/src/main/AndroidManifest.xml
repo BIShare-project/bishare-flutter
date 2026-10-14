@@ -44,7 +44,7 @@
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <application
-        android:label="bishare"
+        android:label="BIShare"
         android:name="${applicationName}"
         android:localeConfig="@xml/locales_config"
         android:banner="@drawable/tv_banner"

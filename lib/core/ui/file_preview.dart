@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
@@ -59,19 +59,16 @@ Future<void> showFilePreview(
   // Everything else → glass hero card.
   return showGlassModal<void>(
     context,
-    builder: (ctx) => _FileInfoCard(
-      path: path,
-      name: name,
-      mimeType: mimeType,
-      size: size,
-    ),
+    builder: (ctx) =>
+        _FileInfoCard(path: path, name: name, mimeType: mimeType, size: size),
   );
 }
 
 enum _PreviewKind { image, video, videoPoster, document, text }
 
 /// Platforms with an in-app video player and document renderer.
-bool get _inAppViewers => Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
+bool get _inAppViewers =>
+    Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
 
 /// Text files are read whole into memory, so only up to this size.
 const _maxTextBytes = 2 * 1024 * 1024;
@@ -181,21 +178,25 @@ class _PreviewPage extends StatelessWidget {
       onShare: () => _share(path),
     );
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: fullBleed
-          ? Stack(
-              children: [
-                Positioned.fill(child: body),
-                Positioned(top: 0, left: 0, right: 0, child: bar),
-              ],
-            )
-          : Column(
-              children: [
-                bar,
-                Expanded(child: body),
-              ],
-            ),
+    // Dark full-screen page: light status-bar icons whatever the app theme.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: fullBleed
+            ? Stack(
+                children: [
+                  Positioned.fill(child: body),
+                  Positioned(top: 0, left: 0, right: 0, child: bar),
+                ],
+              )
+            : Column(
+                children: [
+                  bar,
+                  Expanded(child: body),
+                ],
+              ),
+      ),
     );
   }
 }
@@ -403,7 +404,9 @@ class _VideoPlayerViewState extends State<_VideoPlayerView> {
                     border: Border.all(color: Colors.white70, width: 2),
                   ),
                   child: Icon(
-                    v.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    v.isPlaying
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
                     size: 44,
                     color: Colors.white,
                   ),
@@ -422,7 +425,10 @@ class _VideoPlayerViewState extends State<_VideoPlayerView> {
                     children: [
                       Text(
                         _clock(v.position),
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -440,7 +446,10 @@ class _VideoPlayerViewState extends State<_VideoPlayerView> {
                       const SizedBox(width: 10),
                       Text(
                         _clock(v.duration),
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -554,9 +563,9 @@ class _TextView extends StatefulWidget {
 }
 
 class _TextViewState extends State<_TextView> {
-  late final Future<String> _text = File(widget.path)
-      .readAsBytes()
-      .then((b) => utf8.decode(b, allowMalformed: true));
+  late final Future<String> _text = File(
+    widget.path,
+  ).readAsBytes().then((b) => utf8.decode(b, allowMalformed: true));
 
   @override
   Widget build(BuildContext context) {
@@ -612,9 +621,7 @@ class _FileInfoCard extends StatelessWidget {
     final ext = name.contains('.') ? name.split('.').last.toUpperCase() : '';
     if (ext.isNotEmpty && ext.length <= 5) return ext;
     final slash = mimeType.indexOf('/');
-    return slash >= 0
-        ? mimeType.substring(slash + 1).toUpperCase()
-        : 'FILE';
+    return slash >= 0 ? mimeType.substring(slash + 1).toUpperCase() : 'FILE';
   }
 
   @override
@@ -634,7 +641,11 @@ class _FileInfoCard extends StatelessWidget {
                 color: cs.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: AppSvgIcon(fileIcon(mimeType), size: 40, color: cs.primary),
+              child: AppSvgIcon(
+                fileIcon(mimeType),
+                size: 40,
+                color: cs.primary,
+              ),
             ),
           ),
           const SizedBox(height: 16),

@@ -82,7 +82,8 @@
     "turn_on_auto_accept": "开启自动接受",
     "type_something": "输入内容...",
     "visible_ready": "可见 - 已就绪",
-    "voice": "语音"
+    "voice": "语音",
+    "refresh": "刷新"
   },
   "send": {
     "cancel": "取消",
@@ -657,5 +658,12 @@
     "no": "不需要",
     "thanks": "谢谢。你的回答有助于决定接下来开发什么。",
     "close": "关闭"
+  },
+  "scanner": {
+    "title": "扫描二维码",
+    "hint_title": "对准 BIShare 二维码",
+    "hint_body": "传输、分享链接和房间",
+    "enter_code": "手动输入代码",
+    "camera_denied": "需要相机权限才能扫描二维码"
   }
 }

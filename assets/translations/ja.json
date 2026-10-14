@@ -82,7 +82,8 @@
     "turn_on_auto_accept": "自動受信をオンにする",
     "type_something": "入力してください...",
     "visible_ready": "表示中 - 準備完了",
-    "voice": "音声"
+    "voice": "音声",
+    "refresh": "更新"
   },
   "send": {
     "cancel": "キャンセル",
@@ -657,5 +658,12 @@
     "no": "必要ありません",
     "thanks": "ありがとうございます。いただいた回答は、次に何を作るかを決める参考にします。",
     "close": "閉じる"
+  },
+  "scanner": {
+    "title": "QRコードをスキャン",
+    "hint_title": "BIShareのQRコードにかざしてください",
+    "hint_body": "転送、共有リンク、ルーム",
+    "enter_code": "コードを手動で入力",
+    "camera_denied": "QRコードをスキャンするにはカメラへのアクセスが必要です"
   }
 }

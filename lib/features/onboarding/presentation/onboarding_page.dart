@@ -20,7 +20,7 @@ const kOnboardingDone = 'onboardingDone';
 
 typedef _Slide = ({String icon, String title, String body, Color color});
 
-/// First-run walkthrough: 5 feature slides + a permission-priming page. Mirrors
+/// First-run walkthrough: feature slides (5 on Apple, 4 elsewhere) + a permission-priming page. Mirrors
 /// the native `OnboardingView`. Reached via the router redirect while
 /// [kOnboardingDone] is false; "Get Started" sets the flag and enters the app.
 class OnboardingPage extends StatefulWidget {
@@ -53,12 +53,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
       body: 'onboarding.slide2_body'.tr(),
       color: const Color(0xFF16A34A),
     ),
-    (
-      icon: AppIcons.transferP2p,
-      title: 'onboarding.slide3_title'.tr(),
-      body: 'onboarding.slide3_body'.tr(),
-      color: const Color(0xFFEA580C),
-    ),
+    // Nearby Mode (MultipeerConnectivity) exists only on Apple devices.
+    if (_isApple)
+      (
+        icon: AppIcons.transferP2p,
+        title: 'onboarding.slide3_title'.tr(),
+        body: 'onboarding.slide3_body'.tr(),
+        color: const Color(0xFFEA580C),
+      ),
     (
       icon: AppIcons.permissionShield,
       title: 'onboarding.slide4_title'.tr(),
@@ -78,7 +80,41 @@ class _OnboardingPageState extends State<OnboardingPage> {
   bool get _onPermission => _page == _permIndex;
   bool get _isMobile => Platform.isIOS || Platform.isAndroid;
 
-  Color get _accent => _onPermission ? const Color(0xFF4F46E5) : _slides[_page].color;
+  /// Only iOS and macOS have a Local Network permission to prime; elsewhere the
+  /// row would request nothing.
+  bool get _isApple => Platform.isIOS || Platform.isMacOS;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGranted();
+  }
+
+  /// Start each permission row from its real status, so a permission granted
+  /// earlier (or by a reinstall) is not offered again.
+  Future<void> _loadGranted() async {
+    final notifications = await getIt<NotificationService>().isPermitted();
+    var photos = false;
+    var camera = false;
+    if (_isMobile) {
+      try {
+        final p = await Permission.photos.status;
+        photos = p.isGranted || p.isLimited;
+        camera = (await Permission.camera.status).isGranted;
+      } on Object {
+        // best-effort: rows stay "Continue"
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _notifications = _notifications || notifications;
+      _photos = _photos || photos;
+      _camera = _camera || camera;
+    });
+  }
+
+  Color get _accent =>
+      _onPermission ? const Color(0xFF4F46E5) : _slides[_page].color;
 
   @override
   void dispose() {
@@ -158,7 +194,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
               gradient: RadialGradient(
                 center: Alignment.topCenter,
                 radius: 0.85,
-                colors: [_accent.withValues(alpha: 0.14), _accent.withValues(alpha: 0)],
+                colors: [
+                  _accent.withValues(alpha: 0.14),
+                  _accent.withValues(alpha: 0),
+                ],
               ),
             ),
           ),
@@ -224,7 +263,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
             width: i == _page ? 22 : 7,
             height: 7,
             decoration: BoxDecoration(
-              color: i == _page ? _accent : cs.mutedForeground.withValues(alpha: 0.3),
+              color: i == _page
+                  ? _accent
+                  : cs.mutedForeground.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -249,10 +290,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color.lerp(_accent, Colors.white, 0.12)!,
-                    _accent,
-                  ],
+                  colors: [Color.lerp(_accent, Colors.white, 0.12)!, _accent],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -297,16 +335,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color.lerp(_accent, Colors.white, 0.16)!,
-                  _accent,
-                ],
+                colors: [Color.lerp(_accent, Colors.white, 0.16)!, _accent],
               ),
               boxShadow: [
-                BoxShadow(color: _accent.withValues(alpha: 0.35), blurRadius: 24),
+                BoxShadow(
+                  color: _accent.withValues(alpha: 0.35),
+                  blurRadius: 24,
+                ),
               ],
             ),
-            child: const AppSvgIcon(AppIcons.hand, size: 42, color: Colors.white),
+            child: const AppSvgIcon(
+              AppIcons.hand,
+              size: 42,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 22),
           Text(
@@ -322,17 +364,23 @@ class _OnboardingPageState extends State<OnboardingPage> {
           Text(
             'onboarding.perm_subtitle'.tr(),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13.5, height: 1.4, color: cs.mutedForeground),
+            style: TextStyle(
+              fontSize: 13.5,
+              height: 1.4,
+              color: cs.mutedForeground,
+            ),
           ),
           const SizedBox(height: 22),
-          PermissionRow(
-            icon: AppIcons.wifi,
-            title: 'onboarding.perm_local_network'.tr(),
-            subtitle: 'onboarding.perm_local_network_sub'.tr(),
-            granted: _network,
-            onAllow: _askNetwork,
-          ),
-          const SizedBox(height: 10),
+          if (_isApple) ...[
+            PermissionRow(
+              icon: AppIcons.wifi,
+              title: 'onboarding.perm_local_network'.tr(),
+              subtitle: 'onboarding.perm_local_network_sub'.tr(),
+              granted: _network,
+              onAllow: _askNetwork,
+            ),
+            const SizedBox(height: 10),
+          ],
           PermissionRow(
             icon: AppIcons.notification,
             title: 'onboarding.perm_notifications'.tr(),

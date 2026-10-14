@@ -82,7 +82,8 @@
     "turn_on_auto_accept": "Turn on auto-accept",
     "type_something": "Type something...",
     "visible_ready": "Visible - Ready",
-    "voice": "Voice"
+    "voice": "Voice",
+    "refresh": "Refresh"
   },
   "send": {
     "cancel": "Cancel",
@@ -657,5 +658,12 @@
     "no": "Not for me",
     "thanks": "Thank you. Your answer helps decide what gets built next.",
     "close": "Close"
+  },
+  "scanner": {
+    "title": "Scan QR code",
+    "hint_title": "Point at a BIShare QR code",
+    "hint_body": "Transfers, share links and rooms",
+    "enter_code": "Enter code manually",
+    "camera_denied": "Camera access is needed to scan QR codes"
   }
 }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -79,43 +80,58 @@ class _QrBeamReceivePageState extends State<QrBeamReceivePage> {
   @override
   Widget build(BuildContext context) {
     final done = _savedName != null;
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (!done)
-            // Continuous: read every frame of the cycling stream, repeats
-            // included (a debounced reader would drop frames still needed).
-            // The collector dedupes.
-            QrCamera(
-              controller: _controller,
-              onCode: _onCode,
-              denied: const _CameraDenied(),
-              continuous: true,
+    // Dark full-screen page: light status-bar icons whatever the app theme.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (!done)
+              // Continuous: read every frame of the cycling stream, repeats
+              // included (a debounced reader would drop frames still needed).
+              // The collector dedupes.
+              QrCamera(
+                controller: _controller,
+                onCode: _onCode,
+                denied: const _CameraDenied(),
+                continuous: true,
+              ),
+            if (!done)
+              const DecoratedBox(
+                decoration: BoxDecoration(color: Colors.black26),
+              ),
+            if (!done) const Center(child: _ScanFrame()),
+            SafeArea(
+              child: Column(
+                children: [
+                  _TopBar(controller: _controller, showTorch: !done),
+                  const Spacer(),
+                  if (done)
+                    _DoneCard(name: _savedName!)
+                  else
+                    _ProgressCard(
+                      received: _received,
+                      total: _total,
+                      error: _error,
+                    ),
+                ],
+              ),
             ),
-          if (!done) const DecoratedBox(decoration: BoxDecoration(color: Colors.black26)),
-          if (!done) const Center(child: _ScanFrame()),
-          SafeArea(
-            child: Column(
-              children: [
-                _TopBar(controller: _controller, showTorch: !done),
-                const Spacer(),
-                if (done)
-                  _DoneCard(name: _savedName!)
-                else
-                  _ProgressCard(received: _received, total: _total, error: _error),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 class _ProgressCard extends StatelessWidget {
-  const _ProgressCard({required this.received, required this.total, this.error});
+  const _ProgressCard({
+    required this.received,
+    required this.total,
+    this.error,
+  });
 
   final int received;
   final int total;
@@ -144,12 +160,17 @@ class _ProgressCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   scanning ? 'qr_beam.aim'.tr() : 'qr_beam.receiving'.tr(),
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               if (!scanning)
-                Text('${(pct * 100).round()}%',
-                    style: TextStyle(fontSize: 13, color: cs.mutedForeground)),
+                Text(
+                  '${(pct * 100).round()}%',
+                  style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -166,12 +187,21 @@ class _ProgressCard extends StatelessWidget {
           Text(
             scanning
                 ? 'qr_beam.aim_hint'.tr()
-                : 'qr_beam.chunks_of'.tr(namedArgs: {'i': '$received', 'n': '$total'}),
-            style: TextStyle(fontSize: 12.5, height: 1.4, color: cs.mutedForeground),
+                : 'qr_beam.chunks_of'.tr(
+                    namedArgs: {'i': '$received', 'n': '$total'},
+                  ),
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.4,
+              color: cs.mutedForeground,
+            ),
           ),
           if (error != null) ...[
             const SizedBox(height: 8),
-            Text(error!, style: TextStyle(fontSize: 12.5, color: cs.destructive)),
+            Text(
+              error!,
+              style: TextStyle(fontSize: 12.5, color: cs.destructive),
+            ),
           ],
         ],
       ),
@@ -208,7 +238,11 @@ class _DoneCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Center(
-                  child: AppSvgIcon(AppIcons.successSent, size: 22, color: cs.primary),
+                  child: AppSvgIcon(
+                    AppIcons.successSent,
+                    size: 22,
+                    color: cs.primary,
+                  ),
                 ),
               ),
               const SizedBox(width: 14),
@@ -216,13 +250,20 @@ class _DoneCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('qr_beam.received_title'.tr(),
-                        style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600)),
+                    Text(
+                      'qr_beam.received_title'.tr(),
+                      style: const TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, color: cs.mutedForeground)),
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+                    ),
                   ],
                 ),
               ),
@@ -296,7 +337,11 @@ class _TopBar extends StatelessWidget {
 }
 
 class _CircleButton extends StatelessWidget {
-  const _CircleButton({required this.icon, required this.onTap, this.active = false});
+  const _CircleButton({
+    required this.icon,
+    required this.onTap,
+    this.active = false,
+  });
 
   final String icon;
   final VoidCallback onTap;
@@ -313,7 +358,11 @@ class _CircleButton extends StatelessWidget {
           color: active ? Colors.white : Colors.black.withValues(alpha: 0.4),
           shape: BoxShape.circle,
         ),
-        child: AppSvgIcon(icon, size: 20, color: active ? Colors.black : Colors.white),
+        child: AppSvgIcon(
+          icon,
+          size: 20,
+          color: active ? Colors.black : Colors.white,
+        ),
       ),
     );
   }
@@ -353,6 +402,7 @@ class _FramePainter extends CustomPainter {
       canvas.drawLine(o, o + h1, paint);
       canvas.drawLine(o, o + v1, paint);
     }
+
     corner(const Offset(0, r), const Offset(0, 0), const Offset(0, len));
     canvas.drawLine(const Offset(r, 0), Offset(r + len, 0), paint);
     canvas.drawLine(Offset(w - r, 0), Offset(w - r - len, 0), paint);

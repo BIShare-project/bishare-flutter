@@ -22,6 +22,8 @@ import '../../features/discovery/data/discovery_service.dart';
 import '../../features/favorites/data/favorites_repository.dart';
 import '../../features/history/data/history_repository.dart';
 import '../../features/nearby/data/nearby_service.dart';
+import '../../features/onboarding/presentation/onboarding_page.dart'
+    show kOnboardingDone;
 import '../../features/remote/data/cloud_config_service.dart';
 import '../../features/remote/data/cloud_transfer_service.dart';
 import '../../features/remote/data/stream_relay_service.dart';
@@ -99,7 +101,10 @@ Future<void> setupLocator() async {
   // abort setup (getIt would stay empty → blank launch).
   final notifications = NotificationService();
   try {
-    await notifications.init();
+    // First run: leave the prompt to the onboarding permission page.
+    await notifications.init(
+      requestNow: prefs.getBool(kOnboardingDone) ?? false,
+    );
   } on Object catch (e) {
     debugPrint('[locator] notification init failed: $e');
   }
@@ -180,7 +185,9 @@ Future<void> setupLocator() async {
     // Tier limits from GET /api/v1/config, cached per run (1 GiB fallback).
     // Lazy: no Dio until the remote-share flow first checks the limit.
     ..registerLazySingleton<CloudConfigService>(CloudConfigService.new)
-    ..registerSingleton<RoomService>(RoomService(identity, server, history, prefs))
+    ..registerSingleton<RoomService>(
+      RoomService(identity, server, history, prefs),
+    )
     ..registerSingleton<LocalRoomService>(
       LocalRoomService(identity, server, history, telemetry),
     )
@@ -190,9 +197,7 @@ Future<void> setupLocator() async {
     ..registerSingleton<WebNearbyService>(
       WebNearbyService(identity, server, history),
     )
-    ..registerSingleton<StreamRelayService>(
-      StreamRelayService(server, history),
-    )
+    ..registerSingleton<StreamRelayService>(StreamRelayService(server, history))
     ..registerSingleton<DeepLinkService>(DeepLinkService())
     ..registerSingleton<TransferClient>(transferClient)
     ..registerSingleton<NearbyService>(NearbyService())

@@ -5,6 +5,28 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+- **No notification prompt before the welcome screens.** On a first launch
+  Android and iOS asked for notifications over the splash screen, before
+  BIShare had said what it is. The question now comes on the permissions page
+  of the welcome screens, and that page shows a permission as allowed when it
+  already is.
+- **Welcome screens fit the device.** Android, Windows and Linux no longer see
+  the Apple-only Nearby Mode slide or a "Local Network" permission that asked
+  for nothing.
+- **The top buttons on the Share screen have names.** Scan, QR Beam, Secure
+  Link, Nearby and Refresh show a label on long-press or hover, and screen
+  readers announce them instead of "button".
+- **The app is called "BIShare" everywhere.** The name under the icon was
+  "bishare" on Android, "Bishare" on iPhone and iPad, and "bishare" in the
+  macOS menu bar and the Linux title bar.
+- **The QR scanner speaks your language.** Its title, hints, the manual code
+  button and the camera message were English in every language.
+- **Readable status bar.** The clock and battery icons were white on the light
+  theme; they now follow the theme, and stay light on the camera, photo and
+  QR Beam screens.
+- Portuguese (Brazil): "Câmera" and "ao vivo" instead of the European forms.
+
 ## [2.6.2] — 2026-10-14
 
 ### Changed

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -117,6 +118,21 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
             textTheme: theme.textTheme.apply(fontFamily: AppTheme.fontFamily),
           ),
           routerConfig: appRouter,
+          // Status-bar icons follow the app theme (dark icons on the light
+          // theme). Full-screen dark pages override this with their own region.
+          builder: (context, child) {
+            final dark =
+                settings.themeMode == ThemeMode.dark ||
+                (settings.themeMode == ThemeMode.system &&
+                    MediaQuery.platformBrightnessOf(context) ==
+                        Brightness.dark);
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: dark
+                  ? SystemUiOverlayStyle.light
+                  : SystemUiOverlayStyle.dark,
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
         ),
       ),
     );

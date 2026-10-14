@@ -1,4 +1,6 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -66,36 +68,40 @@ class _ScannerPageState extends State<ScannerPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          QrCamera(
-            controller: _controller,
-            onCode: _onCode,
-            denied: const _CameraDenied(),
-          ),
-          const DecoratedBox(
-            decoration: BoxDecoration(color: Colors.black26),
-          ),
-          const Center(child: _ScanFrame()),
-          SafeArea(
-            child: Column(
-              children: [
-                _TopBar(controller: _controller),
-                const Spacer(),
-                _StatusCard(
-                  showManual: _showManual,
-                  manual: _manual,
-                  onToggleManual: () =>
-                      setState(() => _showManual = !_showManual),
-                  onSubmit: _submitManual,
-                ),
-              ],
+    // Dark full-screen page: light status-bar icons whatever the app theme.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            QrCamera(
+              controller: _controller,
+              onCode: _onCode,
+              denied: const _CameraDenied(),
             ),
-          ),
-        ],
+            const DecoratedBox(
+              decoration: BoxDecoration(color: Colors.black26),
+            ),
+            const Center(child: _ScanFrame()),
+            SafeArea(
+              child: Column(
+                children: [
+                  _TopBar(controller: _controller),
+                  const Spacer(),
+                  _StatusCard(
+                    showManual: _showManual,
+                    manual: _manual,
+                    onToggleManual: () =>
+                        setState(() => _showManual = !_showManual),
+                    onSubmit: _submitManual,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -120,8 +126,8 @@ class _TopBar extends StatelessWidget {
             },
           ),
           const Spacer(),
-          const Text(
-            'Scan QR code',
+          Text(
+            'scanner.title'.tr(),
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -269,8 +275,8 @@ class _StatusCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'Point at a BIShare QR code',
+          Text(
+            'scanner.hint_title'.tr(),
             style: TextStyle(
               color: Colors.white,
               fontSize: 15,
@@ -279,7 +285,7 @@ class _StatusCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Transfers, share links and rooms',
+            'scanner.hint_body'.tr(),
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.65),
               fontSize: 12.5,
@@ -317,7 +323,11 @@ class _StatusCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: onSubmit,
-                  child: AppSvgIcon(AppIcons.arrowRightCircle, color: accent, size: 34),
+                  child: AppSvgIcon(
+                    AppIcons.arrowRightCircle,
+                    color: accent,
+                    size: 34,
+                  ),
                 ),
               ],
             )
@@ -334,7 +344,7 @@ class _StatusCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Enter code manually',
+                    'scanner.enter_code'.tr(),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 13.5,
@@ -362,10 +372,14 @@ class _CameraDenied extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const AppSvgIcon(AppIcons.cameraOff, color: Colors.white54, size: 48),
+              const AppSvgIcon(
+                AppIcons.cameraOff,
+                color: Colors.white54,
+                size: 48,
+              ),
               const SizedBox(height: 16),
               Text(
-                'Camera access is needed to scan QR codes',
+                'scanner.camera_denied'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.8),

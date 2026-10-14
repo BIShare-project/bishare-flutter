@@ -12,6 +12,7 @@ class AppIconButton extends StatelessWidget {
     required this.onPressed,
     this.badge = 0,
     this.size = 20,
+    this.tooltip,
   });
 
   /// An [AppIcons] name, rendered with [AppSvgIcon].
@@ -20,18 +21,24 @@ class AppIconButton extends StatelessWidget {
   final int badge;
   final double size;
 
+  /// What the button does, shown on long-press / hover and read by screen
+  /// readers. Icon-only buttons should always pass one.
+  final String? tooltip;
+
   @override
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        ShadIconButton.ghost(
-          icon: AppSvgIcon(icon, size: size),
-          onPressed: () {
-            tapHaptic();
-            onPressed();
-          },
+        _withTooltip(
+          ShadIconButton.ghost(
+            icon: AppSvgIcon(icon, size: size),
+            onPressed: () {
+              tapHaptic();
+              onPressed();
+            },
+          ),
         ),
         if (badge > 0)
           Positioned(
@@ -59,5 +66,11 @@ class AppIconButton extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  Widget _withTooltip(Widget button) {
+    final label = tooltip;
+    if (label == null || label.isEmpty) return button;
+    return Tooltip(message: label, child: button);
   }
 }

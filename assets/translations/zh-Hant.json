@@ -82,7 +82,8 @@
     "turn_on_auto_accept": "開啟自動接受",
     "type_something": "輸入內容...",
     "visible_ready": "可見 - 已就緒",
-    "voice": "語音"
+    "voice": "語音",
+    "refresh": "重新整理"
   },
   "send": {
     "cancel": "取消",
@@ -657,5 +658,12 @@
     "no": "不需要",
     "thanks": "謝謝。你的回答有助於決定接下來要開發什麼。",
     "close": "關閉"
+  },
+  "scanner": {
+    "title": "掃描 QR 碼",
+    "hint_title": "對準 BIShare QR 碼",
+    "hint_body": "傳輸、分享連結和房間",
+    "enter_code": "手動輸入代碼",
+    "camera_denied": "需要相機權限才能掃描 QR 碼"
   }
 }

@@ -6,7 +6,7 @@
     },
     "code_not_found": "Código não encontrado. Se for um compartilhamento ao vivo, mantenha a tela do remetente aberta e escaneie o QR.",
     "error_processing_link": "Erro ao processar o link",
-    "live_transfer": "Transferência em Direto",
+    "live_transfer": "Transferência ao vivo",
     "tab_history": "Histórico",
     "tab_inbox": "Recebidos",
     "tab_rooms": "Salas",
@@ -82,7 +82,8 @@
     "turn_on_auto_accept": "Ativar aceitação automática",
     "type_something": "Escreva algo...",
     "visible_ready": "Visível - Pronto",
-    "voice": "Voz"
+    "voice": "Voz",
+    "refresh": "Atualizar"
   },
   "send": {
     "cancel": "Cancelar",
@@ -487,7 +488,7 @@
     "perm_continue": "Continuar",
     "get_started": "Começar",
     "next": "Seguinte",
-    "perm_camera": "Câmara",
+    "perm_camera": "Câmera",
     "perm_camera_sub": "Escaneie códigos QR para conectar na hora.",
     "perm_local_network": "Rede Local",
     "perm_local_network_sub": "Descubra dispositivos próximos para enviar e receber.",
@@ -657,5 +658,12 @@
     "no": "Não é para mim",
     "thanks": "Obrigado. Sua resposta ajuda a decidir o que será desenvolvido em seguida.",
     "close": "Fechar"
+  },
+  "scanner": {
+    "title": "Escanear código QR",
+    "hint_title": "Aponte para um código QR do BIShare",
+    "hint_body": "Transferências, links de compartilhamento e salas",
+    "enter_code": "Digitar o código manualmente",
+    "camera_denied": "É preciso acesso à câmera para escanear códigos QR"
   }
 }
