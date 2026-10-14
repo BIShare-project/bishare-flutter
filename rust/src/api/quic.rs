@@ -704,6 +704,10 @@ pub fn quic_benchmark(size_mb: u32, streams: u8, chunk_kb: u32) -> Result<String
                 .map_err(|e| e.to_string())?;
             let (tx, mut rx) =
                 tokio::sync::mpsc::unbounded_channel::<Result<QuicServerEvent, String>>();
+            // The sender closes as soon as its last stream is acknowledged, which can be
+            // before this receiver has verified the file. Stop accepting then but keep
+            // reading events; dropping our sender ends the wait if no task reports.
+            let mut tx = Some(tx);
             loop {
                 tokio::select! {
                     ev = rx.recv() => {
@@ -711,10 +715,13 @@ pub fn quic_benchmark(size_mb: u32, streams: u8, chunk_kb: u32) -> Result<String
                         conn.closed().await;
                         return Ok::<QuicServerEvent, String>(ev);
                     }
-                    accepted = conn.accept_bi() => {
-                        let (send, recv) = accepted.map_err(|e| e.to_string())?;
+                    accepted = conn.accept_bi(), if tx.is_some() => {
+                        let Ok((send, recv)) = accepted else {
+                            tx = None;
+                            continue;
+                        };
                         let dir = dir_recv.clone();
-                        let tx = tx.clone();
+                        let tx = tx.clone().unwrap();
                         runtime().spawn(async move {
                             match stream_dispatch(send, recv, &dir, None, IDLE_TIMEOUT).await {
                                 Ok(Some(ev)) => { let _ = tx.send(Ok(ev)); }
