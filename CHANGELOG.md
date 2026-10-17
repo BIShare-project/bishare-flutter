@@ -5,6 +5,8 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.6.3] — 2026-10-17
+
 ### Added
 - **Another way when no device is found.** While the Share screen is still
   looking for devices, it now offers "Send as a link" (opens Secure Link with
