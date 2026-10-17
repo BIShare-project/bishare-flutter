@@ -1,10 +1,10 @@
 {
-    "version": "2.6.2",
+    "version": "2.6.3",
     "description": "Fast, private, cross-platform file sharing — AirDrop for every device",
     "homepage": "https://bishare.app",
     "license": "Apache-2.0",
-    "url": "https://github.com/BIShare-project/bishare-flutter/releases/download/v2.6.2/BIShare-2.6.2-windows-x64.zip",
-    "hash": "0656e244856c584fced64f46acaa23ec59935ce72801b376f66ef93464b0fe11",
+    "url": "https://github.com/BIShare-project/bishare-flutter/releases/download/v2.6.3/BIShare-2.6.3-windows-x64.zip",
+    "hash": "7826ab5b240002362af8b9fdc6d41ef5e1a6805a0668f1670b4c4654a3f9d514",
     "bin": "bishare.exe",
     "shortcuts": [
         [
@@ -16,6 +16,6 @@
         "github": "https://github.com/BIShare-project/bishare-flutter"
     },
     "autoupdate": {
-        "url": "https://github.com/BIShare-project/bishare-flutter/releases/download/v2.6.2/BIShare-2.6.2-windows-x64.zip"
+        "url": "https://github.com/BIShare-project/bishare-flutter/releases/download/v2.6.3/BIShare-2.6.3-windows-x64.zip"
     }
 }
