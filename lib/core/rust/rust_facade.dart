@@ -122,6 +122,16 @@ class Rust {
       rv.vaultMetaKey(vaultKey: vaultKey);
   static Uint8List vaultThumbKey(List<int> fileKey) =>
       rv.vaultThumbKey(fileKey: fileKey);
+  static Uint8List vaultDedupeKey(List<int> vaultKey) =>
+      rv.vaultDedupeKey(vaultKey: vaultKey);
+  static String vaultDedupeTag({
+    required List<int> dedupeKey,
+    required List<int> plaintextHash,
+  }) => rv.vaultDedupeTag(dedupeKey: dedupeKey, plaintextHash: plaintextHash);
+  static Uint8List vaultDeflateRaw(List<int> data) =>
+      rv.vaultDeflateRaw(data: data);
+  static Uint8List vaultInflateRaw(List<int> data, int expectedLen) =>
+      rv.vaultInflateRaw(data: data, expectedLen: BigInt.from(expectedLen));
   static String vaultPhraseFromKey(List<int> vaultKey) =>
       rv.vaultPhraseFromKey(vaultKey: vaultKey);
   static Uint8List vaultKeyFromPhrase(String phrase) =>

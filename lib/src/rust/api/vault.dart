@@ -33,6 +33,32 @@ Uint8List vaultMetaKey({required List<int> vaultKey}) =>
 Uint8List vaultThumbKey({required List<int> fileKey}) =>
     RustLib.instance.api.crateApiVaultVaultThumbKey(fileKey: fileKey);
 
+/// `K_dedupe` of a vault; it stays on the device.
+Uint8List vaultDedupeKey({required List<int> vaultKey}) =>
+    RustLib.instance.api.crateApiVaultVaultDedupeKey(vaultKey: vaultKey);
+
+/// The tag sent with an upload: same content in the same vault, same tag.
+String vaultDedupeTag({
+  required List<int> dedupeKey,
+  required List<int> plaintextHash,
+}) => RustLib.instance.api.crateApiVaultVaultDedupeTag(
+  dedupeKey: dedupeKey,
+  plaintextHash: plaintextHash,
+);
+
+/// Raw DEFLATE of a whole buffer (for files small enough to hold in memory).
+Uint8List vaultDeflateRaw({required List<int> data}) =>
+    RustLib.instance.api.crateApiVaultVaultDeflateRaw(data: data);
+
+/// Inflate raw DEFLATE to exactly `expected_len` bytes, the sealed size.
+Uint8List vaultInflateRaw({
+  required List<int> data,
+  required BigInt expectedLen,
+}) => RustLib.instance.api.crateApiVaultVaultInflateRaw(
+  data: data,
+  expectedLen: expectedLen,
+);
+
 /// The 24-word recovery phrase of a vault key.
 String vaultPhraseFromKey({required List<int> vaultKey}) =>
     RustLib.instance.api.crateApiVaultVaultPhraseFromKey(vaultKey: vaultKey);
@@ -239,7 +265,8 @@ class VaultGrantKey {
 }
 
 /// What is sealed about one file or folder. `kind` is "file" or "dir"; the
-/// last four fields apply to files only.
+/// last five fields apply to files only. `compression` is "deflate" when the
+/// blob holds the bytes compressed (inflate them with `vault_inflate_raw`).
 class VaultMeta {
   final String kind;
   final String name;
@@ -249,6 +276,7 @@ class VaultMeta {
   final String? mime;
   final Uint8List? fileKey;
   final Uint8List? hash;
+  final String? compression;
 
   const VaultMeta({
     required this.kind,
@@ -259,6 +287,7 @@ class VaultMeta {
     this.mime,
     this.fileKey,
     this.hash,
+    this.compression,
   });
 
   @override
@@ -270,7 +299,8 @@ class VaultMeta {
       size.hashCode ^
       mime.hashCode ^
       fileKey.hashCode ^
-      hash.hashCode;
+      hash.hashCode ^
+      compression.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -284,5 +314,6 @@ class VaultMeta {
           size == other.size &&
           mime == other.mime &&
           fileKey == other.fileKey &&
-          hash == other.hash;
+          hash == other.hash &&
+          compression == other.compression;
 }

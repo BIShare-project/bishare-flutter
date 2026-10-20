@@ -57,6 +57,7 @@ K_meta          HKDF(VK, "bishare-vault-meta-v1", 32)
 phrase          the BIP-39 English mnemonic of VK: 24 words, lowercase, single spaces
 file key        32 random bytes per file object; the BSE2 key for the file's bytes
 thumb key       HKDF(file key, "bishare-vault-thumb-v1", 32)
+K_dedupe        HKDF(VK, "bishare-vault-dedupe-v1", 32)
 device key      an Ed25519 key pair (RFC 8032) made on each device from a 32-byte
                 random seed; the seed never leaves the device
 ```
@@ -105,14 +106,54 @@ no whitespace, and omits a key that does not apply:
 | `t` | MIME type, never empty | file |
 | `fk` | b64u(file key) | file |
 | `h` | b64u(SHA256(plaintext)) | file |
+| `z` | `"deflate"`, only when the blob holds the bytes compressed (see "Compression") | file, optional |
 
 A reader accepts any JSON serialization and ignores keys it does not know,
-rejects `v` ≠ 1, an unknown `k`, a bad name, and a file without all four of
-`s`, `t`, `fk`, `h` or whose `fk` or `h` is not 32 bytes. Strings are UTF-8
+rejects `v` ≠ 1, an unknown `k`, a bad name, a file without all four of
+`s`, `t`, `fk`, `h` or whose `fk` or `h` is not 32 bytes, and a file whose
+`z` is anything but `"deflate"` (bytes it could not read back). A folder
+never carries `z`. Strings are UTF-8
 and are not normalized by either side.
 
 The AAD binds the sealed metadata to one object of one vault: moving a sealed
 string to another object, or to another vault, fails to open.
+
+## Compression (added 2026-10-21)
+
+A writer may compress a file before sealing it, to keep stored bytes down
+(drive-plan.md "Keeping R2 cost down"). The only method is raw DEFLATE
+(RFC 1951: no zlib or gzip header), and the sealed metadata says so with
+`"z":"deflate"`:
+
+```
+blob            BSE2(file key, DEFLATE(plaintext))
+s, h            the size and SHA-256 of the plaintext, not of the compressed bytes
+```
+
+Any DEFLATE encoder may write it (the Rust code uses miniz_oxide at level 6,
+the browser `CompressionStream("deflate-raw")`); a reader accepts any valid
+stream. A reader inflates to at most `s` bytes and refuses a stream that
+gives more or fewer, so a crafted stream cannot expand without bound.
+
+When to compress is a writer's choice, not part of the format: only types
+that are not already compressed (documents, text, code, CSV, uncompressed
+audio and images, PSD), and only when the result is at least 10% smaller.
+Maximum security writes no `z`, so stored sizes say nothing about how
+compressible a file is.
+
+## Copies stored once: the dedupe tag (added 2026-10-21)
+
+```
+dedupe tag      b64u(HMAC-SHA256(K_dedupe, h)[0..16))      h = the 32-byte SHA-256 of the plaintext
+```
+
+Sent with an upload. The server answers with a blob of the same vault that
+has the same tag and ciphertext size, if one exists; the new object then
+points at that blob and copies its file key from the object that already
+does. `K_dedupe` is derived from VK, so the tag of a file differs in every
+vault and cannot be used to ask whether some other vault holds a known file.
+What the server learns is that two objects in one vault have the same
+content. Maximum security sends no tag.
 
 ## Thumbnails
 
@@ -195,7 +236,9 @@ plaintext from a failed authentication.
 `vault_vectors.json` fixes every random input (`seq` values) and records every
 derived value: key check, `K_meta`, phrase, key copy, device public key and
 id, sign-in nonce, a signed request with its message and header, a sealed
-file and folder entry, a sealed thumbnail, and a grant. The Rust tests write
+file and folder entry, a sealed thumbnail, a grant, `K_dedupe` with the
+dedupe tag of the file, and a compressed file (its plaintext, the DEFLATE
+stream Rust wrote, and its sealed entry with `z`). The Rust tests write
 the file; the Dart and TypeScript tests must reproduce every value and must
 also fail on a flipped bit, a wrong vault id in an AAD, a wrong key check and
 a stale phrase checksum.

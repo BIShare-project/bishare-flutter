@@ -164,6 +164,8 @@ dependencies = [
  "chrono",
  "ed25519-dalek",
  "hkdf",
+ "hmac",
+ "miniz_oxide",
  "rand 0.8.6",
  "serde",
  "serde_json",

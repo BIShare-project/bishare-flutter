@@ -26,6 +26,8 @@ void main() {
   final device = v['device'] as Map<String, dynamic>;
   final request = v['request'] as Map<String, dynamic>;
   final grant = v['grant'] as Map<String, dynamic>;
+  final dedupe = v['dedupe'] as Map<String, dynamic>;
+  final compressed = v['compressed'] as Map<String, dynamic>;
   late bool rust;
 
   setUpAll(() async {
@@ -134,7 +136,7 @@ void main() {
         metaKey: kMeta,
         vaultId: vaultId,
         objectId: file['objectId'] as String,
-        meta: VaultMeta(kind: 'file', name: 'x', parent: null, mtimeMs: 1, size: 1, mime: 'a/b', fileKey: opened.fileKey, hash: null),
+        meta: VaultMeta(kind: 'file', name: 'x', parent: null, mtimeMs: 1, size: 1, mime: 'a/b', fileKey: opened.fileKey, hash: null, compression: null),
       ),
       throwsA(anything),
     );
@@ -145,6 +147,44 @@ void main() {
     expect(openedDir.parent, isNull);
     expect(openedDir.mtimeMs, dm['mtimeMs']);
     expect(openedDir.size, isNull);
+  });
+
+  test('dedupe key and tag match the vectors', () {
+    if (!rust) return markTestSkipped(rustUnavailableReason);
+    final k = Rust.vaultDedupeKey(vk);
+    expect(_enc(k), dedupe['dedupeKey']);
+    expect(Rust.vaultDedupeTag(dedupeKey: k, plaintextHash: _b64u(dedupe['hash'] as String)), dedupe['tag']);
+    expect(Rust.vaultDedupeTag(dedupeKey: k, plaintextHash: Uint8List(32)), isNot(dedupe['tag']));
+    expect(Rust.vaultDedupeTag(dedupeKey: Rust.vaultDedupeKey(Uint8List(32)), plaintextHash: _b64u(dedupe['hash'] as String)), isNot(dedupe['tag']));
+  });
+
+  test('compressed file: z in the metadata, bytes inflate to the sealed size', () {
+    if (!rust) return markTestSkipped(rustUnavailableReason);
+    final kMeta = Rust.vaultMetaKey(vk);
+    final m = Rust.vaultOpenMeta(metaKey: kMeta, vaultId: vaultId, objectId: compressed['objectId'] as String, encMeta: compressed['encMeta'] as String);
+    expect(m.compression, 'deflate');
+    final plain = _b64u(compressed['plaintext'] as String);
+    expect(m.size, plain.length);
+    final deflated = _b64u(compressed['deflated'] as String);
+    expect(Rust.vaultInflateRaw(deflated, m.size!), plain);
+    expect(_enc(crypto.sha256.convert(plain).bytes), _enc(m.hash!));
+    // Dart's own raw inflater reads the same stream (any valid DEFLATE is allowed).
+    expect(ZLibDecoder(raw: true).convert(deflated), plain);
+    expect(Rust.vaultInflateRaw(Rust.vaultDeflateRaw(plain), plain.length), plain);
+    expect(Rust.vaultInflateRaw(ZLibEncoder(raw: true).convert(plain), plain.length), plain);
+    expect(() => Rust.vaultInflateRaw(deflated, plain.length - 1), throwsA(anything));
+    // The flag survives a seal and open; an unknown one is refused before sealing.
+    final sealed = Rust.vaultSealMeta(metaKey: kMeta, vaultId: vaultId, objectId: compressed['objectId'] as String, meta: m);
+    expect(Rust.vaultOpenMeta(metaKey: kMeta, vaultId: vaultId, objectId: compressed['objectId'] as String, encMeta: sealed).compression, 'deflate');
+    expect(
+      () => Rust.vaultSealMeta(
+        metaKey: kMeta,
+        vaultId: vaultId,
+        objectId: compressed['objectId'] as String,
+        meta: VaultMeta(kind: 'file', name: 'x', parent: null, mtimeMs: 1, size: 1, mime: 'a/b', fileKey: m.fileKey, hash: m.hash, compression: 'zstd'),
+      ),
+      throwsA(anything),
+    );
   });
 
   test('thumbnail opens from the vectors and round-trips', () {

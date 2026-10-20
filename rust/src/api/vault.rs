@@ -21,7 +21,8 @@ fn err(e: v::VaultError) -> String {
 }
 
 /// What is sealed about one file or folder. `kind` is "file" or "dir"; the
-/// last four fields apply to files only.
+/// last five fields apply to files only. `compression` is "deflate" when the
+/// blob holds the bytes compressed (inflate them with `vault_inflate_raw`).
 pub struct VaultMeta {
     pub kind: String,
     pub name: String,
@@ -31,6 +32,7 @@ pub struct VaultMeta {
     pub mime: Option<String>,
     pub file_key: Option<Vec<u8>>,
     pub hash: Option<Vec<u8>>,
+    pub compression: Option<String>,
 }
 
 impl VaultMeta {
@@ -45,6 +47,11 @@ impl VaultMeta {
             Some(s) => Some(s as u64),
             None => None,
         };
+        let compression = match self.compression.as_deref() {
+            None => None,
+            Some("deflate") => Some(v::Compression::Deflate),
+            Some(other) => return Err(format!("unknown compression {other:?}")),
+        };
         Ok(v::ObjectMeta {
             kind,
             name: self.name,
@@ -54,6 +61,7 @@ impl VaultMeta {
             mime: self.mime,
             file_key: self.file_key.as_deref().map(|k| key32(k, "file key")).transpose()?,
             hash: self.hash.as_deref().map(|h| key32(h, "hash")).transpose()?,
+            compression,
         })
     }
 
@@ -70,6 +78,9 @@ impl VaultMeta {
             mime: m.mime,
             file_key: m.file_key.map(|k| k.to_vec()),
             hash: m.hash.map(|h| h.to_vec()),
+            compression: m.compression.map(|c| match c {
+                v::Compression::Deflate => "deflate".to_string(),
+            }),
         }
     }
 }
@@ -115,6 +126,31 @@ pub fn vault_meta_key(vault_key: Vec<u8>) -> Result<Vec<u8>, String> {
 #[flutter_rust_bridge::frb(sync)]
 pub fn vault_thumb_key(file_key: Vec<u8>) -> Result<Vec<u8>, String> {
     Ok(v::thumb_key(&key32(&file_key, "file key")?).to_vec())
+}
+
+/// `K_dedupe` of a vault; it stays on the device.
+#[flutter_rust_bridge::frb(sync)]
+pub fn vault_dedupe_key(vault_key: Vec<u8>) -> Result<Vec<u8>, String> {
+    Ok(v::dedupe_key(&key32(&vault_key, "vault key")?).to_vec())
+}
+
+/// The tag sent with an upload: same content in the same vault, same tag.
+#[flutter_rust_bridge::frb(sync)]
+pub fn vault_dedupe_tag(dedupe_key: Vec<u8>, plaintext_hash: Vec<u8>) -> Result<String, String> {
+    Ok(v::dedupe_tag(&key32(&dedupe_key, "dedupe key")?, &key32(&plaintext_hash, "hash")?))
+}
+
+/// Raw DEFLATE of a whole buffer (for files small enough to hold in memory).
+#[flutter_rust_bridge::frb(sync)]
+pub fn vault_deflate_raw(data: Vec<u8>) -> Vec<u8> {
+    v::deflate_raw(&data)
+}
+
+/// Inflate raw DEFLATE to exactly `expected_len` bytes, the sealed size.
+#[flutter_rust_bridge::frb(sync)]
+pub fn vault_inflate_raw(data: Vec<u8>, expected_len: u64) -> Result<Vec<u8>, String> {
+    let len = usize::try_from(expected_len).map_err(|_| "size too large".to_string())?;
+    v::inflate_raw(&data, len).map_err(err)
 }
 
 /// The 24-word recovery phrase of a vault key.

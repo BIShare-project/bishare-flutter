@@ -22,6 +22,7 @@ use base64::Engine as _;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ed25519_dalek::{Signature, Signer, SigningKey, VerifyingKey};
 use hkdf::Hkdf;
+use hmac::{Hmac, Mac};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -44,6 +45,8 @@ pub const META_VERSION: u32 = 1;
 pub const AUTH_SCHEME: &str = "BIShare-Vault";
 /// Seconds a request's `ts` may differ from the server's clock.
 pub const REQUEST_WINDOW_SECS: i64 = 300;
+/// Bytes of HMAC output kept in a dedupe tag.
+pub const DEDUPE_TAG_SIZE: usize = 16;
 
 const KEY_COPY_MAGIC: &[u8; 4] = b"BSVK";
 const KEY_COPY_VERSION: u8 = 1;
@@ -53,6 +56,7 @@ const INFO_META: &[u8] = b"bishare-vault-meta-v1";
 const INFO_BACKUP: &[u8] = b"bishare-vault-backup-v1";
 const INFO_THUMB: &[u8] = b"bishare-vault-thumb-v1";
 const INFO_GRANT: &[u8] = b"bishare-vault-grant-v1";
+const INFO_DEDUPE: &[u8] = b"bishare-vault-dedupe-v1";
 const AAD_META: &str = "bishare-vault-meta-v1";
 const AAD_THUMB: &str = "bishare-vault-thumb-v1";
 const REQ_PREFIX: &str = "bishare-vault-req-v1";
@@ -81,6 +85,8 @@ pub enum VaultError {
     BadAuthorization,
     /// The vault key received does not match the account's key check.
     KeyCheckMismatch,
+    /// Compressed bytes that do not inflate to exactly the sealed size.
+    BadCompression,
 }
 
 impl fmt::Display for VaultError {
@@ -98,6 +104,7 @@ impl fmt::Display for VaultError {
             Self::BadSignature => write!(f, "bad signature"),
             Self::BadAuthorization => write!(f, "bad authorization header"),
             Self::KeyCheckMismatch => write!(f, "key does not belong to this vault"),
+            Self::BadCompression => write!(f, "compressed bytes do not match the file"),
         }
     }
 }
@@ -240,6 +247,20 @@ pub fn meta_key(vault_key: &[u8; KEY_SIZE]) -> [u8; KEY_SIZE] {
 }
 
 /// The key a file's thumbnail is sealed under, from that file's key.
+/// `K_dedupe`: keys the dedupe tag. Like every key here, it never leaves the device.
+pub fn dedupe_key(vault_key: &[u8; KEY_SIZE]) -> [u8; KEY_SIZE] {
+    hkdf32(vault_key, INFO_DEDUPE)
+}
+
+/// The tag sent with an upload so the server can find a blob with the same
+/// content in this vault, and only this vault: `b64u(HMAC-SHA256(K_dedupe, h)[0..16))`
+/// where `h` is the 32-byte SHA-256 of the plaintext (the `h` of the metadata).
+pub fn dedupe_tag(dedupe_key: &[u8; KEY_SIZE], plaintext_hash: &[u8; 32]) -> String {
+    let mut mac = <Hmac<Sha256> as Mac>::new_from_slice(dedupe_key).expect("HMAC takes a key of any length");
+    mac.update(plaintext_hash);
+    b64u(&mac.finalize().into_bytes()[..DEDUPE_TAG_SIZE])
+}
+
 pub fn thumb_key(file_key: &[u8; KEY_SIZE]) -> [u8; KEY_SIZE] {
     hkdf32(file_key, INFO_THUMB)
 }
@@ -339,6 +360,21 @@ impl ObjectKind {
     }
 }
 
+/// How a file's bytes were transformed before they were sealed with BSE2.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Compression {
+    /// Raw DEFLATE (RFC 1951): no zlib or gzip header.
+    Deflate,
+}
+
+impl Compression {
+    fn wire(self) -> &'static str {
+        match self {
+            Self::Deflate => "deflate",
+        }
+    }
+}
+
 /// What is sealed about one file or folder. Only `kind`, `name`, `parent` and
 /// `mtime_ms` apply to a folder.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -357,6 +393,9 @@ pub struct ObjectMeta {
     pub file_key: Option<[u8; KEY_SIZE]>,
     /// SHA-256 of the plaintext (files).
     pub hash: Option<[u8; 32]>,
+    /// Set when the bytes in the blob were compressed before sealing (files).
+    /// `size` and `hash` stay those of the uncompressed file.
+    pub compression: Option<Compression>,
 }
 
 /// The JSON as written: this key order, nothing else.
@@ -375,6 +414,8 @@ struct MetaWire {
     fk: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     h: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    z: Option<String>,
 }
 
 fn bad(why: &str) -> VaultError {
@@ -426,11 +467,13 @@ impl ObjectMeta {
             t: if file { self.mime.clone() } else { None },
             fk: if file { self.file_key.map(|k| b64u(&k)) } else { None },
             h: if file { self.hash.map(|h| b64u(&h)) } else { None },
+            z: if file { self.compression.map(|c| c.wire().to_string()) } else { None },
         };
         serde_json::to_string(&wire).map_err(|e| bad(&e.to_string()))
     }
 
-    /// Reads any JSON serialization; unknown keys are ignored.
+    /// Reads any JSON serialization; unknown keys are ignored, but an unknown
+    /// `z` is refused: those bytes could not be read back.
     pub fn from_json(json: &str) -> Result<Self> {
         let wire: MetaWire = serde_json::from_str(json).map_err(|e| bad(&e.to_string()))?;
         if wire.v != META_VERSION {
@@ -451,6 +494,11 @@ impl ObjectMeta {
             }
         };
         let file = kind == ObjectKind::File;
+        let compression = match (file, wire.z.as_deref()) {
+            (false, _) | (true, None) => None,
+            (true, Some("deflate")) => Some(Compression::Deflate),
+            (true, Some(_)) => return Err(bad("unknown compression")),
+        };
         let meta = ObjectMeta {
             kind,
             name: wire.n,
@@ -460,10 +508,31 @@ impl ObjectMeta {
             mime: if file { wire.t } else { None },
             file_key: if file { key32(wire.fk, "file key")? } else { None },
             hash: if file { key32(wire.h, "hash")? } else { None },
+            compression,
         };
         meta.validate()?;
         Ok(meta)
     }
+}
+
+// ── compression ─────────────────────────────────────────────────────────────
+
+/// Raw DEFLATE at level 6. Any encoder is allowed to write `"z":"deflate"`
+/// (the browser uses CompressionStream); readers accept any valid stream.
+pub fn deflate_raw(data: &[u8]) -> Vec<u8> {
+    miniz_oxide::deflate::compress_to_vec(data, 6)
+}
+
+/// Inflate raw DEFLATE that must give exactly `expected_len` bytes (the
+/// sealed `s`). Output past that length is never produced, so a crafted
+/// stream cannot expand without bound.
+pub fn inflate_raw(data: &[u8], expected_len: usize) -> Result<Vec<u8>> {
+    let out = miniz_oxide::inflate::decompress_to_vec_with_limit(data, expected_len)
+        .map_err(|_| VaultError::BadCompression)?;
+    if out.len() != expected_len {
+        return Err(VaultError::BadCompression);
+    }
+    Ok(out)
 }
 
 fn meta_aad(vault_id: &str, object_id: &str) -> Result<Vec<u8>> {
@@ -849,6 +918,27 @@ mod tests {
             mime: Some("application/pdf".to_string()),
             file_key: Some(i.file_key),
             hash: Some(Sha256::digest(&i.plaintext).into()),
+            compression: None,
+        }
+    }
+
+    /// A CSV-like text that DEFLATE shrinks a lot.
+    fn compressible_plaintext() -> Vec<u8> {
+        (0..40).map(|n| format!("{n},BIShare vault compression vector,{}\n", n * 7)).collect::<String>().into_bytes()
+    }
+
+    fn compressed_meta(i: &Inputs) -> ObjectMeta {
+        let plain = compressible_plaintext();
+        ObjectMeta {
+            kind: ObjectKind::File,
+            name: "inventory.csv".to_string(),
+            parent: Some(i.dir_id.clone()),
+            mtime_ms: 1_728_000_000_456,
+            size: Some(plain.len() as u64),
+            mime: Some("text/csv".to_string()),
+            file_key: Some(seq(0x88)),
+            hash: Some(Sha256::digest(&plain).into()),
+            compression: Some(Compression::Deflate),
         }
     }
 
@@ -862,6 +952,7 @@ mod tests {
             mime: None,
             file_key: None,
             hash: None,
+            compression: None,
         }
     }
 
@@ -877,6 +968,9 @@ mod tests {
             .wrap_key(&new_key.public_bytes(), &new_key.public_bytes(), &granter.public_bytes())
             .unwrap();
         let signature = device.sign_request(i.req_method, &i.req_path, i.req_ts, i.req_body);
+        let k_dedupe = dedupe_key(&i.vk);
+        let cm = compressed_meta(&i);
+        let c_plain = compressible_plaintext();
         json!({
             "note": "Written by the Rust tests in bishare-flutter/rust/bishare-protocol/src/vault.rs (VAULT-SPEC.md). Binary values are base64url without padding; 'seq' inputs are consecutive bytes.",
             "vaultId": i.vault_id,
@@ -929,6 +1023,19 @@ mod tests {
                 "nonce": b64u(&i.dir_nonce),
                 "encMeta": seal_meta(&k_meta, &i.vault_id, &i.dir_id, &dm, Some(i.dir_nonce)).unwrap(),
             },
+            "dedupe": {
+                "dedupeKey": b64u(&k_dedupe),
+                "hash": b64u(&fm.hash.unwrap()),
+                "tag": dedupe_tag(&k_dedupe, &fm.hash.unwrap()),
+            },
+            "compressed": {
+                "objectId": b64u(&seq::<16>(0x20)),
+                "plaintext": b64u(&c_plain),
+                "deflated": b64u(&deflate_raw(&c_plain)),
+                "metaJson": cm.to_json().unwrap(),
+                "nonce": b64u(&seq::<12>(0x48)),
+                "encMeta": seal_meta(&k_meta, &i.vault_id, &b64u(&seq::<16>(0x20)), &cm, Some(seq::<12>(0x48))).unwrap(),
+            },
             "grant": {
                 "newPriv": b64u(&i.new_priv),
                 "newPub": b64u(&new_key.public_bytes()),
@@ -956,6 +1063,52 @@ mod tests {
         let current = std::fs::read_to_string(FIXTURE)
             .expect("test/fixtures/vault_vectors.json exists (cargo test -- --ignored write_vectors)");
         assert_eq!(pretty(&vectors()), current, "vault_vectors.json drifted from vault.rs");
+    }
+
+    #[test]
+    fn dedupe_tag_is_per_vault_and_per_content() {
+        let i = inputs();
+        let h: [u8; 32] = Sha256::digest(&i.plaintext).into();
+        let k = dedupe_key(&i.vk);
+        let tag = dedupe_tag(&k, &h);
+        assert_eq!(from_b64u(&tag).unwrap().len(), DEDUPE_TAG_SIZE);
+        assert_eq!(tag, dedupe_tag(&k, &h), "same content, same vault: same tag");
+        assert_ne!(tag, dedupe_tag(&dedupe_key(&seq(0x11)), &h), "another vault: another tag");
+        assert_ne!(tag, dedupe_tag(&k, &[0u8; 32]), "other content: another tag");
+        assert_ne!(k, meta_key(&i.vk));
+    }
+
+    #[test]
+    fn compression_round_trips_and_is_bounded() {
+        let plain = compressible_plaintext();
+        let z = deflate_raw(&plain);
+        assert!(z.len() * 2 < plain.len(), "the vector text compresses well");
+        assert_eq!(inflate_raw(&z, plain.len()).unwrap(), plain);
+        // Exactly the sealed size, no more and no less.
+        assert_eq!(inflate_raw(&z, plain.len() - 1), Err(VaultError::BadCompression));
+        assert_eq!(inflate_raw(&z, plain.len() + 1), Err(VaultError::BadCompression));
+        assert_eq!(inflate_raw(b"not deflate at all", 10), Err(VaultError::BadCompression));
+        // A small stream that would expand to 10 MB stops at the limit.
+        let bomb = deflate_raw(&vec![0u8; 10_000_000]);
+        assert!(bomb.len() < 20_000);
+        assert_eq!(inflate_raw(&bomb, 1000), Err(VaultError::BadCompression));
+    }
+
+    #[test]
+    fn compression_is_sealed_in_the_metadata() {
+        let i = inputs();
+        let cm = compressed_meta(&i);
+        let json = cm.to_json().unwrap();
+        assert!(json.ends_with(r#","z":"deflate"}"#), "z is written last: {json}");
+        assert_eq!(ObjectMeta::from_json(&json).unwrap(), cm);
+        // Without z the file was stored as it is.
+        assert!(!file_meta(&i).to_json().unwrap().contains("\"z\""));
+        // An unknown z cannot be read back, so the entry is refused.
+        let other = json.replace(r#""z":"deflate""#, r#""z":"zstd""#);
+        assert!(matches!(ObjectMeta::from_json(&other), Err(VaultError::BadMeta(_))));
+        // A folder never carries z.
+        let dir = ObjectMeta { compression: Some(Compression::Deflate), ..dir_meta() };
+        assert!(!dir.to_json().unwrap().contains("\"z\""));
     }
 
     #[test]

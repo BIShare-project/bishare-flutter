@@ -17,6 +17,8 @@ base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }
 ed25519-dalek = "3"
 bip39 = "3"
+hmac = "0.12"
+miniz_oxide = "0.8"
 
 [dev-dependencies]
 pretty_assertions = "1"
