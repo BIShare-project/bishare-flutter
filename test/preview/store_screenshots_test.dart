@@ -372,6 +372,7 @@ void _registerDrive(String self) {
   when(() => account.quotaBytes).thenReturn(5000000000);
   when(() => account.keyCopy).thenReturn(copy);
   when(() => account.linkedProviders).thenReturn(['google']);
+  when(() => account.infoLoaded).thenReturn(true);
   final now = DateTime.now().millisecondsSinceEpoch;
   when(() => account.devices()).thenAnswer(
     (_) async => [
