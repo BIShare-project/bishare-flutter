@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:bishare/core/crypto/bse2.dart';
 import 'package:bishare/features/vault/data/vault_account.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
@@ -198,26 +199,40 @@ void main() {
       await raf.close();
       final want = await sha(src);
 
-      a.failPutsAfter = a.puts + 30;
+      // Cut off half way: the server's part size is 100 MiB above 1 GiB.
+      final sealedSize = Bse2.ciphertextSize(size);
+      final partSize = sealedSize > (1 << 30) ? 100 << 20 : 50 << 20;
+      final total = (sealedSize / partSize).ceil();
+      final cut = total ~/ 2;
+      a.failPutsAfter = a.puts + cut;
       await a.uploader.enqueue([src]);
       await a.uploader.run();
       final stuck = (await a.db.vaultDao.pendingTransfers()).single;
       expect(
         stuck.partsDone,
-        contains('"n":30'),
-        reason: 'thirty parts went up before the cut',
+        contains('"n":$cut'),
+        reason: 'half the parts went up before the cut',
       );
       final sent = a.puts;
       a = a.restart();
       final up = Stopwatch()..start();
-      await a.uploader.run();
+      // As in the small run: wrangler dev may give out and come back.
+      var rounds = 0;
+      do {
+        await _waitForWorker(api);
+        await a.uploader.run();
+        rounds++;
+      } while ((await a.db.vaultDao.pendingTransfers()).isNotEmpty &&
+          rounds < 20);
       up.stop();
       expect(await a.failed(), isEmpty);
+      await a.sync.pull();
       final row = (await a.db.vaultDao.watchChildren(null).first).single;
-      final parts = (row.blobSize! / (100 * 1024 * 1024)).ceil();
+      expect(row.blobSize, sealedSize);
+      // A part on its way when the worker went is sent once more, no other.
       expect(
         a.puts - sent,
-        parts - 30,
+        inInclusiveRange(total - cut, total - cut + rounds - 1),
         reason: 'only the parts not sent before',
       );
       debugPrint(
@@ -226,10 +241,20 @@ void main() {
 
       await b.sync.pull();
       final down = Stopwatch()..start();
-      final out = await b.downloader.download(
-        row.id,
-        File('${tmp.path}/big-out.bin'),
-      );
+      late File out;
+      for (var attempt = 0; ; attempt++) {
+        try {
+          out = await b.downloader.download(
+            row.id,
+            File('${tmp.path}/big-out.bin'),
+          );
+          break;
+        } on Object catch (e) {
+          if (attempt >= 3) rethrow;
+          debugPrint('[gate] big download: $e; again');
+          await _waitForWorker(api);
+        }
+      }
       down.stop();
       debugPrint('[gate] $gb GB down in ${down.elapsed.inSeconds} s');
       expect(await out.length(), size);
