@@ -57,6 +57,11 @@ dependencies:
   drift_flutter: ^0.3.0
   sqlite3_flutter_libs: ^0.6.0+eol
   shared_preferences: ^2.5.5
+  # 2.5.0 (2026-10-17) moved to Pigeon JNI and crashes at start in release
+  # builds after R8 ("no non-static method SharedPreferencesApiRegistrar
+  # .getAll"): stuck on the splash. pubspec.lock is not committed, so CI
+  # would pick it too. Lift once a release build is checked on a phone.
+  shared_preferences_android: ">=2.4.28 <2.5.0"
   flutter_secure_storage: ^10.3.1
   file_picker: ^10.0.0
   # Folder-sync change detection (FSEvents/inotify/RDCW + polling fallback).
