@@ -164,7 +164,11 @@ void main() {
         ),
       );
 
-  VaultPhotoBackup make(_Library library, {int batch = 30}) {
+  VaultPhotoBackup make(
+    _Library library, {
+    int batch = 30,
+    Future<void> Function()? catchUp,
+  }) {
     final b = VaultPhotoBackup(
       library: library,
       dao: dao,
@@ -176,6 +180,7 @@ void main() {
       onWifi: () async => wifi,
       networkChanges: network.stream,
       batch: batch,
+      catchUp: catchUp,
     );
     backups.add(b);
     return b;
@@ -370,6 +375,79 @@ void main() {
     expect(b.noRoom, isFalse);
     await b.scan();
     expect((await dao.pendingTransfers()).length, 1);
+  });
+
+  test('an upload that finished before the index caught up is not sent '
+      'again', () async {
+    final library = _Library([photo('a.jpg', 'one')]);
+    await prefs.setBool('vault.photoBackup', true);
+    var caughtUp = 0;
+    final b = make(
+      library,
+      catchUp: () async {
+        caughtUp++;
+        await driveHas('x', 'one');
+      },
+    );
+    await b.start();
+    await b.scan();
+    // The uploader finished and marked it; the index has not pulled yet.
+    final t = (await dao.pendingTransfers()).single;
+    await dao.updateTransfer(
+      t.id,
+      const VaultTransfersCompanion(state: Value('done')),
+    );
+    await dao.markAssetBackedUp(
+      'a0',
+      VaultMetaCodec.b64u(
+        Uint8List.fromList(sha256.convert('one'.codeUnits).bytes),
+      ),
+      'x',
+    );
+    await b.scan();
+    expect(caughtUp, 1);
+    expect(await dao.pendingTransfers(), isEmpty);
+    verify(
+      () => uploader.enqueueAsset(
+        any(),
+        assetId: 'a0',
+        name: any(named: 'name'),
+        parent: any(named: 'parent'),
+      ),
+    ).called(1);
+    expect(b.left, 0);
+  });
+
+  test('a reinstall puts photos in the Camera folder already there, and '
+      'makes none while nothing is sent', () async {
+    final library = _Library([photo('a.jpg', 'one'), photo('b.jpg', 'two')]);
+    await driveHas('x', 'one');
+    await prefs.setBool('vault.photoBackup', true);
+    // Only photos already in the Drive: no folder at all.
+    final first = make(_Library([library.files[0]]));
+    await first.start();
+    await first.scan();
+    verifyNever(() => files.mkdir(any(), parent: any(named: 'parent')));
+    await first.stop();
+
+    await db
+        .into(db.vaultObjects)
+        .insert(
+          VaultObjectsCompanion.insert(
+            id: 'camera',
+            name: 'Camera',
+            kind: 'dir',
+            mtime: 1,
+            seq: 2,
+            createdAt: 1,
+            encMeta: '',
+          ),
+        );
+    final b = make(library);
+    await b.start();
+    await b.scan();
+    verifyNever(() => files.mkdir(any(), parent: any(named: 'parent')));
+    expect((await dao.pendingTransfers()).single.parent, 'camera');
   });
 
   test('the badge of each photo', () {

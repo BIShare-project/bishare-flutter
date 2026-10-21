@@ -309,6 +309,7 @@ Future<void> setupLocator() async {
         keys: getIt<VaultKeyStore>(),
         prefs: getIt<SharedPreferences>(),
         folderName: () => 'vault.backup_folder'.tr(),
+        catchUp: () => getIt<VaultSync>().pull(),
       ),
     );
 

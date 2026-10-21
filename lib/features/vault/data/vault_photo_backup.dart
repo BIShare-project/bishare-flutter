@@ -39,6 +39,7 @@ class VaultPhotoBackup extends ChangeNotifier {
     required SharedPreferences prefs,
     required String Function() folderName,
     Future<bool> Function()? onWifi,
+    Future<void> Function()? catchUp,
     Stream<void>? networkChanges,
     this.batch = 30,
   }) : _library = library,
@@ -49,6 +50,7 @@ class VaultPhotoBackup extends ChangeNotifier {
        _prefs = prefs,
        _folderName = folderName,
        _onWifi = onWifi ?? _wifiNow,
+       _catchUp = catchUp,
        _networkChanges = networkChanges ?? _connectivityChanges();
 
   final PhotoLibrary _library;
@@ -59,6 +61,11 @@ class VaultPhotoBackup extends ChangeNotifier {
   final SharedPreferences _prefs;
   final String Function() _folderName;
   final Future<bool> Function() _onWifi;
+
+  /// Brings the index up to the server (VaultSync.pull). An upload that just
+  /// finished is in the Drive before it is in this device's index; looking
+  /// at the library in between would send that photo a second time.
+  final Future<void> Function()? _catchUp;
   final Stream<void> _networkChanges;
 
   /// Photos looked at (exported, hashed, queued) per round.
@@ -88,8 +95,21 @@ class VaultPhotoBackup extends ChangeNotifier {
     return until != null && DateTime.now().isAfter(until);
   }
 
-  /// Backed up since the last full count (taken off [left] until the next).
-  final Set<String> _doneSinceCount = {};
+  /// What was backed up at the last full count, and now: the photos in the
+  /// second and not the first come off [left] until the next count. "Now"
+  /// follows the index, so uploads that finish outside a round (the queue
+  /// left by an earlier run, the app's own uploader) count too.
+  Set<String> _backedAtCount = const {};
+  Set<String> _backedNow = const {};
+  StreamSubscription<Set<String>>? _backedSub;
+
+  void _followBacked() {
+    _backedSub ??= _dao.watchBackedUpAssetIds().listen((ids) {
+      _backedNow = ids;
+      notifyListeners();
+    });
+  }
+
   AppLifecycleListener? _lifecycle;
 
   /// A full count of what is left at most this often (a library can hold
@@ -114,7 +134,8 @@ class VaultPhotoBackup extends ChangeNotifier {
   /// way included), as of the last look. Null before the first.
   int? get left {
     final l = _left;
-    return l == null ? null : max(0, l - _doneSinceCount.length);
+    if (l == null) return null;
+    return max(0, l - _backedNow.difference(_backedAtCount).length);
   }
 
   int? get total => _total;
@@ -127,6 +148,7 @@ class VaultPhotoBackup extends ChangeNotifier {
     if (_started || !available) return;
     _started = true;
     _uploader.mayStart = _mayStart;
+    _followBacked();
     _access = await _library.access();
     notifyListeners();
     _subs
@@ -181,7 +203,10 @@ class VaultPhotoBackup extends ChangeNotifier {
     _now.clear();
     _left = null;
     _total = null;
-    _doneSinceCount.clear();
+    await _backedSub?.cancel();
+    _backedSub = null;
+    _backedAtCount = const {};
+    _backedNow = const {};
     notifyListeners();
   }
 
@@ -272,8 +297,31 @@ class VaultPhotoBackup extends ChangeNotifier {
     if (!_started || _timeUp || await _keys.vaultKey() == null) return;
     if (_access == PhotoAccess.none) _access = await _library.access();
     if (_access == PhotoAccess.none) return;
-    final backed = await _dao.backedUpAssetIds();
     final uploads = await _dao.watchAssetUploads().first;
+    var backed = await _dao.backedUpAssetIds();
+    bool behind() => uploads.entries.any(
+      (e) => e.value == 'done' && !backed.contains(e.key),
+    );
+    if (behind()) {
+      final catchUp = _catchUp;
+      try {
+        if (catchUp != null) await catchUp();
+      } on Object catch (e) {
+        debugPrint('[vault] photo backup catch-up: $e');
+      }
+      backed = await _dao.backedUpAssetIds();
+      // Still not in the index: without a way to catch up (or offline), the
+      // photo waits a round; with one, it was deleted from the Drive and
+      // goes up again (below).
+      if (catchUp == null && behind()) {
+        backed = {
+          ...backed,
+          for (final e in uploads.entries)
+            if (e.value == 'done') e.key,
+        };
+      }
+    }
+    _backedNow = backed;
     // A photo whose upload failed (it was edited, its export went away) is
     // tried again from a fresh copy.
     final failed = [
@@ -313,15 +361,16 @@ class VaultPhotoBackup extends ChangeNotifier {
     if (counting) {
       _left = left;
       _countedAt = DateTime.now();
-      _doneSinceCount.clear();
+      _backedAtCount = backed;
+      _backedNow = backed;
     }
     notifyListeners();
     if (!on || todo.isEmpty) return;
     final queued = await _queue(todo);
-    await _tickOff(todo);
+    await _tickOff();
     if (queued > 0) {
       await _uploader.run();
-      await _tickOff(todo);
+      await _tickOff();
       // Only when the batch is through: offline, or on mobile data with
       // "Wi-Fi only", the next round waits for the network to say so.
       final stuck = (await _dao.pendingTransfers()).any(
@@ -334,21 +383,17 @@ class VaultPhotoBackup extends ChangeNotifier {
     }
   }
 
-  /// Those of [batch] in the Drive now come off [left].
-  Future<void> _tickOff(List<PhotoAsset> batch) async {
-    final backed = await _dao.backedUpAssetIds();
-    final before = _doneSinceCount.length;
-    _doneSinceCount.addAll([
-      for (final a in batch)
-        if (backed.contains(a.id)) a.id,
-    ]);
-    if (_doneSinceCount.length != before) notifyListeners();
+  /// The index as it is now, for [left] (the watch may not have caught up).
+  Future<void> _tickOff() async {
+    _backedNow = await _dao.backedUpAssetIds();
+    notifyListeners();
   }
 
   /// Queue [assets], marking those already in the Drive. Returns how many
   /// went into the upload queue.
   Future<int> _queue(List<PhotoAsset> assets) async {
-    final folder = await _folder();
+    // Made (or found) only when a photo is actually sent.
+    String? folder;
     var queued = 0;
     for (final a in assets) {
       if (_timeUp) break;
@@ -370,6 +415,7 @@ class VaultPhotoBackup extends ChangeNotifier {
           // The export's own time, then.
         }
       }
+      folder ??= await _folder();
       await _uploader.enqueueAsset(
         got.file,
         assetId: a.id,
@@ -389,7 +435,16 @@ class VaultPhotoBackup extends ChangeNotifier {
       final o = await _dao.object(id);
       if (o != null && o.kind == 'dir' && o.trashedAt == null) return id;
     }
-    final made = await _files.mkdir(_folderName());
+    // A reinstall (or another device) already has it: the same folder, not
+    // a second one next to it.
+    final name = _folderName();
+    for (final o in await _dao.liveChildren(null)) {
+      if (o.kind == 'dir' && o.name == name) {
+        await _dao.setStateValue(_kFolder, o.id);
+        return o.id;
+      }
+    }
+    final made = await _files.mkdir(name);
     await _dao.setStateValue(_kFolder, made);
     return made;
   }

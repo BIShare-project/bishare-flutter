@@ -194,6 +194,7 @@ class VaultBackground {
       folderName: () => prefs.getString(folderNameKey) ?? 'Camera',
       onWifi: onWifi,
       networkChanges: const Stream.empty(),
+      catchUp: sync.pull,
     );
 
     // The app opening meanwhile asks this run to stop.
