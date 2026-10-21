@@ -61,7 +61,9 @@ class _VaultGroupState extends State<_VaultGroup> {
         'NETWORK' => 'vault.error_network'.tr(),
         _ => 'vault.error_generic'.tr(),
       };
-      debugPrint('[vault] sign-in refused: $e');
+      // In internal mode the refusal carries the subject hash the owner adds to
+      // vault_testers; it is only printed (debug log), never shown.
+      debugPrint('[vault] sign-in refused: $e ${e.extra['subjectHash'] ?? ''}');
     } on VaultSigninException catch (e) {
       _error = 'vault.error_generic'.tr();
       debugPrint('[vault] provider sign-in failed: $e');
