@@ -961,6 +961,37 @@
     "phrase_store_hint": "最好写在纸上或存进密码管理器。任何拿到这些单词的人都能打开你的 Drive。",
     "phrase_file_title": "BIShare Drive 恢复短语",
     "phrase_file_body": "在其他所有找回方式都丢失时，这 24 个单词可以打开你的 BIShare Drive。拿到它们的人也能打开：请把此文件离线保存或放进密码管理器，并删除其他副本。",
-    "phrase_file_made": "创建于 {date}。"
+    "phrase_file_made": "创建于 {date}。",
+    "view_phone": "此手机",
+    "backup_title": "备份照片和视频",
+    "backup_off_body": "已关闭。开启后，此手机上的照片和视频会进入你 Drive 中的“{folder}”文件夹，并先在手机上加密。",
+    "backup_left": {
+      "zero": "已全部备份",
+      "other": "还剩 {} 项"
+    },
+    "backup_counting": "正在检查备份情况…",
+    "backup_wifi_only": "仅限 Wi-Fi",
+    "backup_wifi_only_body": "不使用移动数据，立即备份的照片除外。",
+    "backup_now": "立即备份",
+    "backup_added_n": {
+      "zero": "未添加任何项目",
+      "other": "已将 {} 项加入上传"
+    },
+    "backup_all_there": "它们已在你的 Drive 中。",
+    "backup_access_title": "允许访问照片",
+    "backup_access_body": "要显示哪些照片和视频已备份，BIShare 需要读取你的照片。在你开启备份或选择要备份的照片之前，不会上传任何内容。",
+    "backup_access_denied": "BIShare 无法读取你的照片。请在设置中允许访问。",
+    "backup_allow": "允许访问",
+    "backup_open_settings": "打开设置",
+    "backup_limited": "仅显示你选择的照片。",
+    "backup_choose_more": "选择更多",
+    "backup_empty": "没有照片或视频",
+    "backup_empty_body": "用此手机拍摄的照片和视频会显示在这里。",
+    "backup_state_done": "已备份",
+    "backup_state_not": "未备份",
+    "backup_state_waiting": "等待上传",
+    "backup_state_uploading": "正在上传",
+    "backup_state_failed": "上传失败",
+    "backup_folder": "相机"
   }
 }

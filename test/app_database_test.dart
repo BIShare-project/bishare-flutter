@@ -432,7 +432,7 @@ void main() {
     await first.close();
 
     final db = AppDatabase(NativeDatabase(file, setup: (raw) {
-      if (raw.userVersion != 5) return;
+      if (raw.userVersion != 6) return;
       for (final t in ['vault_objects', 'vault_transfers', 'vault_state', 'vault_backed_up_assets']) {
         raw.execute('DROP TABLE $t;');
       }
@@ -457,6 +457,49 @@ void main() {
     expect(await vault.watchChildren(null).first, isEmpty);
     expect((await db.watchAll().first).single.fileName, 'old.jpg', reason: 'clearing Drive touches nothing else');
 
+    await db.close();
+  });
+
+  test('migration v5→v6: transfers learn their library asset, keep v5 rows', () async {
+    final dir = await Directory.systemTemp.createTemp('bishare_db_test');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/app.db');
+
+    final first = AppDatabase(NativeDatabase(file));
+    await first.vaultDao.enqueue(VaultTransfersCompanion.insert(
+      direction: 'up',
+      objectId: 'o1',
+      name: 'IMG_1.jpg',
+      localPath: '/x/IMG_1.jpg',
+      size: 3,
+      state: 'queued',
+      createdAt: 1,
+      updatedAt: 1,
+    ));
+    await first.close();
+
+    // Back to v5: the column did not exist then.
+    final db = AppDatabase(NativeDatabase(file, setup: (raw) {
+      if (raw.userVersion != 6) return;
+      raw.execute('ALTER TABLE vault_transfers DROP COLUMN asset_id;');
+      raw.userVersion = 5;
+    }));
+
+    final old = (await db.vaultDao.pendingTransfers()).single;
+    expect(old.name, 'IMG_1.jpg', reason: 'v5 rows survive');
+    expect(old.assetId, isNull);
+    await db.vaultDao.enqueue(VaultTransfersCompanion.insert(
+      direction: 'up',
+      objectId: 'o2',
+      name: 'IMG_2.jpg',
+      localPath: '/x/IMG_2.jpg',
+      size: 3,
+      state: 'queued',
+      createdAt: 2,
+      updatedAt: 2,
+      assetId: const Value('asset-2'),
+    ));
+    expect((await db.vaultDao.pendingTransfers()).map((t) => t.assetId), [null, 'asset-2']);
     await db.close();
   });
 }

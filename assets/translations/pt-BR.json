@@ -966,6 +966,39 @@
     "phrase_store_hint": "O melhor é no papel ou num gerenciador de senhas. Quem tiver estas palavras pode abrir seu Drive.",
     "phrase_file_title": "Frase de recuperação do BIShare Drive",
     "phrase_file_body": "Estas 24 palavras abrem seu BIShare Drive se todas as outras formas de voltar a entrar se perderem. Quem as tiver também consegue abri-lo: guarde este arquivo offline ou num gerenciador de senhas e apague as outras cópias.",
-    "phrase_file_made": "Criado em {date}."
+    "phrase_file_made": "Criado em {date}.",
+    "view_phone": "Neste celular",
+    "backup_title": "Backup de fotos e vídeos",
+    "backup_off_body": "Desativado. Quando ativado, as fotos e vídeos deste celular vão para a pasta “{folder}” do seu Drive, criptografados antes no celular.",
+    "backup_left": {
+      "zero": "Tudo tem backup",
+      "one": "Falta {} foto ou vídeo",
+      "other": "Faltam {} fotos e vídeos"
+    },
+    "backup_counting": "Verificando o que tem backup…",
+    "backup_wifi_only": "Só no Wi-Fi",
+    "backup_wifi_only_body": "Sem dados móveis, exceto para as fotos que você enviar agora.",
+    "backup_now": "Fazer backup agora",
+    "backup_added_n": {
+      "zero": "Nada foi adicionado",
+      "one": "{} adicionado aos envios",
+      "other": "{} adicionados aos envios"
+    },
+    "backup_all_there": "Elas já estão no seu Drive.",
+    "backup_access_title": "Permita o acesso às fotos",
+    "backup_access_body": "Para mostrar quais fotos e vídeos têm backup, o BIShare precisa ler suas fotos. Nada é enviado até você ativar o backup ou escolher fotos para o backup.",
+    "backup_access_denied": "O BIShare não consegue ler suas fotos. Permita o acesso nas Configurações.",
+    "backup_allow": "Permitir acesso",
+    "backup_open_settings": "Abrir Configurações",
+    "backup_limited": "Só as fotos que você escolheu aparecem.",
+    "backup_choose_more": "Escolher mais",
+    "backup_empty": "Nenhuma foto ou vídeo",
+    "backup_empty_body": "As fotos e vídeos que você tirar com este celular aparecem aqui.",
+    "backup_state_done": "Com backup",
+    "backup_state_not": "Sem backup",
+    "backup_state_waiting": "Aguardando envio",
+    "backup_state_uploading": "Enviando",
+    "backup_state_failed": "Falha no envio",
+    "backup_folder": "Câmera"
   }
 }

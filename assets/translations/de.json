@@ -966,6 +966,39 @@
     "phrase_store_hint": "Am besten auf Papier oder in einem Passwortmanager. Wer diese Wörter hat, kann Ihr Drive öffnen.",
     "phrase_file_title": "Wiederherstellungsphrase für BIShare Drive",
     "phrase_file_body": "Diese 24 Wörter öffnen Ihr BIShare Drive, wenn alle anderen Wege zurück verloren sind. Wer sie hat, kann es ebenfalls öffnen: Bewahren Sie diese Datei offline oder in einem Passwortmanager auf und löschen Sie andere Kopien.",
-    "phrase_file_made": "Erstellt am {date}."
+    "phrase_file_made": "Erstellt am {date}.",
+    "view_phone": "Auf diesem Handy",
+    "backup_title": "Fotos & Videos sichern",
+    "backup_off_body": "Aus. Wenn aktiv, landen Fotos und Videos von diesem Handy im Ordner „{folder}“ Ihres Drives, zuvor auf dem Handy verschlüsselt.",
+    "backup_left": {
+      "zero": "Alles ist gesichert",
+      "one": "Noch {} Foto oder Video",
+      "other": "Noch {} Fotos und Videos"
+    },
+    "backup_counting": "Prüfe, was schon gesichert ist …",
+    "backup_wifi_only": "Nur über WLAN",
+    "backup_wifi_only_body": "Keine mobilen Daten, außer für Fotos, die Sie jetzt sichern.",
+    "backup_now": "Jetzt sichern",
+    "backup_added_n": {
+      "zero": "Nichts hinzugefügt",
+      "one": "{} zu den Uploads hinzugefügt",
+      "other": "{} zu den Uploads hinzugefügt"
+    },
+    "backup_all_there": "Diese sind schon in Ihrem Drive.",
+    "backup_access_title": "Zugriff auf Fotos erlauben",
+    "backup_access_body": "Um zu zeigen, welche Fotos und Videos gesichert sind, muss BIShare Ihre Fotos lesen können. Hochgeladen wird erst, wenn Sie die Sicherung einschalten oder Fotos zum Sichern auswählen.",
+    "backup_access_denied": "BIShare kann Ihre Fotos nicht lesen. Erlauben Sie den Zugriff in den Einstellungen.",
+    "backup_allow": "Zugriff erlauben",
+    "backup_open_settings": "Einstellungen öffnen",
+    "backup_limited": "Nur die von Ihnen ausgewählten Fotos werden angezeigt.",
+    "backup_choose_more": "Weitere auswählen",
+    "backup_empty": "Keine Fotos oder Videos",
+    "backup_empty_body": "Fotos und Videos, die Sie mit diesem Handy aufnehmen, erscheinen hier.",
+    "backup_state_done": "Gesichert",
+    "backup_state_not": "Nicht gesichert",
+    "backup_state_waiting": "Wartet auf Upload",
+    "backup_state_uploading": "Wird hochgeladen",
+    "backup_state_failed": "Upload fehlgeschlagen",
+    "backup_folder": "Kamera"
   }
 }

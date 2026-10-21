@@ -966,6 +966,39 @@
     "phrase_store_hint": "Paling aman di kertas atau di pengelola kata sandi. Siapa pun yang punya kata-kata ini bisa membuka Drive Anda.",
     "phrase_file_title": "Frasa pemulihan BIShare Drive",
     "phrase_file_body": "24 kata ini membuka BIShare Drive Anda bila semua cara masuk lain hilang. Siapa pun yang memilikinya juga bisa membukanya: simpan file ini secara offline atau di pengelola kata sandi, dan hapus salinan lainnya.",
-    "phrase_file_made": "Dibuat pada {date}."
+    "phrase_file_made": "Dibuat pada {date}.",
+    "view_phone": "Di ponsel ini",
+    "backup_title": "Cadangkan foto & video",
+    "backup_off_body": "Mati. Kalau dinyalakan, foto dan video dari ponsel ini masuk ke folder “{folder}” di Drive Anda, dienkripsi di ponsel dulu.",
+    "backup_left": {
+      "zero": "Semua sudah dicadangkan",
+      "one": "{} foto atau video lagi",
+      "other": "{} foto dan video lagi"
+    },
+    "backup_counting": "Memeriksa yang sudah dicadangkan…",
+    "backup_wifi_only": "Hanya Wi-Fi",
+    "backup_wifi_only_body": "Tanpa data seluler, kecuali foto yang Anda cadangkan sekarang.",
+    "backup_now": "Cadangkan sekarang",
+    "backup_added_n": {
+      "zero": "Tidak ada yang ditambahkan",
+      "one": "{} ditambahkan ke unggahan",
+      "other": "{} ditambahkan ke unggahan"
+    },
+    "backup_all_there": "Semuanya sudah ada di Drive Anda.",
+    "backup_access_title": "Izinkan akses ke foto",
+    "backup_access_body": "Untuk menunjukkan foto dan video mana yang sudah dicadangkan, BIShare perlu membaca foto Anda. Tidak ada yang diunggah sampai Anda menyalakan pencadangan atau memilih foto untuk dicadangkan.",
+    "backup_access_denied": "BIShare tidak bisa membaca foto Anda. Izinkan akses di Pengaturan.",
+    "backup_allow": "Izinkan akses",
+    "backup_open_settings": "Buka Pengaturan",
+    "backup_limited": "Hanya foto yang Anda pilih yang ditampilkan.",
+    "backup_choose_more": "Pilih lagi",
+    "backup_empty": "Tidak ada foto atau video",
+    "backup_empty_body": "Foto dan video yang Anda ambil dengan ponsel ini muncul di sini.",
+    "backup_state_done": "Sudah dicadangkan",
+    "backup_state_not": "Belum dicadangkan",
+    "backup_state_waiting": "Menunggu diunggah",
+    "backup_state_uploading": "Mengunggah",
+    "backup_state_failed": "Gagal diunggah",
+    "backup_folder": "Kamera"
   }
 }

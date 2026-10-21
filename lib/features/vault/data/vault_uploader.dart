@@ -58,6 +58,7 @@ class VaultUploader extends ChangeNotifier {
     VaultThumbs? thumbs,
     this.maximumSecurity = false,
     this.retryAfter,
+    this.mayStart,
   }) : _thumbs = thumbs,
        _api = api,
        _keys = keys,
@@ -90,6 +91,10 @@ class VaultUploader extends ChangeNotifier {
   /// The first pause before the queue tries again by itself after a lost
   /// connection; null: only when asked ([run]).
   final Duration? retryAfter;
+
+  /// Whether [t] may go up now (photo backup on mobile data waits when the
+  /// person asked for Wi-Fi only). Null: everything may.
+  Future<bool> Function(VaultTransfer t)? mayStart;
 
   static const _partRetries = 3;
 
@@ -164,6 +169,40 @@ class VaultUploader extends ChangeNotifier {
     return ids;
   }
 
+  /// Queue one photo or video of the device's library (photo backup) for
+  /// the folder [parent]; [name] is the library's own file name. When it is
+  /// done the asset is marked backed up. Returns the queue id.
+  Future<int> enqueueAsset(
+    File file, {
+    required String assetId,
+    required String name,
+    String? parent,
+  }) async {
+    final taken = {
+      for (final t in await _dao.pendingTransfers())
+        if (t.direction == 'up' && t.parent == parent) t.name.toLowerCase(),
+      for (final o in await _dao.liveChildren(parent)) o.name.toLowerCase(),
+    };
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return _dao.enqueue(
+      VaultTransfersCompanion.insert(
+        direction: 'up',
+        objectId: Rust.vaultGenerateObjectId(),
+        parent: Value(parent),
+        name: freeNameIn(
+          taken,
+          VaultMetaCodec.validName(name) ? name : 'photo',
+        ),
+        localPath: file.path,
+        size: await file.length(),
+        state: 'queued',
+        createdAt: now,
+        updatedAt: now,
+        assetId: Value(assetId),
+      ),
+    );
+  }
+
   /// Queue a whole folder from this device: its folders are made in the Drive
   /// first (with [files]), then every file inside is queued into the matching
   /// folder. Hidden files and folders (a leading dot) are left out. Returns
@@ -234,9 +273,14 @@ class VaultUploader extends ChangeNotifier {
   Future<void> _runAll() async {
     final epoch = _epoch;
     while (epoch == _epoch) {
-      final next = (await _dao.pendingTransfers())
-          .where((t) => t.direction == 'up' && !_cancelled.contains(t.id))
-          .firstOrNull;
+      VaultTransfer? next;
+      for (final t in await _dao.pendingTransfers()) {
+        if (t.direction != 'up' || _cancelled.contains(t.id)) continue;
+        final gate = mayStart;
+        if (gate != null && !await gate(t)) continue;
+        next = t;
+        break;
+      }
       if (next == null) {
         _nextRetry = null;
         return;
@@ -538,8 +582,16 @@ class VaultUploader extends ChangeNotifier {
     }
     await _cleanup(t);
     await _set(t.id, state: 'done', error: null);
+    await _markAsset(t, meta.hash);
     await _thumb(t, vaultId, meta);
     unawaited(_sync.pull().catchError((Object _) {}));
+  }
+
+  /// Photo backup: the library asset behind [t] is in the Drive now.
+  Future<void> _markAsset(VaultTransfer t, Uint8List? hash) async {
+    final asset = t.assetId;
+    if (asset == null || hash == null) return;
+    await _dao.markAssetBackedUp(asset, VaultMetaCodec.b64u(hash), t.objectId);
   }
 
   static bool _allSent(String? partsDone) {
@@ -625,6 +677,7 @@ class VaultUploader extends ChangeNotifier {
       );
     }
     await _set(t.id, state: 'done', error: null);
+    await _markAsset(t, hash);
     await _thumb(t, vaultId, meta);
     unawaited(_sync.pull().catchError((Object _) {}));
     return true;

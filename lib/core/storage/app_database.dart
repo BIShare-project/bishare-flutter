@@ -100,7 +100,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'bishare'));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   /// The ONE incremental upgrade path. Every future schema bump adds its own
   /// `if (from < N)` block below (from < 4, from < 5, …) — never edit or
@@ -133,6 +133,13 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(vaultTransfers);
         await m.createTable(vaultState);
         await m.createTable(vaultBackedUpAssets);
+      }
+      // From 5 only: a database made at 4 or before got the column with the
+      // table just above.
+      if (from == 5) {
+        // Photo backup (drive-plan.md task 5.2): which library asset an
+        // upload is.
+        await m.addColumn(vaultTransfers, vaultTransfers.assetId);
       }
     },
   );

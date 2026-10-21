@@ -6372,6 +6372,17 @@ class $VaultTransfersTable extends VaultTransfers
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _assetIdMeta = const VerificationMeta(
+    'assetId',
+  );
+  @override
+  late final GeneratedColumn<String> assetId = GeneratedColumn<String>(
+    'asset_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -6390,6 +6401,7 @@ class $VaultTransfersTable extends VaultTransfers
     error,
     createdAt,
     updatedAt,
+    assetId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -6512,6 +6524,12 @@ class $VaultTransfersTable extends VaultTransfers
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('asset_id')) {
+      context.handle(
+        _assetIdMeta,
+        assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
+      );
+    }
     return context;
   }
 
@@ -6585,6 +6603,10 @@ class $VaultTransfersTable extends VaultTransfers
         DriftSqlType.int,
         data['${effectivePrefix}updated_at'],
       )!,
+      assetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}asset_id'],
+      ),
     );
   }
 
@@ -6624,6 +6646,10 @@ class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
   final String? error;
   final int createdAt;
   final int updatedAt;
+
+  /// Photo backup (phase 5): the library asset this upload is, so it is
+  /// marked backed up when it is done (schemaVersion 6).
+  final String? assetId;
   const VaultTransfer({
     required this.id,
     required this.direction,
@@ -6641,6 +6667,7 @@ class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
     this.error,
     required this.createdAt,
     required this.updatedAt,
+    this.assetId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -6673,6 +6700,9 @@ class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
     }
     map['created_at'] = Variable<int>(createdAt);
     map['updated_at'] = Variable<int>(updatedAt);
+    if (!nullToAbsent || assetId != null) {
+      map['asset_id'] = Variable<String>(assetId);
+    }
     return map;
   }
 
@@ -6706,6 +6736,9 @@ class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
           : Value(error),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      assetId: assetId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(assetId),
     );
   }
 
@@ -6731,6 +6764,7 @@ class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
       error: serializer.fromJson<String?>(json['error']),
       createdAt: serializer.fromJson<int>(json['createdAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      assetId: serializer.fromJson<String?>(json['assetId']),
     );
   }
   @override
@@ -6753,6 +6787,7 @@ class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
       'error': serializer.toJson<String?>(error),
       'createdAt': serializer.toJson<int>(createdAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
+      'assetId': serializer.toJson<String?>(assetId),
     };
   }
 
@@ -6773,6 +6808,7 @@ class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
     Value<String?> error = const Value.absent(),
     int? createdAt,
     int? updatedAt,
+    Value<String?> assetId = const Value.absent(),
   }) => VaultTransfer(
     id: id ?? this.id,
     direction: direction ?? this.direction,
@@ -6790,6 +6826,7 @@ class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
     error: error.present ? error.value : this.error,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    assetId: assetId.present ? assetId.value : this.assetId,
   );
   VaultTransfer copyWithCompanion(VaultTransfersCompanion data) {
     return VaultTransfer(
@@ -6811,6 +6848,7 @@ class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
       error: data.error.present ? data.error.value : this.error,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      assetId: data.assetId.present ? data.assetId.value : this.assetId,
     );
   }
 
@@ -6832,7 +6870,8 @@ class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
           ..write('bytesDone: $bytesDone, ')
           ..write('error: $error, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('assetId: $assetId')
           ..write(')'))
         .toString();
   }
@@ -6855,6 +6894,7 @@ class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
     error,
     createdAt,
     updatedAt,
+    assetId,
   );
   @override
   bool operator ==(Object other) =>
@@ -6875,7 +6915,8 @@ class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
           other.bytesDone == this.bytesDone &&
           other.error == this.error &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.assetId == this.assetId);
 }
 
 class VaultTransfersCompanion extends UpdateCompanion<VaultTransfer> {
@@ -6895,6 +6936,7 @@ class VaultTransfersCompanion extends UpdateCompanion<VaultTransfer> {
   final Value<String?> error;
   final Value<int> createdAt;
   final Value<int> updatedAt;
+  final Value<String?> assetId;
   const VaultTransfersCompanion({
     this.id = const Value.absent(),
     this.direction = const Value.absent(),
@@ -6912,6 +6954,7 @@ class VaultTransfersCompanion extends UpdateCompanion<VaultTransfer> {
     this.error = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.assetId = const Value.absent(),
   });
   VaultTransfersCompanion.insert({
     this.id = const Value.absent(),
@@ -6930,6 +6973,7 @@ class VaultTransfersCompanion extends UpdateCompanion<VaultTransfer> {
     this.error = const Value.absent(),
     required int createdAt,
     required int updatedAt,
+    this.assetId = const Value.absent(),
   }) : direction = Value(direction),
        objectId = Value(objectId),
        name = Value(name),
@@ -6955,6 +6999,7 @@ class VaultTransfersCompanion extends UpdateCompanion<VaultTransfer> {
     Expression<String>? error,
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
+    Expression<String>? assetId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -6973,6 +7018,7 @@ class VaultTransfersCompanion extends UpdateCompanion<VaultTransfer> {
       if (error != null) 'error': error,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (assetId != null) 'asset_id': assetId,
     });
   }
 
@@ -6993,6 +7039,7 @@ class VaultTransfersCompanion extends UpdateCompanion<VaultTransfer> {
     Value<String?>? error,
     Value<int>? createdAt,
     Value<int>? updatedAt,
+    Value<String?>? assetId,
   }) {
     return VaultTransfersCompanion(
       id: id ?? this.id,
@@ -7011,6 +7058,7 @@ class VaultTransfersCompanion extends UpdateCompanion<VaultTransfer> {
       error: error ?? this.error,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      assetId: assetId ?? this.assetId,
     );
   }
 
@@ -7065,6 +7113,9 @@ class VaultTransfersCompanion extends UpdateCompanion<VaultTransfer> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(updatedAt.value);
     }
+    if (assetId.present) {
+      map['asset_id'] = Variable<String>(assetId.value);
+    }
     return map;
   }
 
@@ -7086,7 +7137,8 @@ class VaultTransfersCompanion extends UpdateCompanion<VaultTransfer> {
           ..write('bytesDone: $bytesDone, ')
           ..write('error: $error, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('assetId: $assetId')
           ..write(')'))
         .toString();
   }
@@ -10802,6 +10854,7 @@ typedef $$VaultTransfersTableCreateCompanionBuilder =
       Value<String?> error,
       required int createdAt,
       required int updatedAt,
+      Value<String?> assetId,
     });
 typedef $$VaultTransfersTableUpdateCompanionBuilder =
     VaultTransfersCompanion Function({
@@ -10821,6 +10874,7 @@ typedef $$VaultTransfersTableUpdateCompanionBuilder =
       Value<String?> error,
       Value<int> createdAt,
       Value<int> updatedAt,
+      Value<String?> assetId,
     });
 
 class $$VaultTransfersTableFilterComposer
@@ -10909,6 +10963,11 @@ class $$VaultTransfersTableFilterComposer
 
   ColumnFilters<int> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get assetId => $composableBuilder(
+    column: $table.assetId,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -11001,6 +11060,11 @@ class $$VaultTransfersTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get assetId => $composableBuilder(
+    column: $table.assetId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$VaultTransfersTableAnnotationComposer
@@ -11061,6 +11125,9 @@ class $$VaultTransfersTableAnnotationComposer
 
   GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get assetId =>
+      $composableBuilder(column: $table.assetId, builder: (column) => column);
 }
 
 class $$VaultTransfersTableTableManager
@@ -11112,6 +11179,7 @@ class $$VaultTransfersTableTableManager
                 Value<String?> error = const Value.absent(),
                 Value<int> createdAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
+                Value<String?> assetId = const Value.absent(),
               }) => VaultTransfersCompanion(
                 id: id,
                 direction: direction,
@@ -11129,6 +11197,7 @@ class $$VaultTransfersTableTableManager
                 error: error,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                assetId: assetId,
               ),
           createCompanionCallback:
               ({
@@ -11148,6 +11217,7 @@ class $$VaultTransfersTableTableManager
                 Value<String?> error = const Value.absent(),
                 required int createdAt,
                 required int updatedAt,
+                Value<String?> assetId = const Value.absent(),
               }) => VaultTransfersCompanion.insert(
                 id: id,
                 direction: direction,
@@ -11165,6 +11235,7 @@ class $$VaultTransfersTableTableManager
                 error: error,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                assetId: assetId,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

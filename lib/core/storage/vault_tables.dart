@@ -77,6 +77,10 @@ class VaultTransfers extends Table {
   TextColumn get error => text().nullable()();
   IntColumn get createdAt => integer()();
   IntColumn get updatedAt => integer()();
+
+  /// Photo backup (phase 5): the library asset this upload is, so it is
+  /// marked backed up when it is done (schemaVersion 6).
+  TextColumn get assetId => text().nullable()();
 }
 
 /// Small facts about the vault on this device: its id, the last sequence
@@ -312,6 +316,49 @@ class VaultDao extends DatabaseAccessor<AppDatabase> with _$VaultDaoMixin {
   )..where((t) => t.state.isIn(['done', 'cancelled']))).go();
 
   // ---- photo backup ----
+
+  /// The library assets whose content is in the Drive now (a live file with
+  /// the same SHA-256). A copy deleted from the Drive, or in its trash, does
+  /// not count: that photo goes up again.
+  Stream<Set<String>> watchBackedUpAssetIds() => _backedUp().watch().map(
+    (rows) => {for (final r in rows) r.read<String>('asset_id')},
+  );
+
+  Future<Set<String>> backedUpAssetIds() async => {
+    for (final r in await _backedUp().get()) r.read<String>('asset_id'),
+  };
+
+  Selectable<QueryRow> _backedUp() => customSelect(
+    'SELECT a.asset_id FROM vault_backed_up_assets a WHERE EXISTS '
+    '(SELECT 1 FROM vault_objects o WHERE o.hash = a.hash '
+    "AND o.kind = 'file' AND o.trashed_at IS NULL)",
+    readsFrom: {vaultBackedUpAssets, vaultObjects},
+  );
+
+  /// A live file (not in the trash) with this content.
+  Future<VaultObject?> liveFileWithHash(String hash) =>
+      (select(vaultObjects)
+            ..where(
+              (t) =>
+                  t.hash.equals(hash) &
+                  t.kind.equals('file') &
+                  t.trashedAt.isNull(),
+            )
+            ..limit(1))
+          .getSingleOrNull();
+
+  /// The latest upload of each library asset: its state ('queued', …,
+  /// 'done', 'failed').
+  Stream<Map<String, String>> watchAssetUploads() =>
+      (select(vaultTransfers)
+            ..where((t) => t.assetId.isNotNull())
+            ..orderBy([(t) => OrderingTerm.asc(t.id)]))
+          .watch()
+          .map((rows) => {for (final t in rows) t.assetId!: t.state});
+
+  Future<void> deleteTransfers(List<int> ids) =>
+      (delete(vaultTransfers)..where((t) => t.id.isIn(ids))).go();
+
   Future<bool> assetBackedUp(String assetId) async =>
       (await (select(
         vaultBackedUpAssets,

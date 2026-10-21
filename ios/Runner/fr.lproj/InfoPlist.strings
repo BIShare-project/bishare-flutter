@@ -7,4 +7,4 @@
 "NSLocalNetworkUsageDescription" = "BIShare finds nearby devices and transfers files over your local network.";
 "NSMicrophoneUsageDescription" = "BIShare records a short voice message so you can send it to nearby devices.";
 "NSPhotoLibraryAddUsageDescription" = "BIShare saves received photos and videos to your photo library.";
-"NSPhotoLibraryUsageDescription" = "BIShare saves received photos and videos to a BIShare album in your photo library.";
+"NSPhotoLibraryUsageDescription" = "BIShare saves received photos and videos to a BIShare album in your photo library, and, when you turn on Drive photo backup, reads your photos to back them up, encrypted on this device first.";

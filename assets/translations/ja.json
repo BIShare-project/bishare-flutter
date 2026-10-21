@@ -961,6 +961,37 @@
     "phrase_store_hint": "紙かパスワードマネージャに保管するのがおすすめです。この単語を持っている人は誰でもDriveを開けます。",
     "phrase_file_title": "BIShare Driveのリカバリーフレーズ",
     "phrase_file_body": "この24個の単語は、ほかのすべての方法を失ったときにBIShare Driveを開けます。持っている人は誰でも開けるため、このファイルはオフラインかパスワードマネージャに保管し、ほかのコピーは削除してください。",
-    "phrase_file_made": "{date}に作成。"
+    "phrase_file_made": "{date}に作成。",
+    "view_phone": "このスマホ",
+    "backup_title": "写真とビデオのバックアップ",
+    "backup_off_body": "オフです。オンにすると、このスマホの写真とビデオがDriveの「{folder}」フォルダに入ります。先にスマホ上で暗号化されます。",
+    "backup_left": {
+      "zero": "すべてバックアップ済み",
+      "other": "残り{}件"
+    },
+    "backup_counting": "バックアップ済みか確認中…",
+    "backup_wifi_only": "Wi-Fiのみ",
+    "backup_wifi_only_body": "モバイルデータは使いません。今すぐバックアップする写真は除きます。",
+    "backup_now": "今すぐバックアップ",
+    "backup_added_n": {
+      "zero": "追加された項目はありません",
+      "other": "{}件をアップロードに追加しました"
+    },
+    "backup_all_there": "すでにDriveにあります。",
+    "backup_access_title": "写真へのアクセスを許可",
+    "backup_access_body": "どの写真とビデオがバックアップ済みかを表示するには、BIShareが写真を読み取る必要があります。バックアップをオンにするか、バックアップする写真を選ぶまで、何もアップロードされません。",
+    "backup_access_denied": "BIShareは写真を読み取れません。設定でアクセスを許可してください。",
+    "backup_allow": "アクセスを許可",
+    "backup_open_settings": "設定を開く",
+    "backup_limited": "選択した写真だけが表示されています。",
+    "backup_choose_more": "さらに選択",
+    "backup_empty": "写真やビデオがありません",
+    "backup_empty_body": "このスマホで撮った写真とビデオがここに表示されます。",
+    "backup_state_done": "バックアップ済み",
+    "backup_state_not": "未バックアップ",
+    "backup_state_waiting": "アップロード待ち",
+    "backup_state_uploading": "アップロード中",
+    "backup_state_failed": "アップロード失敗",
+    "backup_folder": "カメラ"
   }
 }

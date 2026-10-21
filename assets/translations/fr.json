@@ -966,6 +966,39 @@
     "phrase_store_hint": "Le mieux : sur papier ou dans un gestionnaire de mots de passe. Quiconque a ces mots peut ouvrir votre Drive.",
     "phrase_file_title": "Phrase de récupération BIShare Drive",
     "phrase_file_body": "Ces 24 mots ouvrent votre BIShare Drive si tous les autres moyens de revenir sont perdus. Quiconque les a peut aussi l’ouvrir : gardez ce fichier hors ligne ou dans un gestionnaire de mots de passe, et supprimez les autres copies.",
-    "phrase_file_made": "Créé le {date}."
+    "phrase_file_made": "Créé le {date}.",
+    "view_phone": "Sur ce téléphone",
+    "backup_title": "Sauvegarder photos et vidéos",
+    "backup_off_body": "Désactivée. Une fois activée, les photos et vidéos de ce téléphone vont dans le dossier « {folder} » de votre Drive, chiffrées d’abord sur le téléphone.",
+    "backup_left": {
+      "zero": "Tout est sauvegardé",
+      "one": "Encore {} photo ou vidéo",
+      "other": "Encore {} photos et vidéos"
+    },
+    "backup_counting": "Vérification de ce qui est sauvegardé…",
+    "backup_wifi_only": "Wi-Fi uniquement",
+    "backup_wifi_only_body": "Pas de données mobiles, sauf pour les photos que vous sauvegardez maintenant.",
+    "backup_now": "Sauvegarder maintenant",
+    "backup_added_n": {
+      "zero": "Rien n’a été ajouté",
+      "one": "{} ajouté aux envois",
+      "other": "{} ajoutés aux envois"
+    },
+    "backup_all_there": "Elles sont déjà dans votre Drive.",
+    "backup_access_title": "Autoriser l’accès aux photos",
+    "backup_access_body": "Pour indiquer quelles photos et vidéos sont sauvegardées, BIShare doit pouvoir lire vos photos. Rien n’est envoyé tant que vous n’activez pas la sauvegarde ou ne choisissez pas de photos à sauvegarder.",
+    "backup_access_denied": "BIShare ne peut pas lire vos photos. Autorisez l’accès dans les paramètres.",
+    "backup_allow": "Autoriser l’accès",
+    "backup_open_settings": "Ouvrir les paramètres",
+    "backup_limited": "Seules les photos que vous avez choisies sont affichées.",
+    "backup_choose_more": "En choisir d’autres",
+    "backup_empty": "Aucune photo ni vidéo",
+    "backup_empty_body": "Les photos et vidéos prises avec ce téléphone apparaissent ici.",
+    "backup_state_done": "Sauvegardée",
+    "backup_state_not": "Non sauvegardée",
+    "backup_state_waiting": "En attente d’envoi",
+    "backup_state_uploading": "Envoi en cours",
+    "backup_state_failed": "Échec de l’envoi",
+    "backup_folder": "Appareil photo"
   }
 }

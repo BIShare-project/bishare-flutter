@@ -5,7 +5,9 @@ import '../../../../core/storage/app_database.dart';
 import '../../../../core/storage/vault_tables.dart';
 
 /// Where the Drive screen is looking.
-enum DriveView { files, recent, media, documents, audio, trash }
+/// [phone] is the phone's own photo library (backup, task 5.8), not the
+/// Drive's index: only on phones and tablets that have one.
+enum DriveView { files, recent, media, phone, documents, audio, trash }
 
 enum DriveSort { name, modified, size, kind }
 
@@ -202,6 +204,7 @@ class DriveController extends ChangeNotifier {
         DriveView.media => _dao.watchFilesOfType(
           prefixes: ['image/', 'video/'],
         ),
+        DriveView.phone => Stream.value(const <VaultObject>[]),
         DriveView.documents => _dao.watchFilesOfType(
           prefixes: ['text/'],
           types: driveDocumentTypes,

@@ -18,12 +18,14 @@ import '../../../settings/presentation/widgets/glyph.dart';
 import '../../data/vault_account.dart';
 import '../../data/vault_api.dart';
 import '../../data/vault_downloads.dart';
+import '../../data/vault_photo_backup.dart';
 import '../../data/vault_sync.dart';
 import '../../data/vault_uploader.dart';
 import '../vault_sign_in_buttons.dart';
 import 'drive_actions.dart';
 import 'drive_controller.dart';
 import 'drive_format.dart';
+import 'drive_phone_view.dart';
 import 'drive_widgets.dart';
 
 /// BIShare Drive's file manager (drive-plan.md tasks 4.7, 4.8, 4.10): the
@@ -47,6 +49,11 @@ class _DrivePageState extends State<DrivePage> {
   final VaultSync _sync = getIt<VaultSync>();
   final VaultUploader _uploader = getIt<VaultUploader>();
   final VaultDownloads _downloads = getIt<VaultDownloads>();
+
+  /// Photo backup, on phones and tablets with a photo library.
+  final VaultPhotoBackup? _photos = getIt.isRegistered<VaultPhotoBackup>()
+      ? getIt<VaultPhotoBackup>()
+      : null;
   late final DriveController _ctrl = DriveController(
     _dao,
     prefs: getIt<SharedPreferences>(),
@@ -75,6 +82,12 @@ class _DrivePageState extends State<DrivePage> {
   /// another device closes the path down to what is left.
   StreamSubscription<List<VaultObject>>? _pathSub;
   String _pathKey = '';
+
+  /// A photo library to back up (iOS, Android).
+  bool get _library => _photos?.available ?? false;
+
+  /// "On this phone": the phone's library, not the Drive's index.
+  bool get _onPhone => _library && _ctrl.view == DriveView.phone;
 
   static bool get _desktop =>
       Platform.isMacOS || Platform.isWindows || Platform.isLinux;
@@ -574,7 +587,7 @@ class _DrivePageState extends State<DrivePage> {
           icon: AppIcons.uploadFile,
           onPressed: () => _act.addMenu(),
         ),
-      if (!wide)
+      if (!wide && !_onPhone)
         AppIconButton(
           icon: AppIcons.squareCheck,
           onPressed: () {
@@ -597,9 +610,11 @@ class _DrivePageState extends State<DrivePage> {
           actions: _headerActions(wide: false),
         ),
         if (!_ctrl.selecting && _ctrl.path.isEmpty) ?widget.segment,
-        if (!_ctrl.selecting) DriveViewChips(ctrl: _ctrl),
-        DriveToolbar(ctrl: _ctrl, search: _search, searchFocus: _searchFocus),
-        DriveBreadcrumb(ctrl: _ctrl),
+        if (!_ctrl.selecting) DriveViewChips(ctrl: _ctrl, phone: _library),
+        if (!_onPhone) ...[
+          DriveToolbar(ctrl: _ctrl, search: _search, searchFocus: _searchFocus),
+          DriveBreadcrumb(ctrl: _ctrl),
+        ],
         Expanded(child: _queueAndContent()),
         if (_ctrl.selecting) DriveSelectionBar(actions: _selectionActions()),
       ],
@@ -618,6 +633,7 @@ class _DrivePageState extends State<DrivePage> {
                 listenable: Listenable.merge([_downloads, _uploader]),
                 builder: (context, _) => DriveSidebar(
                   ctrl: _ctrl,
+                  phone: _library,
                   storage: _storageCard(),
                   transfersBusy: _downloads.busy,
                   onTransfers: () => context.push('/drive-transfers'),
@@ -659,12 +675,14 @@ class _DrivePageState extends State<DrivePage> {
                         ..._headerActions(wide: true),
                       ],
                     ),
-                    DriveBreadcrumb(ctrl: _ctrl),
-                    DriveToolbar(
-                      ctrl: _ctrl,
-                      search: _search,
-                      searchFocus: _searchFocus,
-                    ),
+                    if (!_onPhone) ...[
+                      DriveBreadcrumb(ctrl: _ctrl),
+                      DriveToolbar(
+                        ctrl: _ctrl,
+                        search: _search,
+                        searchFocus: _searchFocus,
+                      ),
+                    ],
                     Expanded(child: _queueAndContent()),
                     if (_ctrl.selecting)
                       DriveSelectionBar(actions: _selectionActions()),
@@ -698,7 +716,11 @@ class _DrivePageState extends State<DrivePage> {
     Widget content = Column(
       children: [
         _UploadStrip(uploader: _uploader, transfers: _transfers),
-        Expanded(child: _content()),
+        Expanded(
+          child: _onPhone
+              ? DrivePhoneView(backup: _photos!, dao: _dao)
+              : _content(),
+        ),
       ],
     );
     if (_desktop) {
@@ -943,7 +965,7 @@ class _DrivePageState extends State<DrivePage> {
               'vault.empty_recent'.tr(),
               'vault.empty_view_body'.tr(),
             ),
-            DriveView.media => (
+            DriveView.media || DriveView.phone => (
               AppIcons.image,
               'vault.empty_media'.tr(),
               'vault.empty_view_body'.tr(),

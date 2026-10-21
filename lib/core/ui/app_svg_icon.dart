@@ -11,6 +11,8 @@ class AppIcons {
   AppIcons._();
 
   static const bookmark = 'bookmark';
+  static const cloudDone = 'cloud-done';
+  static const cloudOff = 'cloud-off';
   static const cloudSync = 'cloud-sync';
   static const comment = 'comment';
   static const copyDuplicate = 'copy-duplicate';

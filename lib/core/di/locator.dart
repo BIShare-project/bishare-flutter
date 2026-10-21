@@ -37,6 +37,8 @@ import '../../features/vault/data/vault_downloader.dart';
 import '../../features/vault/data/vault_downloads.dart';
 import '../../features/vault/data/vault_files.dart';
 import '../../features/vault/data/vault_keys.dart';
+import '../../features/vault/data/vault_photo_backup.dart';
+import '../../features/vault/data/vault_photo_library.dart';
 import '../../features/vault/data/vault_shares.dart';
 import '../../features/vault/data/vault_sync.dart';
 import '../../features/vault/data/vault_thumbs.dart';
@@ -228,6 +230,7 @@ Future<void> setupLocator() async {
         // Before the index goes: nothing may write the old account's
         // names into it again, or keep sending its files.
         onForget: () async {
+          await getIt<VaultPhotoBackup>().stop();
           await getIt<VaultSync>().stop();
           await getIt<VaultUploader>().stop();
           await getIt<VaultThumbs>().clear();
@@ -291,6 +294,18 @@ Future<void> setupLocator() async {
         dao: db.vaultDao,
         sync: getIt<VaultSync>(),
       ),
+    )
+    ..registerLazySingleton<PhotoLibrary>(DevicePhotoLibrary.new)
+    ..registerLazySingleton<VaultPhotoBackup>(
+      () => VaultPhotoBackup(
+        library: getIt<PhotoLibrary>(),
+        dao: db.vaultDao,
+        uploader: getIt<VaultUploader>(),
+        files: getIt<VaultFiles>(),
+        keys: getIt<VaultKeyStore>(),
+        prefs: getIt<SharedPreferences>(),
+        folderName: () => 'vault.backup_folder'.tr(),
+      ),
     );
 
   // Drive's start check (task 3.6): once Drive is visible on this device,
@@ -301,10 +316,20 @@ Future<void> setupLocator() async {
     featureFlags.removeListener(vaultStart);
     unawaited(
       getIt<VaultAccount>().load().then((_) {
-        if (getIt<VaultAccount>().status != VaultStatus.ready) return;
+        final account = getIt<VaultAccount>();
+        // Photo backup follows the key: on whenever this device has it.
+        void backup() {
+          if (account.status == VaultStatus.ready) {
+            unawaited(getIt<VaultPhotoBackup>().start());
+          }
+        }
+
+        account.addListener(backup);
+        if (account.status != VaultStatus.ready) return;
         // The index follows the server, and uploads left by the last run go on.
         unawaited(getIt<VaultSync>().start());
         unawaited(getIt<VaultUploader>().run());
+        backup();
       }),
     );
   }

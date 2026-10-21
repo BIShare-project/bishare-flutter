@@ -961,6 +961,37 @@
     "phrase_store_hint": "종이나 비밀번호 관리자에 보관하는 것이 가장 좋습니다. 이 단어를 가진 사람은 누구나 Drive를 열 수 있습니다.",
     "phrase_file_title": "BIShare Drive 복구 문구",
     "phrase_file_body": "이 24개 단어는 다른 모든 방법을 잃었을 때 BIShare Drive를 엽니다. 이 단어를 가진 사람도 열 수 있으니, 이 파일은 오프라인이나 비밀번호 관리자에 보관하고 다른 사본은 삭제하세요.",
-    "phrase_file_made": "{date}에 생성."
+    "phrase_file_made": "{date}에 생성.",
+    "view_phone": "이 휴대폰",
+    "backup_title": "사진 및 동영상 백업",
+    "backup_off_body": "꺼져 있습니다. 켜면 이 휴대폰의 사진과 동영상이 Drive의 ‘{folder}’ 폴더로 들어갑니다. 먼저 휴대폰에서 암호화됩니다.",
+    "backup_left": {
+      "zero": "모두 백업됨",
+      "other": "{}개 남음"
+    },
+    "backup_counting": "백업 여부 확인 중…",
+    "backup_wifi_only": "Wi-Fi에서만",
+    "backup_wifi_only_body": "모바일 데이터를 쓰지 않습니다. 지금 백업하는 사진은 예외입니다.",
+    "backup_now": "지금 백업",
+    "backup_added_n": {
+      "zero": "추가된 항목 없음",
+      "other": "{}개를 업로드에 추가했습니다"
+    },
+    "backup_all_there": "이미 Drive에 있습니다.",
+    "backup_access_title": "사진 접근 허용",
+    "backup_access_body": "어떤 사진과 동영상이 백업되었는지 보여 주려면 BIShare가 사진을 읽어야 합니다. 백업을 켜거나 백업할 사진을 고르기 전에는 아무것도 업로드되지 않습니다.",
+    "backup_access_denied": "BIShare가 사진을 읽을 수 없습니다. 설정에서 접근을 허용하세요.",
+    "backup_allow": "접근 허용",
+    "backup_open_settings": "설정 열기",
+    "backup_limited": "선택한 사진만 표시됩니다.",
+    "backup_choose_more": "더 선택",
+    "backup_empty": "사진이나 동영상이 없습니다",
+    "backup_empty_body": "이 휴대폰으로 찍은 사진과 동영상이 여기에 표시됩니다.",
+    "backup_state_done": "백업됨",
+    "backup_state_not": "백업 안 됨",
+    "backup_state_waiting": "업로드 대기 중",
+    "backup_state_uploading": "업로드 중",
+    "backup_state_failed": "업로드 실패",
+    "backup_folder": "카메라"
   }
 }

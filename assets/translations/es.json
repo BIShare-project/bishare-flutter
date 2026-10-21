@@ -966,6 +966,39 @@
     "phrase_store_hint": "Mejor en papel o en un gestor de contraseñas. Quien tenga estas palabras puede abrir tu Drive.",
     "phrase_file_title": "Frase de recuperación de BIShare Drive",
     "phrase_file_body": "Estas 24 palabras abren tu BIShare Drive si se pierden todas las demás formas de volver a entrar. Quien las tenga también puede abrirlo: guarda este archivo sin conexión o en un gestor de contraseñas y borra las demás copias.",
-    "phrase_file_made": "Creado el {date}."
+    "phrase_file_made": "Creado el {date}.",
+    "view_phone": "En este teléfono",
+    "backup_title": "Copia de fotos y vídeos",
+    "backup_off_body": "Desactivada. Al activarla, las fotos y vídeos de este teléfono van a la carpeta «{folder}» de tu Drive, cifrados antes en el teléfono.",
+    "backup_left": {
+      "zero": "Todo tiene copia",
+      "one": "Falta {} foto o vídeo",
+      "other": "Faltan {} fotos y vídeos"
+    },
+    "backup_counting": "Comprobando qué tiene copia…",
+    "backup_wifi_only": "Solo con Wi-Fi",
+    "backup_wifi_only_body": "Sin datos móviles, salvo para las fotos que copies ahora.",
+    "backup_now": "Copiar ahora",
+    "backup_added_n": {
+      "zero": "No se añadió nada",
+      "one": "{} añadido a las subidas",
+      "other": "{} añadidos a las subidas"
+    },
+    "backup_all_there": "Ya están en tu Drive.",
+    "backup_access_title": "Permite el acceso a tus fotos",
+    "backup_access_body": "Para mostrar qué fotos y vídeos tienen copia, BIShare necesita leer tus fotos. No se sube nada hasta que activas la copia o eliges fotos para copiar.",
+    "backup_access_denied": "BIShare no puede leer tus fotos. Permite el acceso en Ajustes.",
+    "backup_allow": "Permitir acceso",
+    "backup_open_settings": "Abrir Ajustes",
+    "backup_limited": "Solo se muestran las fotos que elegiste.",
+    "backup_choose_more": "Elegir más",
+    "backup_empty": "No hay fotos ni vídeos",
+    "backup_empty_body": "Las fotos y vídeos que hagas con este teléfono aparecen aquí.",
+    "backup_state_done": "Con copia",
+    "backup_state_not": "Sin copia",
+    "backup_state_waiting": "Esperando para subir",
+    "backup_state_uploading": "Subiendo",
+    "backup_state_failed": "Error al subir",
+    "backup_folder": "Cámara"
   }
 }

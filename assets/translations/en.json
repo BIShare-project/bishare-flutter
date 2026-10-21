@@ -966,6 +966,39 @@
     "phrase_store_hint": "Best kept on paper or in a password manager. Anyone with these words can open your Drive.",
     "phrase_file_title": "BIShare Drive recovery phrase",
     "phrase_file_body": "These 24 words open your BIShare Drive if every other way back in is lost. Anyone who has them can open it too: keep this file offline or in a password manager, and delete other copies.",
-    "phrase_file_made": "Made on {date}."
+    "phrase_file_made": "Made on {date}.",
+    "backup_folder": "Camera",
+    "view_phone": "On this phone",
+    "backup_title": "Back up photos & videos",
+    "backup_off_body": "Off. When on, photos and videos from this phone go to the “{folder}” folder of your Drive, encrypted on the phone first.",
+    "backup_left": {
+      "zero": "Everything is backed up",
+      "one": "{} photo or video left",
+      "other": "{} photos and videos left"
+    },
+    "backup_counting": "Checking what is backed up…",
+    "backup_wifi_only": "Wi-Fi only",
+    "backup_wifi_only_body": "No mobile data, except for photos you back up now.",
+    "backup_now": "Back up now",
+    "backup_added_n": {
+      "zero": "Nothing added",
+      "one": "{} added to uploads",
+      "other": "{} added to uploads"
+    },
+    "backup_all_there": "Those are already in your Drive.",
+    "backup_access_title": "Allow access to your photos",
+    "backup_access_body": "To show which photos and videos are backed up, BIShare needs to read your photos. Nothing is uploaded until you turn backup on or choose photos to back up.",
+    "backup_access_denied": "BIShare can’t read your photos. Allow access in Settings.",
+    "backup_allow": "Allow access",
+    "backup_open_settings": "Open Settings",
+    "backup_limited": "Only the photos you chose are shown.",
+    "backup_choose_more": "Choose more",
+    "backup_empty": "No photos or videos",
+    "backup_empty_body": "Photos and videos you take with this phone show up here.",
+    "backup_state_done": "Backed up",
+    "backup_state_not": "Not backed up",
+    "backup_state_waiting": "Waiting to upload",
+    "backup_state_uploading": "Uploading",
+    "backup_state_failed": "Upload failed"
   }
 }

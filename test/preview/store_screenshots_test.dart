@@ -56,6 +56,8 @@ import 'package:bishare/features/vault/data/vault_account.dart';
 import 'package:bishare/features/vault/data/vault_downloads.dart';
 import 'package:bishare/features/vault/data/vault_key_copy.dart';
 import 'package:bishare/features/vault/data/vault_sync.dart';
+import 'package:bishare/features/vault/data/vault_photo_backup.dart';
+import 'package:bishare/features/vault/data/vault_photo_library.dart';
 import 'package:bishare/features/vault/data/vault_thumbs.dart';
 import 'package:bishare/features/vault/data/vault_uploader.dart';
 import 'package:bishare/features/vault/presentation/drive/drive_controller.dart';
@@ -187,6 +189,42 @@ class _Downloads extends Mock implements VaultDownloads {}
 
 class _Thumbs extends Mock implements VaultThumbs {}
 
+class _Backup extends Mock implements VaultPhotoBackup {}
+
+/// A phone's camera roll: 30 photos and videos, newest first.
+class _Library implements PhotoLibrary {
+  static final _assets = [
+    for (var i = 0; i < 30; i++)
+      PhotoAsset(
+        id: 'a$i',
+        video: i % 7 == 3,
+        taken: DateTime(2026, 10, 20).subtract(Duration(hours: 5 * i)),
+        durationS: i % 7 == 3 ? 14 + 9 * i : 0,
+      ),
+  ];
+
+  @override
+  bool get available => true;
+  @override
+  Future<PhotoAccess> access({bool ask = false}) async => PhotoAccess.full;
+  @override
+  Future<int> count() async => _assets.length;
+  @override
+  Future<List<PhotoAsset>> page(int page, int size) async =>
+      _assets.skip(page * size).take(size).toList();
+  @override
+  Future<({File file, String name})?> original(PhotoAsset asset) async => null;
+  @override
+  Future<Uint8List?> thumbnail(PhotoAsset asset, int size) async =>
+      _thumb(int.parse(asset.id.substring(1)));
+  @override
+  Stream<void> get changes => const Stream.empty();
+  @override
+  Future<void> openSettings() async {}
+  @override
+  Future<void> chooseMore() async {}
+}
+
 class _Db extends Mock implements AppDatabase {}
 
 /// The index as plain lists: a drift stream inside a widget test never settles.
@@ -309,8 +347,9 @@ Uint8List _thumb(int seed) {
 }
 
 /// Drive with the key on this device, 1.8 GB of the free 5 GB used, and the
-/// index above; registered over whatever the previous preset left.
-void _registerDrive(String self) {
+/// index above; registered over whatever the previous preset left. On a
+/// [phone], photo backup is on with most of the camera roll backed up.
+void _registerDrive(String self, {required bool phone}) {
   final objects = _driveObjects();
   final live = objects.where((o) => o.trashedAt == null).toList();
   final dao = _Dao();
@@ -351,6 +390,15 @@ void _registerDrive(String self) {
     }),
   );
   when(() => dao.watchTransfers()).thenAnswer((_) => Stream.value(const []));
+  when(() => dao.watchBackedUpAssetIds()).thenAnswer(
+    (_) => Stream.value({
+      for (var i = 6; i < 30; i++)
+        if (i != 11) 'a$i',
+    }),
+  );
+  when(() => dao.watchAssetUploads()).thenAnswer(
+    (_) => Stream.value({'a2': 'uploading', 'a3': 'queued', 'a4': 'queued'}),
+  );
   when(
     () => dao.liveFolders(),
   ).thenAnswer((_) async => live.where((o) => o.kind == 'dir').toList());
@@ -413,7 +461,21 @@ void _registerDrive(String self) {
   when(() => thumbs.load(any())).thenAnswer(
     (i) async => _thumb((i.positionalArguments.first as VaultObject).seq),
   );
+  final backup = _Backup();
+  final library = _Library();
+  when(() => backup.available).thenReturn(phone);
+  when(() => backup.library).thenReturn(library);
+  when(() => backup.access).thenReturn(PhotoAccess.full);
+  when(() => backup.on).thenReturn(true);
+  when(() => backup.wifiOnly).thenReturn(true);
+  when(() => backup.scanning).thenReturn(false);
+  when(() => backup.left).thenReturn(7);
+  when(() => backup.total).thenReturn(30);
+  when(
+    () => backup.refreshAccess(ask: any(named: 'ask')),
+  ).thenAnswer((_) async {});
   getIt
+    ..registerSingleton<VaultPhotoBackup>(backup)
     ..registerSingleton<AppDatabase>(db)
     ..registerSingleton<VaultAccount>(account)
     ..registerSingleton<VaultSync>(sync)
@@ -577,6 +639,8 @@ final List<(String, int?, Widget, DriveView?)> _driveScreens = [
   ('drive/2_photos', 1, const DrivePage(), DriveView.media),
   ('drive/3_account', null, const VaultAccountPage(), null),
   ('drive/4_grid', 1, const DrivePage(), DriveView.files),
+  // Phones and tablets only: computers have no photo library.
+  ('drive/5_phone', 1, const DrivePage(), DriveView.phone),
 ];
 
 Future<void> _settle(WidgetTester tester, [int rounds = 12]) async {
@@ -673,7 +737,10 @@ Future<void> _run(
         ),
       );
   });
-  _registerDrive(preset.self);
+  final phone =
+      preset.platform == TargetPlatform.android ||
+      preset.platform == TargetPlatform.iOS;
+  _registerDrive(preset.self, phone: phone);
   final showcase = registerAppShowcase();
 
   final settings = _Settings();
@@ -739,6 +806,7 @@ Future<void> _run(
       for (final (file, tab, page) in _screens) (file, tab, page, null),
       ..._driveScreens,
     ]) {
+      if (view == DriveView.phone && !phone) continue;
       // Drive keeps list or grid in the preferences: the views get the grid
       await tester.runAsync(
         () => getIt<SharedPreferences>().setBool('vault.grid', view != null),
@@ -803,6 +871,9 @@ Future<void> _run(
       );
       await _settle(tester);
       if (view != null) {
+        // The chips scroll sideways: the later ones start off screen.
+        await tester.ensureVisible(find.text(driveViewLabel(view)).first);
+        await _settle(tester);
         await tester.tap(find.text(driveViewLabel(view)).first);
         await _settle(tester);
       }
