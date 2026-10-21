@@ -368,12 +368,13 @@ class VaultApi {
 
   // ---- pairing (key by QR code, task 3.8) --------------------------------------
 
+  /// Signed, like taking the box: the slot belongs to this device of this
+  /// vault, and only the vault's own devices can fill it.
   Future<String> openPairSlot() async {
     final data = await _send(
       'POST',
       '/api/v1/vault/pair',
       json: const <String, dynamic>{},
-      signed: false,
     );
     return (data as Map<String, dynamic>)['slot'] as String;
   }
@@ -395,8 +396,7 @@ class VaultApi {
     String slot,
   ) async {
     final data =
-        await _send('GET', '/api/v1/vault/pair/$slot', signed: false)
-            as Map<String, dynamic>;
+        await _send('GET', '/api/v1/vault/pair/$slot') as Map<String, dynamic>;
     if (data['ready'] != true) return null;
     return (
       box: _b64u(data['box'] as String),

@@ -135,6 +135,11 @@ void main() {
     await a.files.restore([photos]);
     await b.sync.pull();
     expect((await b.db.vaultDao.watchChildren(photos).first).map((o) => o.name), ['big.bin', 'random.bin']);
+    // Only what is in the trash can be deleted for good, on the device and on the server.
+    await b.files.deleteForGood([copyRow.id]);
+    await a.sync.pull();
+    expect(await a.db.vaultDao.object(copyRow.id), isNotNull, reason: 'a live file is never deleted for good');
+    await b.files.trash([copyRow.id]);
     await b.files.deleteForGood([copyRow.id]);
     await a.sync.pull();
     expect(await a.db.vaultDao.object(copyRow.id), isNull);
