@@ -954,6 +954,14 @@
     "removed_here": "This device was removed from your Drive. Sign in again to use it here.",
     "account_gone": "This Drive account no longer exists.",
     "save_to_drive": "Save to Drive",
-    "save_here": "Save here"
+    "save_here": "Save here",
+    "phrase_copy": "Copy",
+    "phrase_save": "Save as file",
+    "phrase_copied": "Copied. It leaves the clipboard in 1 minute; paste it into your password manager now.",
+    "phrase_saved": "Saved. Keep the file offline or in a password manager, never in a shared folder.",
+    "phrase_store_hint": "Best kept on paper or in a password manager. Anyone with these words can open your Drive.",
+    "phrase_file_title": "BIShare Drive recovery phrase",
+    "phrase_file_body": "These 24 words open your BIShare Drive if every other way back in is lost. Anyone who has them can open it too: keep this file offline or in a password manager, and delete other copies.",
+    "phrase_file_made": "Made on {date}."
   }
 }

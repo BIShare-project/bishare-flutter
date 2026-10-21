@@ -65,6 +65,17 @@ class MainFlutterWindow: NSWindow {
         result(NSPasteboard.general.changeCount)
       case "isSensitive":
         result(self.clipboardIsSensitive())
+      case "setSecretText":
+        // Marked the way password managers mark theirs, so clipboard
+        // managers and BIShare's own sync leave it alone.
+        let args = call.arguments as? [String: Any]
+        guard let text = args?["text"] as? String else { result(false); return }
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.setString(text, forType: .string)
+        pb.setString("", forType: NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType"))
+        pb.setString("", forType: NSPasteboard.PasteboardType("org.nspasteboard.TransientType"))
+        result(true)
       default:
         result(FlutterMethodNotImplemented)
       }

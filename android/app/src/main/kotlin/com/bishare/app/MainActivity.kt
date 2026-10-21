@@ -18,6 +18,7 @@ import android.os.Build
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.os.PersistableBundle
 import android.provider.OpenableColumns
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
@@ -116,6 +117,28 @@ class MainActivity : FlutterActivity() {
                 }
                 "changeCount" -> result.success(clipChanges)
                 "isSensitive" -> result.success(clipboardIsSensitive(clipboard))
+                "setSecretText" -> {
+                    val text = call.argument<String>("text")
+                    if (text == null) {
+                        result.success(false)
+                    } else {
+                        // Marked sensitive: no clipboard preview, no keyboard
+                        // suggestion (Android 13+; the plain key before that).
+                        val clip = ClipData.newPlainText("BIShare", text)
+                        clip.description.extras = PersistableBundle().apply {
+                            putBoolean(
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    ClipDescription.EXTRA_IS_SENSITIVE
+                                } else {
+                                    "android.content.extra.IS_SENSITIVE"
+                                },
+                                true,
+                            )
+                        }
+                        clipboard.setPrimaryClip(clip)
+                        result.success(true)
+                    }
+                }
                 else -> result.notImplemented()
             }
         }

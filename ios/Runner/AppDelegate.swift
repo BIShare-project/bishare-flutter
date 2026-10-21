@@ -52,6 +52,18 @@ import UserNotifications
           }
         case "changeCount":
           result(UIPasteboard.general.changeCount)
+        case "setSecretText":
+          // Local only (never to the other Apple devices) and gone by itself.
+          let args = call.arguments as? [String: Any]
+          guard let text = args?["text"] as? String else { result(false); return }
+          let seconds = (args?["seconds"] as? Int) ?? 60
+          UIPasteboard.general.setItems(
+            [["public.utf8-plain-text": text]],
+            options: [
+              .localOnly: true,
+              .expirationDate: Date().addingTimeInterval(TimeInterval(seconds)),
+            ])
+          result(true)
         default:
           result(FlutterMethodNotImplemented)
         }

@@ -13,6 +13,7 @@ import '../../../core/clipboard/clipboard_channel.dart';
 import '../../../core/constants/protocol.dart';
 import '../../../core/identity/device_identity.dart';
 import '../../../core/rust/rust_facade.dart';
+import '../../../core/clipboard/clipboard_secrets.dart';
 import '../../discovery/data/discovery_service.dart';
 import '../../discovery/domain/discovered_device.dart';
 import 'clipboard_history_store.dart';
@@ -192,7 +193,10 @@ class ClipboardService {
       // Remember it either way, so a secret is not re-examined every poll and
       // does not go out the moment it stops being marked.
       _lastText = text;
-      if (!await ClipboardImageChannel.isSensitive()) _broadcastText(text);
+      if (!ClipboardSecrets.isMarked(text) &&
+          !await ClipboardImageChannel.isSensitive()) {
+        _broadcastText(text);
+      }
     }
     await _pollImage();
   }

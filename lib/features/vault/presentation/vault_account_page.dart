@@ -1,11 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/clipboard/clipboard_channel.dart';
+import '../../../core/clipboard/clipboard_secrets.dart';
 import '../../../core/desktop/desktop_service.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/platform/device_lock.dart';
@@ -119,8 +124,88 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
       icon: AppIcons.passwordLock,
       title: 'vault.phrase_title'.tr(),
       subtitle: 'vault.phrase_body'.tr(),
-      builder: (ctx) => _PhraseWords(words: phrase.split(' ')),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _PhraseWords(words: phrase.split(' ')),
+          const SizedBox(height: 12),
+          Text(
+            'vault.phrase_store_hint'.tr(),
+            textAlign: TextAlign.center,
+            style: ShadTheme.of(ctx).textTheme.muted.copyWith(fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ShadButton.outline(
+                  onPressed: () => _copyPhrase(phrase),
+                  leading: const AppSvgIcon(AppIcons.copyDuplicate, size: 15),
+                  child: Text('vault.phrase_copy'.tr()),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ShadButton.outline(
+                  onPressed: () => _savePhrase(phrase),
+                  leading: const AppSvgIcon(AppIcons.downloadFile, size: 15),
+                  child: Text('vault.phrase_save'.tr()),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
+  }
+
+  /// Copy the phrase as a secret: marked sensitive where the system knows
+  /// the idea, never sent by BIShare's clipboard sync, and taken off the
+  /// clipboard after a minute if it is still there.
+  Future<void> _copyPhrase(String phrase) async {
+    ClipboardSecrets.mark(phrase);
+    await ClipboardImageChannel.setSecretText(phrase);
+    _say('vault.phrase_copied');
+    Timer(const Duration(seconds: 60), () async {
+      final now = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+      if (now == phrase) await Clipboard.setData(const ClipboardData(text: ''));
+    });
+  }
+
+  /// Save the phrase as a text file where the person chooses (the system's
+  /// own save dialog; nothing is left in the app's folders).
+  Future<void> _savePhrase(String phrase) async {
+    final words = phrase.split(' ');
+    final sheet = StringBuffer()
+      ..writeln('vault.phrase_file_title'.tr())
+      ..writeln()
+      ..writeln('vault.phrase_file_body'.tr())
+      ..writeln();
+    for (var i = 0; i < words.length; i++) {
+      sheet.writeln('${(i + 1).toString().padLeft(2)}. ${words[i]}');
+    }
+    sheet
+      ..writeln()
+      ..writeln(
+        'vault.phrase_file_made'.tr(
+          namedArgs: {
+            'date': DateFormat.yMMMd(
+              context.locale.toLanguageTag(),
+            ).format(DateTime.now()),
+          },
+        ),
+      );
+    try {
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: 'vault.phrase_save'.tr(),
+        fileName: 'BIShare Drive recovery phrase.txt',
+        bytes: Uint8List.fromList(utf8.encode(sheet.toString())),
+      );
+      if (path != null) _say('vault.phrase_saved');
+    } on Object catch (e) {
+      debugPrint('[vault] save phrase: $e');
+      _say('vault.error_generic');
+    }
   }
 
   // ---- the key for this device ---------------------------------------------------
