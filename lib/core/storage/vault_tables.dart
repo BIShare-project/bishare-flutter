@@ -324,12 +324,20 @@ class VaultDao extends DatabaseAccessor<AppDatabase> with _$VaultDaoMixin {
     (rows) => {for (final r in rows) r.read<String>('asset_id')},
   );
 
+  /// The same, with the content hash of each: the Drive files that are
+  /// these photos.
+  Stream<Map<String, String>> watchBackedUpAssets() => _backedUp().watch().map(
+    (rows) => {
+      for (final r in rows) r.read<String>('asset_id'): r.read<String>('hash'),
+    },
+  );
+
   Future<Set<String>> backedUpAssetIds() async => {
     for (final r in await _backedUp().get()) r.read<String>('asset_id'),
   };
 
   Selectable<QueryRow> _backedUp() => customSelect(
-    'SELECT a.asset_id FROM vault_backed_up_assets a WHERE EXISTS '
+    'SELECT a.asset_id, a.hash FROM vault_backed_up_assets a WHERE EXISTS '
     '(SELECT 1 FROM vault_objects o WHERE o.hash = a.hash '
     "AND o.kind = 'file' AND o.trashed_at IS NULL)",
     readsFrom: {vaultBackedUpAssets, vaultObjects},

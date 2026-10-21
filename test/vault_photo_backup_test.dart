@@ -312,6 +312,11 @@ void main() {
       'y',
     );
     expect(await dao.backedUpAssetIds(), {'a1'});
+    expect(await dao.watchBackedUpAssets().first, {
+      'a1': VaultMetaCodec.b64u(
+        Uint8List.fromList(sha256.convert('two'.codeUnits).bytes),
+      ),
+    }, reason: 'the gallery hides the Drive copy of a photo on this phone');
   });
 
   test('a failed backup upload is tried again from a fresh copy', () async {

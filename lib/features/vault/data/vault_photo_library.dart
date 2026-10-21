@@ -138,7 +138,10 @@ class DevicePhotoLibrary implements PhotoLibrary {
     final file = await e.originFile;
     if (file == null || !await file.exists()) return null;
     final title = await e.titleAsync;
-    return (file: file, name: title.isEmpty ? file.uri.pathSegments.last : title);
+    return (
+      file: file,
+      name: title.isEmpty ? file.uri.pathSegments.last : title,
+    );
   }
 
   @override

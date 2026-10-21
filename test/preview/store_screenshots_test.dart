@@ -390,10 +390,10 @@ void _registerDrive(String self, {required bool phone}) {
     }),
   );
   when(() => dao.watchTransfers()).thenAnswer((_) => Stream.value(const []));
-  when(() => dao.watchBackedUpAssetIds()).thenAnswer(
+  when(() => dao.watchBackedUpAssets()).thenAnswer(
     (_) => Stream.value({
       for (var i = 6; i < 30; i++)
-        if (i != 11) 'a$i',
+        if (i != 11) 'a$i': 'h$i',
     }),
   );
   when(() => dao.watchAssetUploads()).thenAnswer(
@@ -633,14 +633,13 @@ final List<(String, int?, Widget)> _screens = [
 
 /// Drive, in the Inbox tab (not framed for the stores, see the top): the
 /// file manager as a list and as cards, the photos view as a gallery (the
-/// view to tap), and the account page.
+/// view to tap; on phones the camera roll with its backup clouds and the
+/// Drive's photos from other devices), and the account page.
 final List<(String, int?, Widget, DriveView?)> _driveScreens = [
   ('drive/1_files', 1, const DrivePage(), null),
   ('drive/2_photos', 1, const DrivePage(), DriveView.media),
   ('drive/3_account', null, const VaultAccountPage(), null),
   ('drive/4_grid', 1, const DrivePage(), DriveView.files),
-  // Phones and tablets only: computers have no photo library.
-  ('drive/5_phone', 1, const DrivePage(), DriveView.phone),
 ];
 
 Future<void> _settle(WidgetTester tester, [int rounds = 12]) async {
@@ -806,7 +805,6 @@ Future<void> _run(
       for (final (file, tab, page) in _screens) (file, tab, page, null),
       ..._driveScreens,
     ]) {
-      if (view == DriveView.phone && !phone) continue;
       // Drive keeps list or grid in the preferences: the views get the grid
       await tester.runAsync(
         () => getIt<SharedPreferences>().setBool('vault.grid', view != null),

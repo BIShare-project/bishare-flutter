@@ -967,7 +967,6 @@
     "phrase_file_title": "Wiederherstellungsphrase für BIShare Drive",
     "phrase_file_body": "Diese 24 Wörter öffnen Ihr BIShare Drive, wenn alle anderen Wege zurück verloren sind. Wer sie hat, kann es ebenfalls öffnen: Bewahren Sie diese Datei offline oder in einem Passwortmanager auf und löschen Sie andere Kopien.",
     "phrase_file_made": "Erstellt am {date}.",
-    "view_phone": "Auf diesem Handy",
     "backup_title": "Fotos & Videos sichern",
     "backup_off_body": "Aus. Wenn aktiv, landen Fotos und Videos von diesem Handy im Ordner „{folder}“ Ihres Drives, zuvor auf dem Handy verschlüsselt.",
     "backup_left": {

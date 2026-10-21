@@ -608,12 +608,9 @@ class DriveToolbar extends StatelessWidget {
 
 /// The views, as chips (phones).
 class DriveViewChips extends StatelessWidget {
-  const DriveViewChips({super.key, required this.ctrl, this.phone = false});
+  const DriveViewChips({super.key, required this.ctrl});
 
   final DriveController ctrl;
-
-  /// Show "On this phone" (a device with a photo library).
-  final bool phone;
 
   @override
   Widget build(BuildContext context) {
@@ -624,7 +621,7 @@ class DriveViewChips extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         children: [
-          for (final v in driveViews(phone: phone))
+          for (final v in DriveView.values)
             Padding(
               padding: const EdgeInsets.only(right: 6, bottom: 4),
               child: _Chip(
@@ -694,15 +691,10 @@ class _Chip extends StatelessWidget {
   );
 }
 
-/// The views to offer: "On this phone" only where there is a photo library.
-Iterable<DriveView> driveViews({required bool phone}) =>
-    DriveView.values.where((v) => phone || v != DriveView.phone);
-
 String driveViewLabel(DriveView v) => switch (v) {
   DriveView.files => 'vault.view_files',
   DriveView.recent => 'vault.view_recent',
   DriveView.media => 'vault.view_media',
-  DriveView.phone => 'vault.view_phone',
   DriveView.documents => 'vault.view_documents',
   DriveView.audio => 'vault.view_audio',
   DriveView.trash => 'vault.view_trash',
@@ -712,7 +704,6 @@ String driveViewIcon(DriveView v) => switch (v) {
   DriveView.files => AppIcons.folder,
   DriveView.recent => AppIcons.clock,
   DriveView.media => AppIcons.image,
-  DriveView.phone => AppIcons.smartphone,
   DriveView.documents => AppIcons.fileDocument,
   DriveView.audio => AppIcons.fileAudio,
   DriveView.trash => AppIcons.trashDelete,
@@ -728,11 +719,9 @@ class DriveSidebar extends StatelessWidget {
     required this.onTransfers,
     required this.onAccount,
     required this.transfersBusy,
-    this.phone = false,
   });
 
   final DriveController ctrl;
-  final bool phone;
   final Widget storage;
   final VoidCallback onTransfers;
   final VoidCallback onAccount;
@@ -788,7 +777,7 @@ class DriveSidebar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 8),
-          for (final v in driveViews(phone: phone))
+          for (final v in DriveView.values)
             item(
               driveViewLabel(v),
               driveViewIcon(v),

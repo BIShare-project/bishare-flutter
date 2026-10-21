@@ -967,7 +967,6 @@
     "phrase_file_title": "Phrase de récupération BIShare Drive",
     "phrase_file_body": "Ces 24 mots ouvrent votre BIShare Drive si tous les autres moyens de revenir sont perdus. Quiconque les a peut aussi l’ouvrir : gardez ce fichier hors ligne ou dans un gestionnaire de mots de passe, et supprimez les autres copies.",
     "phrase_file_made": "Créé le {date}.",
-    "view_phone": "Sur ce téléphone",
     "backup_title": "Sauvegarder photos et vidéos",
     "backup_off_body": "Désactivée. Une fois activée, les photos et vidéos de ce téléphone vont dans le dossier « {folder} » de votre Drive, chiffrées d’abord sur le téléphone.",
     "backup_left": {

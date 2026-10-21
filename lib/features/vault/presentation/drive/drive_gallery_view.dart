@@ -4,29 +4,63 @@ import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:mime/mime.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../../core/storage/app_database.dart';
 import '../../../../core/storage/vault_tables.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../../data/vault_photo_backup.dart';
 import '../../data/vault_photo_library.dart';
 import 'drive_widgets.dart';
 
-/// "On this phone" (drive-plan.md task 5.8): the phone's own photos and
-/// videos, newest first, each with a cloud that says whether it is in the
-/// Drive. The backup switch and "Wi-Fi only" sit on top; chosen photos go up
-/// at once with "Back up now".
-class DrivePhoneView extends StatefulWidget {
-  const DrivePhoneView({super.key, required this.backup, required this.dao});
+/// One picture of the gallery: on this phone, or only in the Drive.
+sealed class _Item {
+  int get at;
+}
+
+class _Local extends _Item {
+  _Local(this.asset);
+  final PhotoAsset asset;
+  @override
+  int get at => asset.taken.millisecondsSinceEpoch;
+}
+
+class _Remote extends _Item {
+  _Remote(this.object);
+  final VaultObject object;
+  @override
+  int get at => object.mtime;
+}
+
+/// Photos and videos on a phone (drive-plan.md task 5.8, owner 2026-10-21:
+/// "buat drive UI nya seperti galery ... ada icon cloud di setiap foto atau
+/// video"): the phone's own library and the Drive's photos from other
+/// devices in one timeline, newest first. Every photo of the phone has a
+/// cloud on it: crossed out until it is in the Drive, in the theme colour
+/// once it is. The backup switch and "Wi-Fi only" sit on top; chosen photos
+/// go up at once with "Back up now".
+class DriveGalleryView extends StatefulWidget {
+  const DriveGalleryView({
+    super.key,
+    required this.backup,
+    required this.dao,
+    required this.onOpen,
+    required this.onMore,
+  });
 
   final VaultPhotoBackup backup;
   final VaultDao dao;
 
+  /// A photo that is only in the Drive: open it, or its actions.
+  final void Function(VaultObject) onOpen;
+  final void Function(VaultObject) onMore;
+
   @override
-  State<DrivePhoneView> createState() => _DrivePhoneViewState();
+  State<DriveGalleryView> createState() => _DriveGalleryViewState();
 }
 
-class _DrivePhoneViewState extends State<DrivePhoneView> {
+class _DriveGalleryViewState extends State<DriveGalleryView> {
   static const _pageSize = 120;
 
   VaultPhotoBackup get _backup => widget.backup;
@@ -35,9 +69,13 @@ class _DrivePhoneViewState extends State<DrivePhoneView> {
   final List<PhotoAsset> _assets = [];
   final Set<String> _selected = {};
   final ScrollController _scroll = ScrollController();
-  late final Stream<Set<String>> _backed = widget.dao.watchBackedUpAssetIds();
+  late final Stream<Map<String, String>> _backed = widget.dao
+      .watchBackedUpAssets();
   late final Stream<Map<String, String>> _uploads = widget.dao
       .watchAssetUploads();
+  late final Stream<List<VaultObject>> _drive = widget.dao.watchFilesOfType(
+    prefixes: ['image/', 'video/'],
+  );
   StreamSubscription<void>? _changes;
   AppLifecycleListener? _lifecycle;
 
@@ -144,6 +182,31 @@ class _DrivePhoneViewState extends State<DrivePhoneView> {
     }
   }
 
+  /// The phone's pictures and the Drive's others, newest first. While the
+  /// library is still being paged, Drive pictures older than the last one
+  /// read wait for the next page, so the two stay in date order.
+  List<_Item> _timeline(List<VaultObject> drive, Set<String> onPhone) {
+    final remote = [
+      for (final o in drive)
+        if (o.hash == null || !onPhone.contains(o.hash)) o,
+    ]..sort((a, b) => b.mtime.compareTo(a.mtime));
+    final all = _end || _assets.isEmpty;
+    final oldest = all ? null : _assets.last.taken.millisecondsSinceEpoch;
+    final out = <_Item>[];
+    var r = 0;
+    for (final a in _assets) {
+      final at = a.taken.millisecondsSinceEpoch;
+      while (r < remote.length && remote[r].mtime > at) {
+        out.add(_Remote(remote[r++]));
+      }
+      out.add(_Local(a));
+    }
+    while (r < remote.length && (oldest == null || remote[r].mtime >= oldest)) {
+      out.add(_Remote(remote[r++]));
+    }
+    return out;
+  }
+
   Future<Uint8List?> _thumb(PhotoAsset a) {
     final had = _thumbs.remove(a.id);
     final f = had ?? _library.thumbnail(a, 240);
@@ -157,6 +220,19 @@ class _DrivePhoneViewState extends State<DrivePhoneView> {
     setState(() {
       _selected.contains(a.id) ? _selected.remove(a.id) : _selected.add(a.id);
     });
+  }
+
+  /// A photo of the phone, full screen.
+  Future<void> _view(PhotoAsset a) async {
+    final got = await _library.original(a);
+    if (got == null || !mounted) return;
+    await showFilePreview(
+      context,
+      path: got.file.path,
+      name: got.name,
+      mimeType:
+          lookupMimeType(got.name) ?? (a.video ? 'video/mp4' : 'image/jpeg'),
+    );
   }
 
   Future<void> _backUpChosen(Set<String> backed) async {
@@ -189,61 +265,78 @@ class _DrivePhoneViewState extends State<DrivePhoneView> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<Set<String>>(
+    return StreamBuilder<Map<String, String>>(
       stream: _backed,
       builder: (context, backedSnap) => StreamBuilder<Map<String, String>>(
         stream: _uploads,
-        builder: (context, uploadsSnap) {
-          final backed = backedSnap.data ?? const <String>{};
-          final uploads = uploadsSnap.data ?? const <String, String>{};
-          return PopScope(
-            canPop: _selected.isEmpty,
-            onPopInvokedWithResult: (didPop, _) {
-              if (!didPop) setState(_selected.clear);
-            },
-            child: Column(
-              children: [
-                Expanded(child: _body(backed, uploads)),
-                if (_selected.isNotEmpty)
-                  DriveSelectionBar(
-                    actions: [
-                      (
-                        AppIcons.cloudSync,
-                        'vault.backup_now'.tr(),
-                        () => unawaited(_backUpChosen(backed)),
-                        false,
-                      ),
-                      (
-                        AppIcons.close,
-                        'vault.cancel'.tr(),
-                        () => setState(_selected.clear),
-                        false,
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          );
-        },
+        builder: (context, uploadsSnap) => StreamBuilder<List<VaultObject>>(
+          stream: _drive,
+          builder: (context, driveSnap) {
+            final backed = backedSnap.data ?? const <String, String>{};
+            final uploads = uploadsSnap.data ?? const <String, String>{};
+            final ids = backed.keys.toSet();
+            final items = _timeline(
+              driveSnap.data ?? const [],
+              backed.values.toSet(),
+            );
+            return PopScope(
+              canPop: _selected.isEmpty,
+              onPopInvokedWithResult: (didPop, _) {
+                if (!didPop) setState(_selected.clear);
+              },
+              child: Column(
+                children: [
+                  Expanded(child: _body(items, ids, uploads)),
+                  if (_selected.isNotEmpty)
+                    DriveSelectionBar(
+                      actions: [
+                        (
+                          AppIcons.cloudSync,
+                          'vault.backup_now'.tr(),
+                          () => unawaited(_backUpChosen(ids)),
+                          false,
+                        ),
+                        (
+                          AppIcons.close,
+                          'vault.cancel'.tr(),
+                          () => setState(_selected.clear),
+                          false,
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _body(Set<String> backed, Map<String, String> uploads) {
-    final access = _backup.access;
-    if (access == PhotoAccess.none) {
-      return ListView(
-        padding: const EdgeInsets.only(bottom: 24),
-        children: [_AccessCard(backup: _backup)],
-      );
-    }
+  Widget _body(
+    List<_Item> items,
+    Set<String> backed,
+    Map<String, String> uploads,
+  ) {
+    final noAccess = _backup.access == PhotoAccess.none;
+    final waiting = !noAccess && _pages == null;
     return CustomScrollView(
       controller: _scroll,
+      physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverToBoxAdapter(
-          child: _BackupCard(backup: _backup, onSwitch: _switch),
+          child: noAccess
+              ? _AccessCard(backup: _backup)
+              : _BackupCard(backup: _backup, onSwitch: _switch),
         ),
-        if (_pages != null && _assets.isEmpty)
+        if (waiting)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          )
+        else if (items.isEmpty)
           SliverToBoxAdapter(
             child: AppEmptyState(
               icon: AppIcons.image,
@@ -260,25 +353,59 @@ class _DrivePhoneViewState extends State<DrivePhoneView> {
                 mainAxisSpacing: 3,
                 crossAxisSpacing: 3,
               ),
-              itemCount: _assets.length,
-              itemBuilder: (context, i) {
-                final a = _assets[i];
-                final state = VaultPhotoBackup.stateOf(a.id, backed, uploads);
-                return DriveMediaTile(
-                  image: _Thumb(future: _thumb(a)),
-                  video: a.video,
-                  durationS: a.video ? a.durationS : null,
-                  selected: _selected.contains(a.id),
-                  selecting: _selected.isNotEmpty,
-                  onTap: () => _toggle(a),
-                  onLongPress: () => _toggle(a),
-                  badge: PhotoBackupBadge(state: state),
-                  label: photoBackupStateLabel(state),
-                );
+              itemCount: items.length,
+              itemBuilder: (context, i) => switch (items[i]) {
+                _Local(:final asset) => _localTile(asset, backed, uploads),
+                _Remote(:final object) => _remoteTile(object),
               },
             ),
           ),
       ],
+    );
+  }
+
+  Widget _localTile(
+    PhotoAsset a,
+    Set<String> backed,
+    Map<String, String> uploads,
+  ) {
+    final state = VaultPhotoBackup.stateOf(a.id, backed, uploads);
+    final selecting = _selected.isNotEmpty;
+    return DriveMediaTile(
+      image: _Thumb(future: _thumb(a)),
+      video: a.video,
+      durationS: a.video ? a.durationS : null,
+      selected: _selected.contains(a.id),
+      selecting: selecting,
+      onTap: () => selecting ? _toggle(a) : unawaited(_view(a)),
+      onLongPress: () => _toggle(a),
+      badge: PhotoBackupBadge(state: state),
+      label: photoBackupStateLabel(state),
+    );
+  }
+
+  /// A Drive photo from another device: in the cloud, not on this phone.
+  Widget _remoteTile(VaultObject o) {
+    return DriveMediaTile(
+      image: LayoutBuilder(
+        builder: (context, c) => o.hasThumb
+            ? DriveThumb(object: o, size: c.biggest.shortestSide, radius: 0)
+            : Center(
+                child: DriveThumb(
+                  object: o,
+                  size: c.biggest.shortestSide * 0.4,
+                ),
+              ),
+      ),
+      video: (o.mime ?? '').startsWith('video/'),
+      selected: false,
+      selecting: false,
+      onTap: () {
+        if (_selected.isEmpty) widget.onOpen(o);
+      },
+      onLongPress: () => widget.onMore(o),
+      badge: const PhotoBackupBadge(state: PhotoBackupState.backedUp),
+      label: o.name,
     );
   }
 }

@@ -962,7 +962,6 @@
     "phrase_file_title": "BIShare Driveのリカバリーフレーズ",
     "phrase_file_body": "この24個の単語は、ほかのすべての方法を失ったときにBIShare Driveを開けます。持っている人は誰でも開けるため、このファイルはオフラインかパスワードマネージャに保管し、ほかのコピーは削除してください。",
     "phrase_file_made": "{date}に作成。",
-    "view_phone": "このスマホ",
     "backup_title": "写真とビデオのバックアップ",
     "backup_off_body": "オフです。オンにすると、このスマホの写真とビデオがDriveの「{folder}」フォルダに入ります。先にスマホ上で暗号化されます。",
     "backup_left": {

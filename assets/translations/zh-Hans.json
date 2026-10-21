@@ -962,7 +962,6 @@
     "phrase_file_title": "BIShare Drive 恢复短语",
     "phrase_file_body": "在其他所有找回方式都丢失时，这 24 个单词可以打开你的 BIShare Drive。拿到它们的人也能打开：请把此文件离线保存或放进密码管理器，并删除其他副本。",
     "phrase_file_made": "创建于 {date}。",
-    "view_phone": "此手机",
     "backup_title": "备份照片和视频",
     "backup_off_body": "已关闭。开启后，此手机上的照片和视频会进入你 Drive 中的“{folder}”文件夹，并先在手机上加密。",
     "backup_left": {
