@@ -75,6 +75,185 @@ class VaultSigninResult {
   final Uint8List? serverHalf;
 }
 
+/// One object in a `changes` page: what the server holds about it.
+class VaultChange {
+  const VaultChange({
+    required this.id,
+    required this.encMeta,
+    required this.blobId,
+    required this.size,
+    required this.hasThumb,
+    required this.seq,
+    required this.createdAt,
+    required this.trashedAt,
+    required this.deleted,
+  });
+
+  factory VaultChange.fromJson(Map<String, dynamic> j) => VaultChange(
+    id: j['id'] as String,
+    encMeta: j['encMeta'] as String?,
+    blobId: j['blobId'] as String?,
+    size: (j['size'] as num?)?.toInt(),
+    hasThumb: j['hasThumb'] == true,
+    seq: (j['seq'] as num).toInt(),
+    createdAt: (j['createdAt'] as num?)?.toInt() ?? 0,
+    trashedAt: (j['trashedAt'] as num?)?.toInt(),
+    deleted: j['deleted'] == true,
+  );
+
+  final String id;
+
+  /// Null for a deleted object (a tombstone).
+  final String? encMeta;
+  final String? blobId;
+
+  /// Stored (ciphertext) size of the blob.
+  final int? size;
+  final bool hasThumb;
+  final int seq;
+  final int createdAt;
+  final int? trashedAt;
+  final bool deleted;
+}
+
+/// One page of `GET changes`.
+class VaultChanges {
+  const VaultChanges({
+    required this.seq,
+    required this.resync,
+    required this.more,
+    required this.objects,
+    required this.devices,
+  });
+
+  factory VaultChanges.fromJson(Map<String, dynamic> j) => VaultChanges(
+    seq: (j['seq'] as num).toInt(),
+    resync: j['resync'] == true,
+    more: j['more'] == true,
+    objects: [
+      for (final o in (j['objects'] as List?) ?? const [])
+        VaultChange.fromJson(Map<String, dynamic>.from(o as Map)),
+    ],
+    devices: [
+      for (final d in (j['devices'] as List?) ?? const [])
+        Map<String, dynamic>.from(d as Map),
+    ],
+  );
+
+  /// The sequence number to ask from next time.
+  final int seq;
+
+  /// The device was so far behind that tombstones are gone: the page starts
+  /// over from 0, and the local index must be rebuilt.
+  final bool resync;
+  final bool more;
+  final List<VaultChange> objects;
+  final List<Map<String, dynamic>> devices;
+}
+
+/// The answer to `POST uploads`: an existing blob with the same content, or
+/// where to send the bytes.
+class VaultReservation {
+  const VaultReservation({
+    this.existingBlobId,
+    this.uploadId,
+    this.blobId,
+    this.size = 0,
+    this.multipart = false,
+    this.partSize = 0,
+    this.parts = 1,
+    this.url,
+    this.partUrls = const {},
+  });
+
+  factory VaultReservation.fromJson(Map<String, dynamic> j) {
+    final existing = j['existing'];
+    if (existing is Map) {
+      return VaultReservation(
+        existingBlobId: existing['blobId'] as String,
+        size: (existing['size'] as num).toInt(),
+      );
+    }
+    return VaultReservation(
+      uploadId: j['uploadId'] as String,
+      blobId: j['blobId'] as String,
+      size: (j['size'] as num).toInt(),
+      multipart: j['multipart'] == true,
+      partSize: (j['partSize'] as num).toInt(),
+      parts: (j['parts'] as num).toInt(),
+      url: j['url'] as String?,
+      partUrls: _partUrls(j['partUrls']),
+    );
+  }
+
+  /// Set when the vault already holds these bytes: link to it, send nothing.
+  final String? existingBlobId;
+  final String? uploadId;
+  final String? blobId;
+  final int size;
+  final bool multipart;
+  final int partSize;
+  final int parts;
+
+  /// Single upload: the presigned PUT.
+  final String? url;
+
+  /// Multipart: presigned PUT per part number (the first ones; ask for more
+  /// with [VaultApi.partUrls]).
+  final Map<int, String> partUrls;
+}
+
+/// One item of `POST downloads`.
+class VaultDownload {
+  const VaultDownload({
+    required this.objectId,
+    this.missing = false,
+    this.url,
+    this.size,
+    this.thumbUrl,
+    this.retryAfterMs,
+  });
+
+  factory VaultDownload.fromJson(Map<String, dynamic> j) => VaultDownload(
+    objectId: j['objectId'] as String,
+    missing: j['missing'] == true,
+    url: j['url'] as String?,
+    size: (j['size'] as num?)?.toInt(),
+    thumbUrl: j['thumbUrl'] as String?,
+    retryAfterMs: (j['retryAfterMs'] as num?)?.toInt(),
+  );
+
+  final String objectId;
+  final bool missing;
+  final String? url;
+  final int? size;
+  final String? thumbUrl;
+
+  /// Past the read-back allowance the server hands URLs out slowly: ask again
+  /// after this long.
+  final int? retryAfterMs;
+}
+
+/// A Drive file copied out as an ordinary transfer link (task 4.10).
+class VaultShare {
+  const VaultShare({
+    required this.code,
+    required this.rawCode,
+    required this.expiresAt,
+    required this.deleteToken,
+  });
+
+  final String code;
+  final String rawCode;
+  final DateTime expiresAt;
+  final String deleteToken;
+}
+
+Map<int, String> _partUrls(Object? list) => {
+  for (final p in (list as List?) ?? const [])
+    ((p as Map)['partNumber'] as num).toInt(): p['url'] as String,
+};
+
 /// The `/api/v1/vault/*` routes (drive-plan.md "Routes"), every one but
 /// sign-in signed with this device's key (VAULT-SPEC "Signed requests").
 ///
@@ -225,6 +404,215 @@ class VaultApi {
     );
   }
 
+  // ---- the index (task 4.3) ----------------------------------------------------
+
+  /// One page of changes after [since]; at most [limit] objects (server cap).
+  Future<VaultChanges> changes(String vaultId, int since, {int? limit}) async =>
+      VaultChanges.fromJson(
+        await _send(
+              'GET',
+              '/api/v1/vault/$vaultId/changes?since=$since'
+                  '${limit == null ? '' : '&limit=$limit'}',
+              vaultId: vaultId,
+            )
+            as Map<String, dynamic>,
+      );
+
+  /// A batch of metadata changes, each with its own `opId` so a repeat does
+  /// nothing. Answers the new sequence number and one result per op
+  /// (`{ok, opId, seq}` or `{ok: false, code, message}`).
+  Future<({int seq, List<Map<String, dynamic>> results})> ops(
+    String vaultId,
+    List<Map<String, dynamic>> ops,
+  ) async {
+    final data =
+        await _send(
+              'POST',
+              '/api/v1/vault/$vaultId/ops',
+              vaultId: vaultId,
+              json: {'ops': ops},
+            )
+            as Map<String, dynamic>;
+    return (
+      seq: (data['seq'] as num).toInt(),
+      results: [
+        for (final r in (data['results'] as List?) ?? const [])
+          Map<String, dynamic>.from(r as Map),
+      ],
+    );
+  }
+
+  /// The WebSocket that says when the sequence moves. A WebSocket cannot
+  /// carry headers everywhere, so the signature travels as `?auth=` and
+  /// covers the bare path with an empty body.
+  Future<Uri> wsUri(String vaultId) async {
+    final path = '/api/v1/vault/$vaultId/ws';
+    final auth = Rust.vaultAuthorization(
+      seed: await _keys.deviceSeed(),
+      vaultId: vaultId,
+      method: 'GET',
+      pathAndQuery: path,
+      ts: now().millisecondsSinceEpoch ~/ 1000,
+      body: Uint8List(0),
+    );
+    final base = Uri.parse(_dio.options.baseUrl);
+    return base.replace(
+      scheme: base.scheme == 'http' ? 'ws' : 'wss',
+      path: path,
+      queryParameters: {'auth': auth},
+    );
+  }
+
+  // ---- uploads (task 4.4) ----------------------------------------------------------
+
+  /// Reserve quota for [size] stored bytes. With a dedupe [tag] the server may
+  /// answer with a blob of this vault that holds the same bytes.
+  Future<VaultReservation> reserve(
+    String vaultId, {
+    required int size,
+    String? tag,
+  }) async => VaultReservation.fromJson(
+    await _send(
+          'POST',
+          '/api/v1/vault/$vaultId/uploads',
+          vaultId: vaultId,
+          json: {'size': size, 'tag': ?tag},
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// Fresh presigned part URLs (resume after the first ones ran out or
+  /// expired); at most 100 per call.
+  Future<Map<int, String>> partUrls(
+    String vaultId,
+    String uploadId,
+    List<int> partNumbers,
+  ) async {
+    final data =
+        await _send(
+              'POST',
+              '/api/v1/vault/$vaultId/uploads/$uploadId/parts',
+              vaultId: vaultId,
+              json: {'partNumbers': partNumbers},
+            )
+            as Map<String, dynamic>;
+    return _partUrls(data['partUrls']);
+  }
+
+  /// A fresh URL for a single upload whose first one expired.
+  Future<String> putUrl(String vaultId, String uploadId) async =>
+      ((await _send(
+                'POST',
+                '/api/v1/vault/$vaultId/uploads/$uploadId/parts',
+                vaultId: vaultId,
+                json: const <String, dynamic>{},
+              )
+              as Map<String, dynamic>)['url'])
+          as String;
+
+  /// Commit the object. [parts]: every part in order with its ETag
+  /// (multipart only). A repeat answers the same commit.
+  Future<Map<String, dynamic>> complete(
+    String vaultId,
+    String uploadId, {
+    required String objectId,
+    required String encMeta,
+    List<({int partNumber, String etag})>? parts,
+  }) async =>
+      await _send(
+            'POST',
+            '/api/v1/vault/$vaultId/uploads/$uploadId/complete',
+            vaultId: vaultId,
+            json: {
+              'objectId': objectId,
+              'encMeta': encMeta,
+              if (parts != null)
+                'parts': [
+                  for (final p in parts)
+                    {'partNumber': p.partNumber, 'etag': p.etag},
+                ],
+            },
+          )
+          as Map<String, dynamic>;
+
+  /// Give up an upload and release its reservation.
+  Future<void> abort(String vaultId, String uploadId) => _send(
+    'DELETE',
+    '/api/v1/vault/$vaultId/uploads/$uploadId',
+    vaultId: vaultId,
+  );
+
+  /// The sealed thumbnail of an object (raw bytes, at most 32 KB of JPEG).
+  Future<void> putThumb(String vaultId, String objectId, Uint8List sealed) =>
+      _send(
+        'PUT',
+        '/api/v1/vault/$vaultId/objects/$objectId/thumb',
+        vaultId: vaultId,
+        raw: sealed,
+      );
+
+  // ---- downloads (task 4.5) ----------------------------------------------------------
+
+  /// Short-lived presigned GET URLs for up to 200 objects.
+  Future<List<VaultDownload>> downloads(
+    String vaultId,
+    List<String> objectIds, {
+    bool thumbs = false,
+    bool blobs = true,
+  }) async {
+    final data =
+        await _send(
+              'POST',
+              '/api/v1/vault/$vaultId/downloads',
+              vaultId: vaultId,
+              json: {
+                'objectIds': objectIds,
+                if (thumbs) 'thumbs': true,
+                if (!blobs) 'blobs': false,
+              },
+            )
+            as Map<String, dynamic>;
+    return [
+      for (final i in (data['items'] as List?) ?? const [])
+        VaultDownload.fromJson(Map<String, dynamic>.from(i as Map)),
+    ];
+  }
+
+  // ---- sharing (task 4.10) ------------------------------------------------------------
+
+  /// Copy one file out as an ordinary transfer link of 6, 12 or 24 hours.
+  Future<VaultShare> share(
+    String vaultId, {
+    required String objectId,
+    required String fileName,
+    required String mimeType,
+    required int expiryHours,
+    bool oneTime = false,
+    int? mtimeMs,
+  }) async {
+    final data =
+        await _send(
+              'POST',
+              '/api/v1/vault/$vaultId/shares',
+              vaultId: vaultId,
+              json: {
+                'objectId': objectId,
+                'fileName': fileName,
+                'mimeType': mimeType,
+                'expiryHours': expiryHours,
+                if (oneTime) 'oneTime': true,
+                'mtimeMs': ?mtimeMs,
+              },
+            )
+            as Map<String, dynamic>;
+    return VaultShare(
+      code: data['code'] as String,
+      rawCode: data['rawCode'] as String,
+      expiresAt: DateTime.parse(data['expiresAt'] as String),
+      deleteToken: data['deleteToken'] as String,
+    );
+  }
+
   // ---- transport ----------------------------------------------------------------
 
   /// Send one request. [path] includes any query string; it is signed as is.
@@ -233,13 +621,17 @@ class VaultApi {
     String path, {
     String? vaultId,
     Map<String, dynamic>? json,
+    Uint8List? raw,
     bool signed = true,
   }) async {
-    final body = json == null
-        ? Uint8List(0)
-        : Uint8List.fromList(utf8.encode(jsonEncode(json)));
+    final body =
+        raw ??
+        (json == null
+            ? Uint8List(0)
+            : Uint8List.fromList(utf8.encode(jsonEncode(json))));
     final headers = <String, dynamic>{
       if (json != null) Headers.contentTypeHeader: Headers.jsonContentType,
+      if (raw != null) Headers.contentTypeHeader: 'application/octet-stream',
     };
     if (signed) {
       final id = vaultId ?? await _keys.vaultId();

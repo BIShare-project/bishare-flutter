@@ -144,6 +144,10 @@ class VaultDao extends DatabaseAccessor<AppDatabase> with _$VaultDaoMixin {
             ]))
           .watch();
 
+  /// Every child of a folder, trashed ones too.
+  Future<List<VaultObject>> childrenOf(String parent) =>
+      (select(vaultObjects)..where((t) => t.parent.equals(parent))).get();
+
   Stream<List<VaultObject>> watchTrash() =>
       (select(vaultObjects)
             ..where((t) => t.trashedAt.isNotNull())
@@ -160,6 +164,14 @@ class VaultDao extends DatabaseAccessor<AppDatabase> with _$VaultDaoMixin {
                   t.kind.equals('file') &
                   t.blobId.isNotNull(),
             )
+            ..limit(1))
+          .getSingleOrNull();
+
+  /// Any object (trashed ones too) whose content is the blob [blobId]: the
+  /// file key of a blob the server says this vault already holds.
+  Future<VaultObject?> fileWithBlob(String blobId) =>
+      (select(vaultObjects)
+            ..where((t) => t.blobId.equals(blobId))
             ..limit(1))
           .getSingleOrNull();
 
