@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io' show IOException;
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../core/constants/cloud.dart';
 import '../../../core/rust/rust_facade.dart';
@@ -694,6 +694,10 @@ class VaultApi {
       );
     }
     final status = e.response?.statusCode;
+    if (status == null || status >= 500) {
+      // The cause behind "network error", for logcat.
+      debugPrint('[vault] ${e.requestOptions.path}: ${e.type.name} ${e.error}');
+    }
     switch (e.type) {
       case DioExceptionType.connectionError:
       case DioExceptionType.connectionTimeout:
