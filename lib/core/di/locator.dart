@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
@@ -33,6 +34,7 @@ import '../../features/room/data/webrtc_room_service.dart';
 import '../../features/web_nearby/data/web_nearby_service.dart';
 import '../../features/vault/data/vault_account.dart';
 import '../../features/vault/data/vault_api.dart';
+import '../../features/vault/data/vault_background.dart';
 import '../../features/vault/data/vault_downloader.dart';
 import '../../features/vault/data/vault_downloads.dart';
 import '../../features/vault/data/vault_files.dart';
@@ -230,6 +232,7 @@ Future<void> setupLocator() async {
         // Before the index goes: nothing may write the old account's
         // names into it again, or keep sending its files.
         onForget: () async {
+          await VaultBackground.schedule(on: false, wifiOnly: true);
           await getIt<VaultPhotoBackup>().stop();
           await getIt<VaultSync>().stop();
           await getIt<VaultUploader>().stop();
@@ -315,12 +318,51 @@ Future<void> setupLocator() async {
     if (!featureFlags.vaultVisible) return;
     featureFlags.removeListener(vaultStart);
     unawaited(
-      getIt<VaultAccount>().load().then((_) {
+      getIt<VaultAccount>().load().then((_) async {
         final account = getIt<VaultAccount>();
+        final photos = getIt<VaultPhotoBackup>();
+        final uploader = getIt<VaultUploader>()
+          // A background run that is sending stops before the app sends.
+          ..beforeRun = VaultBackground.takeOver;
+
+        // A background run that finds the app up leaves the work to it.
+        Future<void> backupNow() async {
+          if (account.status != VaultStatus.ready) return;
+          await photos.scan();
+          unawaited(uploader.run());
+        }
+
+        await VaultBackground.initialize(onBackup: backupNow);
+        AppLifecycleListener(
+          onResume: () => VaultBackground.listen(onBackup: backupNow),
+        );
+
+        // Runs while the app is closed follow the switch (task 5.4).
+        (bool, bool)? scheduled;
+        void followSwitch() {
+          final want = (
+            account.status == VaultStatus.ready && photos.on,
+            photos.wifiOnly,
+          );
+          if (want == scheduled) return;
+          scheduled = want;
+          unawaited(
+            prefs.setString(
+              VaultBackground.folderNameKey,
+              'vault.backup_folder'.tr(),
+            ),
+          );
+          unawaited(VaultBackground.schedule(on: want.$1, wifiOnly: want.$2));
+        }
+
+        photos.addListener(followSwitch);
+        account.addListener(followSwitch);
+        followSwitch();
+
         // Photo backup follows the key: on whenever this device has it.
         void backup() {
           if (account.status == VaultStatus.ready) {
-            unawaited(getIt<VaultPhotoBackup>().start());
+            unawaited(photos.start());
           }
         }
 
@@ -328,7 +370,7 @@ Future<void> setupLocator() async {
         if (account.status != VaultStatus.ready) return;
         // The index follows the server, and uploads left by the last run go on.
         unawaited(getIt<VaultSync>().start());
-        unawaited(getIt<VaultUploader>().run());
+        unawaited(uploader.run());
         backup();
       }),
     );

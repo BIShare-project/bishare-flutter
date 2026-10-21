@@ -248,12 +248,42 @@ class VaultUploader extends ChangeNotifier {
   /// Work through the queue until it is empty or the network goes. Calls
   /// while it runs join the same run.
   Future<void> run() {
+    if (_held) return Future.value();
     _retryTimer?.cancel();
     _retryTimer = null;
-    return _running ??= _runAll().whenComplete(() {
-      _running = null;
-    });
+    return _running ??=
+        () async {
+          await beforeRun?.call();
+          await _runAll();
+        }().whenComplete(() {
+          _running = null;
+        });
   }
+
+  /// Awaited before the queue starts: the app makes a background run that
+  /// is sending stop first (VaultBackground.takeOver).
+  Future<void> Function()? beforeRun;
+
+  bool _held = false;
+
+  /// Stop sending, keep everything for later: the upload in flight stops
+  /// where it is (its parts sent so far stay sent) and nothing starts until
+  /// [release]. Photo backup's background run uses it when its time is up,
+  /// or when the app opens and takes over the queue.
+  Future<void> hold() async {
+    _held = true;
+    _epoch++;
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    _cancel?.cancel();
+    try {
+      await _running;
+    } on Object {
+      // Stopped is what was asked.
+    }
+  }
+
+  void release() => _held = false;
 
   /// Sign-out: the upload in flight stops, nothing starts again by itself,
   /// and the work folder (sealed files, compressed copies) goes.

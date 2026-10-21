@@ -95,9 +95,17 @@ class ClipboardHistory extends Table {
 )
 class AppDatabase extends _$AppDatabase {
   /// Pass a custom [executor] in tests (e.g. `NativeDatabase.memory()`); the app
-  /// uses drift_flutter's lazy, background-isolate connection.
+  /// uses drift_flutter's lazy, background-isolate connection, shared with
+  /// Drive's background run (VaultBackground) when both are up in one
+  /// process, so the screens see what that run writes.
   AppDatabase([QueryExecutor? executor])
-    : super(executor ?? driftDatabase(name: 'bishare'));
+    : super(
+        executor ??
+            driftDatabase(
+              name: 'bishare',
+              native: const DriftNativeOptions(shareAcrossIsolates: true),
+            ),
+      );
 
   @override
   int get schemaVersion => 6;
@@ -186,10 +194,9 @@ class AppDatabase extends _$AppDatabase {
   )..where((t) => t.fingerprint.equals(fingerprint))).go();
 
   // ---- known devices ----
-  Stream<List<KnownDevice>> watchKnownDevices() =>
-      (select(knownDevices)
-            ..orderBy([(t) => OrderingTerm.desc(t.lastSeen)]))
-          .watch();
+  Stream<List<KnownDevice>> watchKnownDevices() => (select(
+    knownDevices,
+  )..orderBy([(t) => OrderingTerm.desc(t.lastSeen)])).watch();
 
   Future<void> upsertKnownDevice(KnownDevicesCompanion row) =>
       into(knownDevices).insertOnConflictUpdate(row);

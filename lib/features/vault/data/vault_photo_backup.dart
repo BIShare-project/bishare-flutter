@@ -80,6 +80,14 @@ class VaultPhotoBackup extends ChangeNotifier {
   int? _total;
   DateTime? _countedAt;
 
+  /// The end of a background run's time: nothing new is looked at after it.
+  DateTime? _until;
+
+  bool get _timeUp {
+    final until = _until;
+    return until != null && DateTime.now().isAfter(until);
+  }
+
   /// Backed up since the last full count (taken off [left] until the next).
   final Set<String> _doneSinceCount = {};
   AppLifecycleListener? _lifecycle;
@@ -125,6 +133,31 @@ class VaultPhotoBackup extends ChangeNotifier {
     // Back in the app: what was taken meanwhile.
     _lifecycle = AppLifecycleListener(onResume: () => unawaited(scan()));
     unawaited(scan());
+  }
+
+  /// Photo backup's background run (task 5.4): one look at the library and
+  /// the uploads it makes, for at most [budget], without the listeners of
+  /// [start] (there is no screen and no network watch). Uploads cut by the
+  /// end of [budget] go on from where they stopped next time.
+  Future<void> runInBackground(Duration budget) async {
+    if (!available || !on) return;
+    _started = true;
+    _uploader.mayStart = _mayStart;
+    _until = DateTime.now().add(budget);
+    final timeUp = Timer(budget, () => unawaited(_uploader.hold()));
+    try {
+      _access = await _library.access();
+      if (_access == PhotoAccess.none) return;
+      // What was queued before (by the app, or the last run) goes first.
+      await _uploader.run();
+      await scan();
+    } finally {
+      timeUp.cancel();
+      await _uploader.hold();
+      _until = null;
+      _started = false;
+      _uploader.mayStart = null;
+    }
   }
 
   /// Sign-out: nothing more is looked at or queued.
@@ -226,7 +259,7 @@ class VaultPhotoBackup extends ChangeNotifier {
   }
 
   Future<void> _scanOnce() async {
-    if (!_started || await _keys.vaultKey() == null) return;
+    if (!_started || _timeUp || await _keys.vaultKey() == null) return;
     if (_access == PhotoAccess.none) _access = await _library.access();
     if (_access == PhotoAccess.none) return;
     final backed = await _dao.backedUpAssetIds();
@@ -300,6 +333,7 @@ class VaultPhotoBackup extends ChangeNotifier {
     final folder = await _folder();
     var queued = 0;
     for (final a in assets) {
+      if (_timeUp) break;
       final got = await _library.original(a);
       if (got == null) continue;
       final snap = await VaultFileWork.snapshot(got.file.path);
