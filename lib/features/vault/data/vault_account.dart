@@ -97,6 +97,10 @@ class VaultAccount extends ChangeNotifier {
     _vaultId = await _keys.vaultId();
     if (_vaultId == null) {
       _status = VaultStatus.signedOut;
+    } else if (await _keys.keyPending()) {
+      // The first key of this Drive was made here but never reached the
+      // server: signing in again finishes it.
+      _status = VaultStatus.signedOut;
     } else {
       _status = await _keys.vaultKey() != null
           ? VaultStatus.ready
@@ -115,9 +119,27 @@ class VaultAccount extends ChangeNotifier {
     if (vaultId == null || serverHalf == null) return;
     try {
       if (_status == VaultStatus.ready) {
+        // The key here must be the one the account knows before it is used
+        // to repair anything: another device may have registered first.
+        final vk = (await _keys.vaultKey())!;
+        final mine = Rust.vaultKeyCheck(vk);
+        var server = (await _api.info(vaultId))['keyCheck'] as String?;
+        if (server == null) {
+          await _register(vaultId, mine);
+          server = (await _api.info(vaultId))['keyCheck'] as String?;
+        }
+        if (server != mine) {
+          await _keys.forgetVaultKey();
+          _status = VaultStatus.needsKey;
+          notifyListeners();
+          if (server != null) {
+            await _restore(vaultId, serverHalf, server, interactive: false);
+          }
+          return;
+        }
         await keyCopy.repair(
           vaultId: vaultId,
-          vaultKey: (await _keys.vaultKey())!,
+          vaultKey: vk,
           serverHalf: serverHalf,
         );
       } else if (_status == VaultStatus.needsKey) {
@@ -184,9 +206,9 @@ class VaultAccount extends ChangeNotifier {
     // and its index and queue go too.
     final previous = await _keys.vaultId();
     if (previous != null && previous != r.vaultId) {
+      await _onForget?.call();
       await _keys.forgetVault();
       await _dao?.clearAll();
-      await _onForget?.call();
     }
     await _keys.saveVault(vaultId: r.vaultId, serverHalf: r.serverHalf);
     _vaultId = r.vaultId;
@@ -197,9 +219,15 @@ class VaultAccount extends ChangeNotifier {
       await _makeVaultKey(r.vaultId);
     } else {
       final local = await _keys.vaultKey();
-      _status = local != null && Rust.vaultKeyCheck(local) == r.keyCheck
-          ? VaultStatus.ready
-          : VaultStatus.needsKey;
+      if (local != null && Rust.vaultKeyCheck(local) == r.keyCheck) {
+        await _keys.setKeyPending(false);
+        _status = VaultStatus.ready;
+      } else {
+        // A key that is not this Drive's (made here and never registered
+        // while another device's won) must not stay to be used later.
+        if (local != null) await _keys.forgetVaultKey();
+        _status = VaultStatus.needsKey;
+      }
     }
     notifyListeners();
     _checked = true;
@@ -226,19 +254,33 @@ class VaultAccount extends ChangeNotifier {
   }
 
   /// First device of the account: make VK, keep it, register its key check.
+  /// Until the server has the check the key is pending: kept (never lost),
+  /// not used. A lost connection here fails the sign-in; signing in again
+  /// registers the same key.
   Future<void> _makeVaultKey(String vaultId) async {
     final vk = await _keys.vaultKey() ?? Rust.vaultGenerateKey();
     await _keys.saveVaultKey(vk);
-    try {
-      await _api.registerKeyCheck(vaultId, Rust.vaultKeyCheck(vk));
+    await _keys.setKeyPending(true);
+    await _register(vaultId, Rust.vaultKeyCheck(vk));
+    final server = (await _api.info(vaultId))['keyCheck'] as String?;
+    if (server == Rust.vaultKeyCheck(vk)) {
+      await _keys.setKeyPending(false);
       _status = VaultStatus.ready;
-    } on VaultApiException catch (e) {
-      if (e.code != 'VAULT_KEY_EXISTS') rethrow;
+    } else {
       // Another device of the same account registered first: its key wins,
       // and this device's own attempt is thrown away.
-      await _keys.forgetVault();
-      await _keys.saveVault(vaultId: vaultId, serverHalf: _last?.serverHalf);
+      await _keys.forgetVaultKey();
       _status = VaultStatus.needsKey;
+    }
+  }
+
+  /// Register [check] as the account's key check; "already there" is fine
+  /// (this device's earlier try, or another device's: the caller compares).
+  Future<void> _register(String vaultId, String check) async {
+    try {
+      await _api.registerKeyCheck(vaultId, check);
+    } on VaultApiException catch (e) {
+      if (e.code != 'VAULT_KEY_EXISTS') rethrow;
     }
   }
 
@@ -275,6 +317,9 @@ class VaultAccount extends ChangeNotifier {
     for (final i in (_info?['identities'] as List?) ?? const [])
       if (i is Map && i['provider'] is String) i['provider'] as String,
   ];
+
+  /// [refreshInfo] has answered at least once since the last sign-in.
+  bool get infoLoaded => _info != null;
 
   /// Stored bytes (what the quota counts), as of the last [refreshInfo].
   int? get usedBytes => (_info?['usedBytes'] as num?)?.toInt();
@@ -632,10 +677,10 @@ class VaultAccount extends ChangeNotifier {
 
   /// Forget Drive on this device. The account and its files stay.
   Future<void> signOut() async {
+    await _onForget?.call();
     await _keys.forgetVault();
     await _signin.forgetGoogle();
     await _dao?.clearAll();
-    await _onForget?.call();
     keyCopy.reset();
     _vaultId = null;
     _last = null;

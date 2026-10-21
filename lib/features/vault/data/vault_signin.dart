@@ -164,8 +164,10 @@ class VaultSignin {
       await _desktop.forget();
       return;
     }
-    if (_googleNonce == null) return;
     try {
+      // Signing out needs Google set up on this run, even when this run never
+      // signed in (the nonce is this device's, as at any sign-in).
+      await _initGoogle(await _keys.signinNonce());
       await GoogleSignIn.instance.signOut();
     } on Object {
       // Nothing to forget.

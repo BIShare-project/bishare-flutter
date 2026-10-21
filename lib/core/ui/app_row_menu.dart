@@ -43,6 +43,8 @@ class AppRowMenu extends StatelessWidget {
     if (context.isWideLayout) {
       final cs = ShadTheme.of(context).colorScheme;
       return ShadContextMenuRegion(
+        // A tap opens the row; on a tablet shadcn would pop the menu too.
+        tapEnabled: false,
         items: [
           for (final a in actions)
             ShadContextMenuItem(

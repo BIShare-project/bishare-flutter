@@ -8,6 +8,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../core/di/locator.dart';
 import '../../core/identity/device_identity.dart';
 import '../../core/ui/app_showcase.dart';
+import '../../core/ui/shell_tab.dart';
 import '../../core/ui/app_ui.dart';
 import '../receive/presentation/incoming_file_request_sheet.dart';
 import '../receive/presentation/incoming_transfer_sheet.dart';
@@ -38,6 +39,9 @@ class HomePage extends StatelessWidget {
       backgroundColor: cs.background,
       body: DropTarget(
         // Desktop drag-drop: dropped files/folders join the staging tray.
+        // Only while Home is on screen: the tabs share one window, and a
+        // drop on Drive must not land here too.
+        enable: ShellTab.isActive(context),
         onDragDone: (detail) => context.read<TrayCubit>().addDropped(
           detail.files.map((f) => f.path).toList(),
         ),

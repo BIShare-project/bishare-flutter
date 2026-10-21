@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
@@ -15,6 +14,7 @@ import '../../../core/rust/rust_facade.dart';
 import '../../../core/storage/app_database.dart';
 import '../../../core/storage/vault_tables.dart';
 import 'vault_api.dart';
+import 'vault_file_work.dart';
 import 'vault_files.dart';
 import 'vault_keys.dart';
 import 'vault_meta.dart';
@@ -23,17 +23,26 @@ import 'vault_thumbs.dart';
 
 /// The upload queue (drive-plan.md task 4.4). For each file:
 ///
-/// 1. hash the plaintext; a file this vault already holds (same SHA-256 in
-///    the local index) is linked to the stored copy, nothing is sent;
-/// 2. compress when the type is worth it and the result is at least 10%
-///    smaller (VAULT-SPEC "Compression");
-/// 3. seal with a fresh file key (BSE2) to a file that outlives a restart,
+/// 1. read it once (on another isolate): its SHA-256, its size, and its
+///    compressed copy when the type is worth it and the result is at least
+///    10% smaller (VAULT-SPEC "Compression"); a file this vault already holds
+///    (same SHA-256 and size in the local index) is linked to the stored
+///    copy, nothing is sent;
+/// 2. seal it with a fresh file key (BSE2) to a file that outlives a restart,
 ///    because a second sealing would give different bytes than the parts
-///    already sent;
-/// 4. reserve quota with the dedupe tag (the server may answer with a blob
-///    of the same content: link to it);
-/// 5. send in one PUT, or in parts whose ETags are kept after each one;
-/// 6. commit the object with its sealed metadata, then pull the index.
+///    already sent; written under a temporary name, so a sealing cut short is
+///    never sent; the file must still be the one that was read;
+/// 3. reserve quota with the dedupe tag (the server may answer with a blob of
+///    the same content: link to it once its hash and size match ours);
+/// 4. send in one PUT, or in parts whose ETags are kept after each one; a
+///    send that makes no progress for a minute stops (slow is fine, stuck is
+///    not);
+/// 5. commit the object with its sealed metadata, then pull the index. A
+///    commit whose answer was lost is asked again, not sent again.
+///
+/// A lost connection stops the queue and, in the app, it starts again by
+/// itself after a pause ([retryAfter], growing up to five minutes). A file
+/// that fails for good leaves nothing behind in the work folder.
 ///
 /// One file at a time, one part at a time: a phone on mobile data should not
 /// open ten connections. The queue lives in [VaultTransfers]; [run] picks up
@@ -48,17 +57,19 @@ class VaultUploader extends ChangeNotifier {
     Future<Directory> Function()? workDir,
     VaultThumbs? thumbs,
     this.maximumSecurity = false,
+    this.retryAfter,
   }) : _thumbs = thumbs,
        _api = api,
        _keys = keys,
        _dao = dao,
        _sync = sync,
+       // No send timeout: a large part on a slow line takes as long as it
+       // takes. The watchdog in [_put] stops a send that makes no progress.
        _http =
            http ??
            Dio(
              BaseOptions(
                connectTimeout: const Duration(seconds: 15),
-               sendTimeout: const Duration(minutes: 5),
                receiveTimeout: const Duration(minutes: 2),
              ),
            ),
@@ -76,12 +87,27 @@ class VaultUploader extends ChangeNotifier {
   /// (VAULT-SPEC: stored sizes then say nothing about the content).
   bool maximumSecurity;
 
+  /// The first pause before the queue tries again by itself after a lost
+  /// connection; null: only when asked ([run]).
+  final Duration? retryAfter;
+
   static const _partRetries = 3;
+
+  /// A send with no progress for this long is treated as a lost connection.
+  static const _stalled = Duration(seconds: 60);
+
+  static const _retryMax = Duration(minutes: 5);
 
   Future<void>? _running;
   CancelToken? _cancel;
   int? _current;
+  final Set<int> _cancelled = {};
   final Map<int, ({int done, int total})> _progress = {};
+  Timer? _retryTimer;
+  Duration? _nextRetry;
+
+  /// Bumped by [stop]: a run from before it ends at its next step.
+  int _epoch = 0;
 
   /// Bytes sent of the file being uploaded now, by queue id.
   ({int done, int total})? progressOf(int id) => _progress[id];
@@ -173,7 +199,8 @@ class VaultUploader extends ChangeNotifier {
     return count;
   }
 
-  /// Put a stopped upload back in the queue (after "Upload stopped").
+  /// Put a stopped upload back in the queue (after "Upload stopped", or one
+  /// waiting for the connection).
   Future<void> retry(int id) async {
     await _set(id, state: 'queued', error: null);
     unawaited(run());
@@ -181,51 +208,105 @@ class VaultUploader extends ChangeNotifier {
 
   /// Work through the queue until it is empty or the network goes. Calls
   /// while it runs join the same run.
-  Future<void> run() => _running ??= _runAll().whenComplete(() {
-    _running = null;
-  });
+  Future<void> run() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    return _running ??= _runAll().whenComplete(() {
+      _running = null;
+    });
+  }
+
+  /// Sign-out: the upload in flight stops, nothing starts again by itself,
+  /// and the work folder (sealed files, compressed copies) goes.
+  Future<void> stop() async {
+    _epoch++;
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    _cancel?.cancel();
+    try {
+      final work = await _workDir();
+      if (await work.exists()) await work.delete(recursive: true);
+    } on Object catch (e) {
+      debugPrint('[vault] work folder: $e');
+    }
+  }
 
   Future<void> _runAll() async {
-    while (true) {
+    final epoch = _epoch;
+    while (epoch == _epoch) {
       final next = (await _dao.pendingTransfers())
-          .where((t) => t.direction == 'up')
+          .where((t) => t.direction == 'up' && !_cancelled.contains(t.id))
           .firstOrNull;
-      if (next == null) return;
+      if (next == null) {
+        _nextRetry = null;
+        return;
+      }
       _current = next.id;
       _cancel = CancelToken();
       try {
         await _upload(next);
+        _nextRetry = null;
       } on _Stop catch (s) {
-        await _set(next.id, state: s.state, error: s.code);
+        if (s.state == 'failed') {
+          await _fail(next.id, s.code);
+        } else {
+          await _set(next.id, state: s.state, error: s.code);
+        }
         if (s.state != 'failed' && s.state != 'cancelled') return;
       } on VaultApiException catch (e) {
-        if (e.code == 'NETWORK') {
+        if (_retryable(e.code)) {
           await _set(next.id, error: 'NETWORK');
-          return; // try again on the next run
+          _later(epoch);
+          return;
         }
-        await _set(next.id, state: 'failed', error: e.code);
+        await _fail(next.id, e.code);
       } on DioException catch (e) {
-        if (CancelToken.isCancel(e)) {
+        if (CancelToken.isCancel(e) && _cancelled.contains(next.id)) {
+          await _cleanup((await _dao.transfer(next.id)) ?? next);
           await _set(next.id, state: 'cancelled');
+        } else if (CancelToken.isCancel(e)) {
+          return; // stopped (sign-out)
         } else {
           await _set(next.id, error: 'NETWORK');
+          _later(epoch);
           return;
         }
       } on Object catch (e) {
         debugPrint('[vault] upload ${next.id} failed: $e');
-        await _set(next.id, state: 'failed', error: 'UNKNOWN');
+        await _fail(next.id, 'UNKNOWN');
       } finally {
         _current = null;
+        _cancelled.remove(next.id);
         _progress.remove(next.id);
         notifyListeners();
       }
     }
   }
 
-  /// Stop a queued or running upload and release what it reserved.
+  /// A lost connection, a server hiccup, a full minute without progress:
+  /// worth trying again.
+  static bool _retryable(String code) =>
+      code == 'NETWORK' || code == 'INTERNAL_ERROR' || code == 'RATE_LIMITED';
+
+  /// Try the queue again by itself after a pause that grows with each try.
+  void _later(int epoch) {
+    final first = retryAfter;
+    if (first == null || epoch != _epoch) return;
+    final wait = _nextRetry ?? first;
+    _nextRetry = wait * 2 > _retryMax ? _retryMax : wait * 2;
+    _retryTimer?.cancel();
+    _retryTimer = Timer(wait, () {
+      if (epoch == _epoch) unawaited(run());
+    });
+  }
+
+  /// Stop a queued or running upload and release what it reserved. A step
+  /// already running (sealing, reserving) finishes first, then the upload
+  /// stops there and gives back what that step took.
   Future<void> cancel(int id) async {
     final t = await _dao.transfer(id);
     if (t == null) return;
+    _cancelled.add(id);
     if (_current == id) _cancel?.cancel();
     final vaultId = await _keys.vaultId();
     if (t.uploadId != null && vaultId != null) {
@@ -235,32 +316,83 @@ class VaultUploader extends ChangeNotifier {
         // The reservation runs out by itself.
       }
     }
-    await _cleanup(t);
+    if (_current != id) {
+      _cancelled.remove(id);
+      await _cleanup(t);
+    }
     await _set(id, state: 'cancelled');
+  }
+
+  /// Between steps: a cancel that came while the step ran stops here.
+  Future<void> _check(VaultTransfer t, String vaultId) async {
+    if (!_cancelled.contains(t.id)) return;
+    final now = await _dao.transfer(t.id);
+    final reserved = now?.uploadId;
+    if (reserved != null) {
+      try {
+        await _api.abort(vaultId, reserved);
+      } on Object {
+        // The reservation runs out by itself.
+      }
+    }
+    await _cleanup(now ?? t);
+    throw const _Stop('cancelled', 'CANCELLED');
   }
 
   // ---- one file ----------------------------------------------------------------------
 
-  Future<void> _upload(VaultTransfer t0) async {
+  /// [changed]: how many times the file was edited while it was being read
+  /// and sealed; it is read again each time, then given up on.
+  Future<void> _upload(VaultTransfer t0, {int changed = 0}) async {
     final vaultId = await _keys.vaultId();
     final vk = await _keys.vaultKey();
     if (vaultId == null || vk == null) throw const _Stop('queued', 'NO_KEY');
     var t = t0;
     final source = File(t.localPath);
 
-    // 1-2. Metadata (with the file key) once; a resumed upload keeps it.
+    // Everything was sent and only the commit's answer is missing: ask again.
+    if (t.uploadId != null && t.encMeta != null && _allSent(t.partsDone)) {
+      return _commit(vaultId, vk, t);
+    }
+
+    // A sealed file is made once. Without it (the app stopped while sealing,
+    // or the work folder went), the upload starts over with a fresh file key:
+    // a key is never used for two different sealings.
+    var sealed = t.sealedPath == null ? null : File(t.sealedPath!);
+    if (t.encMeta != null && (sealed == null || !await sealed.exists())) {
+      await _reset(vaultId, t);
+      t = (await _dao.transfer(t.id))!;
+      sealed = null;
+    }
+
+    // 1. One read of the file: hash, size, the compressed copy.
     if (t.encMeta == null) {
       if (!await source.exists()) throw const _Stop('failed', 'MISSING');
       await _set(t.id, state: 'sealing');
-      final hash = await _sha256(source);
-      final hashB64 = VaultMetaCodec.b64u(hash);
       final mime = lookupMimeType(t.name) ?? 'application/octet-stream';
-      final mtime = (await source.lastModified()).millisecondsSinceEpoch;
-
+      final work = await _workDir();
+      final snap = await VaultFileWork.snapshot(
+        source.path,
+        zPath: _wantsCompression(t, mime)
+            ? '${work.path}/${t.objectId}.z'
+            : null,
+      );
+      await _check(t, vaultId);
       if (!maximumSecurity) {
-        final same = await _dao.fileWithHash(hashB64);
+        final same = await _dao.fileWithHash(VaultMetaCodec.b64u(snap.hash));
         if (same != null &&
-            await _linkTo(vaultId, vk, t, same, mime: mime, mtime: mtime)) {
+            same.size == snap.size &&
+            await _linkTo(
+              vaultId,
+              vk,
+              t,
+              same,
+              hash: snap.hash,
+              size: snap.size,
+              mime: mime,
+              mtime: snap.modifiedMs,
+            )) {
+          await _cleanup(t);
           return;
         }
       }
@@ -268,17 +400,18 @@ class VaultUploader extends ChangeNotifier {
         kind: 'file',
         name: t.name,
         parent: t.parent,
-        mtimeMs: mtime,
-        size: t.size,
+        mtimeMs: snap.modifiedMs,
+        size: snap.size,
         mime: mime,
         fileKey: Rust.vaultGenerateFileKey(),
-        hash: hash,
-        compression: await _compressed(t) ? 'deflate' : null,
+        hash: snap.hash,
+        compression: snap.compressed ? 'deflate' : null,
       );
       await _dao.updateTransfer(
         t.id,
         VaultTransfersCompanion(
           encMeta: Value(VaultMetaCodec.seal(vk, vaultId, t.objectId, meta)),
+          size: Value(snap.size),
           updatedAt: Value(_now()),
         ),
       );
@@ -286,21 +419,19 @@ class VaultUploader extends ChangeNotifier {
     }
     final meta = VaultMetaCodec.open(vk, vaultId, t.objectId, t.encMeta!);
 
-    // 3. The sealed file, made once.
-    var sealed = t.sealedPath == null ? null : File(t.sealedPath!);
-    if (sealed == null || !await sealed.exists()) {
-      if (t.uploadId != null) {
-        // Parts of an earlier sealing may be on the server; they cannot be
-        // matched by a new one. Start the upload over.
-        await _forgetUpload(vaultId, t);
-        t = (await _dao.transfer(t.id))!;
-      }
-      sealed = await _seal(t, meta);
-      t = (await _dao.transfer(t.id))!;
+    // 2. The sealed file, made once.
+    try {
+      sealed ??= await _seal(t, meta);
+    } on _Changed {
+      if (changed >= 2) throw const _Stop('failed', 'CHANGED');
+      await _reset(vaultId, t);
+      return _upload((await _dao.transfer(t.id))!, changed: changed + 1);
     }
+    t = (await _dao.transfer(t.id))!;
+    await _check(t, vaultId);
     final sealedSize = await sealed.length();
 
-    // 4. Reserve, or link to the same content.
+    // 3. Reserve, or link to the same content.
     if (t.uploadId == null) {
       final tag = maximumSecurity
           ? null
@@ -321,13 +452,16 @@ class VaultUploader extends ChangeNotifier {
               vk,
               t,
               holder,
+              hash: meta.hash!,
+              size: meta.size!,
               mime: meta.mime!,
               mtime: meta.mtimeMs,
             )) {
           await _cleanup(t);
           return;
         }
-        // The index has no object for that blob: send the bytes after all.
+        // No object of ours holds that blob, or its content is not ours:
+        // send the bytes after all.
         r = await _api.reserve(vaultId, size: sealedSize);
       }
       await _dao.updateTransfer(
@@ -346,6 +480,7 @@ class VaultUploader extends ChangeNotifier {
         ),
       );
       t = (await _dao.transfer(t.id))!;
+      await _check(t, vaultId);
       if (!r.multipart && r.url != null) {
         await _putSingle(t, sealed, r.url!);
       } else {
@@ -365,27 +500,53 @@ class VaultUploader extends ChangeNotifier {
       } on VaultApiException catch (e) {
         if (e.code != 'VAULT_UPLOAD_NOT_FOUND') rethrow;
         // The reservation ran out while the app was closed: start over.
-        await _forgetUpload(vaultId, t);
+        await _reset(vaultId, t);
         return _upload((await _dao.transfer(t.id))!);
       }
       t = (await _dao.transfer(t.id))!;
     }
+    await _check(t, vaultId);
+    return _commit(vaultId, vk, t);
+  }
 
-    // 6. Commit.
+  /// 5. Commit, then the index and the thumbnail. A repeat of a commit that
+  /// went through is answered from the object; a reservation that ran out
+  /// before any commit starts the upload over.
+  Future<void> _commit(String vaultId, Uint8List vk, VaultTransfer t) async {
     await _set(t.id, state: 'finishing');
+    final meta = VaultMetaCodec.open(vk, vaultId, t.objectId, t.encMeta!);
     final plan = jsonDecode(t.partsDone ?? '{}') as Map<String, dynamic>;
     final multipart = (plan['size'] as num? ?? 0) > 0;
-    await _api.complete(
-      vaultId,
-      t.uploadId!,
-      objectId: t.objectId,
-      encMeta: t.encMeta!,
-      parts: multipart ? _doneParts(plan) : null,
-    );
+    try {
+      await _api.complete(
+        vaultId,
+        t.uploadId!,
+        objectId: t.objectId,
+        encMeta: t.encMeta!,
+        parts: multipart ? _doneParts(plan) : null,
+      );
+    } on VaultApiException catch (e) {
+      if (e.code == 'VAULT_OBJECT_EXISTS') {
+        // This object is ours: an earlier try went through.
+      } else if (e.code == 'VAULT_UPLOAD_NOT_FOUND' ||
+          e.code == 'VAULT_UPLOAD_INCOMPLETE') {
+        await _reset(vaultId, t);
+        return _upload((await _dao.transfer(t.id))!);
+      } else {
+        rethrow;
+      }
+    }
     await _cleanup(t);
     await _set(t.id, state: 'done', error: null);
     await _thumb(t, vaultId, meta);
     unawaited(_sync.pull().catchError((Object _) {}));
+  }
+
+  static bool _allSent(String? partsDone) {
+    if (partsDone == null) return false;
+    final plan = jsonDecode(partsDone) as Map<String, dynamic>;
+    final parts = (plan['parts'] as num? ?? 0).toInt();
+    return parts > 0 && _doneParts(plan).length == parts;
   }
 
   /// The thumbnail of a photo or video just committed. Best effort: a file
@@ -405,13 +566,18 @@ class VaultUploader extends ChangeNotifier {
   }
 
   /// Point a new object at content this vault already stores: its file key
-  /// (and compression) come from the object that holds it. False when that
-  /// object's metadata does not open.
+  /// (and compression) come from the object that holds it, once that
+  /// object's hash and size are those of the file being added (VAULT-SPEC
+  /// "Dedupe": the server's word that two blobs match is never enough).
+  /// False when they differ, the holder's metadata does not open, or the
+  /// server no longer has the blob; the caller then sends the bytes.
   Future<bool> _linkTo(
     String vaultId,
     Uint8List vk,
     VaultTransfer t,
     VaultObject holder, {
+    required Uint8List hash,
+    required int size,
     required String mime,
     required int mtime,
   }) async {
@@ -419,6 +585,12 @@ class VaultUploader extends ChangeNotifier {
     try {
       theirs = VaultMetaCodec.open(vk, vaultId, holder.id, holder.encMeta);
     } on Object {
+      return false;
+    }
+    final theirHash = theirs.hash;
+    if (theirs.size != size ||
+        theirHash == null ||
+        !listEquals(theirHash, hash)) {
       return false;
     }
     final meta = VaultMeta(
@@ -443,9 +615,12 @@ class VaultUploader extends ChangeNotifier {
       },
     ]);
     final res = r.results.single;
-    if (res['ok'] != true) {
+    final code = res['code'] as String?;
+    if (res['ok'] != true && code == 'VAULT_BLOB_NOT_FOUND') return false;
+    // VAULT_OBJECT_EXISTS: this object is ours, an earlier try went through.
+    if (res['ok'] != true && code != 'VAULT_OBJECT_EXISTS') {
       throw VaultApiException(
-        res['code'] as String? ?? 'UNKNOWN',
+        code ?? 'UNKNOWN',
         res['message'] as String? ?? '',
       );
     }
@@ -455,37 +630,37 @@ class VaultUploader extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> _compressed(VaultTransfer t) async =>
+  bool _wantsCompression(VaultTransfer t, String mime) =>
       !maximumSecurity &&
       t.size <= VaultMetaCodec.compressMax &&
-      VaultMetaCodec.compressible(
-        lookupMimeType(t.name) ?? 'application/octet-stream',
-        t.name,
-      ) &&
-      (await _compressedFile(t)) != null;
-
-  /// The raw-DEFLATE copy of [t]'s file in the work folder, kept only when
-  /// it is at least 10% smaller.
-  Future<File?> _compressedFile(VaultTransfer t) async {
-    final out = File('${(await _workDir()).path}/${t.objectId}.z');
-    if (await out.exists()) return out;
-    final plain = await File(t.localPath).readAsBytes();
-    final packed = Rust.vaultDeflateRaw(plain);
-    if (packed.length > plain.length * 0.9) return null;
-    await out.writeAsBytes(packed, flush: true);
-    return out;
-  }
+      VaultMetaCodec.compressible(mime, t.name);
 
   Future<File> _seal(VaultTransfer t, VaultMeta meta) async {
     await _set(t.id, state: 'sealing');
     final work = await _workDir();
-    final input = meta.compression == 'deflate'
-        ? (await _compressedFile(t) ??
-              (throw const _Stop('failed', 'COMPRESSION')))
+    final compressed = meta.compression == 'deflate';
+    final input = compressed
+        ? File('${work.path}/${t.objectId}.z')
         : File(t.localPath);
-    if (!await input.exists()) throw const _Stop('failed', 'MISSING');
+    if (!await input.exists()) {
+      throw _Stop('failed', compressed ? 'COMPRESSION' : 'MISSING');
+    }
+    final plainSize = await input.length();
     final out = File('${work.path}/${t.objectId}.bse2');
-    await Bse2.encryptFile(input: input, output: out, key: meta.fileKey!);
+    final tmp = File('${out.path}.tmp');
+    await Bse2.encryptFile(input: input, output: tmp, key: meta.fileKey!);
+    // The file read in step 1 is the one sealed: not edited meanwhile, and
+    // the container is whole.
+    final same =
+        compressed ||
+        (plainSize == meta.size &&
+            (await input.lastModified()).millisecondsSinceEpoch ==
+                meta.mtimeMs);
+    if (!same || await tmp.length() != Bse2.ciphertextSize(plainSize)) {
+      await tmp.delete();
+      throw const _Changed();
+    }
+    await tmp.rename(out.path);
     await _dao.updateTransfer(
       t.id,
       VaultTransfersCompanion(
@@ -498,13 +673,7 @@ class VaultUploader extends ChangeNotifier {
 
   Future<void> _putSingle(VaultTransfer t, File sealed, String url) async {
     final len = await sealed.length();
-    await _http.put<void>(
-      url,
-      data: sealed.openRead(),
-      options: Options(headers: {Headers.contentLengthHeader: len}),
-      onSendProgress: (sent, _) => _report(t.id, sent, len),
-      cancelToken: _cancel,
-    );
+    await _put(url, () => sealed.openRead(), len, (s) => _report(t.id, s, len));
     final plan = {
       'size': 0,
       'parts': 1,
@@ -520,6 +689,50 @@ class VaultUploader extends ChangeNotifier {
         updatedAt: Value(_now()),
       ),
     );
+  }
+
+  /// One PUT to R2 with a watchdog: no progress for [_stalled] ends it as a
+  /// lost connection. The ETag, when the server sent one.
+  Future<String?> _put(
+    String url,
+    Stream<List<int>> Function() data,
+    int length,
+    void Function(int sent) onSent,
+  ) async {
+    final outer = _cancel;
+    final token = CancelToken();
+    unawaited(outer?.whenCancel.then((_) => token.cancel()));
+    Timer? idle;
+    var stalled = false;
+    void arm() {
+      idle?.cancel();
+      idle = Timer(_stalled, () {
+        stalled = true;
+        token.cancel('stalled');
+      });
+    }
+
+    arm();
+    try {
+      final res = await _http.put<void>(
+        url,
+        data: data(),
+        options: Options(headers: {Headers.contentLengthHeader: length}),
+        onSendProgress: (sent, _) {
+          arm();
+          onSent(sent);
+        },
+        cancelToken: token,
+      );
+      return res.headers.value('etag');
+    } on DioException catch (e) {
+      if (stalled && CancelToken.isCancel(e)) {
+        throw const VaultApiException('NETWORK', 'no progress');
+      }
+      rethrow;
+    } finally {
+      idle?.cancel();
+    }
   }
 
   Future<void> _putParts(
@@ -558,16 +771,12 @@ class VaultUploader extends ChangeNotifier {
       String? etag;
       for (var attempt = 0; ; attempt++) {
         try {
-          final res = await _http.put<void>(
+          etag = await _put(
             await urlFor(n),
-            data: sealed.openRead(start, end),
-            options: Options(
-              headers: {Headers.contentLengthHeader: end - start},
-            ),
-            onSendProgress: (s, _) => _report(t.id, sent + s, len),
-            cancelToken: _cancel,
+            () => sealed.openRead(start, end),
+            end - start,
+            (s) => _report(t.id, sent + s, len),
           );
-          etag = res.headers.value('etag');
           break;
         } on DioException catch (e) {
           if (CancelToken.isCancel(e) || attempt >= _partRetries) rethrow;
@@ -607,7 +816,9 @@ class VaultUploader extends ChangeNotifier {
     return list;
   }
 
-  Future<void> _forgetUpload(String vaultId, VaultTransfer t) async {
+  /// Back to the start: the reservation released, the sealed file and the
+  /// compressed copy gone, the metadata (with its file key) dropped.
+  Future<void> _reset(String vaultId, VaultTransfer t) async {
     if (t.uploadId != null) {
       try {
         await _api.abort(vaultId, t.uploadId!);
@@ -615,9 +826,12 @@ class VaultUploader extends ChangeNotifier {
         // Expired already.
       }
     }
+    await _cleanup(t);
     await _dao.updateTransfer(
       t.id,
       VaultTransfersCompanion(
+        encMeta: const Value(null),
+        sealedPath: const Value(null),
         uploadId: const Value(null),
         partsDone: const Value(null),
         bytesDone: const Value(0),
@@ -626,12 +840,24 @@ class VaultUploader extends ChangeNotifier {
     );
   }
 
+  /// Failed for good (until "Try again"): nothing is kept around for it, not
+  /// the reservation, not the sealed file, not the compressed copy, which is
+  /// the content without encryption.
+  Future<void> _fail(int id, String code) async {
+    final t = await _dao.transfer(id);
+    final vaultId = await _keys.vaultId();
+    if (t != null && vaultId != null) await _reset(vaultId, t);
+    await _set(id, state: 'failed', error: code);
+  }
+
   Future<void> _cleanup(VaultTransfer t) async {
     final work = await _workDir();
     for (final f in [
       if (t.sealedPath != null) File(t.sealedPath!),
       File('${work.path}/${t.objectId}.z'),
+      File('${work.path}/${t.objectId}.z.tmp'),
       File('${work.path}/${t.objectId}.bse2'),
+      File('${work.path}/${t.objectId}.bse2.tmp'),
     ]) {
       try {
         if (await f.exists()) await f.delete();
@@ -640,9 +866,6 @@ class VaultUploader extends ChangeNotifier {
       }
     }
   }
-
-  static Future<Uint8List> _sha256(File f) async =>
-      Uint8List.fromList((await sha256.bind(f.openRead()).first).bytes);
 
   void _report(int id, int done, int total) {
     _progress[id] = (done: done, total: total);
@@ -671,4 +894,9 @@ class _Stop implements Exception {
   const _Stop(this.state, this.code);
   final String state;
   final String code;
+}
+
+/// The file changed between the read that hashed it and the sealing.
+class _Changed implements Exception {
+  const _Changed();
 }

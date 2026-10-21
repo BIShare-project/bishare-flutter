@@ -7,9 +7,9 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../core/crypto/bse2.dart';
 import '../../../core/io/preserve_mtime.dart';
-import '../../../core/rust/rust_facade.dart';
 import '../../../core/storage/vault_tables.dart';
 import 'vault_api.dart';
+import 'vault_file_work.dart';
 import 'vault_keys.dart';
 import 'vault_meta.dart';
 import 'vault_sync.dart';
@@ -18,6 +18,11 @@ import 'vault_sync.dart';
 /// from R2, BSE2-open with the file key from the object's sealed metadata,
 /// inflate when it was stored compressed, then the original modification
 /// time on the result.
+///
+/// The result must have exactly the size and SHA-256 its sealed metadata
+/// gives, or it is refused: BSE2 authenticates every record, not where the
+/// stream ends, so a stored file cut short at a record boundary would
+/// otherwise open as a shorter one.
 ///
 /// Opening needs the whole sealed file on disk first (BSE2 authenticates every
 /// record and the whole length), so a download takes its ciphertext size of
@@ -95,12 +100,29 @@ class VaultDownloader {
       );
       await Bse2.decryptFile(input: sealed, output: plain, key: meta.fileKey!);
       await sealed.delete();
-      if (meta.compression == 'deflate') {
-        final bytes = Rust.vaultInflateRaw(
-          await plain.readAsBytes(),
-          meta.size!,
+      try {
+        if (meta.compression == 'deflate') {
+          final packed = File('${work.path}/$objectId.z');
+          await plain.rename(packed.path);
+          try {
+            await VaultFileWork.inflate(
+              packed.path,
+              plain.path,
+              meta.size!,
+              meta.hash,
+            );
+          } finally {
+            if (await packed.exists()) await packed.delete();
+          }
+        } else {
+          await VaultFileWork.verify(plain.path, meta.size!, meta.hash);
+        }
+      } on FormatException catch (e) {
+        debugPrint('[vault] $objectId does not match its metadata: $e');
+        throw const VaultApiException(
+          'VAULT_CORRUPT',
+          'The stored file is not the one that was added',
         );
-        await plain.writeAsBytes(bytes, flush: true);
       }
       await target.parent.create(recursive: true);
       final File done;

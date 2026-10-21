@@ -40,6 +40,7 @@ class VaultKeyStore {
   static const _kServerHalf = 'vault.serverHalf';
   static const _kGoogleHere = 'vault.googleHere';
   static const _kGoogleRefresh = 'vault.googleRefresh';
+  static const _kKeyPending = 'vault.keyPending';
 
   Uint8List? _seed;
 
@@ -83,6 +84,21 @@ class VaultKeyStore {
     await _writeBytes(_kVaultKey, key);
   }
 
+  /// A key made here whose check the server does not have yet: kept so it
+  /// is never lost, never used until the server has it (VaultAccount).
+  Future<bool> keyPending() async =>
+      await _storage.read(key: _kKeyPending) == '1';
+
+  Future<void> setKeyPending(bool pending) => pending
+      ? _storage.write(key: _kKeyPending, value: '1')
+      : _storage.delete(key: _kKeyPending);
+
+  /// Drop the vault key only (it is not this Drive's); the sign-in stays.
+  Future<void> forgetVaultKey() async {
+    await _storage.delete(key: _kVaultKey);
+    await _storage.delete(key: _kKeyPending);
+  }
+
   /// Whether this device has signed in with Google for Drive, so it may ask
   /// Google for a Drive token at start without showing anything first.
   Future<bool> googleHere() async =>
@@ -106,6 +122,7 @@ class VaultKeyStore {
   Future<void> forgetVault() async {
     await _storage.delete(key: _kVaultId);
     await _storage.delete(key: _kVaultKey);
+    await _storage.delete(key: _kKeyPending);
     await _storage.delete(key: _kServerHalf);
   }
 

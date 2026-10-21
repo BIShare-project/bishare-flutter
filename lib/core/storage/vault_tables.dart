@@ -127,6 +127,10 @@ class VaultDao extends DatabaseAccessor<AppDatabase> with _$VaultDaoMixin {
   Future<VaultObject?> object(String id) =>
       (select(vaultObjects)..where((t) => t.id.equals(id))).getSingleOrNull();
 
+  /// The rows of [ids] as they change (the folders of an open path).
+  Stream<List<VaultObject>> watchObjects(List<String> ids) =>
+      (select(vaultObjects)..where((t) => t.id.isIn(ids))).watch();
+
   /// The live children of a folder (null = the root): folders first, then by
   /// name.
   Stream<List<VaultObject>> watchChildren(String? parent) =>
@@ -145,27 +149,23 @@ class VaultDao extends DatabaseAccessor<AppDatabase> with _$VaultDaoMixin {
           .watch();
 
   /// Live files and folders whose name contains [query] (any case), for
-  /// search across the whole Drive.
+  /// search across the whole Drive. Matched here rather than in SQL: SQLite
+  /// folds case for ASCII letters only, and names come in every language
+  /// ("отчёт" finds "Отчёт.pdf").
   Stream<List<VaultObject>> watchSearch(String query, {int limit = 300}) {
-    final q = query.trim();
-    final escaped = q
-        .replaceAll('\\', '\\\\')
-        .replaceAll('%', '\\%')
-        .replaceAll('_', '\\_');
-    return (select(vaultObjects)
-          ..where(
-            (t) =>
-                t.trashedAt.isNull() &
-                t.name
-                    .collate(Collate.noCase)
-                    .like('%$escaped%', escapeChar: '\\'),
-          )
-          ..orderBy([
-            (t) => OrderingTerm.asc(t.kind),
-            (t) => OrderingTerm.asc(t.name.collate(Collate.noCase)),
-          ])
-          ..limit(limit))
-        .watch();
+    final q = query.trim().toLowerCase();
+    return (select(
+      vaultObjects,
+    )..where((t) => t.trashedAt.isNull())).watch().map((all) {
+      final hits = all.where((o) => o.name.toLowerCase().contains(q)).toList()
+        ..sort((a, b) {
+          final k = a.kind.compareTo(b.kind); // 'dir' before 'file'
+          return k != 0
+              ? k
+              : a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        });
+      return hits.length > limit ? hits.sublist(0, limit) : hits;
+    });
   }
 
   /// Live files added most recently, newest first.

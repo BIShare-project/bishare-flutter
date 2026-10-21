@@ -197,14 +197,23 @@ class VaultThumbs {
       }
       return;
     }
-    final dir = await _cacheDir();
-    final byId = {for (final i in items) i.objectId: i};
-    // A few at a time: a folder of photos should not open 100 connections.
-    for (var i = 0; i < ids.length; i += 6) {
-      await Future.wait([
-        for (final id in ids.skip(i).take(6))
-          _fetchOne(vaultId, vk, id, byId[id], dir),
-      ]);
+    try {
+      final dir = await _cacheDir();
+      final byId = {for (final i in items) i.objectId: i};
+      // A few at a time: a folder of photos should not open 100 connections.
+      for (var i = 0; i < ids.length; i += 6) {
+        await Future.wait([
+          for (final id in ids.skip(i).take(6))
+            _fetchOne(vaultId, vk, id, byId[id], dir),
+        ]);
+      }
+    } on Object catch (e) {
+      debugPrint('[vault] thumbnails: $e');
+    } finally {
+      // Whatever did not arrive is asked for again by the next screen.
+      for (final id in ids) {
+        _waiting.remove(id)?.complete(null);
+      }
     }
   }
 
@@ -216,9 +225,9 @@ class VaultThumbs {
     Directory dir,
   ) async {
     final url = item?.thumbUrl;
-    final obj = await _dao.object(id);
-    if (url == null || obj == null) return _done(id, null);
     try {
+      final obj = await _dao.object(id);
+      if (url == null || obj == null) return _done(id, null);
       final res = await _http.get<List<int>>(url);
       final meta = VaultMetaCodec.open(vk, vaultId, id, obj.encMeta);
       final jpeg = Rust.vaultOpenThumbnail(

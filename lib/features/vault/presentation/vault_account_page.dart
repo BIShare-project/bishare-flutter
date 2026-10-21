@@ -36,6 +36,9 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
   final VaultAccount _account = getIt<VaultAccount>();
   bool _busy = false;
 
+  /// The device list, asked for once per change (not on every rebuild).
+  Future<List<VaultDeviceView>>? _devices;
+
   @override
   void initState() {
     super.initState();
@@ -48,6 +51,13 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     } on VaultApiException catch (e) {
       debugPrint('[vault] account info: $e');
     }
+    if (mounted) setState(() => _devices = null);
+  }
+
+  /// What a confirmation needs (the linked sign-ins): asked for first when
+  /// the page has not heard from the server yet.
+  Future<void> _ensureInfo() async {
+    if (!_account.infoLoaded) await _refresh();
   }
 
   void _say(String key) {
@@ -66,7 +76,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     'VAULT_PAIR_NOT_FOUND' => 'vault.error_pair_expired',
     'VAULT_PAIR_TAKEN' => 'vault.error_pair_expired',
     'VAULT_SIGNIN' => 'vault.error_signin_again',
-    _ => 'vault.error_generic',
+    _ => 'vault.error_failed',
   };
 
   /// Run [step] with the page busy; errors become a short message.
@@ -100,6 +110,11 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
       reason: 'vault.phrase_lock_reason'.tr(),
     );
     if (!mounted || lock == DeviceLockResult.cancelled) return;
+    if (lock == DeviceLockResult.failed) {
+      // A lock is there and could not be asked: never show the words then.
+      _say('vault.error_failed');
+      return;
+    }
     if (lock != DeviceLockResult.ok) {
       // No screen lock to ask for: say what that means, and let the person
       // decide.
@@ -204,7 +219,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
       if (path != null) _say('vault.phrase_saved');
     } on Object catch (e) {
       debugPrint('[vault] save phrase: $e');
-      _say('vault.error_generic');
+      _say('vault.error_failed');
     }
   }
 
@@ -213,19 +228,17 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
   Future<void> _showCode() => _run(() async {
     final pairing = await _account.startPairing();
     if (!mounted) return;
-    var closed = false;
+    var closed = false; // by the person, before an answer came
+    var answered = false;
     final wait = _account.awaitGrant(pairing, cancelled: () => closed);
+    BuildContext? sheetContext;
     final sheet = showAppSheet<void>(
       context,
       icon: AppIcons.qrShare,
       title: 'vault.code_title'.tr(),
       subtitle: 'vault.code_body'.tr(),
       builder: (ctx) {
-        unawaited(
-          wait.then((ok) {
-            if (ok && ctx.mounted) Navigator.pop(ctx);
-          }, onError: (_) {}),
-        );
+        sheetContext = ctx;
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -240,10 +253,35 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         );
       },
     );
+    unawaited(
+      sheet.then((_) {
+        if (!answered) closed = true;
+      }),
+    );
+    Object? outcome;
+    try {
+      outcome = await wait;
+    } on Object catch (e) {
+      outcome = e;
+    }
+    answered = true;
+    // One close, whatever the answer: the key came, the code ran out (five
+    // minutes), or the key did not fit this Drive.
+    if (!closed) {
+      if (sheetContext == null) await WidgetsBinding.instance.endOfFrame;
+      final ctx = sheetContext;
+      if (ctx != null && ctx.mounted) Navigator.pop(ctx);
+    }
     await sheet;
-    closed = true;
-    if (await wait.catchError((Object _) => false)) {
+    if (outcome == true) {
       _say('vault.key_received');
+    } else if (outcome is VaultApiException) {
+      throw outcome;
+    } else if (outcome != false) {
+      debugPrint('[vault] waiting for the key: $outcome');
+      _say('vault.error_failed');
+    } else if (!closed) {
+      _say('vault.error_pair_expired');
     }
   });
 
@@ -398,9 +436,12 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     controller.dispose();
     if (name == null || name.isEmpty || name == d.name) return;
     await _run(() => _account.renameDevice(d.id, name));
+    if (mounted) setState(() => _devices = null);
   }
 
   Future<void> _removeDevice(VaultDeviceView d) async {
+    await _ensureInfo();
+    if (!mounted) return;
     final providers = [
       for (final p in _account.linkedProviders)
         if (_canSignIn(p)) p,
@@ -439,11 +480,14 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         _say('vault.device_removed');
       }
     });
+    if (mounted) setState(() => _devices = null);
   }
 
   // ---- the account -------------------------------------------------------------------
 
   Future<void> _delete() async {
+    await _ensureInfo();
+    if (!mounted) return;
     final providers = [
       for (final p in _account.linkedProviders)
         if (_canSignIn(p)) p,
@@ -498,6 +542,31 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
   }
 
   Future<void> _signOut() async {
+    final cs = ShadTheme.of(context).colorScheme;
+    final ok = await showAppSheet<bool>(
+      context,
+      icon: AppIcons.close,
+      iconColor: cs.destructive,
+      title: 'vault.sign_out_title'.tr(),
+      subtitle: 'vault.sign_out_body'.tr(),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppSheetAction(
+            icon: AppIcons.close,
+            label: 'vault.sign_out_confirm'.tr(),
+            destructive: true,
+            onTap: () => Navigator.pop(ctx, true),
+          ),
+          AppSheetAction(
+            icon: AppIcons.close,
+            label: 'vault.cancel'.tr(),
+            onTap: () => Navigator.pop(ctx, false),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
     await _account.signOut();
     if (mounted) Navigator.of(context).maybePop();
   }
@@ -596,7 +665,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         AppSectionHeader('vault.devices'.tr()),
         AppGroup(
           child: FutureBuilder<List<VaultDeviceView>>(
-            future: _account.devices(),
+            future: _devices ??= _account.devices(),
             builder: (context, snap) {
               final devices = snap.data ?? const <VaultDeviceView>[];
               final rows = <Widget>[];
@@ -652,9 +721,21 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
       rows.add(w);
     }
 
+    // Not heard from the server yet: nothing is shown as "not linked".
+    final known = _account.infoLoaded;
     for (final p in const ['google', 'apple']) {
       final isLinked = linked.contains(p);
       if (!isLinked && !_canSignIn(p)) continue;
+      if (!known) {
+        add(
+          AppListTile(
+            leading: const Glyph(AppIcons.logIn),
+            title: Text('vault.way_$p'.tr()),
+            subtitle: const Text('…'),
+          ),
+        );
+        continue;
+      }
       final holder = p == 'google' ? 'google' : 'icloud';
       final where = copy.holders.contains(holder)
           ? copy.stateOf(holder)

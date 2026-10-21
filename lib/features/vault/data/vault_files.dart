@@ -127,6 +127,9 @@ class VaultFiles {
     ]);
   }
 
+  /// Bring [ids] back with what was trashed with them: the folder's contents
+  /// trashed at the same time or after it (a large folder goes to the trash
+  /// in several calls), not what was trashed on its own before.
   Future<void> restore(List<String> ids) async {
     final (vaultId, _) = await _vault();
     final all = <String>{};
@@ -134,12 +137,9 @@ class VaultFiles {
       final obj = await _object(id);
       all.add(id);
       final at = obj.trashedAt;
-      for (final d in await _descendants(id)) {
-        if (d.trashedAt != null &&
-            at != null &&
-            (d.trashedAt! - at).abs() <= _sameTrash) {
-          all.add(d.id);
-        }
+      if (at == null) continue;
+      for (final d in await _trashedBelow(id)) {
+        if (d.trashedAt! >= at - _sameTrash) all.add(d.id);
       }
     }
     await _send(vaultId, [
@@ -214,19 +214,28 @@ class VaultFiles {
     return made;
   }
 
-  /// Gone for good, with everything inside: the bytes are deleted on the
-  /// server once no other object points at them.
+  /// Gone for good, with what is in the trash inside them: the bytes are
+  /// deleted on the server once no other object points at them. Only what
+  /// is in the trash can go. Something live inside a trashed folder (restored
+  /// on its own, or added from a device that had not seen the trash yet) is
+  /// kept and moves to the top of the Drive.
   Future<void> deleteForGood(List<String> ids) async {
     final (vaultId, _) = await _vault();
-    final all = <String>[];
+    final gone = <String>[];
+    final keep = <String>[];
     for (final id in ids) {
+      final obj = await _dao.object(id);
+      if (obj == null || obj.trashedAt == null) continue;
+      final below = await _trashedBelow(id, live: keep);
       // Contents first, the folder last.
-      all
-        ..addAll((await _descendants(id)).map((d) => d.id).toList().reversed)
+      gone
+        ..addAll(below.map((d) => d.id).toList().reversed)
         ..add(id);
     }
+    if (keep.isNotEmpty) await move(keep, null);
+    if (gone.isEmpty) return;
     await _send(vaultId, [
-      for (final id in {...all})
+      for (final id in {...gone})
         {'opId': _opId(), 'type': 'delete', 'objectId': id},
     ]);
   }
@@ -248,6 +257,27 @@ class VaultFiles {
         'VAULT_OBJECT_NOT_FOUND',
         'Not in the index',
       ));
+
+  /// The trashed objects below [id], reached through trashed folders only
+  /// (parents before children). Live children met on the way go to [live].
+  Future<List<VaultObject>> _trashedBelow(
+    String id, {
+    List<String>? live,
+  }) async {
+    final out = <VaultObject>[];
+    final queue = [id];
+    while (queue.isNotEmpty) {
+      for (final k in await _dao.childrenOf(queue.removeLast())) {
+        if (k.trashedAt == null) {
+          live?.add(k.id);
+          continue;
+        }
+        out.add(k);
+        if (k.kind == 'dir') queue.add(k.id);
+      }
+    }
+    return out;
+  }
 
   /// Every object below [id], depth first.
   Future<List<VaultObject>> _descendants(String id) async {

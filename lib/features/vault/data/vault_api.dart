@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show IOException;
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -407,16 +408,25 @@ class VaultApi {
   // ---- the index (task 4.3) ----------------------------------------------------
 
   /// One page of changes after [since]; at most [limit] objects (server cap).
-  Future<VaultChanges> changes(String vaultId, int since, {int? limit}) async =>
-      VaultChanges.fromJson(
-        await _send(
-              'GET',
-              '/api/v1/vault/$vaultId/changes?since=$since'
-                  '${limit == null ? '' : '&limit=$limit'}',
-              vaultId: vaultId,
-            )
-            as Map<String, dynamic>,
-      );
+  ///
+  /// [full]: the next page of a listing from the start (a new device, or
+  /// after "start over"), so the server does not send it back to the start
+  /// when old deletions have since been forgotten.
+  Future<VaultChanges> changes(
+    String vaultId,
+    int since, {
+    int? limit,
+    bool full = false,
+  }) async => VaultChanges.fromJson(
+    await _send(
+          'GET',
+          '/api/v1/vault/$vaultId/changes?since=$since'
+              '${limit == null ? '' : '&limit=$limit'}'
+              '${full ? '&full=1' : ''}',
+          vaultId: vaultId,
+        )
+        as Map<String, dynamic>,
+  );
 
   /// A batch of metadata changes, each with its own `opId` so a repeat does
   /// nothing. Answers the new sequence number and one result per op
@@ -683,12 +693,19 @@ class VaultApi {
         status: 404,
       );
     }
+    final status = e.response?.statusCode;
     switch (e.type) {
       case DioExceptionType.connectionError:
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.sendTimeout:
         return const VaultApiException('NETWORK', 'network error');
+      // A socket closed mid-request, or a gateway page from in front of the
+      // API (502, 503, 504): the connection, not the request, went wrong.
+      case DioExceptionType.unknown when e.error is IOException:
+        return const VaultApiException('NETWORK', 'network error');
+      case DioExceptionType.badResponse when status != null && status >= 500:
+        return VaultApiException('NETWORK', 'server error', status: status);
       default:
         return VaultApiException(
           'UNKNOWN',

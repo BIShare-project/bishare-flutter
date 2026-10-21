@@ -99,17 +99,22 @@ class VaultDownloads extends ChangeNotifier {
   }
 
   /// Download folder [dir] with everything in it into a folder of its name
-  /// inside [into].
+  /// inside [into]; a name already there gets " (1)", " (2)", … so nothing
+  /// on the computer is replaced.
   /// Returns the folder made, or null when cancelled or something failed.
   Future<Directory?> folder(VaultObject dir, Directory into) async {
     final root = Directory(
-      '${into.path}${Platform.pathSeparator}${_safe(dir.name)}',
+      '${into.path}${Platform.pathSeparator}${await _freeDirName(into, safeName(dir.name))}',
     );
     final plan = <(VaultObject, String)>[];
+    final seen = <String>{dir.id};
     Future<void> walk(VaultObject d, String path) async {
+      // Two siblings can share a name in the Drive; not on disk.
+      final used = <String>{};
       for (final c in await _dao.childrenOf(d.id)) {
-        if (c.trashedAt != null) continue;
-        final at = '$path${Platform.pathSeparator}${_safe(c.name)}';
+        if (c.trashedAt != null || !seen.add(c.id)) continue;
+        final name = _unique(safeName(c.name), used);
+        final at = '$path${Platform.pathSeparator}$name';
         if (c.kind == 'dir') {
           await walk(c, at);
         } else {
@@ -187,8 +192,43 @@ class VaultDownloads extends ChangeNotifier {
     notifyListeners();
   }
 
-  static String _safe(String name) {
-    final cleaned = name.replaceAll(RegExp(r'[/\\:\x00-\x1f]'), '_').trim();
-    return cleaned.isEmpty ? 'file' : cleaned;
+  /// [name] as a file name on any system: no folder separators, no
+  /// characters Windows refuses, never "." or "..".
+  static String safeName(String name) {
+    final cleaned = name
+        .replaceAll(RegExp(r'[/\\:*?"<>|\x00-\x1f]'), '_')
+        .trim();
+    if (cleaned.isEmpty) return 'file';
+    if (RegExp(r'^\.+$').hasMatch(cleaned)) return '_';
+    return cleaned;
+  }
+
+  /// [name], or "name (1)", "name (2)", … when [used] has it (any case).
+  static String _unique(String name, Set<String> used) {
+    var out = name;
+    final dot = name.lastIndexOf('.');
+    final (stem, ext) = dot > 0
+        ? (name.substring(0, dot), name.substring(dot))
+        : (name, '');
+    for (var n = 1; used.contains(out.toLowerCase()); n++) {
+      out = '$stem ($n)$ext';
+    }
+    used.add(out.toLowerCase());
+    return out;
+  }
+
+  static Future<String> _freeDirName(Directory into, String name) async {
+    var out = name;
+    for (
+      var n = 1;
+      await FileSystemEntity.type(
+            '${into.path}${Platform.pathSeparator}$out',
+          ) !=
+          FileSystemEntityType.notFound;
+      n++
+    ) {
+      out = '$name ($n)';
+    }
+    return out;
   }
 }

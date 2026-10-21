@@ -59,7 +59,7 @@ class DriveActions {
     'VAULT_READ_ONLY' => 'vault.error_read_only',
     'TRANSFER_TOO_LARGE' => 'vault.error_too_large_to_share',
     'TRANSFER_RATE_LIMITED' => 'vault.error_rate_limited',
-    _ => 'vault.error_generic',
+    _ => 'vault.error_failed',
   };
 
   Future<bool> _guard(Future<void> Function() step) async {
@@ -260,6 +260,7 @@ class DriveActions {
     await dir.create(recursive: true);
     if (!context.mounted) return null;
     var cancelled = false;
+    var finished = false;
     VaultDownloadJob? job;
     BuildContext? sheetContext;
     final sheet = showAppSheet<void>(
@@ -281,20 +282,28 @@ class DriveActions {
             AppSheetAction(
               icon: AppIcons.close,
               label: 'vault.cancel'.tr(),
-              onTap: () {
-                cancelled = true;
-                final j = job;
-                if (j != null) _downloads.cancel(j);
-                Navigator.pop(ctx);
-              },
+              onTap: () => Navigator.pop(ctx),
             ),
           ],
         );
       },
     );
+    // Closed before the file arrived (Cancel, or Android's back): stop it,
+    // so nothing opens later out of the blue.
+    unawaited(
+      sheet.then((_) {
+        if (finished) return;
+        cancelled = true;
+        final j = job;
+        if (j != null) _downloads.cancel(j);
+      }),
+    );
     final run = _downloads.file(o, target);
     job = _downloads.jobs.isEmpty ? null : _downloads.jobs.first;
     final file = await run;
+    finished = true;
+    // Offline, the download can fail before the sheet was ever built.
+    if (sheetContext == null) await WidgetsBinding.instance.endOfFrame;
     final ctx = sheetContext;
     if (!cancelled && ctx != null && ctx.mounted) Navigator.pop(ctx);
     await sheet;
@@ -316,7 +325,25 @@ class DriveActions {
       _say('vault.share_only_files');
       return;
     }
-    await SharePlus.instance.share(ShareParams(files: files));
+    await _shareSheet(
+      ShareParams(files: files, sharePositionOrigin: _origin()),
+    );
+  }
+
+  /// Where the share sheet points from: iPad needs it, or the call fails.
+  Rect? _origin() {
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
+  Future<void> _shareSheet(ShareParams params) async {
+    try {
+      await SharePlus.instance.share(params);
+    } on Object catch (e) {
+      debugPrint('[vault] share: $e');
+      _say('vault.error_failed', type: ToastType.error);
+    }
   }
 
   /// Phones: photos and videos into the photo library.
@@ -433,6 +460,12 @@ class DriveActions {
     List<VaultObject> items, {
     bool all = false,
   }) async {
+    // Only what is in the trash can be deleted for good.
+    items = [
+      for (final o in items)
+        if (o.trashedAt != null) o,
+    ];
+    if (items.isEmpty) return;
     final cs = ShadTheme.of(context).colorScheme;
     final ok = await showAppSheet<bool>(
       context,
@@ -658,7 +691,11 @@ class DriveActions {
             label: 'vault.link_share'.tr(),
             onTap: () {
               Navigator.pop(ctx);
-              SharePlus.instance.share(ShareParams(text: link.url));
+              unawaited(
+                _shareSheet(
+                  ShareParams(text: link.url, sharePositionOrigin: _origin()),
+                ),
+              );
             },
           ),
         ],
@@ -733,7 +770,7 @@ Future<bool> saveToDrive(BuildContext context, List<String> paths) async {
   } on Object catch (e) {
     debugPrint('[vault] save to Drive: $e');
     if (context.mounted) {
-      toast(context, 'vault.error_generic'.tr(), type: ToastType.error);
+      toast(context, 'vault.error_failed'.tr(), type: ToastType.error);
     }
     return false;
   }

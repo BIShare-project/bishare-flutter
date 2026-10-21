@@ -39,6 +39,10 @@ class VaultSync extends ChangeNotifier {
   static const _kSeq = 'seq';
   static const _kVault = 'vaultId';
 
+  /// '1' while a listing from the start is part way through (it survives a
+  /// restart of the app, and goes on where it stopped).
+  static const _kFull = 'fullListing';
+
   Future<void>? _pulling;
   bool _again = false;
   bool _running = false;
@@ -49,6 +53,9 @@ class VaultSync extends ChangeNotifier {
 
   /// The sequence the index is at, once a pull has run on this start.
   int _known = -1;
+
+  /// Bumped by [stop] (sign-out): a pull from before it writes nothing more.
+  int _epoch = 0;
 
   bool _syncing = false;
   bool get syncing => _syncing;
@@ -81,23 +88,45 @@ class VaultSync extends ChangeNotifier {
   }
 
   Future<void> _pullOnce() async {
+    final epoch = _epoch;
     final vaultId = await _keys.vaultId();
     final vk = await _keys.vaultKey();
     if (vaultId == null || vk == null) return;
-    // The index belongs to one vault: a different one on this device (another
-    // account) starts from nothing.
-    if (await _dao.stateValue(_kVault) != vaultId) {
-      await _dao.clearAll();
+    // The index belongs to one vault. Another account's (left on this
+    // device) goes with its queue; with none stored, the index is all there
+    // is to clear: files queued since signing in stay queued.
+    final stored = await _dao.stateValue(_kVault);
+    if (stored != vaultId) {
+      if (stored == null) {
+        await _dao.clearIndex();
+      } else {
+        await _dao.clearAll();
+      }
       await _dao.setStateValue(_kVault, vaultId);
     }
     final metaKey = Rust.vaultMetaKey(vk);
     var since = int.tryParse(await _dao.stateValue(_kSeq) ?? '') ?? 0;
-    while (true) {
-      final page = await _api.changes(vaultId, since);
+    var full = since == 0 || await _dao.stateValue(_kFull) == '1';
+    var startedOver = false;
+    while (epoch == _epoch) {
+      final page = await _api.changes(vaultId, since, full: full && since > 0);
+      if (epoch != _epoch) return;
+      if (page.resync) {
+        // The server forgot deletions this device never saw: start over,
+        // once. A second "start over" in one pull means the server does not
+        // know where a listing stands; try again at the next pull.
+        if (startedOver) return;
+        startedOver = true;
+        full = true;
+      } else if (page.more && page.seq <= since) {
+        debugPrint('[vault] changes did not move past $since');
+        return;
+      }
       await _dao.transaction(() async {
         if (page.resync) await _dao.clearIndex();
         await _apply(vaultId, metaKey, page.objects);
         await _dao.setStateValue(_kSeq, '${page.seq}');
+        await _dao.setStateValue(_kFull, full && page.more ? '1' : '0');
       });
       since = page.seq;
       _known = since;
@@ -181,6 +210,8 @@ class VaultSync extends ChangeNotifier {
   }
 
   Future<void> stop() async {
+    _epoch++;
+    _known = -1;
     _running = false;
     _retry?.cancel();
     _retry = null;
@@ -204,6 +235,9 @@ class VaultSync extends ChangeNotifier {
     if (vaultId == null) return;
     try {
       final ws = _connect(await _api.wsUri(vaultId));
+      // A failed connect also ends the stream (and reconnects there); the
+      // ready future must not report it a second time as unhandled.
+      unawaited(ws.ready.catchError((Object _) {}));
       _ws = ws;
       _wsSub = ws.stream.listen(
         (msg) {

@@ -39,6 +39,7 @@ class VaultShares {
   final VaultKeyStore _keys;
   final VaultDao _dao;
   final VaultDownloads _downloads;
+
   /// Only for files stored compressed (see above).
   final CloudTransferService Function() _cloud;
   final String Function() _alias;
@@ -62,7 +63,7 @@ class VaultShares {
       final dir = await VaultDownloads.cacheFor('share', objectId);
       final plain = await _downloads.file(
         o,
-        File('${dir.path}/${o.name}'),
+        File('${dir.path}/${VaultDownloads.safeName(o.name)}'),
         listed: false,
       );
       if (plain == null) {

@@ -14,8 +14,12 @@ enum DeviceLockResult {
   /// This device has no screen lock, so there is nothing to ask for.
   noLock,
 
-  /// No way to ask on this platform (Linux), or the system refused to.
+  /// No way to ask on this platform (Linux).
   unavailable,
+
+  /// The device has a lock, but asking failed (locked out after too many
+  /// tries, another prompt open): show nothing, try again later.
+  failed,
 }
 
 /// Ask the person to unlock with the device's own lock before something
@@ -49,7 +53,7 @@ class DeviceLock {
         };
       } on Object catch (e) {
         debugPrint('[DeviceLock] Android confirm failed: $e');
-        return DeviceLockResult.unavailable;
+        return DeviceLockResult.failed;
       }
     }
     if (Platform.isIOS || Platform.isMacOS || Platform.isWindows) {
@@ -65,11 +69,14 @@ class DeviceLock {
           LocalAuthExceptionCode.userCanceled ||
           LocalAuthExceptionCode.systemCanceled ||
           LocalAuthExceptionCode.timeout => DeviceLockResult.cancelled,
-          _ => DeviceLockResult.unavailable,
+          LocalAuthExceptionCode.noBiometricHardware ||
+          LocalAuthExceptionCode.noBiometricsEnrolled =>
+            DeviceLockResult.unavailable,
+          _ => DeviceLockResult.failed,
         };
       } on Object catch (e) {
         debugPrint('[DeviceLock] confirm failed: $e');
-        return DeviceLockResult.unavailable;
+        return DeviceLockResult.failed;
       }
     }
     return DeviceLockResult.unavailable;

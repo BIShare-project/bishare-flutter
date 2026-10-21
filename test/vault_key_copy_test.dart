@@ -395,9 +395,11 @@ class _FakeApi extends VaultApi {
         serverHalf: serverHalf,
       );
 
-  @override
-  Future<void> registerKeyCheck(String vaultId, String keyCheck) async {}
+  String? _registered;
 
   @override
-  Future<Map<String, dynamic>> info(String vaultId) async => {'vaultId': vaultId, 'keyCheck': keyCheck};
+  Future<void> registerKeyCheck(String vaultId, String keyCheck) async => _registered ??= keyCheck;
+
+  @override
+  Future<Map<String, dynamic>> info(String vaultId) async => {'vaultId': vaultId, 'keyCheck': keyCheck ?? _registered};
 }

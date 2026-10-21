@@ -30,18 +30,23 @@ class ComposeTray extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 12, bottom: 2),
                   child: Row(
                     children: [
-                      Text(
-                        'home.tray_summary'.plural(
-                          items.length,
-                          namedArgs: {'size': formatBytes(tray.totalBytes)},
-                        ),
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: cs.mutedForeground,
+                      // Gives way (…) on a narrow phone with large text.
+                      Expanded(
+                        child: Text(
+                          'home.tray_summary'.plural(
+                            items.length,
+                            namedArgs: {'size': formatBytes(tray.totalBytes)},
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: cs.mutedForeground,
+                          ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 10),
                       if (driveReady) ...[
                         GestureDetector(
                           onTap: () => saveToDrive(context, [

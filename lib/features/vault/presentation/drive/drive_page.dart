@@ -13,6 +13,7 @@ import '../../../../core/di/locator.dart';
 import '../../../../core/storage/app_database.dart';
 import '../../../../core/storage/vault_tables.dart';
 import '../../../../core/ui/app_ui.dart';
+import '../../../../core/ui/shell_tab.dart';
 import '../../../settings/presentation/widgets/glyph.dart';
 import '../../data/vault_account.dart';
 import '../../data/vault_api.dart';
@@ -61,12 +62,25 @@ class _DrivePageState extends State<DrivePage> {
   late final Stream<Map<String?, int>> _counts = _dao.watchChildCounts();
   late final Stream<List<VaultObject>> _live = _dao.watchLive();
   late final Stream<List<VaultObject>> _trash = _dao.watchTrash();
+  late final Stream<List<VaultTransfer>> _transfers = _dao.watchTransfers();
   Map<String, String> _folderNames = const {};
   VaultStatus? _started;
   bool _dragging = false;
 
+  /// The Inbox tab is on screen (with Drive chosen, or this page would not
+  /// exist): drops, "back" and the shortcuts are only this page's then.
+  bool _active = true;
+
+  /// The folders of the open path, followed: one trashed or deleted on
+  /// another device closes the path down to what is left.
+  StreamSubscription<List<VaultObject>>? _pathSub;
+  String _pathKey = '';
+
   static bool get _desktop =>
       Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+
+  /// Drive's own sidebar needs this much room next to the app's.
+  static const _sidebarMinWidth = 720.0;
 
   @override
   void initState() {
@@ -74,14 +88,27 @@ class _DrivePageState extends State<DrivePage> {
     _account.addListener(_onAccount);
     unawaited(_account.load().then((_) => _onAccount()));
     _ctrl.addListener(_onCtrl);
+    _searchFocus.addListener(_onSearchFocus);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final active = ShellTab.isActive(context);
+    if (active == _active) return;
+    _active = active;
+    // Back on screen: the keyboard shortcuts follow this page again.
+    if (active && _desktop && !_searchFocus.hasFocus) _focus.requestFocus();
   }
 
   @override
   void dispose() {
+    unawaited(_pathSub?.cancel());
     _account.removeListener(_onAccount);
     _ctrl
       ..removeListener(_onCtrl)
       ..dispose();
+    _searchFocus.removeListener(_onSearchFocus);
     _search.dispose();
     _searchFocus.dispose();
     _focus.dispose();
@@ -90,6 +117,20 @@ class _DrivePageState extends State<DrivePage> {
 
   void _onCtrl() {
     if (_search.text != _ctrl.query) _search.text = _ctrl.query;
+    final ids = [for (final o in _ctrl.path) o.id];
+    final key = ids.join('/');
+    if (key != _pathKey) {
+      _pathKey = key;
+      unawaited(_pathSub?.cancel());
+      _pathSub = ids.isEmpty
+          ? null
+          : _dao.watchObjects(ids).skip(1).listen((_) => _ctrl.prune());
+    }
+    if (mounted) setState(() {});
+  }
+
+  /// Typing in the search box: the page's shortcuts step aside.
+  void _onSearchFocus() {
     if (mounted) setState(() {});
   }
 
@@ -111,6 +152,8 @@ class _DrivePageState extends State<DrivePage> {
     final status = _account.status;
     if (status == _started) return;
     _started = status;
+    // Signed out, or another account: nothing of the old path or selection.
+    if (status != VaultStatus.ready) _ctrl.reset();
     if (mounted) setState(() {});
     if (status != VaultStatus.ready) return;
     unawaited(_sync.start());
@@ -127,6 +170,8 @@ class _DrivePageState extends State<DrivePage> {
   }
 
   Future<void> _refresh() async {
+    // Uploads stopped by a lost connection start again with a pull down.
+    unawaited(_uploader.run());
     try {
       await _sync.pull();
       await _ctrl.prune();
@@ -181,7 +226,8 @@ class _DrivePageState extends State<DrivePage> {
   bool get _phone => Platform.isAndroid || Platform.isIOS;
 
   List<AppMenuAction> _itemActions(VaultObject o) {
-    if (_ctrl.view == DriveView.trash && !_ctrl.searching) {
+    // Search in Trash looks only at what is in the trash.
+    if (_ctrl.view == DriveView.trash) {
       return [
         AppMenuAction(
           icon: AppIcons.refreshSync,
@@ -290,7 +336,11 @@ class _DrivePageState extends State<DrivePage> {
         label: 'vault.refresh'.tr(),
         onTap: _refresh,
       ),
-      if (_ctrl.view == DriveView.trash && _visible.isNotEmpty)
+      // While searching, the screen shows only the matches: emptying the
+      // trash is offered on the whole trash only.
+      if (_ctrl.view == DriveView.trash &&
+          !_ctrl.searching &&
+          _visible.isNotEmpty)
         AppMenuAction(
           icon: AppIcons.trashDelete,
           label: 'vault.empty_trash'.tr(),
@@ -317,7 +367,7 @@ class _DrivePageState extends State<DrivePage> {
 
   List<(String, String, VoidCallback, bool)> _selectionActions() {
     final items = _selection;
-    if (_ctrl.view == DriveView.trash && !_ctrl.searching) {
+    if (_ctrl.view == DriveView.trash) {
       return [
         (
           AppIcons.refreshSync,
@@ -388,9 +438,12 @@ class _DrivePageState extends State<DrivePage> {
     return {
       cmd(LogicalKeyboardKey.keyA): () => _ctrl.selectAll(_visible),
       cmd(LogicalKeyboardKey.keyF): _searchFocus.requestFocus,
-      cmd(LogicalKeyboardKey.keyN, shift: true): () =>
-          unawaited(_act.newFolder()),
-      cmd(LogicalKeyboardKey.keyU): () => unawaited(_act.addFiles()),
+      cmd(LogicalKeyboardKey.keyN, shift: true): () {
+        if (_ctrl.canAdd) unawaited(_act.newFolder());
+      },
+      cmd(LogicalKeyboardKey.keyU): () {
+        if (_ctrl.canAdd) unawaited(_act.addFiles());
+      },
       const SingleActivator(LogicalKeyboardKey.escape): () => _ctrl.up(),
       const SingleActivator(LogicalKeyboardKey.delete): removeSelected,
       SingleActivator(LogicalKeyboardKey.backspace, meta: mac, control: !mac):
@@ -401,13 +454,27 @@ class _DrivePageState extends State<DrivePage> {
     };
   }
 
+  /// While the search box has the keyboard: every key types, Escape leaves.
+  Map<ShortcutActivator, VoidCallback> get _searchShortcuts => {
+    const SingleActivator(LogicalKeyboardKey.escape): () {
+      if (_ctrl.searching) _ctrl.setQuery('');
+      _focus.requestFocus();
+    },
+  };
+
   // ---- build -------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
     final ready = _account.status == VaultStatus.ready;
-    final wide = context.isWideLayout;
+    return LayoutBuilder(
+      builder: (context, box) =>
+          _page(cs, ready, wide: box.maxWidth >= _sidebarMinWidth),
+    );
+  }
+
+  Widget _page(ShadColorScheme cs, bool ready, {required bool wide}) {
     Widget body;
     if (!ready) {
       body = Column(
@@ -426,8 +493,20 @@ class _DrivePageState extends State<DrivePage> {
     } else {
       body = _narrow(cs);
     }
+    if (_desktop) {
+      // A click anywhere on the page gives the shortcuts the keyboard back
+      // (the search box takes it again when it is the thing clicked).
+      body = Listener(
+        onPointerDown: (_) {
+          if (!_focus.hasFocus && !_searchFocus.hasFocus) _focus.requestFocus();
+        },
+        child: body,
+      );
+    }
     return PopScope(
+      // Hidden behind another tab, "back" is not this page's to take.
       canPop:
+          !_active ||
           !ready ||
           (!_ctrl.selecting &&
               !_ctrl.searching &&
@@ -441,7 +520,11 @@ class _DrivePageState extends State<DrivePage> {
         body: SafeArea(
           bottom: false,
           child: CallbackShortcuts(
-            bindings: ready ? _shortcuts : const {},
+            bindings: !ready || !_active
+                ? const {}
+                : _searchFocus.hasFocus
+                ? _searchShortcuts
+                : _shortcuts,
             child: Focus(focusNode: _focus, autofocus: _desktop, child: body),
           ),
         ),
@@ -614,12 +697,14 @@ class _DrivePageState extends State<DrivePage> {
   Widget _queueAndContent() {
     Widget content = Column(
       children: [
-        _UploadStrip(uploader: _uploader, dao: _dao),
+        _UploadStrip(uploader: _uploader, transfers: _transfers),
         Expanded(child: _content()),
       ],
     );
     if (_desktop) {
       content = DropTarget(
+        // Every tab is laid out at once: only the one on screen takes drops.
+        enable: _active,
         onDragEntered: (_) => setState(() => _dragging = true),
         onDragExited: (_) => setState(() => _dragging = false),
         onDragDone: (d) {
@@ -631,9 +716,15 @@ class _DrivePageState extends State<DrivePage> {
             content,
             if (_dragging)
               _DropHint(
-                folder: _ctrl.path.isEmpty
-                    ? 'vault.drive'.tr()
-                    : _ctrl.path.last.name,
+                text: _ctrl.canAdd
+                    ? 'vault.drop_here'.tr(
+                        namedArgs: {
+                          'folder': _ctrl.path.isEmpty
+                              ? 'vault.drive'.tr()
+                              : _ctrl.path.last.name,
+                        },
+                      )
+                    : 'vault.drop_only_in_folders'.tr(),
               ),
           ],
         ),
@@ -888,16 +979,16 @@ Map<String, int> storageByKind(
 
 /// The uploads still going, above the files.
 class _UploadStrip extends StatelessWidget {
-  const _UploadStrip({required this.uploader, required this.dao});
+  const _UploadStrip({required this.uploader, required this.transfers});
 
   final VaultUploader uploader;
-  final VaultDao dao;
+  final Stream<List<VaultTransfer>> transfers;
 
   @override
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
     return StreamBuilder<List<VaultTransfer>>(
-      stream: dao.watchTransfers(),
+      stream: transfers,
       builder: (context, snap) {
         final active = (snap.data ?? const <VaultTransfer>[])
             .where(
@@ -913,9 +1004,16 @@ class _UploadStrip extends StatelessWidget {
           listenable: uploader,
           builder: (context, _) {
             final running = active.where((t) => t.state != 'failed').toList();
-            final p = running.isEmpty
+            // The one being sent now, or the next in line (oldest first).
+            final now = running.isEmpty
                 ? null
-                : uploader.progressOf(running.first.id);
+                : running.firstWhere(
+                    (t) => uploader.progressOf(t.id) != null,
+                    orElse: () => running.reduce(
+                      (a, b) => a.createdAt <= b.createdAt ? a : b,
+                    ),
+                  );
+            final p = now == null ? null : uploader.progressOf(now.id);
             final label = running.isEmpty
                 ? 'vault.uploads_stopped'.plural(failed)
                 : 'vault.uploading_n'.plural(running.length);
@@ -946,9 +1044,7 @@ class _UploadStrip extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            running.isEmpty
-                                ? label
-                                : '$label · ${running.first.name}',
+                            now == null ? label : '$label · ${now.name}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -987,8 +1083,8 @@ class _UploadStrip extends StatelessWidget {
 }
 
 class _DropHint extends StatelessWidget {
-  const _DropHint({required this.folder});
-  final String folder;
+  const _DropHint({required this.text});
+  final String text;
 
   @override
   Widget build(BuildContext context) {
@@ -1003,8 +1099,10 @@ class _DropHint extends StatelessWidget {
             border: Border.all(color: cs.primary, width: 2),
           ),
           alignment: Alignment.center,
+          padding: const EdgeInsets.all(24),
           child: Text(
-            'vault.drop_here'.tr(namedArgs: {'folder': folder}),
+            text,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,

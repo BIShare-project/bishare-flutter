@@ -133,6 +133,15 @@ class DriveController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Back to the top of the Drive with nothing selected (another account).
+  void reset() {
+    _view = DriveView.files;
+    _path.clear();
+    _query = '';
+    _selected.clear();
+    notifyListeners();
+  }
+
   /// Drop folders from the path that no longer exist (deleted or trashed on
   /// another device).
   Future<void> prune() async {
@@ -179,7 +188,13 @@ class DriveController extends ChangeNotifier {
   Stream<List<VaultObject>> items() {
     final Stream<List<VaultObject>> source;
     if (searching) {
-      source = _dao.watchSearch(_query);
+      // Search in Trash looks only at what is in the trash, so what it finds
+      // gets the trash's actions (restore, delete for good) and nothing else.
+      source = _view == DriveView.trash
+          ? _dao.watchTrash().map(
+              (all) => _topOfTrash(all).where(_matches).toList(),
+            )
+          : _dao.watchSearch(_query);
     } else {
       source = switch (_view) {
         DriveView.files => _dao.watchChildren(folder),
@@ -199,6 +214,9 @@ class DriveController extends ChangeNotifier {
     if (_view == DriveView.recent && !searching) return source;
     return source.map(sorted);
   }
+
+  bool _matches(VaultObject o) =>
+      o.name.toLowerCase().contains(_query.trim().toLowerCase());
 
   /// Only the top of each trashed tree: a trashed folder shows once.
   static List<VaultObject> _topOfTrash(List<VaultObject> all) {

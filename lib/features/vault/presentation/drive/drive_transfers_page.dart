@@ -11,15 +11,22 @@ import '../../data/vault_uploader.dart';
 import 'drive_format.dart';
 
 /// Uploads and downloads of the Drive, with progress, retry and cancel.
-class DriveTransfersPage extends StatelessWidget {
+class DriveTransfersPage extends StatefulWidget {
   const DriveTransfersPage({super.key});
+
+  @override
+  State<DriveTransfersPage> createState() => _DriveTransfersPageState();
+}
+
+class _DriveTransfersPageState extends State<DriveTransfersPage> {
+  final dao = getIt<AppDatabase>().vaultDao;
+  final uploader = getIt<VaultUploader>();
+  final downloads = getIt<VaultDownloads>();
+  late final Stream<List<VaultTransfer>> _transfers = dao.watchTransfers();
 
   @override
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
-    final dao = getIt<AppDatabase>().vaultDao;
-    final uploader = getIt<VaultUploader>();
-    final downloads = getIt<VaultDownloads>();
     return Scaffold(
       backgroundColor: cs.background,
       body: SafeArea(
@@ -42,7 +49,7 @@ class DriveTransfersPage extends StatelessWidget {
               ),
               Expanded(
                 child: StreamBuilder<List<VaultTransfer>>(
-                  stream: dao.watchTransfers(),
+                  stream: _transfers,
                   builder: (context, snap) => ListenableBuilder(
                     listenable: Listenable.merge([uploader, downloads]),
                     builder: (context, _) {
@@ -155,7 +162,8 @@ class _UploadRow extends StatelessWidget {
           : Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (failed)
+                // Stopped for good, or waiting for the connection: try now.
+                if (failed || t.error == 'NETWORK')
                   IconButton(
                     tooltip: 'vault.retry'.tr(),
                     onPressed: () => uploader.retry(t.id),

@@ -115,15 +115,18 @@ class GoogleAppData {
   });
 
   /// Delete the file if it is there.
+  /// Every file of that name goes: two writes that raced can leave two.
   Future<void> delete(String name, {bool interactive = false}) =>
       _withToken(interactive, (token) async {
-        final id = await _find(token, name);
-        if (id != null) {
+        for (final id in await _findAll(token, name)) {
           await _dio.delete<Object?>('$_files/$id', options: _opts(token));
         }
       });
 
-  Future<String?> _find(String token, String name) async {
+  Future<String?> _find(String token, String name) async =>
+      (await _findAll(token, name)).firstOrNull;
+
+  Future<List<String>> _findAll(String token, String name) async {
     // Names are made by this app ("vault-<base32 id>.key"), so they never
     // contain a quote; refuse anything else rather than escape it.
     if (!RegExp(r'^[A-Za-z0-9._-]+$').hasMatch(name)) {
@@ -139,9 +142,10 @@ class GoogleAppData {
       },
       options: _opts(token, responseType: ResponseType.json),
     );
-    final files = (res.data?['files'] as List?) ?? const [];
-    if (files.isEmpty) return null;
-    return (files.first as Map)['id'] as String?;
+    return [
+      for (final f in (res.data?['files'] as List?) ?? const [])
+        if (f is Map && f['id'] is String) f['id'] as String,
+    ];
   }
 
   /// Run [call] with a token; once more with a fresh token if Google refuses

@@ -29,6 +29,7 @@ import '../features/settings/presentation/settings_page.dart';
 import '../features/web_nearby/data/web_nearby_service.dart';
 import '../core/constants/app_links.dart';
 import '../core/review/review_prompter.dart';
+import '../core/ui/shell_tab.dart';
 
 /// The root tab shell (mirrors native iOS: Share · Inbox · Settings). Tabs are
 /// kept alive in an [IndexedStack] so discovery and the receiver never restart
@@ -371,7 +372,13 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
     final wide = context.isWideLayout;
-    final content = IndexedStack(index: _index, children: _pages);
+    final content = IndexedStack(
+      index: _index,
+      children: [
+        for (var i = 0; i < _pages.length; i++)
+          ShellTab(active: i == _index, child: _pages[i]),
+      ],
+    );
 
     // Wide (desktop / tablet-landscape): a side rail + content pane. Narrow
     // (phone): a bottom tab bar. Mirrors native iOS (sidebar vs TabView).

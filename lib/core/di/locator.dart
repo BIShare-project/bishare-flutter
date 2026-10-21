@@ -225,7 +225,11 @@ Future<void> setupLocator() async {
         keys: getIt<VaultKeyStore>(),
         api: getIt<VaultApi>(),
         dao: db.vaultDao,
+        // Before the index goes: nothing may write the old account's
+        // names into it again, or keep sending its files.
         onForget: () async {
+          await getIt<VaultSync>().stop();
+          await getIt<VaultUploader>().stop();
           await getIt<VaultThumbs>().clear();
           await getIt<VaultDownloads>().clearCache();
         },
@@ -253,6 +257,7 @@ Future<void> setupLocator() async {
         dao: db.vaultDao,
         sync: getIt<VaultSync>(),
         thumbs: getIt<VaultThumbs>(),
+        retryAfter: const Duration(seconds: 15),
       ),
     )
     ..registerLazySingleton<VaultDownloader>(

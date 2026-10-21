@@ -16,15 +16,21 @@
 // system fonts; the test engine has none. For those languages the test loads
 // IBM Plex Sans with the matching Noto glyphs merged in
 // (store/screens/instance_fonts.py), so one process serves one such language.
+//
+// Drive (drive-plan.md task 4.11) is drawn too, into `<lang>/drive/`, which
+// frame.py does not read: Drive is not in the stores' screenshots while it is
+// in testing, but every language is checked for overflows and missing keys.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:bishare/core/config/feature_flags.dart';
 import 'package:bishare/core/crypto/e2e_crypto.dart';
 import 'package:bishare/core/di/locator.dart';
 import 'package:bishare/core/identity/device_identity.dart';
 import 'package:bishare/core/l10n/app_locales.dart';
 import 'package:bishare/core/storage/app_database.dart';
+import 'package:bishare/core/storage/vault_tables.dart';
 import 'package:bishare/core/theme/app_theme.dart';
 import 'package:bishare/core/ui/app_bottom_nav.dart';
 import 'package:bishare/core/ui/app_nav_rail.dart';
@@ -46,6 +52,16 @@ import 'package:bishare/features/send/presentation/tray_cubit.dart';
 import 'package:bishare/features/settings/domain/settings.dart';
 import 'package:bishare/features/settings/presentation/settings_cubit.dart';
 import 'package:bishare/features/settings/presentation/settings_page.dart';
+import 'package:bishare/features/vault/data/vault_account.dart';
+import 'package:bishare/features/vault/data/vault_downloads.dart';
+import 'package:bishare/features/vault/data/vault_key_copy.dart';
+import 'package:bishare/features/vault/data/vault_sync.dart';
+import 'package:bishare/features/vault/data/vault_thumbs.dart';
+import 'package:bishare/features/vault/data/vault_uploader.dart';
+import 'package:bishare/features/vault/presentation/drive/drive_controller.dart';
+import 'package:bishare/features/vault/presentation/drive/drive_page.dart';
+import 'package:bishare/features/vault/presentation/drive/drive_widgets.dart';
+import 'package:bishare/features/vault/presentation/vault_account_page.dart';
 import 'package:bishare/features/web_nearby/presentation/web_nearby_cubit.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -57,6 +73,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image/image.dart' as img;
 import 'package:mocktail/mocktail.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -136,8 +153,9 @@ List<String> _list(String key) => (Platform.environment[key] ?? '')
     .where((s) => s.isNotEmpty)
     .toList();
 
-String _tag(Locale l) =>
-    l.countryCode == null ? l.languageCode : '${l.languageCode}-${l.countryCode}';
+String _tag(Locale l) => l.countryCode == null
+    ? l.languageCode
+    : '${l.languageCode}-${l.countryCode}';
 
 class _Discovery extends MockCubit<List<DiscoveredDevice>>
     implements DiscoveryCubit {}
@@ -156,6 +174,252 @@ class _Room extends MockCubit<RoomState> implements RoomCubit {}
 class _Settings extends MockCubit<Settings> implements SettingsCubit {}
 
 class _WebNearby extends MockCubit<WebNearbyState> implements WebNearbyCubit {}
+
+class _Account extends Mock implements VaultAccount {}
+
+class _KeyCopy extends Mock implements VaultKeyCopy {}
+
+class _Sync extends Mock implements VaultSync {}
+
+class _Uploader extends Mock implements VaultUploader {}
+
+class _Downloads extends Mock implements VaultDownloads {}
+
+class _Thumbs extends Mock implements VaultThumbs {}
+
+class _Db extends Mock implements AppDatabase {}
+
+/// The index as plain lists: a drift stream inside a widget test never settles.
+class _Dao extends Mock implements VaultDao {}
+
+/// A Drive with some of everything: three folders and a mix of files at the
+/// top, photos and videos inside "Bali 2026".
+List<VaultObject> _driveObjects() {
+  final now = DateTime.now().millisecondsSinceEpoch;
+  var seq = 0;
+  VaultObject o(
+    String id,
+    String name, {
+    String? parent,
+    String? mime,
+    int size = 0,
+    int ago = 0,
+  }) {
+    final at = now - ago * 3600000;
+    return VaultObject(
+      id: id,
+      parent: parent,
+      name: name,
+      kind: mime == null ? 'dir' : 'file',
+      size: mime == null ? null : size,
+      mtime: at,
+      mime: mime,
+      blobId: mime == null ? null : 'b-$id',
+      blobSize: mime == null ? null : size,
+      hasThumb:
+          mime != null &&
+          (mime.startsWith('image/') || mime.startsWith('video/')),
+      seq: ++seq,
+      createdAt: at,
+      encMeta: 'x',
+    );
+  }
+
+  const mb = 1000000;
+  return [
+    o('bali', 'Bali 2026', ago: 30),
+    o('projects', 'Projects', ago: 50),
+    o('scans', 'Scans', ago: 200),
+    o('f1', 'IMG_2041.jpg', mime: 'image/jpeg', size: 4718592, ago: 2),
+    o('f2', 'Slides_Q4.pdf', mime: 'application/pdf', size: 12582912, ago: 5),
+    o('f3', 'VID_0412.mp4', mime: 'video/mp4', size: 268435456, ago: 9),
+    o(
+      'f4',
+      'Contract_2026.docx',
+      mime:
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      size: 184320,
+      ago: 26,
+    ),
+    o('f5', 'Podcast_ep12.mp3', mime: 'audio/mpeg', size: 38 * mb, ago: 70),
+    o(
+      'f6',
+      'Budget.xlsx',
+      mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      size: 96256,
+      ago: 120,
+    ),
+    for (var i = 0; i < 14; i++)
+      o(
+        'p$i',
+        i % 5 == 3 ? 'VID_${2101 + i}.mp4' : 'IMG_${2101 + i}.jpg',
+        parent: 'bali',
+        mime: i % 5 == 3 ? 'video/mp4' : 'image/jpeg',
+        size: i % 5 == 3 ? 180 * mb : 3 * mb + i * 211000,
+        ago: 30 + i,
+      ),
+    o(
+      's1',
+      'Passport.pdf',
+      parent: 'scans',
+      mime: 'application/pdf',
+      size: 2 * mb,
+      ago: 210,
+    ),
+    o(
+      'w1',
+      'Roadmap.pdf',
+      parent: 'projects',
+      mime: 'application/pdf',
+      size: 5 * mb,
+      ago: 60,
+    ),
+  ];
+}
+
+/// Thumbnails: a soft two-colour gradient with a sun, one palette per photo.
+Uint8List _thumb(int seed) {
+  const palettes = [
+    [(14, 116, 144), (250, 204, 21)],
+    [(30, 64, 175), (244, 114, 182)],
+    [(21, 128, 61), (190, 242, 100)],
+    [(124, 45, 18), (251, 146, 60)],
+    [(67, 56, 202), (125, 211, 252)],
+    [(15, 23, 42), (148, 163, 184)],
+  ];
+  final [(r0, g0, b0), (r1, g1, b1)] = palettes[seed % palettes.length];
+  final im = img.Image(width: 160, height: 160);
+  for (var y = 0; y < 160; y++) {
+    final t = y / 159;
+    final c = img.ColorRgb8(
+      (r0 + (r1 - r0) * t).round(),
+      (g0 + (g1 - g0) * t).round(),
+      (b0 + (b1 - b0) * t).round(),
+    );
+    img.drawLine(im, x1: 0, y1: y, x2: 159, y2: y, color: c);
+  }
+  img.fillCircle(
+    im,
+    x: 40 + (seed * 37) % 80,
+    y: 52,
+    radius: 18,
+    color: img.ColorRgb8(255, 247, 220),
+  );
+  return img.encodeJpg(im, quality: 85);
+}
+
+/// Drive with the key on this device, 1.8 GB of the free 5 GB used, and the
+/// index above; registered over whatever the previous preset left.
+void _registerDrive(String self) {
+  final objects = _driveObjects();
+  final live = objects.where((o) => o.trashedAt == null).toList();
+  final dao = _Dao();
+  List<VaultObject> files(bool Function(VaultObject) keep) =>
+      live.where((o) => o.kind == 'file' && keep(o)).toList()
+        ..sort((a, b) => b.mtime.compareTo(a.mtime));
+  when(() => dao.watchChildren(any())).thenAnswer(
+    (i) => Stream.value([
+      for (final o in live)
+        if (o.parent == i.positionalArguments.first) o,
+    ]),
+  );
+  when(
+    () => dao.watchRecent(limit: any(named: 'limit')),
+  ).thenAnswer((_) => Stream.value(files((_) => true)));
+  when(
+    () => dao.watchFilesOfType(
+      prefixes: any(named: 'prefixes'),
+      types: any(named: 'types'),
+    ),
+  ).thenAnswer((i) {
+    final prefixes = i.namedArguments[#prefixes] as List<String>? ?? const [];
+    final types = i.namedArguments[#types] as List<String>? ?? const [];
+    return Stream.value(
+      files(
+        (o) =>
+            prefixes.any((p) => o.mime!.startsWith(p)) ||
+            types.contains(o.mime),
+      ),
+    );
+  });
+  when(() => dao.watchLive()).thenAnswer((_) => Stream.value(live));
+  when(() => dao.watchTrash()).thenAnswer((_) => Stream.value(const []));
+  when(() => dao.watchChildCounts()).thenAnswer(
+    (_) => Stream.value({
+      for (final p in live.map((o) => o.parent).toSet())
+        p: live.where((o) => o.parent == p).length,
+    }),
+  );
+  when(() => dao.watchTransfers()).thenAnswer((_) => Stream.value(const []));
+  when(
+    () => dao.liveFolders(),
+  ).thenAnswer((_) async => live.where((o) => o.kind == 'dir').toList());
+  when(() => dao.object(any())).thenAnswer(
+    (i) async =>
+        live.where((o) => o.id == i.positionalArguments.first).firstOrNull,
+  );
+  final db = _Db();
+  when(() => db.vaultDao).thenReturn(dao);
+
+  final copy = _KeyCopy();
+  when(() => copy.holders).thenReturn(['google']);
+  when(() => copy.stateOf(any())).thenReturn(KeyCopyState.saved);
+  final account = _Account();
+  when(() => account.status).thenReturn(VaultStatus.ready);
+  when(() => account.load()).thenAnswer((_) async {});
+  when(() => account.refreshInfo()).thenAnswer((_) async {});
+  when(() => account.usedBytes).thenReturn(1843200000);
+  when(() => account.quotaBytes).thenReturn(5000000000);
+  when(() => account.keyCopy).thenReturn(copy);
+  when(() => account.linkedProviders).thenReturn(['google']);
+  final now = DateTime.now().millisecondsSinceEpoch;
+  when(() => account.devices()).thenAnswer(
+    (_) async => [
+      VaultDeviceView(
+        id: 'd1',
+        name: self,
+        thisDevice: true,
+        pending: false,
+        addedAt: now,
+        lastSeenAt: now,
+      ),
+      VaultDeviceView(
+        id: 'd2',
+        name: 'Galaxy S25',
+        thisDevice: false,
+        pending: false,
+        addedAt: now,
+        lastSeenAt: now - 3 * 60000,
+      ),
+      VaultDeviceView(
+        id: 'd3',
+        name: self == 'MacBook Pro' ? 'Windows PC' : 'MacBook Pro',
+        thisDevice: false,
+        pending: false,
+        addedAt: now,
+        lastSeenAt: now - 26 * 3600000,
+      ),
+    ],
+  );
+  final sync = _Sync();
+  when(sync.start).thenAnswer((_) async {});
+  when(sync.pull).thenAnswer((_) async {});
+  final uploader = _Uploader();
+  when(uploader.run).thenAnswer((_) async {});
+  final downloads = _Downloads();
+  when(() => downloads.busy).thenReturn(false);
+  final thumbs = _Thumbs();
+  when(() => thumbs.load(any())).thenAnswer(
+    (i) async => _thumb((i.positionalArguments.first as VaultObject).seq),
+  );
+  getIt
+    ..registerSingleton<AppDatabase>(db)
+    ..registerSingleton<VaultAccount>(account)
+    ..registerSingleton<VaultSync>(sync)
+    ..registerSingleton<VaultUploader>(uploader)
+    ..registerSingleton<VaultDownloads>(downloads)
+    ..registerSingleton<VaultThumbs>(thumbs);
+}
 
 /// The peers every screenshot shows: three devices that are not this one.
 List<DiscoveredDevice> _cast(String self) {
@@ -232,7 +496,9 @@ Future<void> _loadFonts(String? script) async {
     final loader = FontLoader(name);
     if (name == AppTheme.fontFamily && script != null) {
       for (final w in [400, 500, 600, 700]) {
-        final file = File('store/screens/fonts/merged/IBMPlexSans+$script-$w.ttf');
+        final file = File(
+          'store/screens/fonts/merged/IBMPlexSans+$script-$w.ttf',
+        );
         loader.addFont(
           Future.value(ByteData.sublistView(file.readAsBytesSync())),
         );
@@ -254,8 +520,9 @@ Future<void> _loadFonts(String? script) async {
     '$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
   );
   if (icons.existsSync()) {
-    await (FontLoader('MaterialIcons')
-          ..addFont(Future.value(ByteData.sublistView(icons.readAsBytesSync()))))
+    await (FontLoader(
+          'MaterialIcons',
+        )..addFont(Future.value(ByteData.sublistView(icons.readAsBytesSync()))))
         .load();
   }
 }
@@ -301,6 +568,15 @@ final List<(String, int?, Widget)> _screens = [
   ('5_settings', 4, const SettingsPage()),
 ];
 
+/// Drive, in the Inbox tab (not framed for the stores, see the top): the
+/// file manager as a list, the photos view as a grid (the view to tap), and
+/// the account page.
+final List<(String, int?, Widget, DriveView?)> _driveScreens = [
+  ('drive/1_files', 1, const DrivePage(), null),
+  ('drive/2_photos', 1, const DrivePage(), DriveView.media),
+  ('drive/3_account', null, const VaultAccountPage(), null),
+];
+
 Future<void> _settle(WidgetTester tester, [int rounds = 12]) async {
   for (var i = 0; i < rounds; i++) {
     await tester.runAsync(
@@ -333,6 +609,7 @@ void main() {
   }
 
   setUpAll(() async {
+    registerFallbackValue(_driveObjects().first);
     SharedPreferences.setMockInitialValues({});
     EasyLocalization.logger.enableBuildModes = [];
     await EasyLocalization.ensureInitialized();
@@ -381,6 +658,8 @@ Future<void> _run(
     final (crypto, _) = await E2ECrypto.create();
     getIt
       ..registerSingleton<SharedPreferences>(prefs)
+      // no cached flags: Drive off, so Settings is the one in the stores
+      ..registerSingleton<FeatureFlags>(FeatureFlags(prefs))
       ..registerSingleton<DeviceIdentity>(
         DeviceIdentity.forTesting(
           fingerprint: 'fp-self',
@@ -392,6 +671,7 @@ Future<void> _run(
         ),
       );
   });
+  _registerDrive(preset.self);
   final showcase = registerAppShowcase();
 
   final settings = _Settings();
@@ -404,7 +684,11 @@ Future<void> _run(
   when(() => settings.clipboardImagesSupported).thenReturn(true);
   when(() => settings.currentSaveDir).thenReturn('~/Documents/BIShare');
   final tray = _Tray();
-  whenListen(tray, const Stream<List<SendableFile>>.empty(), initialState: const <SendableFile>[]);
+  whenListen(
+    tray,
+    const Stream<List<SendableFile>>.empty(),
+    initialState: const <SendableFile>[],
+  );
   when(() => tray.totalBytes).thenReturn(0);
   final discovery = _Discovery();
   whenListen(
@@ -413,9 +697,17 @@ Future<void> _run(
     initialState: _cast(preset.self),
   );
   final receive = _Receive();
-  whenListen(receive, const Stream<ReceiveState>.empty(), initialState: const ReceiveState());
+  whenListen(
+    receive,
+    const Stream<ReceiveState>.empty(),
+    initialState: const ReceiveState(),
+  );
   final send = _Send();
-  whenListen(send, const Stream<SendState>.empty(), initialState: const SendState());
+  whenListen(
+    send,
+    const Stream<SendState>.empty(),
+    initialState: const SendState(),
+  );
   final favorites = _Favorites();
   whenListen(
     favorites,
@@ -423,7 +715,11 @@ Future<void> _run(
     initialState: const <String, FavoriteDevice>{},
   );
   final room = _Room();
-  whenListen(room, const Stream<RoomState>.empty(), initialState: _room(preset.self));
+  whenListen(
+    room,
+    const Stream<RoomState>.empty(),
+    initialState: _room(preset.self),
+  );
   final webNearby = _WebNearby();
   whenListen(
     webNearby,
@@ -437,7 +733,14 @@ Future<void> _run(
       .toList();
   for (final locale in locales) {
     final lang = _tag(locale);
-    for (final (file, tab, page) in _screens) {
+    for (final (file, tab, page, view) in <(String, int?, Widget, DriveView?)>[
+      for (final (file, tab, page) in _screens) (file, tab, page, null),
+      ..._driveScreens,
+    ]) {
+      // Drive keeps list or grid in the preferences: the views get the grid
+      await tester.runAsync(
+        () => getIt<SharedPreferences>().setBool('vault.grid', view != null),
+      );
       final router = GoRouter(
         initialLocation: tab == null ? '/page' : '/',
         routes: [
@@ -497,14 +800,18 @@ Future<void> _run(
         ),
       );
       await _settle(tester);
+      if (view != null) {
+        await tester.tap(find.text(driveViewLabel(view)).first);
+        await _settle(tester);
+      }
       await tester.runAsync(() async {
         final render =
-            boundary.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+            boundary.currentContext!.findRenderObject()!
+                as RenderRepaintBoundary;
         final image = await render.toImage(pixelRatio: ratio);
         final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
         image.dispose();
-        final out = Directory('$dir/$name/$lang')..createSync(recursive: true);
-        File('${out.path}/$file.png')
+        (File('$dir/$name/$lang/$file.png')..parent.createSync(recursive: true))
             .writeAsBytesSync(bytes!.buffer.asUint8List());
       });
       router.dispose();

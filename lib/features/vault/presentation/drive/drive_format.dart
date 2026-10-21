@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 
 import '../../../../core/storage/app_database.dart';
+import '../../data/vault_downloads.dart';
 
 /// Sizes the way the quota counts them: 1 GB = 1,000,000,000 bytes. Whole
 /// numbers lose their decimals ("5 GB", not "5.00 GB").
@@ -19,10 +20,7 @@ String decimalBytes(int bytes) {
 }
 
 /// A name the local file system takes.
-String safeFileName(String name) {
-  final cleaned = name.replaceAll(RegExp(r'[/\\:*?"<>|\x00-\x1f]'), '_').trim();
-  return cleaned.isEmpty ? 'file' : cleaned;
-}
+String safeFileName(String name) => VaultDownloads.safeName(name);
 
 /// A path in [dir] for [name] that no file uses yet ("name (1).ext", …).
 File freeLocalFile(Directory dir, String name) {

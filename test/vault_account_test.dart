@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:bishare/core/rust/rust_facade.dart';
 import 'package:bishare/features/vault/data/vault_account.dart';
 import 'package:bishare/features/vault/data/vault_api.dart';
+import 'package:bishare/features/vault/data/vault_key_copy.dart';
 import 'package:bishare/features/vault/data/vault_keys.dart';
 import 'package:bishare/features/vault/data/vault_signin.dart';
 import 'package:dio/dio.dart';
@@ -122,6 +124,59 @@ void main() {
       expect(again.status, VaultStatus.ready);
     });
 
+    test('a first key that never reached the server is kept, not used; signing in again registers it', () async {
+      if (!rust) return markTestSkipped(rustUnavailableReason);
+      final keys = VaultKeyStore();
+      final api = _FakeApi(keys, keyCheck: null)..offline = true;
+      final account = VaultAccount(keys: keys, api: api);
+      await expectLater(
+        account.completeSignIn(const ProviderToken(provider: 'google', idToken: 't')),
+        throwsA(isA<VaultApiException>().having((e) => e.code, 'code', 'NETWORK')),
+      );
+      final made = await keys.vaultKey();
+      expect(made, hasLength(32), reason: 'never lost');
+      expect(await keys.keyPending(), isTrue);
+      final restarted = VaultAccount(keys: keys, api: api);
+      await restarted.load();
+      expect(restarted.status, VaultStatus.signedOut, reason: 'a key the account does not know is not used');
+      api.offline = false;
+      await restarted.completeSignIn(const ProviderToken(provider: 'google', idToken: 't'));
+      expect(restarted.status, VaultStatus.ready);
+      expect(api.registered, Rust.vaultKeyCheck(made!), reason: 'the same key, registered now');
+      expect(await keys.keyPending(), isFalse);
+    });
+
+    test("at start, a key that is not the account's is dropped before it repairs anything", () async {
+      if (!rust) return markTestSkipped(rustUnavailableReason);
+      final keys = VaultKeyStore();
+      final theirs = Rust.vaultGenerateKey();
+      await keys.saveVault(vaultId: _FakeApi.vaultId, serverHalf: Uint8List(32));
+      await keys.saveVaultKey(Rust.vaultGenerateKey()); // ours, never the account's
+      final account = VaultAccount(keys: keys, api: _FakeApi(keys, keyCheck: Rust.vaultKeyCheck(theirs)), keyCopy: VaultKeyCopy(const []));
+      final changed = Completer<void>();
+      account.addListener(() {
+        if (account.status == VaultStatus.needsKey && !changed.isCompleted) changed.complete();
+      });
+      await account.load();
+      await changed.future.timeout(const Duration(seconds: 5));
+      expect(await keys.vaultKey(), isNull);
+      expect(await keys.vaultId(), _FakeApi.vaultId, reason: 'still signed in');
+    });
+
+    test('signing in with a local key that does not match drops it', () async {
+      if (!rust) return markTestSkipped(rustUnavailableReason);
+      final keys = VaultKeyStore();
+      await keys.saveVault(vaultId: _FakeApi.vaultId);
+      await keys.saveVaultKey(Rust.vaultGenerateKey());
+      final account = VaultAccount(keys: keys, api: _FakeApi(keys, keyCheck: Rust.vaultKeyCheck(Rust.vaultGenerateKey())));
+      await account.completeSignIn(const ProviderToken(provider: 'google', idToken: 't'));
+      expect(account.status, VaultStatus.needsKey);
+      expect(await keys.vaultKey(), isNull);
+      final again = VaultAccount(keys: keys, api: _FakeApi(keys, keyCheck: 'x'));
+      await again.load();
+      expect(again.status, VaultStatus.needsKey, reason: 'not ready again after a restart');
+    });
+
     test('a race for the first key: the other device wins, this one waits for the key', () async {
       if (!rust) return markTestSkipped(rustUnavailableReason);
       final keys = VaultKeyStore();
@@ -220,10 +275,21 @@ class _FakeApi extends VaultApi {
         serverHalf: pending ? null : serverHalf,
       );
 
+  /// The key check another device registered first (the race).
+  static const otherCheck = 'BBBBBBBBBBBBBBBBBBBBBB';
+  bool offline = false;
+
   @override
   Future<void> registerKeyCheck(String vaultId, String keyCheck) async {
+    if (offline) throw const VaultApiException('NETWORK', 'network error');
     if (keyExists) throw const VaultApiException('VAULT_KEY_EXISTS', 'This Drive already has a key', status: 409);
     registered = keyCheck;
+  }
+
+  @override
+  Future<Map<String, dynamic>> info(String vaultId) async {
+    if (offline) throw const VaultApiException('NETWORK', 'network error');
+    return {'vaultId': vaultId, 'keyCheck': keyCheck ?? (keyExists ? otherCheck : registered)};
   }
 }
 

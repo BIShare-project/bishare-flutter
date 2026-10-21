@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -456,7 +457,10 @@ class DriveToolbar extends StatelessWidget {
           const SizedBox(width: 6),
           ShadButton.ghost(
             size: ShadButtonSize.sm,
-            onPressed: () => _sortMenu(context),
+            // Recent is newest first, always.
+            onPressed: ctrl.view == DriveView.recent && !ctrl.searching
+                ? null
+                : () => _sortMenu(context),
             leading: AppSvgIcon(AppIcons.sort, size: 16, color: cs.foreground),
             child: Text('vault.sort_${ctrl.sort.name}'.tr()),
           ),
@@ -742,25 +746,33 @@ class DriveStorageCard extends StatelessWidget {
                 height: 7,
                 child: LayoutBuilder(
                   builder: (context, c) {
-                    final total = q > 0 ? q : (u == 0 ? 1 : u);
+                    // Over the quota (read-only after a plan ended) the bar
+                    // is simply full.
+                    final total = max(q, u) > 0 ? max(q, u) : 1;
                     // The index knows the kinds, the server knows the total
                     // (thumbnails, uploads in progress): scale one to the other.
                     final known = byKind.values.fold<int>(0, (a, b) => a + b);
                     final scale = known > 0 && used != null ? u / known : 1.0;
+                    final widths = {
+                      for (final k in colors.keys)
+                        if ((byKind[k] ?? 0) > 0)
+                          k: max(
+                            1.5,
+                            c.maxWidth * (byKind[k]! * scale / total),
+                          ),
+                    };
+                    final sum = widths.values.fold<double>(0, (a, b) => a + b);
+                    final fit = sum > c.maxWidth ? c.maxWidth / sum : 1.0;
                     return Stack(
                       children: [
                         Container(color: cs.muted),
                         Row(
                           children: [
-                            for (final k in colors.keys)
-                              if ((byKind[k] ?? 0) > 0)
-                                Container(
-                                  width:
-                                      (c.maxWidth *
-                                              (byKind[k]! * scale / total))
-                                          .clamp(1.5, c.maxWidth),
-                                  color: colors[k],
-                                ),
+                            for (final e in widths.entries)
+                              Container(
+                                width: e.value * fit,
+                                color: colors[e.key],
+                              ),
                           ],
                         ),
                       ],
