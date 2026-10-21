@@ -1018,6 +1018,19 @@
     "notify_uploading": "Driveにアップロード中",
     "notify_left": "残り{count}件",
     "notify_done": "アップロード完了",
-    "notify_done_body": "アップロード済み: {count}件"
+    "notify_done_body": "アップロード済み: {count}件",
+    "web_open": "WebでDriveを開く",
+    "web_open_body": "パソコンで drive.bishare.app を開き、表示されたコードをスキャンします",
+    "web_scan": "コードをスキャン",
+    "web_type": "コードを入力",
+    "web_type_title": "ブラウザのコードを入力",
+    "web_type_hint": "英数字8文字",
+    "web_approve_title": "WebでDriveを開きますか？",
+    "web_approve_check": "ブラウザにこの文字が表示されていることを確認してください",
+    "web_approve_body": "{name}は、デバイスから削除するまでDrive内のすべてのファイルを開けます。今ご自身で使っているブラウザだけを承認してください。",
+    "web_approve": "承認",
+    "web_opened": "{name}でDriveを開けるようになりました",
+    "error_pair_mismatch": "このコードはそのブラウザと一致しません。ブラウザのページを再読み込みして、もう一度お試しください。",
+    "device_browser": "ブラウザ"
   }
 }

@@ -391,6 +391,51 @@ class VaultApi {
     json: {'box': _enc(box), 'granterPub': _enc(granterPub)},
   );
 
+  /// A browser waiting to open the Drive, by the slot of its QR code or by
+  /// the code typed from its screen (VAULT-SPEC "Opening the Drive in a
+  /// browser"). Signed by this device.
+  Future<Map<String, dynamic>> webPairSlot(String vaultId, String slot) async =>
+      Map<String, dynamic>.from(
+        await _send(
+              'GET',
+              '/api/v1/vault/web-pair/slots/$slot',
+              vaultId: vaultId,
+            )
+            as Map,
+      );
+
+  Future<Map<String, dynamic>> webPairCode(String vaultId, String code) async =>
+      Map<String, dynamic>.from(
+        await _send(
+              'GET',
+              '/api/v1/vault/web-pair/codes/$code',
+              vaultId: vaultId,
+            )
+            as Map,
+      );
+
+  /// Approve the browser: it becomes a device of the vault, and takes [box].
+  Future<void> approveWebPair(
+    String vaultId,
+    String slot, {
+    required String devicePub,
+    required String boxPub,
+    required Uint8List box,
+    required Uint8List granterPub,
+    required String encName,
+  }) => _send(
+    'PUT',
+    '/api/v1/vault/web-pair/slots/$slot',
+    vaultId: vaultId,
+    json: {
+      'devicePub': devicePub,
+      'boxPub': boxPub,
+      'box': _enc(box),
+      'granterPub': _enc(granterPub),
+      'encName': encName,
+    },
+  );
+
   /// Null while the slot is still empty.
   Future<({Uint8List box, Uint8List granterPub, String vaultId})?> takePairSlot(
     String slot,

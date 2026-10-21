@@ -1018,6 +1018,19 @@
     "notify_uploading": "Drive에 업로드 중",
     "notify_left": "{count}개 남음",
     "notify_done": "업로드 완료",
-    "notify_done_body": "업로드됨: {count}개"
+    "notify_done_body": "업로드됨: {count}개",
+    "web_open": "웹에서 Drive 열기",
+    "web_open_body": "컴퓨터에서 drive.bishare.app을 열고 표시된 코드를 스캔하세요",
+    "web_scan": "코드 스캔",
+    "web_type": "코드 입력",
+    "web_type_title": "브라우저의 코드 입력",
+    "web_type_hint": "영문자와 숫자 8자",
+    "web_approve_title": "웹에서 Drive를 여시겠습니까?",
+    "web_approve_check": "브라우저에 이 문자가 표시되는지 확인하세요",
+    "web_approve_body": "{name}에서 기기 목록에서 삭제할 때까지 Drive의 모든 파일을 열 수 있습니다. 지금 직접 사용 중인 브라우저만 승인하세요.",
+    "web_approve": "승인",
+    "web_opened": "이제 {name}에서 Drive를 열 수 있습니다",
+    "error_pair_mismatch": "이 코드는 해당 브라우저와 일치하지 않습니다. 브라우저에서 페이지를 새로고침한 후 다시 시도하세요.",
+    "device_browser": "브라우저"
   }
 }

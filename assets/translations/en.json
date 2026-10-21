@@ -1025,6 +1025,19 @@
     "notify_uploading": "Uploading to Drive",
     "notify_left": "{count} left",
     "notify_done": "Uploads finished",
-    "notify_done_body": "Uploaded: {count}"
+    "notify_done_body": "Uploaded: {count}",
+    "web_open": "Open Drive on the web",
+    "web_open_body": "On a computer, go to drive.bishare.app and scan the code it shows",
+    "web_scan": "Scan the code",
+    "web_type": "Type the code",
+    "web_type_title": "Type the code from the browser",
+    "web_type_hint": "8 letters and numbers",
+    "web_approve_title": "Open your Drive on the web?",
+    "web_approve_check": "Check that the browser shows these letters",
+    "web_approve_body": "{name} can open every file in your Drive until you remove it in Devices. Only approve a browser you are using yourself, right now.",
+    "web_approve": "Approve",
+    "web_opened": "{name} can open your Drive now",
+    "error_pair_mismatch": "This code does not match that browser. Reload the page there and try again.",
+    "device_browser": "Browser"
   }
 }

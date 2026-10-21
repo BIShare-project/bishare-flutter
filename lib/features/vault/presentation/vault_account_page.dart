@@ -76,6 +76,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     'VAULT_PHRASE_INVALID' => 'vault.error_phrase_invalid',
     'VAULT_PAIR_NOT_FOUND' => 'vault.error_pair_expired',
     'VAULT_PAIR_TAKEN' => 'vault.error_pair_expired',
+    'VAULT_PAIR_MISMATCH' => 'vault.error_pair_mismatch',
     'VAULT_SIGNIN' => 'vault.error_signin_again',
     _ => 'vault.error_failed',
   };
@@ -329,6 +330,11 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
   Future<void> _addDevice() async {
     final code = await context.push<String>('/drive-account/scan');
     if (code == null || !mounted) return;
+    // The same scanner reads the code of the web Drive.
+    if (VaultWebPairing.isWebCode(code)) {
+      await _openWebWith(() => _account.browserFromQr(code));
+      return;
+    }
     final ok = await showAppSheet<bool>(
       context,
       icon: AppIcons.permissionShield,
@@ -348,6 +354,146 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     });
   }
 
+  // ---- the web Drive (task 6.11) ------------------------------------------------------
+
+  /// drive.bishare.app shows a QR code and the same code in letters: scan it
+  /// (phones, tablets) or type it (computers without a camera).
+  Future<void> _openWeb() async {
+    if (!supportsCameraScan) return _typeWebCode();
+    final pick = await showAppSheet<String>(
+      context,
+      icon: AppIcons.globePublic,
+      title: 'vault.web_open'.tr(),
+      subtitle: 'vault.web_open_body'.tr(),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppSheetAction(
+            icon: AppIcons.scanDocument,
+            label: 'vault.web_scan'.tr(),
+            onTap: () => Navigator.pop(ctx, 'scan'),
+          ),
+          AppSheetAction(
+            icon: AppIcons.keyboard,
+            label: 'vault.web_type'.tr(),
+            onTap: () => Navigator.pop(ctx, 'type'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (pick == 'type') return _typeWebCode();
+    if (pick != 'scan') return;
+    final code = await context.push<String>('/drive-account/scan');
+    if (code == null || !mounted) return;
+    await _openWebWith(() => _account.browserFromQr(code));
+  }
+
+  Future<void> _typeWebCode() async {
+    final controller = TextEditingController();
+    final typed = await showAppSheet<String>(
+      context,
+      icon: AppIcons.keyboard,
+      title: 'vault.web_type_title'.tr(),
+      subtitle: 'vault.web_open_body'.tr(),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ShadInput(
+            controller: controller,
+            autofocus: true,
+            autocorrect: false,
+            enableSuggestions: false,
+            textCapitalization: TextCapitalization.characters,
+            style: const TextStyle(
+              letterSpacing: 2,
+              fontWeight: FontWeight.w600,
+            ),
+            placeholder: Text('vault.web_type_hint'.tr()),
+            onSubmitted: (v) => Navigator.pop(ctx, v),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ShadButton(
+              onPressed: () => Navigator.pop(ctx, controller.text),
+              child: Text('vault.continue'.tr()),
+            ),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (typed == null || typed.trim().isEmpty || !mounted) return;
+    await _openWebWith(() => _account.browserFromCode(typed));
+  }
+
+  /// Look the browser up, show it with its letters, and approve on a tap.
+  Future<void> _openWebWith(Future<VaultBrowserRequest> Function() find) async {
+    VaultBrowserRequest? browser;
+    await _run(() async => browser = await find());
+    final b = browser;
+    if (b == null || !mounted) return;
+    final cs = ShadTheme.of(context).colorScheme;
+    final ok = await showAppSheet<bool>(
+      context,
+      icon: AppIcons.globePublic,
+      title: 'vault.web_approve_title'.tr(),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            b.name,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'vault.web_approve_check'.tr(),
+            style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            VaultWebPairing.showCode(b.code),
+            style: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 3,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'vault.web_approve_body'.tr(namedArgs: {'name': b.name}),
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: cs.mutedForeground,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _Buttons(
+            primary: 'vault.web_approve'.tr(),
+            onPrimary: () => Navigator.pop(ctx, true),
+            secondary: 'vault.cancel'.tr(),
+            onSecondary: () => Navigator.pop(ctx, false),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    await _run(() async {
+      await _account.approveBrowser(b);
+      _devices = null;
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text('vault.web_opened'.tr(namedArgs: {'name': b.name})),
+        ),
+      );
+    });
+  }
+
   // ---- devices -----------------------------------------------------------------------
 
   Widget _deviceRow(VaultDeviceView d) {
@@ -358,13 +504,20 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
             locale,
           ).format(DateTime.fromMillisecondsSinceEpoch(d.lastSeenAt!));
     final sub = [
+      if (d.web) 'vault.device_browser'.tr(),
       if (d.thisDevice) 'vault.this_device'.tr(),
       if (d.pending) 'vault.device_pending'.tr(),
       if (!d.thisDevice && seen != null)
         'vault.last_seen'.tr(namedArgs: {'when': seen}),
     ].join(' · ');
     return AppListTile(
-      leading: Glyph(d.thisDevice ? AppIcons.smartphone : AppIcons.monitor),
+      leading: Glyph(
+        d.web
+            ? AppIcons.globePublic
+            : d.thisDevice
+            ? AppIcons.smartphone
+            : AppIcons.monitor,
+      ),
       title: Text(
         d.name ?? 'vault.unnamed_device'.tr(),
         maxLines: 1,
@@ -688,6 +841,17 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
                   ),
                 );
               }
+              // Any device with the key can open the Drive in a browser.
+              if (rows.isNotEmpty) rows.add(const AppRowDivider(indent: 58));
+              rows.add(
+                AppListTile(
+                  leading: const Glyph(AppIcons.globePublic),
+                  title: Text('vault.web_open'.tr()),
+                  subtitle: Text('vault.web_open_body'.tr()),
+                  trailing: const _Chevron(),
+                  onTap: _busy ? null : _openWeb,
+                ),
+              );
               return Column(children: rows);
             },
           ),
@@ -881,7 +1045,10 @@ class _PairScanPageState extends State<VaultPairScanPage> {
   }
 
   void _onCode(String raw) {
-    if (_done || !raw.startsWith('BSVP1.')) return;
+    // A device's pairing code, or a browser's (drive.bishare.app).
+    if (_done || !(raw.startsWith('BSVP1.') || raw.startsWith('BSVW1.'))) {
+      return;
+    }
     _done = true;
     tapHaptic();
     context.pop(raw);

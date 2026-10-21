@@ -1025,6 +1025,19 @@
     "notify_uploading": "Drive पर अपलोड हो रहा है",
     "notify_left": "बाकी: {count}",
     "notify_done": "अपलोड पूरे हुए",
-    "notify_done_body": "अपलोड हुए: {count}"
+    "notify_done_body": "अपलोड हुए: {count}",
+    "web_open": "वेब पर Drive खोलें",
+    "web_open_body": "कंप्यूटर पर drive.bishare.app खोलें और वहाँ दिखा कोड स्कैन करें",
+    "web_scan": "कोड स्कैन करें",
+    "web_type": "कोड लिखें",
+    "web_type_title": "ब्राउज़र का कोड लिखें",
+    "web_type_hint": "8 अक्षर और अंक",
+    "web_approve_title": "अपनी Drive वेब पर खोलें?",
+    "web_approve_check": "देखें कि ब्राउज़र यही अक्षर दिखा रहा है",
+    "web_approve_body": "{name} आपकी Drive की हर फ़ाइल खोल सकेगा, जब तक आप उसे डिवाइस में से हटा नहीं देते। सिर्फ़ उसी ब्राउज़र को मंज़ूरी दें जिसे आप इसी समय खुद इस्तेमाल कर रहे हैं।",
+    "web_approve": "मंज़ूरी दें",
+    "web_opened": "{name} अब आपकी Drive खोल सकता है",
+    "error_pair_mismatch": "यह कोड उस ब्राउज़र से मेल नहीं खाता। वहाँ पेज दोबारा लोड करें और फिर कोशिश करें।",
+    "device_browser": "ब्राउज़र"
   }
 }

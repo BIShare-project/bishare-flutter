@@ -1025,6 +1025,19 @@
     "notify_uploading": "Mengunggah ke Drive",
     "notify_left": "{count} lagi",
     "notify_done": "Unggahan selesai",
-    "notify_done_body": "Terunggah: {count}"
+    "notify_done_body": "Terunggah: {count}",
+    "web_open": "Buka Drive di web",
+    "web_open_body": "Di komputer, buka drive.bishare.app lalu pindai kode yang muncul",
+    "web_scan": "Pindai kode",
+    "web_type": "Ketik kode",
+    "web_type_title": "Ketik kode dari browser",
+    "web_type_hint": "8 huruf dan angka",
+    "web_approve_title": "Buka Drive Anda di web?",
+    "web_approve_check": "Pastikan browser menampilkan huruf ini",
+    "web_approve_body": "{name} dapat membuka semua file di Drive Anda sampai Anda menghapusnya di Perangkat. Setujui hanya browser yang sedang Anda pakai sendiri, sekarang.",
+    "web_approve": "Setujui",
+    "web_opened": "{name} sekarang dapat membuka Drive Anda",
+    "error_pair_mismatch": "Kode ini tidak cocok dengan browser itu. Muat ulang halamannya lalu coba lagi.",
+    "device_browser": "Browser"
   }
 }

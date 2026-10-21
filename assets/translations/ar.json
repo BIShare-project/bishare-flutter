@@ -1046,6 +1046,19 @@
     "notify_uploading": "جارٍ الرفع إلى Drive",
     "notify_left": "المتبقي: {count}",
     "notify_done": "اكتمل الرفع",
-    "notify_done_body": "تم الرفع: {count}"
+    "notify_done_body": "تم الرفع: {count}",
+    "web_open": "فتح Drive على الويب",
+    "web_open_body": "على الكمبيوتر، افتح drive.bishare.app وامسح الرمز الظاهر",
+    "web_scan": "مسح الرمز",
+    "web_type": "كتابة الرمز",
+    "web_type_title": "اكتب الرمز من المتصفح",
+    "web_type_hint": "8 أحرف وأرقام",
+    "web_approve_title": "فتح Drive الخاص بك على الويب؟",
+    "web_approve_check": "تحقّق من أن المتصفح يعرض هذه الأحرف",
+    "web_approve_body": "سيتمكن {name} من فتح كل ملف في Drive الخاص بك حتى تزيله من الأجهزة. وافق فقط على متصفح تستخدمه أنت بنفسك الآن.",
+    "web_approve": "موافقة",
+    "web_opened": "يمكن لـ {name} فتح Drive الخاص بك الآن",
+    "error_pair_mismatch": "هذا الرمز لا يطابق ذلك المتصفح. أعد تحميل الصفحة هناك وحاول مرة أخرى.",
+    "device_browser": "متصفح"
   }
 }

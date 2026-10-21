@@ -1025,6 +1025,19 @@
     "notify_uploading": "Envoi vers Drive",
     "notify_left": "Reste : {count}",
     "notify_done": "Envois terminés",
-    "notify_done_body": "Envoyés : {count}"
+    "notify_done_body": "Envoyés : {count}",
+    "web_open": "Ouvrir Drive sur le web",
+    "web_open_body": "Sur un ordinateur, allez sur drive.bishare.app et scannez le code affiché",
+    "web_scan": "Scanner le code",
+    "web_type": "Saisir le code",
+    "web_type_title": "Saisissez le code du navigateur",
+    "web_type_hint": "8 lettres et chiffres",
+    "web_approve_title": "Ouvrir votre Drive sur le web ?",
+    "web_approve_check": "Vérifiez que le navigateur affiche ces caractères",
+    "web_approve_body": "{name} pourra ouvrir tous les fichiers de votre Drive jusqu’à ce que vous le retiriez dans Appareils. N’approuvez qu’un navigateur que vous utilisez vous-même, maintenant.",
+    "web_approve": "Approuver",
+    "web_opened": "{name} peut maintenant ouvrir votre Drive",
+    "error_pair_mismatch": "Ce code ne correspond pas à ce navigateur. Rechargez la page et réessayez.",
+    "device_browser": "Navigateur"
   }
 }

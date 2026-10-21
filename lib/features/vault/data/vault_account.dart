@@ -395,6 +395,7 @@ class VaultAccount extends ChangeNotifier {
           pending: d['status'] == 'pending',
           addedAt: (d['addedAt'] as num?)?.toInt() ?? 0,
           lastSeenAt: (d['lastSeenAt'] as num?)?.toInt(),
+          web: d['kind'] == 'web',
         ),
       );
     }
@@ -638,6 +639,84 @@ class VaultAccount extends ChangeNotifier {
     );
   }
 
+  // ---- the web Drive (task 6.11) ----------------------------------------------
+
+  /// The browser behind a scanned QR code. Its keys come from the camera, and
+  /// the server's copy must be the same, or the server could have put its
+  /// own keys in between. Throws [FormatException] for a code that is not a
+  /// web Drive code, [VaultApiException] `VAULT_PAIR_MISMATCH` when the keys
+  /// differ.
+  Future<VaultBrowserRequest> browserFromQr(String scanned) async {
+    final vaultId = _requireVault();
+    final qr = VaultWebPairing.parse(scanned);
+    final data = await _api.webPairSlot(vaultId, qr.slot);
+    final req = VaultBrowserRequest._fromServer(qr.slot, data, fromQr: true);
+    if (req.devicePub != qr.devicePub || req.boxPub != qr.boxPub) {
+      throw const VaultApiException(
+        'VAULT_PAIR_MISMATCH',
+        'This code belongs to another browser',
+      );
+    }
+    return req;
+  }
+
+  /// The browser behind a code typed from its screen (computers without a
+  /// camera). Its keys come from the server: the weaker path.
+  Future<VaultBrowserRequest> browserFromCode(String typed) async {
+    final vaultId = _requireVault();
+    final code = VaultWebPairing.normalizeCode(typed);
+    if (code == null) throw const FormatException('not a web Drive code');
+    final data = await _api.webPairCode(vaultId, code);
+    return VaultBrowserRequest._fromServer(
+      data['slot'] as String,
+      data,
+      fromQr: false,
+    );
+  }
+
+  /// Let [browser] open this Drive: the vault key sealed to its hand-off key
+  /// (the grant), its name sealed for its device id, and the server enrols
+  /// it as a device of the Drive.
+  Future<void> approveBrowser(VaultBrowserRequest browser) async {
+    final vaultId = _requireVault();
+    final vk = await _keys.vaultKey();
+    if (vk == null) {
+      throw const VaultApiException(
+        'VAULT_NO_KEY',
+        'This device does not have the key yet',
+      );
+    }
+    final boxPub = base64Url.decode(base64Url.normalize(browser.boxPub));
+    final devicePub = base64Url.decode(base64Url.normalize(browser.devicePub));
+    final deviceId = Rust.vaultDeviceId(devicePub);
+    final mine = Rust.vaultGrantKeyGenerate();
+    final box = Rust.vaultGrant(
+      vaultKey: vk,
+      vaultId: vaultId,
+      mineSecret: mine.secret,
+      newPub: boxPub,
+    );
+    final name = browser.name.length > 100
+        ? browser.name.substring(0, 100)
+        : browser.name;
+    final encName = Rust.vaultSealDeviceName(
+      metaKey: Rust.vaultMetaKey(vk),
+      vaultId: vaultId,
+      deviceId: deviceId,
+      name: name,
+    );
+    await _api.approveWebPair(
+      vaultId,
+      browser.slot,
+      devicePub: browser.devicePub,
+      boxPub: browser.boxPub,
+      box: box,
+      granterPub: mine.public,
+      encName: encName,
+    );
+    await refreshInfo();
+  }
+
   // ---- deleting the account (task 3.9) ----------------------------------------
 
   /// Delete the Drive account: a fresh sign-in, the key copy removed from
@@ -742,6 +821,86 @@ class VaultPairing {
   }
 }
 
+/// The QR code a browser shows at drive.bishare.app (VAULT-SPEC "Opening the
+/// Drive in a browser"): `BSVW1.<slot>.<X25519 key>.<device key>`, both
+/// public keys base64url, and the 8-character code under it.
+class VaultWebPairing {
+  VaultWebPairing._();
+
+  static const _prefix = 'BSVW1';
+  static const _alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+  /// True for a web Drive code (the scanner also reads device codes).
+  static bool isWebCode(String raw) => raw.trim().startsWith('$_prefix.');
+
+  /// Read a scanned code; the keys stay in base64url, as the server keeps
+  /// them. Throws [FormatException].
+  static ({String slot, String boxPub, String devicePub}) parse(String raw) {
+    final parts = raw.trim().split('.');
+    final b64 = RegExp(r'^[A-Za-z0-9_-]+$');
+    if (parts.length != 4 ||
+        parts[0] != _prefix ||
+        !RegExp(r'^[A-Za-z0-9_-]{22}$').hasMatch(parts[1]) ||
+        !b64.hasMatch(parts[2]) ||
+        !b64.hasMatch(parts[3])) {
+      throw const FormatException('not a web Drive code');
+    }
+    for (final k in [parts[2], parts[3]]) {
+      final Uint8List bytes;
+      try {
+        bytes = base64Url.decode(base64Url.normalize(k));
+      } on FormatException {
+        throw const FormatException('not a web Drive code');
+      }
+      if (bytes.length != 32) {
+        throw const FormatException('not a web Drive code');
+      }
+    }
+    return (slot: parts[1], boxPub: parts[2], devicePub: parts[3]);
+  }
+
+  /// The typed code without spaces, dots or dashes, in capitals; null when
+  /// it cannot be one.
+  static String? normalizeCode(String typed) {
+    final code = typed.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+    if (code.length != 8) return null;
+    for (final ch in code.split('')) {
+      if (!_alphabet.contains(ch)) return null;
+    }
+    return code;
+  }
+
+  /// "K7Q49MZD" as "K7Q4 · 9MZD", as the browser shows it.
+  static String showCode(String code) => code.length == 8
+      ? '${code.substring(0, 4)} · ${code.substring(4)}'
+      : code;
+}
+
+/// A browser asking to open the Drive, as the server describes it.
+class VaultBrowserRequest {
+  VaultBrowserRequest._fromServer(
+    this.slot,
+    Map<String, dynamic> data, {
+    required this.fromQr,
+  }) : name = (data['name'] as String?) ?? '',
+       code = (data['code'] as String?) ?? '',
+       devicePub = (data['devicePub'] as String?) ?? '',
+       boxPub = (data['boxPub'] as String?) ?? '';
+
+  final String slot;
+
+  /// "Chrome on macOS", as the browser named itself.
+  final String name;
+
+  /// The 8 characters the browser shows, for the person to compare.
+  final String code;
+  final String devicePub;
+  final String boxPub;
+
+  /// Read from the camera (the keys were checked), not typed.
+  final bool fromQr;
+}
+
 /// One device of the Drive, for the device list.
 class VaultDeviceView {
   const VaultDeviceView({
@@ -751,9 +910,13 @@ class VaultDeviceView {
     required this.pending,
     required this.addedAt,
     required this.lastSeenAt,
+    this.web = false,
   });
 
   final String id;
+
+  /// A browser (drive.bishare.app), removed by itself when unused.
+  final bool web;
 
   /// Null until the device has been named (or when the name does not open).
   final String? name;

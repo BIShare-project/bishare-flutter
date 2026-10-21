@@ -195,6 +195,55 @@ grant box       box(wrap key, VK, aad = utf8(vault id))
 The new device opens the box, derives the key check and compares it with the
 server's. Only then is VK accepted.
 
+## Opening the Drive in a browser (web pairing, added 2026-10-22)
+
+The web Drive has no Apple or Google sign-in: a device that already has the
+key approves the browser, which becomes a device of the vault (owner,
+2026-10-22). The browser makes a device key (Ed25519, as any device) and a
+one-time X25519 hand-off pair (as the new device of the grant).
+
+```
+slot            16 random bytes made by the server, b64u
+code            8 characters of "23456789ABCDEFGHJKLMNPQRSTUVWXYZ" made by the server,
+                shown as "XXXX · XXXX"; typed on a device without a camera
+QR text         "BSVW1." ‖ slot ‖ "." ‖ b64u(newPub) ‖ "." ‖ b64u(browser device public key)
+```
+
+1. The browser opens a slot: `POST /api/v1/vault/web-pair` with
+   `{"devicePub", "boxPub", "name", "stay"}`, no signature. `name` is what the
+   approver shows ("Chrome on macOS"), 1 to 80 characters; `stay` is "Stay on
+   this browser". The answer is `{"slot", "code", "expiresAt"}`; a slot lives
+   five minutes.
+2. The approving device reads the QR code, or the typed code, and asks the
+   server for the slot (`GET .../web-pair/slots/<slot>` or
+   `GET .../web-pair/codes/<code>`, both signed as usual). With a QR code it
+   uses the two public keys of the QR text and refuses the slot when the
+   server's differ: the keys come from the screen, so the server cannot put
+   its own in between. With a typed code it uses the server's keys (the
+   weaker path, for computers without a camera).
+3. On Approve it seals VK to `boxPub` exactly as the grant does (wrap key,
+   grant box with `aad = utf8(vault id)`), seals the browser's name as a
+   device name for the browser's device id, and sends
+   `PUT .../web-pair/slots/<slot>` with `{"devicePub", "boxPub", "box",
+   "granterPub", "encName"}`. The server enrols the browser as an active
+   device of kind `web`, added by the approver, and keeps the box in the slot.
+4. The browser asks for the box with `GET .../web-pair/slots/<slot>/box`,
+   signed with its own device key under the header
+
+   ```
+   Authorization: BIShare-Vault-Pair v=1,slot=<slot>,ts=<ts>,sig=<b64u(signature)>
+   ```
+
+   over `"bishare-vault-pair-v1" ‖ "\n" ‖ METHOD ‖ "\n" ‖ PATH ‖ "\n" ‖ ts ‖
+   "\n" ‖ hex(SHA256(body))` (the same fields as a signed request, another
+   label). The answer is `{"ready": false}` until the approval, then once
+   `{"ready": true, "vaultId", "deviceId", "box", "granterPub"}`; the slot is
+   gone after it. The browser opens the box, checks the key check and from
+   then on signs requests like any device.
+
+A `web` device is removed by the server after 12 hours without a request, or
+30 days when `stay` was true; "Lock" in the browser removes it at once.
+
 ## Signed requests
 
 Every request to `/api/v1/vault/*` other than sign-in carries one header:

@@ -1018,6 +1018,19 @@
     "notify_uploading": "正在上傳到 Drive",
     "notify_left": "剩餘 {count} 項",
     "notify_done": "上傳完成",
-    "notify_done_body": "已上傳：{count} 項"
+    "notify_done_body": "已上傳：{count} 項",
+    "web_open": "在網頁上開啟 Drive",
+    "web_open_body": "在電腦上開啟 drive.bishare.app，掃描頁面上顯示的代碼",
+    "web_scan": "掃描代碼",
+    "web_type": "輸入代碼",
+    "web_type_title": "輸入瀏覽器中的代碼",
+    "web_type_hint": "8 位英數字",
+    "web_approve_title": "要在網頁上開啟你的 Drive 嗎？",
+    "web_approve_check": "請確認瀏覽器顯示的是這些字元",
+    "web_approve_body": "在你從「裝置」中移除它之前，{name} 可以開啟你 Drive 中的所有檔案。只核准你本人此刻正在使用的瀏覽器。",
+    "web_approve": "核准",
+    "web_opened": "{name} 現在可以開啟你的 Drive 了",
+    "error_pair_mismatch": "此代碼與該瀏覽器不符。請在那邊重新載入頁面後再試一次。",
+    "device_browser": "瀏覽器"
   }
 }

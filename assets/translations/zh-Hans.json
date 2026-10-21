@@ -1018,6 +1018,19 @@
     "notify_uploading": "正在上传到 Drive",
     "notify_left": "剩余 {count} 项",
     "notify_done": "上传完成",
-    "notify_done_body": "已上传：{count} 项"
+    "notify_done_body": "已上传：{count} 项",
+    "web_open": "在网页上打开 Drive",
+    "web_open_body": "在电脑上打开 drive.bishare.app，扫描页面上显示的代码",
+    "web_scan": "扫描代码",
+    "web_type": "输入代码",
+    "web_type_title": "输入浏览器中的代码",
+    "web_type_hint": "8 位字母和数字",
+    "web_approve_title": "要在网页上打开你的 Drive 吗？",
+    "web_approve_check": "请确认浏览器显示的是这些字符",
+    "web_approve_body": "在你从“设备”中移除它之前，{name} 可以打开你 Drive 中的所有文件。只批准你本人此刻正在使用的浏览器。",
+    "web_approve": "批准",
+    "web_opened": "{name} 现在可以打开你的 Drive 了",
+    "error_pair_mismatch": "此代码与该浏览器不匹配。请在那边刷新页面后重试。",
+    "device_browser": "浏览器"
   }
 }
