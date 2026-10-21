@@ -478,7 +478,14 @@ impl ObjectMeta {
     /// Reads any JSON serialization; unknown keys are ignored, but an unknown
     /// `z` is refused: those bytes could not be read back.
     pub fn from_json(json: &str) -> Result<Self> {
-        let wire: MetaWire = serde_json::from_str(json).map_err(|e| bad(&e.to_string()))?;
+        // Never the parser's own text: it can quote decrypted values (a name)
+        // into a log. A category is enough to tell what went wrong.
+        let wire: MetaWire = serde_json::from_str(json).map_err(|e| {
+            bad(match e.classify() {
+                serde_json::error::Category::Data => "a field is missing, doubled or of the wrong type",
+                _ => "not JSON",
+            })
+        })?;
         if wire.v != META_VERSION {
             return Err(bad("unknown version"));
         }
