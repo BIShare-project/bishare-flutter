@@ -570,12 +570,13 @@ final List<(String, int?, Widget)> _screens = [
 ];
 
 /// Drive, in the Inbox tab (not framed for the stores, see the top): the
-/// file manager as a list, the photos view as a grid (the view to tap), and
-/// the account page.
+/// file manager as a list and as cards, the photos view as a gallery (the
+/// view to tap), and the account page.
 final List<(String, int?, Widget, DriveView?)> _driveScreens = [
   ('drive/1_files', 1, const DrivePage(), null),
   ('drive/2_photos', 1, const DrivePage(), DriveView.media),
   ('drive/3_account', null, const VaultAccountPage(), null),
+  ('drive/4_grid', 1, const DrivePage(), DriveView.files),
 ];
 
 Future<void> _settle(WidgetTester tester, [int rounds = 12]) async {

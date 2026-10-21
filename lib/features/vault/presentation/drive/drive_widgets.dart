@@ -246,83 +246,204 @@ class DriveGridCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
     final o = object;
+    final picture = o.kind == 'file' && o.hasThumb;
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         onLongPress: onLongPress,
         child: Container(
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: selected ? cs.primary.withValues(alpha: 0.10) : cs.card,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: selected ? cs.primary : cs.border.withValues(alpha: 0.8),
               width: selected ? 1.6 : 1,
             ),
           ),
-          padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // The picture to the card's edges; an icon on a quiet ground.
               Expanded(
                 child: Stack(
+                  fit: StackFit.expand,
                   children: [
-                    Positioned.fill(
-                      child: LayoutBuilder(
-                        builder: (context, c) => Center(
-                          child: o.kind == 'file' && o.hasThumb
-                              ? DriveThumb(
+                    LayoutBuilder(
+                      builder: (context, c) => picture
+                          ? FittedBox(
+                              fit: BoxFit.cover,
+                              clipBehavior: Clip.hardEdge,
+                              child: DriveThumb(
+                                object: o,
+                                size: c.biggest.longestSide,
+                                radius: 0,
+                              ),
+                            )
+                          : ColoredBox(
+                              color: cs.muted.withValues(alpha: 0.35),
+                              child: Center(
+                                child: DriveThumb(
                                   object: o,
-                                  size: c.biggest.shortestSide,
-                                  radius: 10,
-                                )
-                              : DriveThumb(
-                                  object: o,
-                                  size: c.biggest.shortestSide * 0.55,
+                                  size: c.biggest.shortestSide * 0.5,
                                 ),
-                        ),
-                      ),
+                              ),
+                            ),
                     ),
                     if (selecting)
-                      Positioned(top: 2, left: 2, child: _Check(on: selected)),
+                      Positioned(top: 6, left: 6, child: _Check(on: selected)),
                     if (!selecting)
                       Positioned(
-                        top: -4,
-                        right: -4,
+                        top: 2,
+                        right: 2,
                         child: IconButton(
                           onPressed: onMore,
                           visualDensity: VisualDensity.compact,
+                          style: picture
+                              ? IconButton.styleFrom(
+                                  backgroundColor: Colors.black.withValues(
+                                    alpha: 0.38,
+                                  ),
+                                  minimumSize: const Size(28, 28),
+                                  padding: EdgeInsets.zero,
+                                )
+                              : null,
                           icon: AppSvgIcon(
                             AppIcons.moreMenu,
                             size: 16,
-                            color: cs.mutedForeground,
+                            color: picture ? Colors.white : cs.mutedForeground,
                           ),
                         ),
                       ),
                   ],
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                o.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: cs.foreground,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(9, 7, 9, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      o.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: cs.foreground,
+                      ),
+                    ),
+                    Text(
+                      o.kind == 'dir'
+                          ? (items == null
+                                ? 'vault.folder'.tr()
+                                : 'vault.items_n'.plural(items!))
+                          : decimalBytes(o.size ?? 0),
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: cs.mutedForeground,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                o.kind == 'dir'
-                    ? (items == null
-                          ? 'vault.folder'.tr()
-                          : 'vault.items_n'.plural(items!))
-                    : decimalBytes(o.size ?? 0),
-                maxLines: 1,
-                style: TextStyle(fontSize: 11.5, color: cs.mutedForeground),
-              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class DriveMediaTile extends StatelessWidget {
+  const DriveMediaTile({
+    super.key,
+    required this.image,
+    required this.selected,
+    required this.selecting,
+    required this.onTap,
+    required this.onLongPress,
+    this.video = false,
+    this.durationS,
+    this.badge,
+    this.label,
+  });
+
+  final Widget image;
+  final bool selected;
+  final bool selecting;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  final bool video;
+
+  /// Shown as m:ss when known.
+  final int? durationS;
+  final Widget? badge;
+
+  /// For screen readers (the tile shows no name).
+  final String? label;
+
+  static String _length(int s) =>
+      '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = ShadTheme.of(context).colorScheme;
+    return Semantics(
+      label: label,
+      selected: selected,
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ColoredBox(color: cs.muted, child: image),
+              if (video)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(6, 10, 6, 4),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0x00000000), Color(0x8C000000)],
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.play_arrow_rounded,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                        if (durationS != null && durationS! > 0)
+                          Text(
+                            _length(durationS!),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (selected)
+                ColoredBox(color: cs.primary.withValues(alpha: 0.28)),
+              if (selecting)
+                Positioned(top: 4, left: 4, child: _Check(on: selected)),
+              if (badge != null) Positioned(right: 4, bottom: 4, child: badge!),
             ],
           ),
         ),

@@ -850,14 +850,19 @@ class _DrivePageState extends State<DrivePage> {
   }
 
   Widget _grid(List<VaultObject> items, Map<String?, int> counts) {
+    // Only photos and videos (a camera folder, the Photos view): a gallery,
+    // picture to picture. Anything else keeps its name on a card.
+    if (items.every((o) => o.kind == 'file' && isMedia(o.mime))) {
+      return _gallery(items);
+    }
     return GridView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(14, 4, 14, 28),
+      padding: const EdgeInsets.fromLTRB(10, 2, 10, 24),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: context.isWideLayout ? 190 : 150,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 0.82,
+        maxCrossAxisExtent: context.isWideLayout ? 160 : 140,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 0.84,
       ),
       itemCount: items.length,
       itemBuilder: (context, i) {
@@ -874,6 +879,43 @@ class _DrivePageState extends State<DrivePage> {
         return context.isWideLayout
             ? AppRowMenu(title: o.name, actions: _itemActions(o), child: card)
             : card;
+      },
+    );
+  }
+
+  Widget _gallery(List<VaultObject> items) {
+    return GridView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(3, 2, 3, 24),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: context.isWideLayout ? 170 : 128,
+        mainAxisSpacing: 3,
+        crossAxisSpacing: 3,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, i) {
+        final o = items[i];
+        final tile = DriveMediaTile(
+          image: LayoutBuilder(
+            builder: (context, c) {
+              final side = c.biggest.shortestSide;
+              return o.hasThumb
+                  ? DriveThumb(object: o, size: side, radius: 0)
+                  : Center(
+                      child: DriveThumb(object: o, size: side * 0.4),
+                    );
+            },
+          ),
+          video: (o.mime ?? '').startsWith('video/'),
+          selected: _ctrl.isSelected(o.id),
+          selecting: _ctrl.selecting,
+          onTap: () => _tap(o),
+          onLongPress: () => _longPress(o),
+          label: o.name,
+        );
+        return context.isWideLayout
+            ? AppRowMenu(title: o.name, actions: _itemActions(o), child: tile)
+            : tile;
       },
     );
   }
