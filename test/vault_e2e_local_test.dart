@@ -2,29 +2,18 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:bishare/core/storage/app_database.dart';
 import 'package:bishare/features/vault/data/vault_account.dart';
 import 'package:bishare/features/vault/data/vault_api.dart';
 import 'package:bishare/core/crypto/bse2.dart';
-import 'package:bishare/features/vault/data/vault_downloader.dart';
-import 'package:bishare/features/vault/data/vault_downloads.dart';
-import 'package:bishare/features/vault/data/vault_files.dart';
-import 'package:bishare/features/vault/data/vault_key_copy.dart';
-import 'package:bishare/features/vault/data/vault_keys.dart';
-import 'package:bishare/features/vault/data/vault_shares.dart';
-import 'package:bishare/features/vault/data/vault_signin.dart';
-import 'package:bishare/features/vault/data/vault_sync.dart';
 import 'package:bishare/features/vault/data/vault_thumbs.dart';
-import 'package:bishare/features/vault/data/vault_uploader.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
-import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 
 import 'helpers/rust_test_lib.dart';
+import 'helpers/vault_local.dart';
 
 /// drive-plan.md phase 4, end to end against a LOCAL Drive worker (never
 /// production): two devices of one account, uploads small, compressed,
@@ -75,7 +64,7 @@ void main() {
 
   test('two devices, every way a file goes in and comes back', () async {
     if (!rust) return markTestSkipped(rustUnavailableReason);
-    final a = await _Device.signIn('a', api, mint, subject, tmp);
+    final a = await VaultLocalDevice.signIn('a', api, mint, subject, tmp);
     expect(a.account.status, VaultStatus.ready);
 
     // ---- uploads -----------------------------------------------------------------
@@ -103,7 +92,7 @@ void main() {
     expect(copyRow.blobId, top.firstWhere((o) => o.name == 'random.bin').blobId, reason: 'one blob for both');
 
     // ---- the second device ------------------------------------------------------------
-    final b = await _Device.signIn('b', api, mint, subject, tmp);
+    final b = await VaultLocalDevice.signIn('b', api, mint, subject, tmp);
     expect(b.account.status, VaultStatus.needsKey);
     await b.account.acceptPhrase((await a.account.phrase())!);
     await b.sync.pull();
@@ -249,131 +238,4 @@ void main() {
     await a.account.deleteAccount('google');
     expect(a.account.status, VaultStatus.signedOut);
   }, timeout: const Timeout(Duration(minutes: 10)));
-}
-
-/// One app installation: its own keychain, database and work folders.
-class _Device {
-  _Device._(this.name, this.apiBase, this.mint, this.subject, this.dir, this.keys, this.db);
-
-  final String name;
-  final String apiBase;
-  final String mint;
-  final String subject;
-  final Directory dir;
-  final VaultKeyStore keys;
-  final AppDatabase db;
-  late VaultApi api;
-  late VaultAccount account;
-  late VaultSync sync;
-  late VaultUploader uploader;
-  late VaultDownloader downloader;
-  late VaultFiles files;
-  late VaultThumbs thumbs;
-  late VaultShares shares;
-  int puts = 0;
-  int? failPutsAfter;
-
-  static Future<_Device> signIn(String name, String api, String mint, String subject, Directory tmp) async {
-    final d = _Device._(name, api, mint, subject, tmp, VaultKeyStore(_Mem()), AppDatabase(NativeDatabase.memory()));
-    d._wire();
-    await d.account.completeSignIn(
-      ProviderToken(provider: 'google', idToken: await d.token(await d.keys.signinNonce())),
-    );
-    return d;
-  }
-
-  /// The same installation after the app was killed: new objects, same
-  /// keychain, database and files.
-  _Device restart() {
-    final again = _Device._(name, apiBase, mint, subject, dir, keys, db)..puts = puts;
-    again._wire();
-    return again;
-  }
-
-  void _wire() {
-    api = VaultApi(keys, dio: Dio(BaseOptions(baseUrl: apiBase, responseType: ResponseType.json)));
-    account = VaultAccount(
-      keys: keys,
-      api: api,
-      signin: _Signin(this),
-      keyCopy: VaultKeyCopy(const []),
-      dao: db.vaultDao,
-      deviceName: () => 'Device $name',
-    );
-    sync = VaultSync(api: api, keys: keys, dao: db.vaultDao);
-    final http = Dio()
-      ..interceptors.add(
-        InterceptorsWrapper(
-          onRequest: (o, h) {
-            if (o.method == 'PUT') {
-              // Every PUT past the limit fails, as if the app had been killed:
-              // the part's retries run out and the upload stops.
-              if (failPutsAfter != null && puts >= failPutsAfter!) {
-                return h.reject(DioException(requestOptions: o, type: DioExceptionType.connectionError));
-              }
-              puts++;
-            }
-            h.next(o);
-          },
-        ),
-      );
-    Future<Directory> work() async => Directory('${dir.path}/$name-work')..createSync(recursive: true);
-    Future<Directory> thumbDir() async => Directory('${dir.path}/$name-thumbs')..createSync(recursive: true);
-    thumbs = VaultThumbs(api: api, keys: keys, dao: db.vaultDao, cacheDir: thumbDir);
-    uploader = VaultUploader(api: api, keys: keys, dao: db.vaultDao, sync: sync, http: http, workDir: work, thumbs: thumbs);
-    downloader = VaultDownloader(api: api, keys: keys, dao: db.vaultDao, sync: sync, workDir: work);
-    files = VaultFiles(api: api, keys: keys, dao: db.vaultDao, sync: sync);
-    shares = VaultShares(
-      api: api,
-      keys: keys,
-      dao: db.vaultDao,
-      downloads: VaultDownloads(downloader: downloader, dao: db.vaultDao),
-      cloud: () => throw StateError('compressed files are not shared in this test'),
-      senderAlias: () => name,
-    );
-  }
-
-  Future<String> token(String nonce) async {
-    final r = await Process.run('node', [mint, 'google', subject, nonce]);
-    if (r.exitCode != 0) throw StateError('mint failed: ${r.stderr}');
-    return r.stdout as String;
-  }
-
-  Future<List<String>> failed() async => [
-    for (final t in await db.vaultDao.watchTransfers().first)
-      if (t.state == 'failed') '${t.name}: ${t.error}',
-  ];
-}
-
-class _Signin extends VaultSignin {
-  _Signin(this.device) : super(device.keys);
-  final _Device device;
-
-  @override
-  Future<ProviderToken?> google(String nonce) async => ProviderToken(provider: 'google', idToken: await device.token(nonce));
-
-  @override
-  Future<void> forgetGoogle() async {}
-}
-
-class _Mem extends FlutterSecureStorage {
-  _Mem();
-  final _m = <String, String>{};
-
-  @override
-  Future<String?> read({required String key, AppleOptions? iOptions, AndroidOptions? aOptions, LinuxOptions? lOptions, WebOptions? webOptions, AppleOptions? mOptions, WindowsOptions? wOptions}) async =>
-      _m[key];
-
-  @override
-  Future<void> write({required String key, required String? value, AppleOptions? iOptions, AndroidOptions? aOptions, LinuxOptions? lOptions, WebOptions? webOptions, AppleOptions? mOptions, WindowsOptions? wOptions}) async {
-    if (value == null) {
-      _m.remove(key);
-    } else {
-      _m[key] = value;
-    }
-  }
-
-  @override
-  Future<void> delete({required String key, AppleOptions? iOptions, AndroidOptions? aOptions, LinuxOptions? lOptions, WebOptions? webOptions, AppleOptions? mOptions, WindowsOptions? wOptions}) async =>
-      _m.remove(key);
 }
