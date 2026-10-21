@@ -1019,6 +1019,7 @@
     "uploads_idle": "Aucun envoi en cours",
     "uploads_bytes": "{done} sur {total}",
     "backup_off": "Désactivée",
-    "backup_done_of": "{done} sur {total} sauvegardées"
+    "backup_done_of": "{done} sur {total} sauvegardées",
+    "backup_no_room": "Votre Drive est plein. La sauvegarde attend qu’il y ait de la place."
   }
 }

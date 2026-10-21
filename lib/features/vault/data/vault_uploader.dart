@@ -928,6 +928,7 @@ class VaultUploader extends ChangeNotifier {
   /// the content without encryption.
   Future<void> _fail(int id, String code) async {
     final t = await _dao.transfer(id);
+    debugPrint('[vault] upload $id (${t?.assetId ?? 'file'}) stopped: $code');
     final vaultId = await _keys.vaultId();
     if (t != null && vaultId != null) await _reset(vaultId, t);
     await _set(id, state: 'failed', error: code);

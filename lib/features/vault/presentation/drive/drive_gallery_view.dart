@@ -567,6 +567,7 @@ class _BackupCard extends StatelessWidget {
         namedArgs: {'folder': 'vault.backup_folder'.tr()},
       );
     }
+    if (backup.noRoom) return 'vault.backup_no_room'.tr();
     final left = backup.left;
     if (left == null) return 'vault.backup_counting'.tr();
     return 'vault.backup_left'.plural(left);

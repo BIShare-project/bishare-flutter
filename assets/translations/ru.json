@@ -1040,6 +1040,7 @@
     "uploads_idle": "Сейчас ничего не загружается",
     "uploads_bytes": "{done} из {total}",
     "backup_off": "Выключено",
-    "backup_done_of": "Сохранено {done} из {total}"
+    "backup_done_of": "Сохранено {done} из {total}",
+    "backup_no_room": "Ваш Drive заполнен. Копирование подождёт, пока не освободится место."
   }
 }

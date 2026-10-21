@@ -1019,6 +1019,7 @@
     "uploads_idle": "अभी कुछ अपलोड नहीं हो रहा",
     "uploads_bytes": "{total} में से {done}",
     "backup_off": "बंद",
-    "backup_done_of": "{total} में से {done} का बैकअप हो गया"
+    "backup_done_of": "{total} में से {done} का बैकअप हो गया",
+    "backup_no_room": "आपकी Drive भर गई है। जगह होने तक बैकअप रुका रहेगा।"
   }
 }

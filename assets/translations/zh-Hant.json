@@ -1012,6 +1012,7 @@
     "uploads_idle": "目前沒有上傳",
     "uploads_bytes": "{done} / {total}",
     "backup_off": "已關閉",
-    "backup_done_of": "已備份 {done} / {total}"
+    "backup_done_of": "已備份 {done} / {total}",
+    "backup_no_room": "你的 Drive 已滿。備份會等到有空間時再繼續。"
   }
 }

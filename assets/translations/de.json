@@ -1019,6 +1019,7 @@
     "uploads_idle": "Gerade wird nichts hochgeladen",
     "uploads_bytes": "{done} von {total}",
     "backup_off": "Aus",
-    "backup_done_of": "{done} von {total} gesichert"
+    "backup_done_of": "{done} von {total} gesichert",
+    "backup_no_room": "Ihr Drive ist voll. Die Sicherung wartet, bis wieder Platz ist."
   }
 }

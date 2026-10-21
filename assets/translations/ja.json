@@ -1012,6 +1012,7 @@
     "uploads_idle": "アップロード中のものはありません",
     "uploads_bytes": "{total}中{done}",
     "backup_off": "オフ",
-    "backup_done_of": "{total}件中{done}件をバックアップ済み"
+    "backup_done_of": "{total}件中{done}件をバックアップ済み",
+    "backup_no_room": "Driveがいっぱいです。空きができるまでバックアップは待機します。"
   }
 }

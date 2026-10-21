@@ -337,6 +337,41 @@ void main() {
     expect(now.single.state, 'queued');
   });
 
+  test('a full Drive stops backup after one more try, until switched on '
+      'again', () async {
+    final library = _Library([photo('a.jpg', 'one')]);
+    await prefs.setBool('vault.photoBackup', true);
+    final b = make(library);
+    await b.start();
+    await b.scan();
+    Future<void> refuse() async {
+      final t = (await dao.pendingTransfers()).single;
+      await dao.updateTransfer(
+        t.id,
+        const VaultTransfersCompanion(
+          state: Value('failed'),
+          error: Value('STORAGE_LIMIT_EXCEEDED'),
+        ),
+      );
+    }
+
+    await refuse();
+    await b.scan();
+    expect(b.noRoom, isTrue);
+    expect((await dao.pendingTransfers()).length, 1, reason: 'one more try');
+    await refuse();
+    await b.scan();
+    expect(
+      await dao.pendingTransfers(),
+      isEmpty,
+      reason: 'no photo after photo into a full Drive',
+    );
+    expect(await b.setOn(true), isTrue);
+    expect(b.noRoom, isFalse);
+    await b.scan();
+    expect((await dao.pendingTransfers()).length, 1);
+  });
+
   test('the badge of each photo', () {
     const backed = {'a'};
     const uploads = {

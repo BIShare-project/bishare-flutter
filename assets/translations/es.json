@@ -1019,6 +1019,7 @@
     "uploads_idle": "No se está subiendo nada",
     "uploads_bytes": "{done} de {total}",
     "backup_off": "Desactivada",
-    "backup_done_of": "{done} de {total} con copia"
+    "backup_done_of": "{done} de {total} con copia",
+    "backup_no_room": "Tu Drive está lleno. La copia espera hasta que haya espacio."
   }
 }

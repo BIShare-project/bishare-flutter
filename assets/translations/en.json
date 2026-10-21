@@ -1019,6 +1019,7 @@
     "uploads_idle": "Nothing is uploading",
     "uploads_bytes": "{done} of {total}",
     "backup_off": "Off",
-    "backup_done_of": "{done} of {total} backed up"
+    "backup_done_of": "{done} of {total} backed up",
+    "backup_no_room": "Your Drive is full. Backup waits until there is room."
   }
 }

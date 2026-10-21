@@ -13,9 +13,11 @@ import '../../../core/ui/app_ui.dart';
 import '../../settings/presentation/widgets/glyph.dart';
 import '../data/vault_account.dart';
 import '../data/vault_photo_backup.dart';
+import '../data/vault_uploader.dart';
 import 'drive/drive_format.dart';
 import 'drive/drive_page.dart' show storageByKind;
 import 'drive/drive_widgets.dart';
+import 'drive/upload_batch.dart';
 
 /// The top of the Drive account page (owner 2026-10-21: "data harus lengkap
 /// storage sisa dll dan ada progress juga"): what is stored against the
@@ -40,6 +42,9 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
   final VaultPhotoBackup? _backup = getIt.isRegistered<VaultPhotoBackup>()
       ? getIt<VaultPhotoBackup>()
       : null;
+
+  final VaultUploader _uploader = getIt<VaultUploader>();
+  final OneWayProgress _bar = OneWayProgress();
 
   VaultAccount get _account => widget.account;
 
@@ -270,53 +275,60 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
 
   // ---- activity ----------------------------------------------------------------
 
-  static bool _running(VaultTransfer t) =>
-      t.direction == 'up' &&
-      t.state != 'done' &&
-      t.state != 'failed' &&
-      t.state != 'cancelled';
-
   Widget _uploads(BuildContext context, List<VaultTransfer> transfers) {
     final cs = ShadTheme.of(context).colorScheme;
     final muted = TextStyle(fontSize: 12.5, color: cs.mutedForeground);
-    final running = transfers.where(_running).toList();
-    final stopped = transfers
-        .where((t) => t.direction == 'up' && t.state == 'failed')
-        .length;
-    final total = running.fold<int>(0, (a, t) => a + t.size);
-    final done = running.fold<int>(0, (a, t) => a + min(t.bytesDone, t.size));
-    return AppListTile(
-      leading: const Glyph(AppIcons.uploadFile),
-      title: Text('vault.uploads'.tr()),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            running.isEmpty
-                ? 'vault.uploads_idle'.tr()
-                : '${'vault.uploading_n'.plural(running.length)} · '
-                      '${'vault.uploads_bytes'.tr(namedArgs: {'done': decimalBytes(done), 'total': decimalBytes(total)})}',
-            style: muted,
+    return ListenableBuilder(
+      // The file being sent reports every few kilobytes.
+      listenable: _uploader,
+      builder: (context, _) {
+        final batch = UploadBatch.of(transfers, _uploader);
+        final bar = _bar.of(batch);
+        final running = batch?.running ?? const <VaultTransfer>[];
+        final stopped = batch?.stopped ?? 0;
+        return AppListTile(
+          leading: const Glyph(AppIcons.uploadFile),
+          title: Text('vault.uploads'.tr()),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                running.isEmpty
+                    ? 'vault.uploads_idle'.tr()
+                    : '${'vault.uploading_n'.plural(running.length)} · '
+                          '${'vault.uploads_bytes'.tr(namedArgs: {'done': decimalBytes(batch!.bytesDone), 'total': decimalBytes(batch.bytes)})}',
+                style: muted,
+              ),
+              if (running.isNotEmpty) ...[
+                const SizedBox(height: 7),
+                _Progress(value: bar),
+                if (batch!.current != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    batch.current!.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: muted.copyWith(fontSize: 11.5),
+                  ),
+                ],
+              ],
+              if (stopped > 0) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'vault.uploads_stopped'.plural(stopped),
+                  style: muted.copyWith(color: cs.destructive),
+                ),
+              ],
+            ],
           ),
-          if (running.isNotEmpty) ...[
-            const SizedBox(height: 7),
-            _Progress(value: total > 0 ? done / total : null),
-          ],
-          if (stopped > 0) ...[
-            const SizedBox(height: 4),
-            Text(
-              'vault.uploads_stopped'.plural(stopped),
-              style: muted.copyWith(color: cs.destructive),
-            ),
-          ],
-        ],
-      ),
-      trailing: AppSvgIcon(
-        AppIcons.chevronRight,
-        size: 16,
-        color: cs.mutedForeground,
-      ),
-      onTap: () => context.push('/drive-transfers'),
+          trailing: AppSvgIcon(
+            AppIcons.chevronRight,
+            size: 16,
+            color: cs.mutedForeground,
+          ),
+          onTap: () => context.push('/drive-transfers'),
+        );
+      },
     );
   }
 
@@ -328,6 +340,8 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
     final String status;
     if (!backup.on) {
       status = 'vault.backup_off'.tr();
+    } else if (backup.noRoom) {
+      status = 'vault.backup_no_room'.tr();
     } else if (left == null) {
       status = 'vault.backup_counting'.tr();
     } else {

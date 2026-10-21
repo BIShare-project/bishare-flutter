@@ -27,6 +27,7 @@ import 'drive_controller.dart';
 import 'drive_format.dart';
 import 'drive_gallery_view.dart';
 import 'drive_widgets.dart';
+import 'upload_batch.dart';
 
 /// BIShare Drive's file manager (drive-plan.md tasks 4.7, 4.8, 4.10): the
 /// Drive's folders and the views across it (Recent, Photos and videos,
@@ -1048,42 +1049,35 @@ Map<String, int> storageByKind(
 }
 
 /// The uploads still going, above the files.
-class _UploadStrip extends StatelessWidget {
+class _UploadStrip extends StatefulWidget {
   const _UploadStrip({required this.uploader, required this.transfers});
 
   final VaultUploader uploader;
   final Stream<List<VaultTransfer>> transfers;
 
   @override
+  State<_UploadStrip> createState() => _UploadStripState();
+}
+
+class _UploadStripState extends State<_UploadStrip> {
+  final OneWayProgress _bar = OneWayProgress();
+
+  @override
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
     return StreamBuilder<List<VaultTransfer>>(
-      stream: transfers,
+      stream: widget.transfers,
       builder: (context, snap) {
-        final active = (snap.data ?? const <VaultTransfer>[])
-            .where(
-              (t) =>
-                  t.direction == 'up' &&
-                  t.state != 'done' &&
-                  t.state != 'cancelled',
-            )
-            .toList();
-        if (active.isEmpty) return const SizedBox.shrink();
-        final failed = active.where((t) => t.state == 'failed').length;
+        final all = snap.data ?? const <VaultTransfer>[];
         return ListenableBuilder(
-          listenable: uploader,
+          listenable: widget.uploader,
           builder: (context, _) {
-            final running = active.where((t) => t.state != 'failed').toList();
-            // The one being sent now, or the next in line (oldest first).
-            final now = running.isEmpty
-                ? null
-                : running.firstWhere(
-                    (t) => uploader.progressOf(t.id) != null,
-                    orElse: () => running.reduce(
-                      (a, b) => a.createdAt <= b.createdAt ? a : b,
-                    ),
-                  );
-            final p = now == null ? null : uploader.progressOf(now.id);
+            final batch = UploadBatch.of(all, widget.uploader);
+            final bar = _bar.of(batch);
+            if (batch == null) return const SizedBox.shrink();
+            final running = batch.running;
+            final failed = batch.stopped;
+            final now = batch.current;
             final label = running.isEmpty
                 ? 'vault.uploads_stopped'.plural(failed)
                 : 'vault.uploading_n'.plural(running.length);
@@ -1125,12 +1119,7 @@ class _UploadStrip extends StatelessWidget {
                           ),
                           if (running.isNotEmpty) ...[
                             const SizedBox(height: 6),
-                            LinearProgressIndicator(
-                              value: p == null || p.total == 0
-                                  ? null
-                                  : p.done / p.total,
-                              minHeight: 3,
-                            ),
+                            LinearProgressIndicator(value: bar, minHeight: 3),
                           ],
                         ],
                       ),

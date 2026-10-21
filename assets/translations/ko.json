@@ -1012,6 +1012,7 @@
     "uploads_idle": "업로드 중인 항목 없음",
     "uploads_bytes": "{total} 중 {done}",
     "backup_off": "꺼짐",
-    "backup_done_of": "{total}개 중 {done}개 백업됨"
+    "backup_done_of": "{total}개 중 {done}개 백업됨",
+    "backup_no_room": "Drive가 가득 찼습니다. 공간이 생길 때까지 백업이 대기합니다."
   }
 }

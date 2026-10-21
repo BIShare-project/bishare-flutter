@@ -1040,6 +1040,7 @@
     "uploads_idle": "لا يوجد رفع الآن",
     "uploads_bytes": "{done} من {total}",
     "backup_off": "متوقف",
-    "backup_done_of": "تم نسخ {done} من {total} احتياطيًا"
+    "backup_done_of": "تم نسخ {done} من {total} احتياطيًا",
+    "backup_no_room": "Drive الخاص بك ممتلئ. ينتظر النسخ الاحتياطي حتى تتوفر مساحة."
   }
 }

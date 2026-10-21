@@ -102,6 +102,14 @@ class VaultPhotoBackup extends ChangeNotifier {
   PhotoAccess get access => _access;
   bool get scanning => _scanning != null;
 
+  /// The Drive refused a photo for lack of room (or it is read-only after a
+  /// plan ended): backup waits instead of trying photo after photo. Cleared
+  /// by turning backup on again or "Back up now", and at the next start.
+  bool get noRoom => _noRoom;
+  bool _noRoom = false;
+
+  static const _roomErrors = {'STORAGE_LIMIT_EXCEEDED', 'VAULT_READ_ONLY'};
+
   /// Photos and videos of the library not in the Drive yet (those on their
   /// way included), as of the last look. Null before the first.
   int? get left {
@@ -186,6 +194,7 @@ class VaultPhotoBackup extends ChangeNotifier {
       if (_access == PhotoAccess.none) return false;
     }
     await _prefs.setBool(_kOn, value);
+    if (value) _noRoom = false;
     notifyListeners();
     if (value) unawaited(scan());
     return true;
@@ -215,6 +224,7 @@ class VaultPhotoBackup extends ChangeNotifier {
   /// whose upload failed or was cancelled is queued again.
   Future<void> backUp(List<PhotoAsset> assets) async {
     if (assets.isEmpty) return;
+    _noRoom = false;
     _now.addAll(assets.map((a) => a.id));
     final uploads = await _dao.watchAssetUploads().first;
     await _queue([
@@ -268,9 +278,17 @@ class VaultPhotoBackup extends ChangeNotifier {
     // tried again from a fresh copy.
     final failed = [
       for (final t in await _dao.watchTransfers().first)
-        if (t.assetId != null && t.state == 'failed') t.id,
+        if (t.assetId != null && t.state == 'failed') t,
     ];
-    if (failed.isNotEmpty) await _dao.deleteTransfers(failed);
+    if (failed.any((t) => _roomErrors.contains(t.error))) {
+      // A full Drive refuses every photo: one try per start is enough.
+      if (_noRoom) return;
+      _noRoom = true;
+      notifyListeners();
+    }
+    if (failed.isNotEmpty) {
+      await _dao.deleteTransfers([for (final t in failed) t.id]);
+    }
 
     final total = await _library.count();
     final counting =

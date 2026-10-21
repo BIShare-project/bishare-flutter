@@ -1019,6 +1019,7 @@
     "uploads_idle": "Tidak ada yang sedang diunggah",
     "uploads_bytes": "{done} dari {total}",
     "backup_off": "Mati",
-    "backup_done_of": "{done} dari {total} sudah dicadangkan"
+    "backup_done_of": "{done} dari {total} sudah dicadangkan",
+    "backup_no_room": "Drive Anda penuh. Pencadangan menunggu sampai ada ruang."
   }
 }

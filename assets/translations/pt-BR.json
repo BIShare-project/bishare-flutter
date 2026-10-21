@@ -1019,6 +1019,7 @@
     "uploads_idle": "Nada sendo enviado",
     "uploads_bytes": "{done} de {total}",
     "backup_off": "Desativado",
-    "backup_done_of": "{done} de {total} com backup"
+    "backup_done_of": "{done} de {total} com backup",
+    "backup_no_room": "Seu Drive está cheio. O backup espera até haver espaço."
   }
 }
