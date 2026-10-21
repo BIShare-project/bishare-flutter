@@ -216,6 +216,18 @@ Future<void> setupLocator() async {
     ..registerLazySingleton<VaultAccount>(
       () => VaultAccount(keys: getIt<VaultKeyStore>(), api: getIt<VaultApi>()),
     );
+
+  // Drive's start check (task 3.6): once Drive is visible on this device,
+  // read its state and check the key copy in the background. With the flag
+  // off nothing Drive is touched, as above.
+  void vaultStart() {
+    if (!featureFlags.vaultVisible) return;
+    featureFlags.removeListener(vaultStart);
+    unawaited(getIt<VaultAccount>().load());
+  }
+
+  featureFlags.addListener(vaultStart);
+  vaultStart();
 }
 
 /// Where received files land.

@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../../core/rust/rust_facade.dart';
+import 'google_app_data.dart';
 import 'vault_api.dart';
+import 'vault_key_copy.dart';
 import 'vault_keys.dart';
 import 'vault_signin.dart';
 
@@ -21,22 +25,36 @@ enum VaultStatus {
   pendingApproval,
 }
 
-/// Sign-in and the vault key on this device (drive-plan.md tasks 3.2 and
-/// 3.5). The first device of an account makes the vault key and registers
-/// its key check; any later device needs the key from somewhere else and
-/// never makes a second one.
+/// Sign-in and the vault key on this device (drive-plan.md tasks 3.2, 3.5
+/// and 3.6). The first device of an account makes the vault key and
+/// registers its key check; any later device gets the key from the key copy,
+/// a QR code or the phrase, and never makes a second one.
 class VaultAccount extends ChangeNotifier {
   VaultAccount({
     required VaultKeyStore keys,
     required VaultApi api,
     VaultSignin? signin,
+    VaultKeyCopy? keyCopy,
   }) : _keys = keys,
-       _api = api,
-       _signin = signin ?? VaultSignin();
+       _api = api {
+    _signin = signin ?? VaultSignin(keys);
+    this.keyCopy =
+        keyCopy ??
+        VaultKeyCopy([
+          if (ICloudKeyCopyHolder.available) ICloudKeyCopyHolder(),
+          GoogleKeyCopyHolder(GoogleAppData(_signin.googleDrive)),
+        ]);
+  }
 
   final VaultKeyStore _keys;
   final VaultApi _api;
-  final VaultSignin _signin;
+  late final VaultSignin _signin;
+
+  /// Where the key copy is, for "Ways back in" (task 3.7).
+  late final VaultKeyCopy keyCopy;
+
+  /// The start check of the key copy runs once per run of the app.
+  bool _checked = false;
 
   VaultStatus _status = VaultStatus.signedOut;
   String? _vaultId;
@@ -48,7 +66,10 @@ class VaultAccount extends ChangeNotifier {
   /// The answer of the latest sign-in on this run (plan, quota, state).
   VaultSigninResult? get lastSignin => _last;
 
-  /// Read what this device already has; no network.
+  /// Read what this device already has, then, once per run and in the
+  /// background, check the key copy: write it again where it went missing,
+  /// or, on a device still waiting for the key, look for it (iCloud Keychain
+  /// may have synced since).
   Future<void> load() async {
     _vaultId = await _keys.vaultId();
     if (_vaultId == null) {
@@ -59,6 +80,57 @@ class VaultAccount extends ChangeNotifier {
           : VaultStatus.needsKey;
     }
     notifyListeners();
+    if (!_checked && _vaultId != null) {
+      _checked = true;
+      unawaited(_checkKeyCopy());
+    }
+  }
+
+  Future<void> _checkKeyCopy() async {
+    final vaultId = _vaultId;
+    final serverHalf = await _keys.serverHalf();
+    if (vaultId == null || serverHalf == null) return;
+    try {
+      if (_status == VaultStatus.ready) {
+        await keyCopy.repair(
+          vaultId: vaultId,
+          vaultKey: (await _keys.vaultKey())!,
+          serverHalf: serverHalf,
+        );
+      } else if (_status == VaultStatus.needsKey) {
+        final keyCheck = (await _api.info(vaultId))['keyCheck'] as String?;
+        if (keyCheck != null) {
+          await _restore(vaultId, serverHalf, keyCheck, interactive: false);
+        }
+      }
+    } on Object catch (e) {
+      debugPrint('[vault] key copy check at start: $e');
+    }
+  }
+
+  /// Look for the key in the key copy; on success the device is ready and the
+  /// copy is written where it was missing.
+  Future<void> _restore(
+    String vaultId,
+    Uint8List serverHalf,
+    String keyCheck, {
+    required bool interactive,
+  }) async {
+    final vk = await keyCopy.restore(
+      vaultId: vaultId,
+      serverHalf: serverHalf,
+      keyCheck: keyCheck,
+      interactive: interactive,
+    );
+    if (vk == null || _vaultId != vaultId) return;
+    await _keys.saveVaultKey(vk);
+    _status = VaultStatus.ready;
+    notifyListeners();
+    await keyCopy.repair(
+      vaultId: vaultId,
+      vaultKey: vk,
+      serverHalf: serverHalf,
+    );
   }
 
   /// Run the provider's sheet, then enrol this device. Returns false when the
@@ -102,6 +174,27 @@ class VaultAccount extends ChangeNotifier {
           : VaultStatus.needsKey;
     }
     notifyListeners();
+    _checked = true;
+
+    // The key copy, right after the tap, so Google may ask for its consent.
+    final serverHalf = r.serverHalf;
+    if (serverHalf == null) return;
+    final interactive = token.provider == 'google';
+    if (_status == VaultStatus.ready) {
+      await keyCopy.save(
+        vaultId: r.vaultId,
+        vaultKey: (await _keys.vaultKey())!,
+        serverHalf: serverHalf,
+        interactive: interactive,
+      );
+    } else if (_status == VaultStatus.needsKey && r.keyCheck != null) {
+      await _restore(
+        r.vaultId,
+        serverHalf,
+        r.keyCheck!,
+        interactive: interactive,
+      );
+    }
   }
 
   /// First device of the account: make VK, keep it, register its key check.
@@ -133,12 +226,22 @@ class VaultAccount extends ChangeNotifier {
     await _keys.saveVaultKey(key);
     _status = VaultStatus.ready;
     notifyListeners();
+    final vaultId = _vaultId;
+    final serverHalf = await _keys.serverHalf();
+    if (vaultId != null && serverHalf != null) {
+      await keyCopy.save(
+        vaultId: vaultId,
+        vaultKey: key,
+        serverHalf: serverHalf,
+      );
+    }
   }
 
   /// Forget Drive on this device. The account and its files stay.
   Future<void> signOut() async {
     await _keys.forgetVault();
     await _signin.forgetGoogle();
+    keyCopy.reset();
     _vaultId = null;
     _last = null;
     _status = VaultStatus.signedOut;

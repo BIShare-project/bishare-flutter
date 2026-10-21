@@ -498,8 +498,21 @@ jobs:
           cargo install flutter_rust_bridge_codegen --version $env:FRB_VERSION
           flutter_rust_bridge_codegen generate
       - run: dart run build_runner build --delete-conflicting-outputs
+      - name: Google desktop client secret (Drive sign-in; empty when unset)
+        shell: pwsh
+        env:
+          OAUTH_JSON: ${{ secrets.GOOGLE_DESKTOP_OAUTH_JSON }}
+        run: |
+          # Google wants the desktop client's secret in the token exchange,
+          # though an installed app cannot keep it secret; it stays out of the
+          # repository all the same. Without it the build offers no Google
+          # sign-in for Drive (VaultGoogleDesktop.available).
+          $s = ""
+          if ($env:OAUTH_JSON) { $s = ($env:OAUTH_JSON | ConvertFrom-Json).installed.client_secret }
+          if ($s) { echo "::add-mask::$s" }
+          echo "VAULT_GOOGLE_DESKTOP_SECRET=$s" >> $env:GITHUB_ENV
       - name: Build Windows (release)
-        run: flutter build windows --release
+        run: flutter build windows --release --dart-define=VAULT_GOOGLE_DESKTOP_SECRET=$env:VAULT_GOOGLE_DESKTOP_SECRET
       - name: Package ZIP
         shell: pwsh
         run: |
@@ -532,7 +545,8 @@ jobs:
           dart run msix:create `
             --store `
             --version "$ver.0" `
-            --output-name "BIShare-$ver-windows-x64-store"
+            --output-name "BIShare-$ver-windows-x64-store" `
+            --windows-build-args "--dart-define=VAULT_GOOGLE_DESKTOP_SECRET=$env:VAULT_GOOGLE_DESKTOP_SECRET"
 
       # Fails the build rather than shipping a package the Store will bounce.
       - name: Verify the Store manifest
@@ -589,7 +603,8 @@ jobs:
           dart run msix:create `
             --version "$env:MSIX_VER.0" `
             --output-name "BIShare-$env:MSIX_VER-windows-x64-test" `
-            --install-certificate false
+            --install-certificate false `
+            --windows-build-args "--dart-define=VAULT_GOOGLE_DESKTOP_SECRET=$env:VAULT_GOOGLE_DESKTOP_SECRET"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -635,8 +650,17 @@ jobs:
           cargo install flutter_rust_bridge_codegen --version $FRB_VERSION
           flutter_rust_bridge_codegen generate
       - run: dart run build_runner build --delete-conflicting-outputs
+      - name: Google desktop client secret (Drive sign-in; empty when unset)
+        env:
+          OAUTH_JSON: ${{ secrets.GOOGLE_DESKTOP_OAUTH_JSON }}
+        run: |
+          # See the Windows job: kept out of the repository, empty when unset.
+          S=""
+          if [ -n "$OAUTH_JSON" ]; then S=$(printf '%s' "$OAUTH_JSON" | jq -r '.installed.client_secret // empty'); fi
+          if [ -n "$S" ]; then echo "::add-mask::$S"; fi
+          echo "VAULT_GOOGLE_DESKTOP_SECRET=$S" >> "$GITHUB_ENV"
       - name: Build Linux (release)
-        run: flutter build linux --release
+        run: flutter build linux --release --dart-define=VAULT_GOOGLE_DESKTOP_SECRET="$VAULT_GOOGLE_DESKTOP_SECRET"
       - name: Package tar.gz
         run: |
           VER="${GITHUB_REF_NAME#v}"

@@ -38,6 +38,8 @@ class VaultKeyStore {
   static const _kVaultId = 'vault.id';
   static const _kVaultKey = 'vault.key';
   static const _kServerHalf = 'vault.serverHalf';
+  static const _kGoogleHere = 'vault.googleHere';
+  static const _kGoogleRefresh = 'vault.googleRefresh';
 
   Uint8List? _seed;
 
@@ -81,8 +83,26 @@ class VaultKeyStore {
     await _writeBytes(_kVaultKey, key);
   }
 
+  /// Whether this device has signed in with Google for Drive, so it may ask
+  /// Google for a Drive token at start without showing anything first.
+  Future<bool> googleHere() async =>
+      await _storage.read(key: _kGoogleHere) == '1';
+
+  Future<void> setGoogleHere(bool here) => here
+      ? _storage.write(key: _kGoogleHere, value: '1')
+      : _storage.delete(key: _kGoogleHere);
+
+  /// Windows and Linux only: the refresh token of the loopback flow
+  /// (VaultGoogleDesktop). It never leaves this device.
+  Future<String?> googleRefreshToken() => _storage.read(key: _kGoogleRefresh);
+
+  Future<void> saveGoogleRefreshToken(String? token) => token == null
+      ? _storage.delete(key: _kGoogleRefresh)
+      : _storage.write(key: _kGoogleRefresh, value: token);
+
   /// Forget the vault on this device (sign-out, account deleted). The device
-  /// key stays.
+  /// key stays, and so does the Google state: it belongs to the provider
+  /// sign-in, which VaultSignin.forgetGoogle clears.
   Future<void> forgetVault() async {
     await _storage.delete(key: _kVaultId);
     await _storage.delete(key: _kVaultKey);
