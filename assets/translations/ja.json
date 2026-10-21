@@ -991,6 +991,27 @@
     "backup_state_waiting": "アップロード待ち",
     "backup_state_uploading": "アップロード中",
     "backup_state_failed": "アップロード失敗",
-    "backup_folder": "カメラ"
+    "backup_folder": "カメラ",
+    "activity": "アップロードとバックアップ",
+    "storage_percent": "{percent}% 使用中",
+    "storage_full": "Driveがいっぱいです。空きができるまで新しいアップロードは待機します。",
+    "stat_left": "空き",
+    "stat_files": "ファイル",
+    "stat_folders": "フォルダ",
+    "plan": "プラン",
+    "plan_free_size": "無料、{size}",
+    "plan_until": "{size}、{date}まで",
+    "region_title": "保存場所",
+    "region_apac": "アジア太平洋",
+    "region_weur": "西ヨーロッパ",
+    "region_eeur": "東ヨーロッパ",
+    "region_enam": "北米東部",
+    "region_wnam": "北米西部",
+    "region_oc": "オセアニア",
+    "storage_details": "種類別のストレージ",
+    "uploads_idle": "アップロード中のものはありません",
+    "uploads_bytes": "{total}中{done}",
+    "backup_off": "オフ",
+    "backup_done_of": "{total}件中{done}件をバックアップ済み"
   }
 }

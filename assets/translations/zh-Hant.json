@@ -991,6 +991,27 @@
     "backup_state_waiting": "等待上傳",
     "backup_state_uploading": "正在上傳",
     "backup_state_failed": "上傳失敗",
-    "backup_folder": "相機"
+    "backup_folder": "相機",
+    "activity": "上傳和備份",
+    "storage_percent": "已使用 {percent}%",
+    "storage_full": "你的 Drive 已滿。新的上傳會等到有空間時再進行。",
+    "stat_left": "剩餘",
+    "stat_files": "檔案",
+    "stat_folders": "資料夾",
+    "plan": "方案",
+    "plan_free_size": "免費，{size}",
+    "plan_until": "{size}，至 {date}",
+    "region_title": "儲存位置",
+    "region_apac": "亞太地區",
+    "region_weur": "西歐",
+    "region_eeur": "東歐",
+    "region_enam": "北美東部",
+    "region_wnam": "北美西部",
+    "region_oc": "大洋洲",
+    "storage_details": "依類型查看儲存空間",
+    "uploads_idle": "目前沒有上傳",
+    "uploads_bytes": "{done} / {total}",
+    "backup_off": "已關閉",
+    "backup_done_of": "已備份 {done} / {total}"
   }
 }

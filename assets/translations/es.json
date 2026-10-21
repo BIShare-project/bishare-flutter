@@ -998,6 +998,27 @@
     "backup_state_waiting": "Esperando para subir",
     "backup_state_uploading": "Subiendo",
     "backup_state_failed": "Error al subir",
-    "backup_folder": "Cámara"
+    "backup_folder": "Cámara",
+    "activity": "Subidas y copia",
+    "storage_percent": "{percent} % usado",
+    "storage_full": "Tu Drive está lleno. Las nuevas subidas esperan hasta que haya espacio.",
+    "stat_left": "Libre",
+    "stat_files": "Archivos",
+    "stat_folders": "Carpetas",
+    "plan": "Plan",
+    "plan_free_size": "Gratis, {size}",
+    "plan_until": "{size}, hasta el {date}",
+    "region_title": "Ubicación",
+    "region_apac": "Asia-Pacífico",
+    "region_weur": "Europa occidental",
+    "region_eeur": "Europa oriental",
+    "region_enam": "Este de Norteamérica",
+    "region_wnam": "Oeste de Norteamérica",
+    "region_oc": "Oceanía",
+    "storage_details": "Almacenamiento por tipo",
+    "uploads_idle": "No se está subiendo nada",
+    "uploads_bytes": "{done} de {total}",
+    "backup_off": "Desactivada",
+    "backup_done_of": "{done} de {total} con copia"
   }
 }

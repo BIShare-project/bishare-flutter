@@ -998,6 +998,27 @@
     "backup_state_waiting": "अपलोड का इंतज़ार",
     "backup_state_uploading": "अपलोड हो रहा है",
     "backup_state_failed": "अपलोड नहीं हो सका",
-    "backup_folder": "कैमरा"
+    "backup_folder": "कैमरा",
+    "activity": "अपलोड और बैकअप",
+    "storage_percent": "{percent}% इस्तेमाल",
+    "storage_full": "आपकी Drive भर गई है। नए अपलोड जगह होने तक रुके रहेंगे।",
+    "stat_left": "बाकी",
+    "stat_files": "फ़ाइलें",
+    "stat_folders": "फ़ोल्डर",
+    "plan": "प्लान",
+    "plan_free_size": "मुफ़्त, {size}",
+    "plan_until": "{size}, {date} तक",
+    "region_title": "कहाँ रखी है",
+    "region_apac": "एशिया-प्रशांत",
+    "region_weur": "पश्चिमी यूरोप",
+    "region_eeur": "पूर्वी यूरोप",
+    "region_enam": "पूर्वी उत्तरी अमेरिका",
+    "region_wnam": "पश्चिमी उत्तरी अमेरिका",
+    "region_oc": "ओशिनिया",
+    "storage_details": "प्रकार के अनुसार स्टोरेज",
+    "uploads_idle": "अभी कुछ अपलोड नहीं हो रहा",
+    "uploads_bytes": "{total} में से {done}",
+    "backup_off": "बंद",
+    "backup_done_of": "{total} में से {done} का बैकअप हो गया"
   }
 }

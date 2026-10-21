@@ -998,6 +998,27 @@
     "backup_state_not": "Not backed up",
     "backup_state_waiting": "Waiting to upload",
     "backup_state_uploading": "Uploading",
-    "backup_state_failed": "Upload failed"
+    "backup_state_failed": "Upload failed",
+    "activity": "Uploads and backup",
+    "storage_percent": "{percent}% used",
+    "storage_full": "Your Drive is full. New uploads wait until there is room.",
+    "stat_left": "Left",
+    "stat_files": "Files",
+    "stat_folders": "Folders",
+    "plan": "Plan",
+    "plan_free_size": "Free, {size}",
+    "plan_until": "{size}, until {date}",
+    "region_title": "Stored in",
+    "region_apac": "Asia-Pacific",
+    "region_weur": "Western Europe",
+    "region_eeur": "Eastern Europe",
+    "region_enam": "Eastern North America",
+    "region_wnam": "Western North America",
+    "region_oc": "Oceania",
+    "storage_details": "Storage by kind",
+    "uploads_idle": "Nothing is uploading",
+    "uploads_bytes": "{done} of {total}",
+    "backup_off": "Off",
+    "backup_done_of": "{done} of {total} backed up"
   }
 }

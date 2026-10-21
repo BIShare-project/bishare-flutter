@@ -1019,6 +1019,27 @@
     "backup_state_waiting": "Ждёт загрузки",
     "backup_state_uploading": "Загружается",
     "backup_state_failed": "Ошибка загрузки",
-    "backup_folder": "Камера"
+    "backup_folder": "Камера",
+    "activity": "Загрузки и резервное копирование",
+    "storage_percent": "Занято {percent}%",
+    "storage_full": "Ваш Drive заполнен. Новые загрузки подождут, пока не освободится место.",
+    "stat_left": "Свободно",
+    "stat_files": "Файлы",
+    "stat_folders": "Папки",
+    "plan": "Тариф",
+    "plan_free_size": "Бесплатно, {size}",
+    "plan_until": "{size}, до {date}",
+    "region_title": "Где хранится",
+    "region_apac": "Азиатско-Тихоокеанский регион",
+    "region_weur": "Западная Европа",
+    "region_eeur": "Восточная Европа",
+    "region_enam": "Восток Северной Америки",
+    "region_wnam": "Запад Северной Америки",
+    "region_oc": "Океания",
+    "storage_details": "Хранилище по типам",
+    "uploads_idle": "Сейчас ничего не загружается",
+    "uploads_bytes": "{done} из {total}",
+    "backup_off": "Выключено",
+    "backup_done_of": "Сохранено {done} из {total}"
   }
 }

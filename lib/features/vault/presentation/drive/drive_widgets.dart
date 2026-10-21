@@ -868,48 +868,67 @@ class DriveStorageCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: SizedBox(
-                height: 7,
-                child: LayoutBuilder(
-                  builder: (context, c) {
-                    // Over the quota (read-only after a plan ended) the bar
-                    // is simply full.
-                    final total = max(q, u) > 0 ? max(q, u) : 1;
-                    // The index knows the kinds, the server knows the total
-                    // (thumbnails, uploads in progress): scale one to the other.
-                    final known = byKind.values.fold<int>(0, (a, b) => a + b);
-                    final scale = known > 0 && used != null ? u / known : 1.0;
-                    final widths = {
-                      for (final k in colors.keys)
-                        if ((byKind[k] ?? 0) > 0)
-                          k: max(
-                            1.5,
-                            c.maxWidth * (byKind[k]! * scale / total),
-                          ),
-                    };
-                    final sum = widths.values.fold<double>(0, (a, b) => a + b);
-                    final fit = sum > c.maxWidth ? c.maxWidth / sum : 1.0;
-                    return Stack(
-                      children: [
-                        Container(color: cs.muted),
-                        Row(
-                          children: [
-                            for (final e in widths.entries)
-                              Container(
-                                width: e.value * fit,
-                                color: colors[e.key],
-                              ),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
+            DriveStorageBar(used: used, quota: quota, byKind: byKind),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The quota as one bar, coloured by kind ([DriveStorageCard.colors]).
+class DriveStorageBar extends StatelessWidget {
+  const DriveStorageBar({
+    super.key,
+    required this.used,
+    required this.quota,
+    required this.byKind,
+    this.height = 7,
+  });
+
+  final int? used;
+  final int? quota;
+  final Map<String, int> byKind;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = ShadTheme.of(context).colorScheme;
+    final colors = DriveStorageCard.colors;
+    final q = quota ?? 0;
+    final u = used ?? byKind.values.fold<int>(0, (a, b) => a + b);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(height / 2),
+      child: SizedBox(
+        height: height,
+        child: LayoutBuilder(
+          builder: (context, c) {
+            // Over the quota (read-only after a plan ended) the bar
+            // is simply full.
+            final total = max(q, u) > 0 ? max(q, u) : 1;
+            // The index knows the kinds, the server knows the total
+            // (thumbnails, uploads in progress): scale one to the other.
+            final known = byKind.values.fold<int>(0, (a, b) => a + b);
+            final scale = known > 0 && used != null ? u / known : 1.0;
+            final widths = {
+              for (final k in colors.keys)
+                if ((byKind[k] ?? 0) > 0)
+                  k: max(1.5, c.maxWidth * (byKind[k]! * scale / total)),
+            };
+            final sum = widths.values.fold<double>(0, (a, b) => a + b);
+            final fit = sum > c.maxWidth ? c.maxWidth / sum : 1.0;
+            return Stack(
+              children: [
+                Container(color: cs.muted),
+                Row(
+                  children: [
+                    for (final e in widths.entries)
+                      Container(width: e.value * fit, color: colors[e.key]),
+                  ],
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

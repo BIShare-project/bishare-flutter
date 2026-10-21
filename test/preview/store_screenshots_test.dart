@@ -421,6 +421,9 @@ void _registerDrive(String self, {required bool phone}) {
   when(() => account.keyCopy).thenReturn(copy);
   when(() => account.linkedProviders).thenReturn(['google']);
   when(() => account.infoLoaded).thenReturn(true);
+  when(() => account.plan).thenReturn('free');
+  when(() => account.region).thenReturn('weur');
+  when(() => account.reservedBytes).thenReturn(0);
   final now = DateTime.now().millisecondsSinceEpoch;
   when(() => account.devices()).thenAnswer(
     (_) async => [

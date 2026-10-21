@@ -998,6 +998,27 @@
     "backup_state_waiting": "Wartet auf Upload",
     "backup_state_uploading": "Wird hochgeladen",
     "backup_state_failed": "Upload fehlgeschlagen",
-    "backup_folder": "Kamera"
+    "backup_folder": "Kamera",
+    "activity": "Uploads und Sicherung",
+    "storage_percent": "{percent} % belegt",
+    "storage_full": "Ihr Drive ist voll. Neue Uploads warten, bis wieder Platz ist.",
+    "stat_left": "Frei",
+    "stat_files": "Dateien",
+    "stat_folders": "Ordner",
+    "plan": "Tarif",
+    "plan_free_size": "Kostenlos, {size}",
+    "plan_until": "{size}, bis {date}",
+    "region_title": "Speicherort",
+    "region_apac": "Asien-Pazifik",
+    "region_weur": "Westeuropa",
+    "region_eeur": "Osteuropa",
+    "region_enam": "Östliches Nordamerika",
+    "region_wnam": "Westliches Nordamerika",
+    "region_oc": "Ozeanien",
+    "storage_details": "Speicher nach Art",
+    "uploads_idle": "Gerade wird nichts hochgeladen",
+    "uploads_bytes": "{done} von {total}",
+    "backup_off": "Aus",
+    "backup_done_of": "{done} von {total} gesichert"
   }
 }

@@ -998,6 +998,27 @@
     "backup_state_waiting": "En attente d’envoi",
     "backup_state_uploading": "Envoi en cours",
     "backup_state_failed": "Échec de l’envoi",
-    "backup_folder": "Appareil photo"
+    "backup_folder": "Appareil photo",
+    "activity": "Envois et sauvegarde",
+    "storage_percent": "{percent} % utilisés",
+    "storage_full": "Votre Drive est plein. Les nouveaux envois attendent qu’il y ait de la place.",
+    "stat_left": "Libre",
+    "stat_files": "Fichiers",
+    "stat_folders": "Dossiers",
+    "plan": "Offre",
+    "plan_free_size": "Gratuit, {size}",
+    "plan_until": "{size}, jusqu’au {date}",
+    "region_title": "Emplacement",
+    "region_apac": "Asie-Pacifique",
+    "region_weur": "Europe de l’Ouest",
+    "region_eeur": "Europe de l’Est",
+    "region_enam": "Est de l’Amérique du Nord",
+    "region_wnam": "Ouest de l’Amérique du Nord",
+    "region_oc": "Océanie",
+    "storage_details": "Stockage par type",
+    "uploads_idle": "Aucun envoi en cours",
+    "uploads_bytes": "{done} sur {total}",
+    "backup_off": "Désactivée",
+    "backup_done_of": "{done} sur {total} sauvegardées"
   }
 }

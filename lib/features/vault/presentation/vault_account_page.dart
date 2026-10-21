@@ -21,6 +21,7 @@ import '../data/vault_account.dart';
 import '../data/vault_api.dart';
 import '../data/vault_key_copy.dart';
 import '../data/vault_signin.dart';
+import 'vault_account_overview.dart';
 
 /// The Drive account on this device (drive-plan.md tasks 3.7, 3.8, 3.9):
 /// where the key is, the ways back in, the key for a new device by QR code
@@ -659,6 +660,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         ),
       ],
       if (ready) ...[
+        VaultAccountOverview(account: _account),
         AppSectionHeader('vault.ways_back'.tr()),
         AppGroup(child: Column(children: _waysBack())),
         note('vault.ways_back_note'),

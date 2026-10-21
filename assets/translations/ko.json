@@ -991,6 +991,27 @@
     "backup_state_waiting": "업로드 대기 중",
     "backup_state_uploading": "업로드 중",
     "backup_state_failed": "업로드 실패",
-    "backup_folder": "카메라"
+    "backup_folder": "카메라",
+    "activity": "업로드 및 백업",
+    "storage_percent": "{percent}% 사용 중",
+    "storage_full": "Drive가 가득 찼습니다. 공간이 생길 때까지 새 업로드는 대기합니다.",
+    "stat_left": "남은 공간",
+    "stat_files": "파일",
+    "stat_folders": "폴더",
+    "plan": "요금제",
+    "plan_free_size": "무료, {size}",
+    "plan_until": "{size}, {date}까지",
+    "region_title": "저장 위치",
+    "region_apac": "아시아 태평양",
+    "region_weur": "서유럽",
+    "region_eeur": "동유럽",
+    "region_enam": "북미 동부",
+    "region_wnam": "북미 서부",
+    "region_oc": "오세아니아",
+    "storage_details": "유형별 저장 공간",
+    "uploads_idle": "업로드 중인 항목 없음",
+    "uploads_bytes": "{total} 중 {done}",
+    "backup_off": "꺼짐",
+    "backup_done_of": "{total}개 중 {done}개 백업됨"
   }
 }

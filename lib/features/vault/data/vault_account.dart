@@ -327,6 +327,21 @@ class VaultAccount extends ChangeNotifier {
   int? get quotaBytes =>
       (_info?['quotaBytes'] as num?)?.toInt() ?? _last?.quotaBytes;
 
+  /// Bytes held for uploads in progress (they count once committed).
+  int? get reservedBytes => (_info?['reservedBytes'] as num?)?.toInt();
+
+  /// "free", or the store product of the plan.
+  String? get plan => _info?['plan'] as String?;
+
+  /// Where the Drive's files are kept ("apac", "weur", …), for good.
+  String? get region => _info?['region'] as String?;
+
+  /// When a paid plan runs out unless it renews.
+  DateTime? get planEnds {
+    final at = (_info?['expiresAt'] as num?)?.toInt();
+    return at == null ? null : DateTime.fromMillisecondsSinceEpoch(at);
+  }
+
   Future<void> refreshInfo() async {
     final id = _vaultId;
     if (id == null) return;

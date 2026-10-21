@@ -1019,6 +1019,27 @@
     "backup_state_waiting": "بانتظار الرفع",
     "backup_state_uploading": "جارٍ الرفع",
     "backup_state_failed": "فشل الرفع",
-    "backup_folder": "الكاميرا"
+    "backup_folder": "الكاميرا",
+    "activity": "الرفع والنسخ الاحتياطي",
+    "storage_percent": "المستخدم {percent}%",
+    "storage_full": "Drive الخاص بك ممتلئ. تنتظر عمليات الرفع الجديدة حتى تتوفر مساحة.",
+    "stat_left": "المتبقي",
+    "stat_files": "الملفات",
+    "stat_folders": "المجلدات",
+    "plan": "الخطة",
+    "plan_free_size": "مجانية، {size}",
+    "plan_until": "{size}، حتى {date}",
+    "region_title": "مكان التخزين",
+    "region_apac": "آسيا والمحيط الهادئ",
+    "region_weur": "أوروبا الغربية",
+    "region_eeur": "أوروبا الشرقية",
+    "region_enam": "شرق أمريكا الشمالية",
+    "region_wnam": "غرب أمريكا الشمالية",
+    "region_oc": "أوقيانوسيا",
+    "storage_details": "التخزين حسب النوع",
+    "uploads_idle": "لا يوجد رفع الآن",
+    "uploads_bytes": "{done} من {total}",
+    "backup_off": "متوقف",
+    "backup_done_of": "تم نسخ {done} من {total} احتياطيًا"
   }
 }

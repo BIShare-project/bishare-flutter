@@ -998,6 +998,27 @@
     "backup_state_waiting": "Menunggu diunggah",
     "backup_state_uploading": "Mengunggah",
     "backup_state_failed": "Gagal diunggah",
-    "backup_folder": "Kamera"
+    "backup_folder": "Kamera",
+    "activity": "Unggahan dan cadangan",
+    "storage_percent": "{percent}% terpakai",
+    "storage_full": "Drive Anda penuh. Unggahan baru menunggu sampai ada ruang.",
+    "stat_left": "Sisa",
+    "stat_files": "File",
+    "stat_folders": "Folder",
+    "plan": "Paket",
+    "plan_free_size": "Gratis, {size}",
+    "plan_until": "{size}, sampai {date}",
+    "region_title": "Lokasi penyimpanan",
+    "region_apac": "Asia-Pasifik",
+    "region_weur": "Eropa Barat",
+    "region_eeur": "Eropa Timur",
+    "region_enam": "Amerika Utara bagian timur",
+    "region_wnam": "Amerika Utara bagian barat",
+    "region_oc": "Oseania",
+    "storage_details": "Penyimpanan per jenis",
+    "uploads_idle": "Tidak ada yang sedang diunggah",
+    "uploads_bytes": "{done} dari {total}",
+    "backup_off": "Mati",
+    "backup_done_of": "{done} dari {total} sudah dicadangkan"
   }
 }

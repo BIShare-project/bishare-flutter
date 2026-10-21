@@ -998,6 +998,27 @@
     "backup_state_waiting": "Aguardando envio",
     "backup_state_uploading": "Enviando",
     "backup_state_failed": "Falha no envio",
-    "backup_folder": "Câmera"
+    "backup_folder": "Câmera",
+    "activity": "Envios e backup",
+    "storage_percent": "{percent}% usado",
+    "storage_full": "Seu Drive está cheio. Novos envios esperam até haver espaço.",
+    "stat_left": "Livre",
+    "stat_files": "Arquivos",
+    "stat_folders": "Pastas",
+    "plan": "Plano",
+    "plan_free_size": "Grátis, {size}",
+    "plan_until": "{size}, até {date}",
+    "region_title": "Local",
+    "region_apac": "Ásia-Pacífico",
+    "region_weur": "Europa Ocidental",
+    "region_eeur": "Europa Oriental",
+    "region_enam": "Leste da América do Norte",
+    "region_wnam": "Oeste da América do Norte",
+    "region_oc": "Oceania",
+    "storage_details": "Armazenamento por tipo",
+    "uploads_idle": "Nada sendo enviado",
+    "uploads_bytes": "{done} de {total}",
+    "backup_off": "Desativado",
+    "backup_done_of": "{done} de {total} com backup"
   }
 }
