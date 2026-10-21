@@ -14,6 +14,7 @@ class FeatureFlags extends ChangeNotifier {
   FeatureFlags(this._prefs);
 
   static const _cacheKey = 'featureFlagsCache';
+  static const _vaultTesterKey = 'vaultTester';
 
   final SharedPreferences _prefs;
   final Dio _dio = Dio(
@@ -45,6 +46,26 @@ class FeatureFlags extends ChangeNotifier {
   /// purely a kill-switch (set `app_web_nearby_enabled=false` in admin Flags
   /// to disable remotely); no flag row is required for the feature to work.
   bool get webNearbyEnabled => _boolFlag('app_web_nearby_enabled', orElse: true);
+
+  /// BIShare Drive (code name "vault"). The server flag `vault_enabled` is
+  /// `true` (open to everyone), `"internal"` (testers on the server's
+  /// allowlist) or absent/false. Anything else counts as off.
+  bool get vaultOpen => _flags['vault_enabled'] == true;
+  bool get vaultInternal => _flags['vault_enabled'] == 'internal';
+
+  /// A tester's own switch on this device. While the flag is "internal" it is
+  /// what shows the Drive entry; the server still refuses sign-ins that are
+  /// not on its allowlist.
+  bool get vaultTester => _prefs.getBool(_vaultTesterKey) ?? false;
+
+  Future<void> setVaultTester(bool on) async {
+    await _prefs.setBool(_vaultTesterKey, on);
+    notifyListeners();
+  }
+
+  /// Whether any Drive entry point is shown. Hidden unless the flag is on, or
+  /// "internal" on a tester's device (drive-plan.md task 3.1).
+  bool get vaultVisible => vaultOpen || (vaultInternal && vaultTester);
 
   /// Load cached flags synchronously-ish, then refresh from the network in the
   /// background (callers listen for changes).
