@@ -229,6 +229,7 @@ Future<void> setupLocator() async {
           await getIt<VaultThumbs>().clear();
           await getIt<VaultDownloads>().clearCache();
         },
+        deviceName: () => getIt<DeviceIdentity>().alias,
       ),
     )
     ..registerLazySingleton<VaultSync>(

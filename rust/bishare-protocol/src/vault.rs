@@ -59,6 +59,9 @@ const INFO_GRANT: &[u8] = b"bishare-vault-grant-v1";
 const INFO_DEDUPE: &[u8] = b"bishare-vault-dedupe-v1";
 const AAD_META: &str = "bishare-vault-meta-v1";
 const AAD_THUMB: &str = "bishare-vault-thumb-v1";
+const AAD_DEVICE: &str = "bishare-vault-device-v1";
+/// Longest device name a writer emits, in characters.
+pub const DEVICE_NAME_MAX: usize = 100;
 const REQ_PREFIX: &str = "bishare-vault-req-v1";
 const NONCE_PREFIX: &[u8] = b"bishare-vault-nonce-v1";
 const PHRASE_WORDS: usize = 24;
@@ -572,6 +575,51 @@ pub fn open_meta(
     ObjectMeta::from_json(&json)
 }
 
+// ── device names ────────────────────────────────────────────────────────────
+
+fn device_aad(vault_id: &str, device_id: &str) -> Result<Vec<u8>> {
+    check_ids(vault_id, device_id)?;
+    Ok(format!("{AAD_DEVICE}|{vault_id}|{device_id}").into_bytes())
+}
+
+fn check_device_name(name: &str) -> Result<()> {
+    if name.is_empty() || name.contains('\0') {
+        return Err(bad("device name"));
+    }
+    Ok(())
+}
+
+/// `enc_name` for one device: b64u of a box over the name under `K_meta`,
+/// bound to the vault and device ids. `nonce` is fixed only by tests.
+pub fn seal_device_name(
+    meta_key: &[u8; KEY_SIZE],
+    vault_id: &str,
+    device_id: &str,
+    name: &str,
+    nonce: Option<[u8; NONCE_SIZE]>,
+) -> Result<String> {
+    check_device_name(name)?;
+    if name.chars().count() > DEVICE_NAME_MAX {
+        return Err(bad("device name too long"));
+    }
+    let aad = device_aad(vault_id, device_id)?;
+    Ok(b64u(&seal(meta_key, &nonce_or_random(nonce), name.as_bytes(), &aad)))
+}
+
+pub fn open_device_name(
+    meta_key: &[u8; KEY_SIZE],
+    vault_id: &str,
+    device_id: &str,
+    enc_name: &str,
+) -> Result<String> {
+    let aad = device_aad(vault_id, device_id)?;
+    let boxed = from_b64u(enc_name).ok_or(VaultError::SealedBoxTooShort)?;
+    let plain = open(meta_key, &boxed, &aad)?;
+    let name = String::from_utf8(plain).map_err(|_| bad("not UTF-8"))?;
+    check_device_name(&name)?;
+    Ok(name)
+}
+
 // ── thumbnails ──────────────────────────────────────────────────────────────
 
 /// The stored bytes of a thumbnail: a box under the file's thumb key, bound
@@ -989,6 +1037,9 @@ mod tests {
                 "publicKey": b64u(&device.public_bytes()),
                 "deviceId": device.device_id(),
                 "signinNonce": device.signin_nonce(),
+                "name": "Cakra's iPhone 📱",
+                "nameNonce": b64u(&seq::<12>(0x58)),
+                "encName": seal_device_name(&k_meta, &i.vault_id, &device.device_id(), "Cakra's iPhone 📱", Some(seq::<12>(0x58))).unwrap(),
             },
             "request": {
                 "method": i.req_method,
@@ -1063,6 +1114,20 @@ mod tests {
         let current = std::fs::read_to_string(FIXTURE)
             .expect("test/fixtures/vault_vectors.json exists (cargo test -- --ignored write_vectors)");
         assert_eq!(pretty(&vectors()), current, "vault_vectors.json drifted from vault.rs");
+    }
+
+    #[test]
+    fn device_names_open_only_for_their_device() {
+        let i = inputs();
+        let k = meta_key(&i.vk);
+        let device = DeviceKey::from_seed(&i.device_seed);
+        let other = DeviceKey::from_seed(&seq(0x99));
+        let sealed = seal_device_name(&k, &i.vault_id, &device.device_id(), "Desk", None).unwrap();
+        assert_eq!(open_device_name(&k, &i.vault_id, &device.device_id(), &sealed).unwrap(), "Desk");
+        assert!(open_device_name(&k, &i.vault_id, &other.device_id(), &sealed).is_err(), "bound to its device");
+        assert!(seal_device_name(&k, &i.vault_id, &device.device_id(), "", None).is_err());
+        assert!(seal_device_name(&k, &i.vault_id, &device.device_id(), "a\0b", None).is_err());
+        assert!(seal_device_name(&k, &i.vault_id, &device.device_id(), &"x".repeat(101), None).is_err());
     }
 
     #[test]

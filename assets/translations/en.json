@@ -939,6 +939,21 @@
       "zero": "Deleted today",
       "one": "{} day left",
       "other": "{} days left"
-    }
+    },
+    "this_device": "This device",
+    "device_pending": "Waiting for approval",
+    "last_seen": "Last active {when}",
+    "unnamed_device": "Unnamed device",
+    "rename_device": "Rename device",
+    "remove_device": "Remove from Drive",
+    "remove_device_title": "Remove “{name}”?",
+    "remove_device_body": "It can no longer open or change your Drive, and cannot come back without signing in again. Files it already downloaded stay on it. Sign in once more to confirm.",
+    "remove_confirm_google": "Remove with Google",
+    "remove_confirm_apple": "Remove with Apple",
+    "device_removed": "Device removed.",
+    "removed_here": "This device was removed from your Drive. Sign in again to use it here.",
+    "account_gone": "This Drive account no longer exists.",
+    "save_to_drive": "Save to Drive",
+    "save_here": "Save here"
   }
 }

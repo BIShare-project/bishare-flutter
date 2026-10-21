@@ -224,6 +224,138 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     });
   }
 
+  // ---- devices -----------------------------------------------------------------------
+
+  Widget _deviceRow(VaultDeviceView d) {
+    final locale = context.locale.toLanguageTag();
+    final seen = d.lastSeenAt == null
+        ? null
+        : DateFormat.yMMMd(
+            locale,
+          ).format(DateTime.fromMillisecondsSinceEpoch(d.lastSeenAt!));
+    final sub = [
+      if (d.thisDevice) 'vault.this_device'.tr(),
+      if (d.pending) 'vault.device_pending'.tr(),
+      if (!d.thisDevice && seen != null)
+        'vault.last_seen'.tr(namedArgs: {'when': seen}),
+    ].join(' · ');
+    return AppListTile(
+      leading: Glyph(d.thisDevice ? AppIcons.smartphone : AppIcons.monitor),
+      title: Text(
+        d.name ?? 'vault.unnamed_device'.tr(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: sub.isEmpty ? null : Text(sub),
+      trailing: const _Chevron(),
+      onTap: _busy ? null : () => _deviceMenu(d),
+    );
+  }
+
+  Future<void> _deviceMenu(VaultDeviceView d) async {
+    final pick = await showAppSheet<String>(
+      context,
+      icon: d.thisDevice ? AppIcons.smartphone : AppIcons.monitor,
+      title: d.name ?? 'vault.unnamed_device'.tr(),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppSheetAction(
+            icon: AppIcons.renameEdit,
+            label: 'vault.rename'.tr(),
+            onTap: () => Navigator.pop(ctx, 'rename'),
+          ),
+          if (!d.thisDevice)
+            AppSheetAction(
+              icon: AppIcons.trashDelete,
+              label: 'vault.remove_device'.tr(),
+              destructive: true,
+              onTap: () => Navigator.pop(ctx, 'remove'),
+            ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (pick == 'rename') await _renameDevice(d);
+    if (pick == 'remove') await _removeDevice(d);
+  }
+
+  Future<void> _renameDevice(VaultDeviceView d) async {
+    final controller = TextEditingController(text: d.name ?? '');
+    final name = await showAppSheet<String>(
+      context,
+      icon: AppIcons.renameEdit,
+      title: 'vault.rename_device'.tr(),
+      builder: (ctx) {
+        void submit() => Navigator.pop(ctx, controller.text.trim());
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ShadInput(
+              controller: controller,
+              autofocus: true,
+              maxLength: 100,
+              placeholder: Text('vault.name_hint'.tr()),
+              onSubmitted: (_) => submit(),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ShadButton(
+                onPressed: submit,
+                child: Text('vault.rename'.tr()),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    if (name == null || name.isEmpty || name == d.name) return;
+    await _run(() => _account.renameDevice(d.id, name));
+  }
+
+  Future<void> _removeDevice(VaultDeviceView d) async {
+    final providers = [
+      for (final p in _account.linkedProviders)
+        if (_canSignIn(p)) p,
+    ];
+    final provider = await showAppSheet<String>(
+      context,
+      icon: AppIcons.trashDelete,
+      iconColor: ShadTheme.of(context).colorScheme.destructive,
+      title: 'vault.remove_device_title'.tr(
+        namedArgs: {'name': d.name ?? 'vault.unnamed_device'.tr()},
+      ),
+      subtitle: providers.isEmpty
+          ? 'vault.delete_no_signin'.tr()
+          : 'vault.remove_device_body'.tr(),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final p in providers)
+            AppSheetAction(
+              icon: AppIcons.trashDelete,
+              label: 'vault.remove_confirm_$p'.tr(),
+              destructive: true,
+              onTap: () => Navigator.pop(ctx, p),
+            ),
+          AppSheetAction(
+            icon: AppIcons.close,
+            label: 'vault.cancel'.tr(),
+            onTap: () => Navigator.pop(ctx),
+          ),
+        ],
+      ),
+    );
+    if (provider == null) return;
+    await _run(() async {
+      if (await _account.removeDevice(d.id, provider)) {
+        _say('vault.device_removed');
+      }
+    });
+  }
+
   // ---- the account -------------------------------------------------------------------
 
   Future<void> _delete() async {
@@ -376,19 +508,34 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         AppSectionHeader('vault.ways_back'.tr()),
         AppGroup(child: Column(children: _waysBack())),
         note('vault.ways_back_note'),
-        // Giving the key to a new device needs a camera to read its code.
-        if (supportsCameraScan) ...[
-          AppSectionHeader('vault.devices'.tr()),
-          AppGroup(
-            child: AppListTile(
-              leading: const Glyph(AppIcons.scanDocument),
-              title: Text('vault.add_device'.tr()),
-              subtitle: Text('vault.add_device_body'.tr()),
-              trailing: const _Chevron(),
-              onTap: _busy ? null : _addDevice,
-            ),
+        AppSectionHeader('vault.devices'.tr()),
+        AppGroup(
+          child: FutureBuilder<List<VaultDeviceView>>(
+            future: _account.devices(),
+            builder: (context, snap) {
+              final devices = snap.data ?? const <VaultDeviceView>[];
+              final rows = <Widget>[];
+              for (final d in devices) {
+                if (rows.isNotEmpty) rows.add(const AppRowDivider(indent: 58));
+                rows.add(_deviceRow(d));
+              }
+              // Giving the key to a new device needs a camera to read its code.
+              if (supportsCameraScan) {
+                if (rows.isNotEmpty) rows.add(const AppRowDivider(indent: 58));
+                rows.add(
+                  AppListTile(
+                    leading: const Glyph(AppIcons.scanDocument),
+                    title: Text('vault.add_device'.tr()),
+                    subtitle: Text('vault.add_device_body'.tr()),
+                    trailing: const _Chevron(),
+                    onTap: _busy ? null : _addDevice,
+                  ),
+                );
+              }
+              return Column(children: rows);
+            },
           ),
-        ],
+        ),
       ],
       AppSectionHeader('vault.account'.tr()),
       AppGroup(

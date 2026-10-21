@@ -11,6 +11,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../../core/storage/app_database.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../../../instant_share/presentation/instant_share_sheet.dart';
+import '../../../vault/presentation/drive/drive_actions.dart';
 import '../inbox_cubit.dart';
 
 class InboxRow extends StatelessWidget {
@@ -100,6 +101,12 @@ class InboxRow extends StatelessWidget {
           onTap: () => SharePlus.instance.share(
             ShareParams(files: [XFile(r.savedPath!)]),
           ),
+        ),
+      if (hasFile && driveReady)
+        AppMenuAction(
+          icon: AppIcons.cloudSync,
+          label: 'vault.save_to_drive'.tr(),
+          onTap: () => saveToDrive(context, [r.savedPath!]),
         ),
       if (hasFile)
         AppMenuAction(

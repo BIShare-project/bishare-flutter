@@ -96,6 +96,18 @@ class _DrivePageState extends State<DrivePage> {
   /// Once the device has the key: follow the server, resume uploads, fetch
   /// the quota. Once per change of status.
   void _onAccount() {
+    final notice = _account.removedNotice;
+    if (notice != null && mounted) {
+      _account.removedNotice = null;
+      toast(
+        context,
+        (notice == 'VAULT_NOT_FOUND'
+                ? 'vault.account_gone'
+                : 'vault.removed_here')
+            .tr(),
+        type: ToastType.warning,
+      );
+    }
     final status = _account.status;
     if (status == _started) return;
     _started = status;

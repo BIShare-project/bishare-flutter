@@ -200,6 +200,24 @@ void main() {
     expect(() => Rust.vaultOpenThumbnail(fileKey: fileKey, vaultId: vaultId, objectId: dir['objectId'] as String, sealed: sealed), throwsA(anything));
   });
 
+  test('device name opens from the vectors, only for its own device', () {
+    if (!rust) return markTestSkipped(rustUnavailableReason);
+    final device = v['device'] as Map<String, dynamic>;
+    final metaKey = _b64u(v['metaKey'] as String);
+    final deviceId = device['deviceId'] as String;
+    expect(
+      Rust.vaultOpenDeviceName(metaKey: metaKey, vaultId: vaultId, deviceId: deviceId, encName: device['encName'] as String),
+      device['name'],
+    );
+    final sealed = Rust.vaultSealDeviceName(metaKey: metaKey, vaultId: vaultId, deviceId: deviceId, name: 'Desk Mac');
+    expect(Rust.vaultOpenDeviceName(metaKey: metaKey, vaultId: vaultId, deviceId: deviceId, encName: sealed), 'Desk Mac');
+    expect(
+      () => Rust.vaultOpenDeviceName(metaKey: metaKey, vaultId: vaultId, deviceId: file['objectId'] as String, encName: sealed),
+      throwsA(anything),
+    );
+    expect(() => Rust.vaultSealDeviceName(metaKey: metaKey, vaultId: vaultId, deviceId: deviceId, name: ''), throwsA(anything));
+  });
+
   test('grant opens from the vectors and a fresh one round-trips', () {
     if (!rust) return markTestSkipped(rustUnavailableReason);
     final keyCheck = v['keyCheck'] as String;

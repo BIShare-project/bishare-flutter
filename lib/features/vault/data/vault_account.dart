@@ -39,10 +39,12 @@ class VaultAccount extends ChangeNotifier {
     VaultKeyCopy? keyCopy,
     VaultDao? dao,
     Future<void> Function()? onForget,
+    String Function()? deviceName,
   }) : _keys = keys,
        _api = api,
        _dao = dao,
-       _onForget = onForget {
+       _onForget = onForget,
+       _deviceName = deviceName {
     _signin = signin ?? VaultSignin(keys);
     this.keyCopy =
         keyCopy ??
@@ -62,6 +64,14 @@ class VaultAccount extends ChangeNotifier {
 
   /// Caches outside the database (thumbnails, opened files) to drop with it.
   final Future<void> Function()? _onForget;
+
+  /// The name this device goes by in the device list until renamed (the
+  /// app's own device name, e.g. "Cakra's MacBook").
+  final String Function()? _deviceName;
+
+  /// Set when the server says this device was removed or the account is
+  /// gone; the Drive screens say so once, then forget it.
+  String? removedNotice;
 
   /// Where the key copy is, for "Ways back in" (task 3.7).
   late final VaultKeyCopy keyCopy;
@@ -275,8 +285,139 @@ class VaultAccount extends ChangeNotifier {
   Future<void> refreshInfo() async {
     final id = _vaultId;
     if (id == null) return;
-    _info = await _api.info(id);
+    try {
+      _info = await _api.info(id);
+    } on VaultApiException catch (e) {
+      // Removed from another device, or the account was deleted there: this
+      // device cannot come back without signing in again.
+      final gone =
+          e.code == 'VAULT_NOT_FOUND' ||
+          (e.code == 'VAULT_AUTH' && e.message.contains('removed'));
+      if (!gone) rethrow;
+      removedNotice = e.code;
+      await signOut();
+      return;
+    }
     notifyListeners();
+    await _nameThisDevice();
+  }
+
+  // ---- devices (task 4.9) --------------------------------------------------------
+
+  /// The devices of this Drive (removed ones left out), names opened.
+  Future<List<VaultDeviceView>> devices() async {
+    final vaultId = _vaultId;
+    final vk = await _keys.vaultKey();
+    final me = await _keys.deviceId();
+    final out = <VaultDeviceView>[];
+    for (final raw in (_info?['devices'] as List?) ?? const []) {
+      final d = Map<String, dynamic>.from(raw as Map);
+      if (d['status'] == 'revoked') continue;
+      String? name;
+      final enc = d['encName'] as String?;
+      if (enc != null && vk != null && vaultId != null) {
+        try {
+          name = Rust.vaultOpenDeviceName(
+            metaKey: Rust.vaultMetaKey(vk),
+            vaultId: vaultId,
+            deviceId: d['id'] as String,
+            encName: enc,
+          );
+        } on Object {
+          name = null;
+        }
+      }
+      out.add(
+        VaultDeviceView(
+          id: d['id'] as String,
+          name: name,
+          thisDevice: d['id'] == me,
+          pending: d['status'] == 'pending',
+          addedAt: (d['addedAt'] as num?)?.toInt() ?? 0,
+          lastSeenAt: (d['lastSeenAt'] as num?)?.toInt(),
+        ),
+      );
+    }
+    out.sort((a, b) {
+      if (a.thisDevice != b.thisDevice) return a.thisDevice ? -1 : 1;
+      return (b.lastSeenAt ?? 0).compareTo(a.lastSeenAt ?? 0);
+    });
+    return out;
+  }
+
+  /// Give a device of this Drive a name (sealed: the server cannot read it).
+  Future<void> renameDevice(String deviceId, String name) async {
+    final vaultId = _requireVault();
+    final vk = await _keys.vaultKey();
+    if (vk == null) {
+      throw const VaultApiException('VAULT_NO_KEY', 'No key on this device');
+    }
+    final trimmed = name.trim();
+    final enc = Rust.vaultSealDeviceName(
+      metaKey: Rust.vaultMetaKey(vk),
+      vaultId: vaultId,
+      deviceId: deviceId,
+      name: trimmed.length > 100 ? trimmed.substring(0, 100) : trimmed,
+    );
+    final r = await _api.ops(vaultId, [
+      {
+        'opId': Rust.vaultGenerateObjectId(),
+        'type': 'device_name',
+        'deviceId': deviceId,
+        'encName': enc,
+      },
+    ]);
+    final res = r.results.single;
+    if (res['ok'] != true) {
+      throw VaultApiException(
+        res['code'] as String? ?? 'UNKNOWN',
+        res['message'] as String? ?? '',
+      );
+    }
+    _info = await _api.info(vaultId);
+    notifyListeners();
+  }
+
+  /// Remove another device: it can no longer read or change anything, and
+  /// cannot come back without signing in again. Needs a fresh sign-in.
+  /// False when the person closed the sheet.
+  Future<bool> removeDevice(String deviceId, String provider) async {
+    final vaultId = _requireVault();
+    final token = await _freshToken(provider);
+    if (token == null) return false;
+    await _api.removeDevice(
+      vaultId,
+      deviceId,
+      provider: token.provider,
+      idToken: token.idToken,
+    );
+    _info = await _api.info(vaultId);
+    notifyListeners();
+    return true;
+  }
+
+  bool _naming = false;
+
+  /// The first time this device has the key, it takes the app's device name.
+  Future<void> _nameThisDevice() async {
+    final provide = _deviceName;
+    if (provide == null || _naming || status != VaultStatus.ready) return;
+    final me = await _keys.deviceId();
+    final mine = ((_info?['devices'] as List?) ?? const [])
+        .map((d) => Map<String, dynamic>.from(d as Map))
+        .where((d) => d['id'] == me)
+        .firstOrNull;
+    if (mine == null || mine['encName'] != null) return;
+    final name = provide().trim();
+    if (name.isEmpty) return;
+    _naming = true;
+    try {
+      await renameDevice(me, name);
+    } on Object catch (e) {
+      debugPrint('[vault] naming this device: $e');
+    } finally {
+      _naming = false;
+    }
   }
 
   /// A sign-in made for one important request: linking, removing a device,
@@ -539,4 +680,27 @@ class VaultPairing {
     }
     return (slot: parts[1], publicKey: key);
   }
+}
+
+/// One device of the Drive, for the device list.
+class VaultDeviceView {
+  const VaultDeviceView({
+    required this.id,
+    required this.name,
+    required this.thisDevice,
+    required this.pending,
+    required this.addedAt,
+    required this.lastSeenAt,
+  });
+
+  final String id;
+
+  /// Null until the device has been named (or when the name does not open).
+  final String? name;
+  final bool thisDevice;
+
+  /// Maximum security: waiting for approval.
+  final bool pending;
+  final int addedAt;
+  final int? lastSeenAt;
 }

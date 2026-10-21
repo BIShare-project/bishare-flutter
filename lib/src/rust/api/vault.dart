@@ -137,6 +137,31 @@ Uint8List vaultOpenThumbnail({
   sealed: sealed,
 );
 
+/// `enc_name` for one device of the vault (VAULT-SPEC "Device names").
+String vaultSealDeviceName({
+  required List<int> metaKey,
+  required String vaultId,
+  required String deviceId,
+  required String name,
+}) => RustLib.instance.api.crateApiVaultVaultSealDeviceName(
+  metaKey: metaKey,
+  vaultId: vaultId,
+  deviceId: deviceId,
+  name: name,
+);
+
+String vaultOpenDeviceName({
+  required List<int> metaKey,
+  required String vaultId,
+  required String deviceId,
+  required String encName,
+}) => RustLib.instance.api.crateApiVaultVaultOpenDeviceName(
+  metaKey: metaKey,
+  vaultId: vaultId,
+  deviceId: deviceId,
+  encName: encName,
+);
+
 VaultGrantKey vaultGrantKeyGenerate() =>
     RustLib.instance.api.crateApiVaultVaultGrantKeyGenerate();
 

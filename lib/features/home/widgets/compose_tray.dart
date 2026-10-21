@@ -6,6 +6,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../send/domain/sendable_file.dart';
 import '../../send/presentation/tray_cubit.dart';
+import '../../vault/presentation/drive/drive_actions.dart';
 import 'source_grid.dart';
 import 'tray_chip.dart';
 
@@ -41,6 +42,22 @@ class ComposeTray extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
+                      if (driveReady) ...[
+                        GestureDetector(
+                          onTap: () => saveToDrive(context, [
+                            for (final f in items) f.path,
+                          ]),
+                          child: Text(
+                            'vault.save_to_drive'.tr(),
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: cs.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                      ],
                       GestureDetector(
                         onTap: tray.clear,
                         child: Text(

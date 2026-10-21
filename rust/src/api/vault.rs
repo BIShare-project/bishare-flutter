@@ -248,6 +248,31 @@ pub fn vault_open_thumbnail(
         .map_err(err)
 }
 
+// ── device names ────────────────────────────────────────────────────────────
+
+/// `enc_name` for one device of the vault (VAULT-SPEC "Device names").
+#[flutter_rust_bridge::frb(sync)]
+pub fn vault_seal_device_name(
+    meta_key: Vec<u8>,
+    vault_id: String,
+    device_id: String,
+    name: String,
+) -> Result<String, String> {
+    v::seal_device_name(&key32(&meta_key, "meta key")?, &vault_id, &device_id, &name, None)
+        .map_err(err)
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn vault_open_device_name(
+    meta_key: Vec<u8>,
+    vault_id: String,
+    device_id: String,
+    enc_name: String,
+) -> Result<String, String> {
+    v::open_device_name(&key32(&meta_key, "meta key")?, &vault_id, &device_id, &enc_name)
+        .map_err(err)
+}
+
 // ── the grant ───────────────────────────────────────────────────────────────
 
 /// A one-off X25519 key pair for handing the vault key to another device.

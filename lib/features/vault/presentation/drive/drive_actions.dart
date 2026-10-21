@@ -10,12 +10,14 @@ import 'package:mime/mime.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/config/feature_flags.dart';
 import '../../../../core/di/locator.dart';
 import '../../../../core/io/media_picker.dart';
 import '../../../../core/server/transfer_server.dart';
 import '../../../../core/storage/app_database.dart';
 import '../../../../core/storage/vault_tables.dart';
 import '../../../../core/ui/app_ui.dart';
+import '../../data/vault_account.dart';
 import '../../data/vault_api.dart';
 import '../../data/vault_downloads.dart';
 import '../../data/vault_files.dart';
@@ -700,6 +702,49 @@ class DriveActions {
       ),
     );
   }
+}
+
+/// Whether "Save to Drive" belongs on this device now: Drive is on for it
+/// (the vault_enabled flag) and it holds the key.
+bool get driveReady =>
+    getIt.isRegistered<FeatureFlags>() &&
+    getIt<FeatureFlags>().vaultVisible &&
+    getIt.isRegistered<VaultAccount>() &&
+    getIt<VaultAccount>().status == VaultStatus.ready;
+
+/// "Save to Drive" from outside the Drive screens (a received file in Inbox,
+/// files shared into the app): choose a folder, then the files join the
+/// upload queue. False when the person closed the picker.
+Future<bool> saveToDrive(BuildContext context, List<String> paths) async {
+  if (paths.isEmpty) return false;
+  final actions = DriveActions(
+    context,
+    DriveController(getIt<AppDatabase>().vaultDao),
+  );
+  final target = await actions.pickFolder(
+    title: 'vault.save_to_drive'.tr(),
+    action: 'vault.save_here'.tr(),
+  );
+  if (target == null) return false;
+  try {
+    await getIt<VaultUploader>().enqueue([
+      for (final p in paths) File(p),
+    ], parent: target.isEmpty ? null : target);
+  } on Object catch (e) {
+    debugPrint('[vault] save to Drive: $e');
+    if (context.mounted) {
+      toast(context, 'vault.error_generic'.tr(), type: ToastType.error);
+    }
+    return false;
+  }
+  if (context.mounted) {
+    toast(
+      context,
+      'vault.queued_n'.tr(namedArgs: {'count': '${paths.length}'}),
+      type: ToastType.success,
+    );
+  }
+  return true;
 }
 
 class _FolderPicker extends StatefulWidget {

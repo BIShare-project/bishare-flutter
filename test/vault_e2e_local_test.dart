@@ -220,6 +220,26 @@ void main() {
       throwsA(isA<VaultApiException>().having((e) => e.code, 'code', 'STORAGE_LIMIT_EXCEEDED')),
     );
 
+    // ---- devices: named on first use, renamed from anywhere, removed for good ----------------------
+    await a.account.refreshInfo();
+    await b.account.refreshInfo();
+    await a.account.refreshInfo();
+    var listed = await a.account.devices();
+    expect({for (final d in listed) d.name}, {'Device a', 'Device b'});
+    expect(listed.firstWhere((d) => d.thisDevice).name, 'Device a');
+    final bId = await b.keys.deviceId();
+    await a.account.renameDevice(bId, 'Kitchen tablet');
+    await b.account.refreshInfo();
+    expect((await b.account.devices()).firstWhere((d) => d.thisDevice).name, 'Kitchen tablet');
+    expect(await a.account.removeDevice(bId, 'google'), isTrue);
+    listed = await a.account.devices();
+    expect(listed.map((d) => d.id), isNot(contains(bId)));
+    await b.account.refreshInfo();
+    expect(b.account.status, VaultStatus.signedOut, reason: 'a removed device is out at its next request');
+    expect(b.account.removedNotice, 'VAULT_AUTH');
+    expect(await b.keys.vaultKey(), isNull);
+    expect(await b.db.vaultDao.watchChildren(null).first, isEmpty, reason: 'its index is gone too');
+
     // ---- delete the account -----------------------------------------------------------------
     await a.account.deleteAccount('google');
     expect(a.account.status, VaultStatus.signedOut);
@@ -267,7 +287,14 @@ class _Device {
 
   void _wire() {
     api = VaultApi(keys, dio: Dio(BaseOptions(baseUrl: apiBase, responseType: ResponseType.json)));
-    account = VaultAccount(keys: keys, api: api, signin: _Signin(this), keyCopy: VaultKeyCopy(const []));
+    account = VaultAccount(
+      keys: keys,
+      api: api,
+      signin: _Signin(this),
+      keyCopy: VaultKeyCopy(const []),
+      dao: db.vaultDao,
+      deviceName: () => 'Device $name',
+    );
     sync = VaultSync(api: api, keys: keys, dao: db.vaultDao);
     final http = Dio()
       ..interceptors.add(

@@ -176,6 +176,28 @@ class Rust {
     objectId: objectId,
     encMeta: encMeta,
   );
+  static String vaultSealDeviceName({
+    required List<int> metaKey,
+    required String vaultId,
+    required String deviceId,
+    required String name,
+  }) => rv.vaultSealDeviceName(
+    metaKey: metaKey,
+    vaultId: vaultId,
+    deviceId: deviceId,
+    name: name,
+  );
+  static String vaultOpenDeviceName({
+    required List<int> metaKey,
+    required String vaultId,
+    required String deviceId,
+    required String encName,
+  }) => rv.vaultOpenDeviceName(
+    metaKey: metaKey,
+    vaultId: vaultId,
+    deviceId: deviceId,
+    encName: encName,
+  );
   static Uint8List vaultSealThumbnail({
     required List<int> fileKey,
     required String vaultId,

@@ -165,6 +165,18 @@ Stored as raw bytes, not b64u. A thumbnail opens only with the file key of its
 own object, so a device that can list a folder but has not fetched a file's
 metadata cannot show its picture.
 
+## Device names (added 2026-10-21)
+
+```
+enc_name        b64u(box(K_meta, utf8(name), aad = utf8("bishare-vault-device-v1|" ‖ vault id ‖ "|" ‖ device id)))
+```
+
+The name a person gives a device ("Cakra's iPhone"), set with the
+`device_name` op and shown in the device list. Sealed like `enc_meta`, so the
+server stores names it cannot read. A writer emits 1 to 100 characters with
+no U+0000; a reader rejects an empty name and a name with U+0000. The AAD
+binds the name to one device of one vault.
+
 ## Handing the vault key to another device (the grant)
 
 Used when a device cannot reach the key copy. Both sides make a fresh X25519
