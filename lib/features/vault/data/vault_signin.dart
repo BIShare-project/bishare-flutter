@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'google_app_data.dart';
@@ -89,6 +90,7 @@ class VaultSignin {
       }
       _googleAccount = account;
       await _keys.setGoogleHere(true);
+      if (Platform.isAndroid) await _keys.saveGoogleEmail(account.email);
       return ProviderToken(provider: 'google', idToken: idToken);
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) return null;
@@ -155,6 +157,33 @@ class VaultSignin {
     }
   }
 
+  /// Android: the app-data token straight from Google's authorization API,
+  /// for the account this device signed in with. The sign-in itself is not
+  /// run again: on Android even its quiet form (Credential Manager) shows a
+  /// "signing in" sheet, which came up at every start while the key copy was
+  /// checked. Without [interactive], null when Google would need the person.
+  Future<String?> _androidDriveToken(
+    List<String> scopes, {
+    required bool interactive,
+  }) async {
+    if (!await _keys.googleHere()) return null;
+    await _initGoogle(await _keys.signinNonce());
+    final data = await GoogleSignInPlatform.instance
+        .clientAuthorizationTokensForScopes(
+          ClientAuthorizationTokensForScopesParameters(
+            request: AuthorizationRequestDetails(
+              scopes: scopes,
+              userId: null,
+              // Signed in before this was kept: Google picks the account,
+              // or asks when [interactive].
+              email: await _keys.googleEmail(),
+              promptIfUnauthorized: interactive,
+            ),
+          ),
+        );
+    return data?.accessToken;
+  }
+
   /// Sign-out of Drive: forget this device's Google sign-in for Drive (and on
   /// Windows and Linux revoke its grant), so nothing Google stays behind.
   Future<void> forgetGoogle() async {
@@ -185,6 +214,17 @@ class _NativeGoogleDrive implements GoogleDriveAccess {
 
   @override
   Future<String?> accessToken({bool interactive = false}) async {
+    if (Platform.isAndroid) {
+      try {
+        return await _signin._androidDriveToken(
+          _scopes,
+          interactive: interactive,
+        );
+      } on GoogleSignInException catch (e) {
+        if (e.code == GoogleSignInExceptionCode.canceled) return null;
+        rethrow;
+      }
+    }
     final account = await _signin._restoreGoogle();
     if (account == null) return null;
     final client = account.authorizationClient;

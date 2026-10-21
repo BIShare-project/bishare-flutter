@@ -39,6 +39,7 @@ class VaultKeyStore {
   static const _kVaultKey = 'vault.key';
   static const _kServerHalf = 'vault.serverHalf';
   static const _kGoogleHere = 'vault.googleHere';
+  static const _kGoogleEmail = 'vault.googleEmail';
   static const _kGoogleRefresh = 'vault.googleRefresh';
   static const _kKeyPending = 'vault.keyPending';
 
@@ -104,9 +105,19 @@ class VaultKeyStore {
   Future<bool> googleHere() async =>
       await _storage.read(key: _kGoogleHere) == '1';
 
-  Future<void> setGoogleHere(bool here) => here
-      ? _storage.write(key: _kGoogleHere, value: '1')
-      : _storage.delete(key: _kGoogleHere);
+  Future<void> setGoogleHere(bool here) async {
+    if (here) return _storage.write(key: _kGoogleHere, value: '1');
+    await _storage.delete(key: _kGoogleHere);
+    await _storage.delete(key: _kGoogleEmail);
+  }
+
+  /// Android only: the Google account this device signed in with, the hint
+  /// that lets Google hand out the Drive app-data token without a sheet. It
+  /// never leaves this device.
+  Future<String?> googleEmail() => _storage.read(key: _kGoogleEmail);
+
+  Future<void> saveGoogleEmail(String email) =>
+      _storage.write(key: _kGoogleEmail, value: email);
 
   /// Windows and Linux only: the refresh token of the loopback flow
   /// (VaultGoogleDesktop). It never leaves this device.
