@@ -144,6 +144,117 @@ class VaultDao extends DatabaseAccessor<AppDatabase> with _$VaultDaoMixin {
             ]))
           .watch();
 
+  /// Live files and folders whose name contains [query] (any case), for
+  /// search across the whole Drive.
+  Stream<List<VaultObject>> watchSearch(String query, {int limit = 300}) {
+    final q = query.trim();
+    final escaped = q
+        .replaceAll('\\', '\\\\')
+        .replaceAll('%', '\\%')
+        .replaceAll('_', '\\_');
+    return (select(vaultObjects)
+          ..where(
+            (t) =>
+                t.trashedAt.isNull() &
+                t.name
+                    .collate(Collate.noCase)
+                    .like('%$escaped%', escapeChar: '\\'),
+          )
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.kind),
+            (t) => OrderingTerm.asc(t.name.collate(Collate.noCase)),
+          ])
+          ..limit(limit))
+        .watch();
+  }
+
+  /// Live files added most recently, newest first.
+  Stream<List<VaultObject>> watchRecent({int limit = 200}) =>
+      (select(vaultObjects)
+            ..where((t) => t.kind.equals('file') & t.trashedAt.isNull())
+            ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+            ..limit(limit))
+          .watch();
+
+  /// Live files whose MIME type starts with one of [prefixes] or equals one of
+  /// [types], newest first.
+  Stream<List<VaultObject>> watchFilesOfType({
+    List<String> prefixes = const [],
+    List<String> types = const [],
+  }) =>
+      (select(vaultObjects)
+            ..where((t) {
+              Expression<bool> match = const Constant(false);
+              for (final p in prefixes) {
+                match = match | t.mime.like('$p%');
+              }
+              if (types.isNotEmpty) match = match | t.mime.isIn(types);
+              return t.kind.equals('file') & t.trashedAt.isNull() & match;
+            })
+            ..orderBy([(t) => OrderingTerm.desc(t.mtime)]))
+          .watch();
+
+  /// Every live object, for the storage breakdown.
+  Stream<List<VaultObject>> watchLive() =>
+      (select(vaultObjects)..where((t) => t.trashedAt.isNull())).watch();
+
+  /// How many live things each folder holds (key null: the top of the Drive).
+  Stream<Map<String?, int>> watchChildCounts() {
+    final count = vaultObjects.id.count();
+    final q = selectOnly(vaultObjects)
+      ..addColumns([vaultObjects.parent, count])
+      ..where(vaultObjects.trashedAt.isNull())
+      ..groupBy([vaultObjects.parent]);
+    return q.watch().map(
+      (rows) => {
+        for (final r in rows) r.read(vaultObjects.parent): r.read(count) ?? 0,
+      },
+    );
+  }
+
+  /// How many objects point at [blobId] (the same content stored once).
+  Future<int> countWithBlob(String blobId) async {
+    final count = vaultObjects.id.count();
+    final row =
+        await (selectOnly(vaultObjects)
+              ..addColumns([count])
+              ..where(vaultObjects.blobId.equals(blobId)))
+            .getSingle();
+    return row.read(count) ?? 0;
+  }
+
+  /// The folders from the top of the Drive down to [id] (included).
+  Future<List<VaultObject>> pathTo(String id) async {
+    final out = <VaultObject>[];
+    final seen = <String>{};
+    String? at = id;
+    while (at != null && seen.add(at)) {
+      final o = await object(at);
+      if (o == null) break;
+      out.insert(0, o);
+      at = o.parent;
+    }
+    return out;
+  }
+
+  /// Every live folder, for the "Move to" picker.
+  Future<List<VaultObject>> liveFolders() =>
+      (select(vaultObjects)
+            ..where((t) => t.kind.equals('dir') & t.trashedAt.isNull())
+            ..orderBy([
+              (t) => OrderingTerm.asc(t.name.collate(Collate.noCase)),
+            ]))
+          .get();
+
+  /// The live children of a folder (null = the root), once.
+  Future<List<VaultObject>> liveChildren(String? parent) =>
+      (select(vaultObjects)..where(
+            (t) =>
+                (parent == null ? t.parent.isNull() : t.parent.equals(parent)) &
+                t.trashedAt.isNull(),
+          ))
+          .get();
+
   /// Every child of a folder, trashed ones too.
   Future<List<VaultObject>> childrenOf(String parent) =>
       (select(vaultObjects)..where((t) => t.parent.equals(parent))).get();

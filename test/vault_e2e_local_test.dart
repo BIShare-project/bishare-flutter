@@ -5,18 +5,24 @@ import 'dart:typed_data';
 import 'package:bishare/core/storage/app_database.dart';
 import 'package:bishare/features/vault/data/vault_account.dart';
 import 'package:bishare/features/vault/data/vault_api.dart';
+import 'package:bishare/core/crypto/bse2.dart';
 import 'package:bishare/features/vault/data/vault_downloader.dart';
+import 'package:bishare/features/vault/data/vault_downloads.dart';
 import 'package:bishare/features/vault/data/vault_files.dart';
 import 'package:bishare/features/vault/data/vault_key_copy.dart';
 import 'package:bishare/features/vault/data/vault_keys.dart';
+import 'package:bishare/features/vault/data/vault_shares.dart';
 import 'package:bishare/features/vault/data/vault_signin.dart';
 import 'package:bishare/features/vault/data/vault_sync.dart';
+import 'package:bishare/features/vault/data/vault_thumbs.dart';
 import 'package:bishare/features/vault/data/vault_uploader.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 
 import 'helpers/rust_test_lib.dart';
 
@@ -137,6 +143,57 @@ void main() {
     expect(await still.readAsBytes(), await bin.readAsBytes());
     await expectLater(a.files.move([photos], photos), throwsA(isA<VaultApiException>()));
 
+    // ---- copies: nothing sent again, names made free ------------------------------------------
+    final hiId = helloId;
+    await b.files.copy([hiId], null);
+    await b.files.copy([photos], null);
+    await a.sync.pull();
+    final topNow = await a.db.vaultDao.watchChildren(null).first;
+    expect(topNow.map((o) => o.name), containsAll(['Photos', 'Photos (1)', 'hi.txt', 'hi (1).txt']));
+    final copiedHi = topNow.firstWhere((o) => o.name == 'hi (1).txt');
+    expect(copiedHi.blobId, topNow.firstWhere((o) => o.name == 'hi.txt').blobId, reason: 'same stored bytes');
+    final copiedPhotos = topNow.firstWhere((o) => o.name == 'Photos (1)');
+    final inCopy = await a.db.vaultDao.watchChildren(copiedPhotos.id).first;
+    expect(inCopy.map((o) => o.name), ['big.bin', 'random.bin']);
+    final outHi = await a.downloader.download(copiedHi.id, File('${tmp.path}/a-out/hi-copy.txt'));
+    expect(await outHi.readAsBytes(), await hello.readAsBytes());
+
+    // ---- thumbnails: made on upload, opened on the other device ----------------------------------
+    final picture = img.Image(width: 640, height: 400);
+    img.fill(picture, color: img.ColorRgb8(30, 120, 220));
+    final pic = await file('pic.png', Uint8List.fromList(img.encodePng(picture)), when);
+    await a.uploader.enqueue([pic]);
+    await a.uploader.run();
+    await b.sync.pull();
+    final picRow = (await b.db.vaultDao.watchChildren(null).first).firstWhere((o) => o.name == 'pic.png');
+    expect(picRow.hasThumb, isTrue);
+    final jpeg = await b.thumbs.load(picRow);
+    expect(jpeg, isNotNull);
+    final decoded = img.decodeJpg(jpeg!)!;
+    expect(decoded.width, 320, reason: 'long side 320');
+    expect(jpeg.length, lessThanOrEqualTo(VaultThumbs.maxJpeg));
+
+    // ---- a Drive file as a transfer link -------------------------------------------------------
+    final shared = await b.shares.share(binId, hours: 6);
+    final key = Bse2.decodeKey(Uri.parse(shared.url).fragment.substring(2))!;
+    final code = Uri.parse(shared.url).pathSegments.last;
+    expect(shared.viaUpload, isFalse);
+    expect(shared.expiresAt!.difference(DateTime.now()).inHours, inInclusiveRange(5, 6));
+    final got = await Dio().get<List<int>>(
+      '$api/api/v1/transfer/download/$code',
+      options: Options(responseType: ResponseType.bytes, followRedirects: true, validateStatus: (_) => true),
+    );
+    if (got.statusCode == 200) {
+      final sealed = File('${tmp.path}/shared.bse2')..writeAsBytesSync(got.data!);
+      final opened = File('${tmp.path}/shared.bin');
+      await Bse2.decryptFile(input: sealed, output: opened, key: key);
+      expect(await opened.readAsBytes(), await bin.readAsBytes(), reason: 'the link opens with the key in its fragment');
+    } else {
+      // The local worker cannot always serve transfer bytes (presigned R2);
+      // the link itself was made, which is what the app owns.
+      debugPrint('[e2e] transfer download answered ${got.statusCode}; link: ${shared.url.split('#').first}#…');
+    }
+
     // ---- an upload killed after its first part, then resumed ----------------------------------
     final big2 = await file('big2.bin', random(110 << 20), when);
     a.failPutsAfter = a.puts + 1;
@@ -186,6 +243,8 @@ class _Device {
   late VaultUploader uploader;
   late VaultDownloader downloader;
   late VaultFiles files;
+  late VaultThumbs thumbs;
+  late VaultShares shares;
   int puts = 0;
   int? failPutsAfter;
 
@@ -227,9 +286,19 @@ class _Device {
         ),
       );
     Future<Directory> work() async => Directory('${dir.path}/$name-work')..createSync(recursive: true);
-    uploader = VaultUploader(api: api, keys: keys, dao: db.vaultDao, sync: sync, http: http, workDir: work);
+    Future<Directory> thumbDir() async => Directory('${dir.path}/$name-thumbs')..createSync(recursive: true);
+    thumbs = VaultThumbs(api: api, keys: keys, dao: db.vaultDao, cacheDir: thumbDir);
+    uploader = VaultUploader(api: api, keys: keys, dao: db.vaultDao, sync: sync, http: http, workDir: work, thumbs: thumbs);
     downloader = VaultDownloader(api: api, keys: keys, dao: db.vaultDao, sync: sync, workDir: work);
     files = VaultFiles(api: api, keys: keys, dao: db.vaultDao, sync: sync);
+    shares = VaultShares(
+      api: api,
+      keys: keys,
+      dao: db.vaultDao,
+      downloads: VaultDownloads(downloader: downloader, dao: db.vaultDao),
+      cloud: () => throw StateError('compressed files are not shared in this test'),
+      senderAlias: () => name,
+    );
   }
 
   Future<String> token(String nonce) async {

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/rust/rust_facade.dart';
+import '../../../core/storage/vault_tables.dart';
 import 'google_app_data.dart';
 import 'vault_api.dart';
 import 'vault_key_copy.dart';
@@ -36,8 +37,12 @@ class VaultAccount extends ChangeNotifier {
     required VaultApi api,
     VaultSignin? signin,
     VaultKeyCopy? keyCopy,
+    VaultDao? dao,
+    Future<void> Function()? onForget,
   }) : _keys = keys,
-       _api = api {
+       _api = api,
+       _dao = dao,
+       _onForget = onForget {
     _signin = signin ?? VaultSignin(keys);
     this.keyCopy =
         keyCopy ??
@@ -50,6 +55,13 @@ class VaultAccount extends ChangeNotifier {
   final VaultKeyStore _keys;
   final VaultApi _api;
   late final VaultSignin _signin;
+
+  /// The local index and queue; cleared on sign-out and when another account
+  /// signs in on this device.
+  final VaultDao? _dao;
+
+  /// Caches outside the database (thumbnails, opened files) to drop with it.
+  final Future<void> Function()? _onForget;
 
   /// Where the key copy is, for "Ways back in" (task 3.7).
   late final VaultKeyCopy keyCopy;
@@ -158,9 +170,14 @@ class VaultAccount extends ChangeNotifier {
       appleCode: token.appleCode,
     );
     _last = r;
-    // Another account was on this device before: its key must not be reused.
+    // Another account was on this device before: its key must not be reused,
+    // and its index and queue go too.
     final previous = await _keys.vaultId();
-    if (previous != null && previous != r.vaultId) await _keys.forgetVault();
+    if (previous != null && previous != r.vaultId) {
+      await _keys.forgetVault();
+      await _dao?.clearAll();
+      await _onForget?.call();
+    }
     await _keys.saveVault(vaultId: r.vaultId, serverHalf: r.serverHalf);
     _vaultId = r.vaultId;
 
@@ -248,6 +265,12 @@ class VaultAccount extends ChangeNotifier {
     for (final i in (_info?['identities'] as List?) ?? const [])
       if (i is Map && i['provider'] is String) i['provider'] as String,
   ];
+
+  /// Stored bytes (what the quota counts), as of the last [refreshInfo].
+  int? get usedBytes => (_info?['usedBytes'] as num?)?.toInt();
+
+  int? get quotaBytes =>
+      (_info?['quotaBytes'] as num?)?.toInt() ?? _last?.quotaBytes;
 
   Future<void> refreshInfo() async {
     final id = _vaultId;
@@ -470,6 +493,8 @@ class VaultAccount extends ChangeNotifier {
   Future<void> signOut() async {
     await _keys.forgetVault();
     await _signin.forgetGoogle();
+    await _dao?.clearAll();
+    await _onForget?.call();
     keyCopy.reset();
     _vaultId = null;
     _last = null;

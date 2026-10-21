@@ -15,9 +15,11 @@ import '../../../core/rust/rust_facade.dart';
 import '../../../core/storage/app_database.dart';
 import '../../../core/storage/vault_tables.dart';
 import 'vault_api.dart';
+import 'vault_files.dart';
 import 'vault_keys.dart';
 import 'vault_meta.dart';
 import 'vault_sync.dart';
+import 'vault_thumbs.dart';
 
 /// The upload queue (drive-plan.md task 4.4). For each file:
 ///
@@ -44,8 +46,10 @@ class VaultUploader extends ChangeNotifier {
     required VaultSync sync,
     Dio? http,
     Future<Directory> Function()? workDir,
+    VaultThumbs? thumbs,
     this.maximumSecurity = false,
-  }) : _api = api,
+  }) : _thumbs = thumbs,
+       _api = api,
        _keys = keys,
        _dao = dao,
        _sync = sync,
@@ -66,6 +70,7 @@ class VaultUploader extends ChangeNotifier {
   final VaultSync _sync;
   final Dio _http;
   final Future<Directory> Function() _workDir;
+  final VaultThumbs? _thumbs;
 
   /// Maximum security sends no dedupe tag and compresses nothing
   /// (VAULT-SPEC: stored sizes then say nothing about the content).
@@ -90,21 +95,36 @@ class VaultUploader extends ChangeNotifier {
   }
 
   /// Queue [files] for the folder [parent] (null: the top of the Drive) and
-  /// start the queue. Returns the queue ids.
-  Future<List<int>> enqueue(List<File> files, {String? parent}) async {
+  /// start the queue. A name already used there (or by a file still in the
+  /// queue for the same folder) gets " (1)", " (2)", …. Returns the queue ids.
+  Future<List<int>> enqueue(
+    List<File> files, {
+    String? parent,
+    bool start = true,
+  }) async {
     final ids = <int>[];
     final now = DateTime.now().millisecondsSinceEpoch;
+    final taken = {
+      for (final t in await _dao.pendingTransfers())
+        if (t.direction == 'up' && t.parent == parent) t.name.toLowerCase(),
+      for (final o in await _dao.liveChildren(parent)) o.name.toLowerCase(),
+    };
     for (final f in files) {
-      final name = f.uri.pathSegments.isEmpty
+      final base = f.uri.pathSegments.isEmpty
           ? 'file'
           : f.uri.pathSegments.last;
+      final name = freeNameIn(
+        taken,
+        VaultMetaCodec.validName(base) ? base : 'file',
+      );
+      taken.add(name.toLowerCase());
       ids.add(
         await _dao.enqueue(
           VaultTransfersCompanion.insert(
             direction: 'up',
             objectId: Rust.vaultGenerateObjectId(),
             parent: Value(parent),
-            name: VaultMetaCodec.validName(name) ? name : 'file',
+            name: name,
             localPath: f.path,
             size: await f.length(),
             state: 'queued',
@@ -114,8 +134,49 @@ class VaultUploader extends ChangeNotifier {
         ),
       );
     }
-    unawaited(run());
+    if (start) unawaited(run());
     return ids;
+  }
+
+  /// Queue a whole folder from this device: its folders are made in the Drive
+  /// first (with [files]), then every file inside is queued into the matching
+  /// folder. Hidden files and folders (a leading dot) are left out. Returns
+  /// the number of files queued.
+  Future<int> enqueueFolder(
+    Directory dir,
+    VaultFiles files, {
+    String? parent,
+  }) async {
+    var count = 0;
+    Future<void> walk(Directory d, String? into) async {
+      final name = d.uri.pathSegments.where((p) => p.isNotEmpty).last;
+      final id = await files.mkdir(name, parent: into);
+      final here = <File>[];
+      final subdirs = <Directory>[];
+      await for (final e in d.list(followLinks: false)) {
+        final base = e.uri.pathSegments.where((p) => p.isNotEmpty).last;
+        if (base.startsWith('.')) continue;
+        if (e is File) here.add(e);
+        if (e is Directory) subdirs.add(e);
+      }
+      if (here.isNotEmpty) {
+        await enqueue(here, parent: id, start: false);
+        count += here.length;
+      }
+      for (final s in subdirs) {
+        await walk(s, id);
+      }
+    }
+
+    await walk(dir, parent);
+    unawaited(run());
+    return count;
+  }
+
+  /// Put a stopped upload back in the queue (after "Upload stopped").
+  Future<void> retry(int id) async {
+    await _set(id, state: 'queued', error: null);
+    unawaited(run());
   }
 
   /// Work through the queue until it is empty or the network goes. Calls
@@ -323,7 +384,24 @@ class VaultUploader extends ChangeNotifier {
     );
     await _cleanup(t);
     await _set(t.id, state: 'done', error: null);
+    await _thumb(t, vaultId, meta);
     unawaited(_sync.pull().catchError((Object _) {}));
+  }
+
+  /// The thumbnail of a photo or video just committed. Best effort: a file
+  /// without one still shows its type icon.
+  Future<void> _thumb(VaultTransfer t, String vaultId, VaultMeta meta) async {
+    final thumbs = _thumbs;
+    if (thumbs == null || !VaultThumbs.wants(meta.mime)) return;
+    final source = File(t.localPath);
+    if (!await source.exists()) return;
+    try {
+      final jpeg = await VaultThumbs.make(source, meta.mime!);
+      if (jpeg == null) return;
+      await thumbs.upload(vaultId, t.objectId, meta.fileKey!, jpeg);
+    } on Object catch (e) {
+      debugPrint('[vault] thumbnail for ${t.name}: $e');
+    }
   }
 
   /// Point a new object at content this vault already stores: its file key
@@ -372,6 +450,7 @@ class VaultUploader extends ChangeNotifier {
       );
     }
     await _set(t.id, state: 'done', error: null);
+    await _thumb(t, vaultId, meta);
     unawaited(_sync.pull().catchError((Object _) {}));
     return true;
   }

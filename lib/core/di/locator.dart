@@ -33,7 +33,14 @@ import '../../features/room/data/webrtc_room_service.dart';
 import '../../features/web_nearby/data/web_nearby_service.dart';
 import '../../features/vault/data/vault_account.dart';
 import '../../features/vault/data/vault_api.dart';
+import '../../features/vault/data/vault_downloader.dart';
+import '../../features/vault/data/vault_downloads.dart';
+import '../../features/vault/data/vault_files.dart';
 import '../../features/vault/data/vault_keys.dart';
+import '../../features/vault/data/vault_shares.dart';
+import '../../features/vault/data/vault_sync.dart';
+import '../../features/vault/data/vault_thumbs.dart';
+import '../../features/vault/data/vault_uploader.dart';
 import '../../features/send/data/transfer_client.dart';
 import '../deeplink/deep_link_service.dart';
 import '../desktop/desktop_service.dart';
@@ -214,7 +221,70 @@ Future<void> setupLocator() async {
     ..registerLazySingleton<VaultKeyStore>(VaultKeyStore.new)
     ..registerLazySingleton<VaultApi>(() => VaultApi(getIt<VaultKeyStore>()))
     ..registerLazySingleton<VaultAccount>(
-      () => VaultAccount(keys: getIt<VaultKeyStore>(), api: getIt<VaultApi>()),
+      () => VaultAccount(
+        keys: getIt<VaultKeyStore>(),
+        api: getIt<VaultApi>(),
+        dao: db.vaultDao,
+        onForget: () async {
+          await getIt<VaultThumbs>().clear();
+          await getIt<VaultDownloads>().clearCache();
+        },
+      ),
+    )
+    ..registerLazySingleton<VaultSync>(
+      () => VaultSync(
+        api: getIt<VaultApi>(),
+        keys: getIt<VaultKeyStore>(),
+        dao: db.vaultDao,
+      ),
+    )
+    ..registerLazySingleton<VaultThumbs>(
+      () => VaultThumbs(
+        api: getIt<VaultApi>(),
+        keys: getIt<VaultKeyStore>(),
+        dao: db.vaultDao,
+      ),
+    )
+    ..registerLazySingleton<VaultUploader>(
+      () => VaultUploader(
+        api: getIt<VaultApi>(),
+        keys: getIt<VaultKeyStore>(),
+        dao: db.vaultDao,
+        sync: getIt<VaultSync>(),
+        thumbs: getIt<VaultThumbs>(),
+      ),
+    )
+    ..registerLazySingleton<VaultDownloader>(
+      () => VaultDownloader(
+        api: getIt<VaultApi>(),
+        keys: getIt<VaultKeyStore>(),
+        dao: db.vaultDao,
+        sync: getIt<VaultSync>(),
+      ),
+    )
+    ..registerLazySingleton<VaultDownloads>(
+      () => VaultDownloads(
+        downloader: getIt<VaultDownloader>(),
+        dao: db.vaultDao,
+      ),
+    )
+    ..registerLazySingleton<VaultShares>(
+      () => VaultShares(
+        api: getIt<VaultApi>(),
+        keys: getIt<VaultKeyStore>(),
+        dao: db.vaultDao,
+        downloads: getIt<VaultDownloads>(),
+        cloud: () => getIt<CloudTransferService>(),
+        senderAlias: () => getIt<DeviceIdentity>().alias,
+      ),
+    )
+    ..registerLazySingleton<VaultFiles>(
+      () => VaultFiles(
+        api: getIt<VaultApi>(),
+        keys: getIt<VaultKeyStore>(),
+        dao: db.vaultDao,
+        sync: getIt<VaultSync>(),
+      ),
     );
 
   // Drive's start check (task 3.6): once Drive is visible on this device,
@@ -223,7 +293,14 @@ Future<void> setupLocator() async {
   void vaultStart() {
     if (!featureFlags.vaultVisible) return;
     featureFlags.removeListener(vaultStart);
-    unawaited(getIt<VaultAccount>().load());
+    unawaited(
+      getIt<VaultAccount>().load().then((_) {
+        if (getIt<VaultAccount>().status != VaultStatus.ready) return;
+        // The index follows the server, and uploads left by the last run go on.
+        unawaited(getIt<VaultSync>().start());
+        unawaited(getIt<VaultUploader>().run());
+      }),
+    );
   }
 
   featureFlags.addListener(vaultStart);

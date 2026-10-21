@@ -10,8 +10,7 @@ import '../../../core/di/locator.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../settings/presentation/widgets/glyph.dart';
 import '../data/vault_account.dart';
-import '../data/vault_api.dart';
-import '../data/vault_signin.dart';
+import 'vault_sign_in_buttons.dart';
 
 /// The Drive group in Settings (drive-plan.md phase 3, for testers). Renders
 /// nothing at all unless [FeatureFlags.vaultVisible]: with the flag off the
@@ -39,8 +38,6 @@ class _VaultGroup extends StatefulWidget {
 
 class _VaultGroupState extends State<_VaultGroup> {
   final VaultAccount _account = getIt<VaultAccount>();
-  bool _busy = false;
-  String? _error;
 
   @override
   void initState() {
@@ -48,76 +45,28 @@ class _VaultGroupState extends State<_VaultGroup> {
     unawaited(_account.load());
   }
 
-  Future<void> _signIn(String provider) async {
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      await _account.signIn(provider);
-    } on VaultApiException catch (e) {
-      _error = switch (e.code) {
-        'VAULT_UNAVAILABLE' => 'vault.error_unavailable'.tr(),
-        'VAULT_NOT_INVITED' => 'vault.error_not_invited'.tr(),
-        'NETWORK' => 'vault.error_network'.tr(),
-        _ => 'vault.error_generic'.tr(),
-      };
-      // In internal mode the refusal carries the subject hash the owner adds to
-      // vault_testers; it is only printed (debug log), never shown.
-      debugPrint('[vault] sign-in refused: $e ${e.extra['subjectHash'] ?? ''}');
-    } on VaultSigninException catch (e) {
-      _error = 'vault.error_generic'.tr();
-      debugPrint('[vault] provider sign-in failed: $e');
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final muted = ShadTheme.of(context).textTheme.muted.copyWith(fontSize: 12);
     return ListenableBuilder(
       listenable: _account,
       builder: (context, _) {
         final status = _account.status;
         final rows = <Widget>[];
         if (status == VaultStatus.signedOut) {
-          rows.add(
-            AppListTile(
-              leading: const Glyph(AppIcons.passwordLock),
-              title: Text('vault.title'.tr()),
-              subtitle: Text('vault.signed_out'.tr()),
-            ),
-          );
-          final buttons = <Widget>[
-            if (VaultSignin.googleAvailable)
-              AppButton(
-                label: 'vault.sign_in_google'.tr(),
-                variant: AppButtonVariant.outline,
-                fullWidth: true,
-                loading: _busy,
-                onPressed: _busy ? null : () => _signIn('google'),
+          rows
+            ..add(
+              AppListTile(
+                leading: const Glyph(AppIcons.passwordLock),
+                title: Text('vault.title'.tr()),
+                subtitle: Text('vault.signed_out'.tr()),
               ),
-            if (VaultSignin.appleAvailable)
-              AppButton(
-                label: 'vault.sign_in_apple'.tr(),
-                variant: AppButtonVariant.outline,
-                fullWidth: true,
-                loading: _busy,
-                onPressed: _busy ? null : () => _signIn('apple'),
+            )
+            ..add(
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 4, 16, 14),
+                child: VaultSignInButtons(),
               ),
-          ];
-          rows.add(
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
-              child: Column(
-                children: [
-                  for (final b in buttons)
-                    Padding(padding: const EdgeInsets.only(top: 8), child: b),
-                ],
-              ),
-            ),
-          );
+            );
         } else {
           rows.add(
             AppListTile(
@@ -147,11 +96,6 @@ class _VaultGroupState extends State<_VaultGroup> {
           children: [
             AppSectionHeader('vault.title'.tr()),
             AppGroup(child: Column(children: rows)),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(28, 8, 28, 0),
-                child: Text(_error!, style: muted),
-              ),
           ],
         );
       },

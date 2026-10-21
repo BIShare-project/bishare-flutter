@@ -15,7 +15,11 @@ import 'widgets/selection_bar.dart';
 /// Inbox tab: received files with a pinch-zoom image gallery, batch select
 /// (save/delete), save-to-Photos, share, and swipe-delete.
 class InboxPage extends StatefulWidget {
-  const InboxPage({super.key});
+  const InboxPage({super.key, this.segment});
+
+  /// The "On this device / Drive" switch, only while Drive is on for this
+  /// device (InboxTab); null keeps the page exactly as it always was.
+  final Widget? segment;
 
   @override
   State<InboxPage> createState() => _InboxPageState();
@@ -115,6 +119,7 @@ class _InboxPageState extends State<InboxPage> {
                       ],
                     ],
                   ),
+                  ?widget.segment,
                   if (_selecting)
                     SelectionBar(
                       total: items.length,

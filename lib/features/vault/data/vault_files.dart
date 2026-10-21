@@ -42,6 +42,7 @@ class VaultFiles {
   Future<String> mkdir(String name, {String? parent}) async {
     final (vaultId, vk) = await _vault();
     _checkName(name);
+    name = await freeName(_dao, parent, name);
     final id = Rust.vaultGenerateObjectId();
     final meta = VaultMeta(
       kind: 'dir',
@@ -64,6 +65,9 @@ class VaultFiles {
     final (vaultId, vk) = await _vault();
     _checkName(name);
     final obj = await _object(objectId);
+    if (name.toLowerCase() != obj.name.toLowerCase()) {
+      name = await freeName(_dao, obj.parent, name);
+    }
     final meta = VaultMetaCodec.open(vk, vaultId, objectId, obj.encMeta);
     await _send(vaultId, [
       _metaOp(vaultId, vk, objectId, VaultMetaCodec.copy(meta, name: name)),
@@ -84,18 +88,28 @@ class VaultFiles {
       }
     }
     final ops = <Map<String, dynamic>>[];
+    final taken = <String>{};
     for (final id in ids) {
       final obj = await _object(id);
+      if (obj.parent == parent) continue;
       final meta = VaultMetaCodec.open(vk, vaultId, id, obj.encMeta);
+      final name = await freeName(_dao, parent, obj.name, taken: taken);
+      taken.add(name.toLowerCase());
       ops.add(
         _metaOp(
           vaultId,
           vk,
           id,
-          VaultMetaCodec.copy(meta, parent: parent, root: parent == null),
+          VaultMetaCodec.copy(
+            meta,
+            name: name,
+            parent: parent,
+            root: parent == null,
+          ),
         ),
       );
     }
+    if (ops.isEmpty) return;
     await _send(vaultId, ops);
   }
 
@@ -132,6 +146,72 @@ class VaultFiles {
       for (final id in all)
         {'opId': _opId(), 'type': 'restore', 'objectId': id},
     ]);
+  }
+
+  /// Copy [ids] into [parent] (null: the top of the Drive). Nothing is sent
+  /// again: a copied file is a new object pointing at the same stored bytes
+  /// with the same file key, and a folder is copied with everything in it.
+  /// A name already used in the target gets " (1)", " (2)", ….
+  Future<List<String>> copy(List<String> ids, String? parent) async {
+    final (vaultId, vk) = await _vault();
+    final ops = <Map<String, dynamic>>[];
+    final made = <String>[];
+    final taken = <String>{};
+
+    Future<void> copyOne(
+      VaultObject o,
+      String? into, {
+      bool top = false,
+    }) async {
+      final meta = VaultMetaCodec.open(vk, vaultId, o.id, o.encMeta);
+      final name = top
+          ? await freeName(_dao, into, o.name, taken: taken)
+          : o.name;
+      if (top) taken.add(name.toLowerCase());
+      final id = Rust.vaultGenerateObjectId();
+      if (top) made.add(id);
+      final copied = VaultMetaCodec.copy(
+        meta,
+        name: name,
+        parent: into,
+        root: into == null,
+      );
+      if (o.kind == 'dir') {
+        ops.add({
+          'opId': _opId(),
+          'type': 'mkdir',
+          'objectId': id,
+          'encMeta': VaultMetaCodec.seal(vk, vaultId, id, copied),
+        });
+        for (final child in await _dao.childrenOf(o.id)) {
+          if (child.trashedAt == null) await copyOne(child, id);
+        }
+      } else {
+        if (o.blobId == null) return;
+        ops.add({
+          'opId': _opId(),
+          'type': 'link',
+          'objectId': id,
+          'encMeta': VaultMetaCodec.seal(vk, vaultId, id, copied),
+          'blobId': o.blobId,
+        });
+      }
+    }
+
+    if (parent != null) {
+      final above = await _ancestors(parent);
+      if (ids.any((id) => id == parent || above.contains(id))) {
+        throw const VaultApiException(
+          'VAULT_MOVE_INTO_ITSELF',
+          'A folder cannot go into itself',
+        );
+      }
+    }
+    for (final id in ids) {
+      await copyOne(await _object(id), parent, top: true);
+    }
+    await _send(vaultId, ops);
+    return made;
   }
 
   /// Gone for good, with everything inside: the bytes are deleted on the
@@ -227,4 +307,29 @@ class VaultFiles {
   }
 
   static String _opId() => Rust.vaultGenerateObjectId();
+}
+
+/// [name], or "name (1).ext", "name (2).ext", … whichever is not used yet by
+/// a live object in [parent] (names compare without case, as on macOS and
+/// Windows), nor in [taken] (lower case).
+Future<String> freeName(
+  VaultDao dao,
+  String? parent,
+  String name, {
+  Set<String> taken = const {},
+}) async => freeNameIn({
+  ...taken,
+  for (final o in await dao.liveChildren(parent)) o.name.toLowerCase(),
+}, name);
+
+/// The same, against a set of lower-case names already in use.
+String freeNameIn(Set<String> used, String name) {
+  if (!used.contains(name.toLowerCase())) return name;
+  final dot = name.lastIndexOf('.');
+  final stem = dot > 0 ? name.substring(0, dot) : name;
+  final ext = dot > 0 ? name.substring(dot) : '';
+  for (var n = 1; ; n++) {
+    final candidate = '$stem ($n)$ext';
+    if (!used.contains(candidate.toLowerCase())) return candidate;
+  }
 }

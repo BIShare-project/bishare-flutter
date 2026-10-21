@@ -19,7 +19,7 @@ import '../core/ui/app_ui.dart';
 import '../features/history/presentation/history_page.dart';
 import '../features/home/home_page.dart';
 import '../features/inbox/presentation/inbox_cubit.dart';
-import '../features/inbox/presentation/inbox_page.dart';
+import '../features/inbox/presentation/inbox_tab.dart';
 import '../features/remote/data/cloud_transfer_service.dart';
 import '../features/remote/data/stream_relay_service.dart';
 import '../features/remote/presentation/remote_download.dart';
@@ -50,7 +50,7 @@ class _MainShellState extends State<MainShell> {
 
   static const _pages = [
     HomePage(),
-    InboxPage(),
+    InboxTab(),
     RoomPage(),
     HistoryPage(),
     SettingsPage(),
