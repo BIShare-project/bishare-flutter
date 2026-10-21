@@ -16,10 +16,12 @@ import '../../../../core/ui/app_ui.dart';
 import '../../../../core/ui/shell_tab.dart';
 import '../../../settings/presentation/widgets/glyph.dart';
 import '../../data/vault_account.dart';
+import '../../data/vault_background.dart';
 import '../../data/vault_api.dart';
 import '../../data/vault_downloads.dart';
 import '../../data/vault_photo_backup.dart';
 import '../../data/vault_sync.dart';
+import '../../data/vault_upload_batch.dart';
 import '../../data/vault_uploader.dart';
 import '../vault_sign_in_buttons.dart';
 import 'drive_actions.dart';
@@ -27,7 +29,6 @@ import 'drive_controller.dart';
 import 'drive_format.dart';
 import 'drive_gallery_view.dart';
 import 'drive_widgets.dart';
-import 'upload_batch.dart';
 
 /// BIShare Drive's file manager (drive-plan.md tasks 4.7, 4.8, 4.10): the
 /// Drive's folders and the views across it (Recent, Photos and videos,
@@ -110,6 +111,8 @@ class _DrivePageState extends State<DrivePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // The words background runs use, in this language (also after a change).
+    unawaited(VaultBackground.saveTexts(getIt<SharedPreferences>()));
     final active = ShellTab.isActive(context);
     if (active == _active) return;
     _active = active;

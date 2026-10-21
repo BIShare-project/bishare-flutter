@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
@@ -16,6 +17,7 @@ import 'vault_photo_backup.dart';
 import 'vault_photo_library.dart';
 import 'vault_sync.dart';
 import 'vault_thumbs.dart';
+import 'vault_upload_notice.dart';
 import 'vault_uploader.dart';
 
 /// Photo backup while the app is closed (drive-plan.md task 5.4), within
@@ -205,6 +207,13 @@ class VaultBackground {
       }
     });
     _stop = uploader.hold;
+    final notice = VaultUploadNotice(
+      dao: db.vaultDao,
+      uploader: uploader,
+      prefs: prefs,
+      initialize: true,
+    );
+    await notice.start();
     try {
       // The index as the server has it: what other devices backed up is
       // not sent again.
@@ -216,11 +225,22 @@ class VaultBackground {
       await backup.runInBackground(_budget);
       return true;
     } finally {
+      await notice.stop(summary: true);
       _stop = null;
       IsolateNameServer.removePortNameMapping(runPort);
       me.close();
       await db.close();
     }
+  }
+
+  /// The app's isolate, with translations loaded: the words a background
+  /// run needs and cannot translate itself (the backup folder's name, the
+  /// upload notification).
+  static Future<void> saveTexts(SharedPreferences prefs) async {
+    final folder = 'vault.backup_folder'.tr();
+    if (folder == 'vault.backup_folder') return; // not loaded yet
+    await prefs.setString(folderNameKey, folder);
+    await VaultUploadNotice.saveTexts(prefs);
   }
 
   /// The system stops the run early (Android).

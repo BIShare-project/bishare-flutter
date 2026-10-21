@@ -1013,6 +1013,11 @@
     "uploads_bytes": "{total} 중 {done}",
     "backup_off": "꺼짐",
     "backup_done_of": "{total}개 중 {done}개 백업됨",
-    "backup_no_room": "Drive가 가득 찼습니다. 공간이 생길 때까지 백업이 대기합니다."
+    "backup_no_room": "Drive가 가득 찼습니다. 공간이 생길 때까지 백업이 대기합니다.",
+    "notify_channel": "Drive 업로드",
+    "notify_uploading": "Drive에 업로드 중",
+    "notify_left": "{count}개 남음",
+    "notify_done": "업로드 완료",
+    "notify_done_body": "업로드됨: {count}개"
   }
 }

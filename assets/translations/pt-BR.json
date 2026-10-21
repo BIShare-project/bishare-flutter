@@ -1020,6 +1020,11 @@
     "uploads_bytes": "{done} de {total}",
     "backup_off": "Desativado",
     "backup_done_of": "{done} de {total} com backup",
-    "backup_no_room": "Seu Drive está cheio. O backup espera até haver espaço."
+    "backup_no_room": "Seu Drive está cheio. O backup espera até haver espaço.",
+    "notify_channel": "Envios do Drive",
+    "notify_uploading": "Enviando para o Drive",
+    "notify_left": "Faltam: {count}",
+    "notify_done": "Envios concluídos",
+    "notify_done_body": "Enviados: {count}"
   }
 }

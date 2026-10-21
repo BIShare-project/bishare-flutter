@@ -1020,6 +1020,11 @@
     "uploads_bytes": "{done} dari {total}",
     "backup_off": "Mati",
     "backup_done_of": "{done} dari {total} sudah dicadangkan",
-    "backup_no_room": "Drive Anda penuh. Pencadangan menunggu sampai ada ruang."
+    "backup_no_room": "Drive Anda penuh. Pencadangan menunggu sampai ada ruang.",
+    "notify_channel": "Unggahan Drive",
+    "notify_uploading": "Mengunggah ke Drive",
+    "notify_left": "{count} lagi",
+    "notify_done": "Unggahan selesai",
+    "notify_done_body": "Terunggah: {count}"
   }
 }

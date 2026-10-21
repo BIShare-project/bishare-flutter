@@ -1041,6 +1041,11 @@
     "uploads_bytes": "{done} из {total}",
     "backup_off": "Выключено",
     "backup_done_of": "Сохранено {done} из {total}",
-    "backup_no_room": "Ваш Drive заполнен. Копирование подождёт, пока не освободится место."
+    "backup_no_room": "Ваш Drive заполнен. Копирование подождёт, пока не освободится место.",
+    "notify_channel": "Загрузки Drive",
+    "notify_uploading": "Загрузка в Drive",
+    "notify_left": "Осталось: {count}",
+    "notify_done": "Загрузки завершены",
+    "notify_done_body": "Загружено: {count}"
   }
 }

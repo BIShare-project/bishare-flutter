@@ -1013,6 +1013,11 @@
     "uploads_bytes": "{total}中{done}",
     "backup_off": "オフ",
     "backup_done_of": "{total}件中{done}件をバックアップ済み",
-    "backup_no_room": "Driveがいっぱいです。空きができるまでバックアップは待機します。"
+    "backup_no_room": "Driveがいっぱいです。空きができるまでバックアップは待機します。",
+    "notify_channel": "Driveへのアップロード",
+    "notify_uploading": "Driveにアップロード中",
+    "notify_left": "残り{count}件",
+    "notify_done": "アップロード完了",
+    "notify_done_body": "アップロード済み: {count}件"
   }
 }

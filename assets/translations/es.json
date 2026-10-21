@@ -1020,6 +1020,11 @@
     "uploads_bytes": "{done} de {total}",
     "backup_off": "Desactivada",
     "backup_done_of": "{done} de {total} con copia",
-    "backup_no_room": "Tu Drive está lleno. La copia espera hasta que haya espacio."
+    "backup_no_room": "Tu Drive está lleno. La copia espera hasta que haya espacio.",
+    "notify_channel": "Subidas a Drive",
+    "notify_uploading": "Subiendo a Drive",
+    "notify_left": "Faltan: {count}",
+    "notify_done": "Subidas terminadas",
+    "notify_done_body": "Subidos: {count}"
   }
 }

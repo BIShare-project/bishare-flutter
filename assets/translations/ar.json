@@ -1041,6 +1041,11 @@
     "uploads_bytes": "{done} من {total}",
     "backup_off": "متوقف",
     "backup_done_of": "تم نسخ {done} من {total} احتياطيًا",
-    "backup_no_room": "Drive الخاص بك ممتلئ. ينتظر النسخ الاحتياطي حتى تتوفر مساحة."
+    "backup_no_room": "Drive الخاص بك ممتلئ. ينتظر النسخ الاحتياطي حتى تتوفر مساحة.",
+    "notify_channel": "عمليات رفع Drive",
+    "notify_uploading": "جارٍ الرفع إلى Drive",
+    "notify_left": "المتبقي: {count}",
+    "notify_done": "اكتمل الرفع",
+    "notify_done_body": "تم الرفع: {count}"
   }
 }

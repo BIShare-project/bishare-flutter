@@ -44,6 +44,7 @@ import '../../features/vault/data/vault_photo_library.dart';
 import '../../features/vault/data/vault_shares.dart';
 import '../../features/vault/data/vault_sync.dart';
 import '../../features/vault/data/vault_thumbs.dart';
+import '../../features/vault/data/vault_upload_notice.dart';
 import '../../features/vault/data/vault_uploader.dart';
 import '../../features/send/data/transfer_client.dart';
 import '../deeplink/deep_link_service.dart';
@@ -333,8 +334,17 @@ Future<void> setupLocator() async {
         }
 
         await VaultBackground.initialize(onBackup: backupNow);
+        // Uploads going on while the app is out of sight show in the
+        // notification shade (Android).
+        final notice = VaultUploadNotice(
+          dao: db.vaultDao,
+          uploader: uploader,
+          prefs: prefs,
+        );
         AppLifecycleListener(
           onResume: () => VaultBackground.listen(onBackup: backupNow),
+          onHide: () => unawaited(notice.start()),
+          onShow: () => unawaited(notice.stop()),
         );
 
         // Runs while the app is closed follow the switch (task 5.4).
@@ -346,12 +356,7 @@ Future<void> setupLocator() async {
           );
           if (want == scheduled) return;
           scheduled = want;
-          unawaited(
-            prefs.setString(
-              VaultBackground.folderNameKey,
-              'vault.backup_folder'.tr(),
-            ),
-          );
+          unawaited(VaultBackground.saveTexts(prefs));
           unawaited(VaultBackground.schedule(on: want.$1, wifiOnly: want.$2));
         }
 

@@ -1020,6 +1020,11 @@
     "uploads_bytes": "{total} में से {done}",
     "backup_off": "बंद",
     "backup_done_of": "{total} में से {done} का बैकअप हो गया",
-    "backup_no_room": "आपकी Drive भर गई है। जगह होने तक बैकअप रुका रहेगा।"
+    "backup_no_room": "आपकी Drive भर गई है। जगह होने तक बैकअप रुका रहेगा।",
+    "notify_channel": "Drive अपलोड",
+    "notify_uploading": "Drive पर अपलोड हो रहा है",
+    "notify_left": "बाकी: {count}",
+    "notify_done": "अपलोड पूरे हुए",
+    "notify_done_body": "अपलोड हुए: {count}"
   }
 }

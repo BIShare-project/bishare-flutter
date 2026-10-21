@@ -1013,6 +1013,11 @@
     "uploads_bytes": "{done} / {total}",
     "backup_off": "已關閉",
     "backup_done_of": "已備份 {done} / {total}",
-    "backup_no_room": "你的 Drive 已滿。備份會等到有空間時再繼續。"
+    "backup_no_room": "你的 Drive 已滿。備份會等到有空間時再繼續。",
+    "notify_channel": "Drive 上傳",
+    "notify_uploading": "正在上傳到 Drive",
+    "notify_left": "剩餘 {count} 項",
+    "notify_done": "上傳完成",
+    "notify_done_body": "已上傳：{count} 項"
   }
 }

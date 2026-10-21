@@ -1020,6 +1020,11 @@
     "uploads_bytes": "{done} von {total}",
     "backup_off": "Aus",
     "backup_done_of": "{done} von {total} gesichert",
-    "backup_no_room": "Ihr Drive ist voll. Die Sicherung wartet, bis wieder Platz ist."
+    "backup_no_room": "Ihr Drive ist voll. Die Sicherung wartet, bis wieder Platz ist.",
+    "notify_channel": "Drive-Uploads",
+    "notify_uploading": "Wird in Drive hochgeladen",
+    "notify_left": "Noch {count}",
+    "notify_done": "Uploads abgeschlossen",
+    "notify_done_body": "Hochgeladen: {count}"
   }
 }

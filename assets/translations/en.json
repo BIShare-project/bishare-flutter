@@ -1020,6 +1020,11 @@
     "uploads_bytes": "{done} of {total}",
     "backup_off": "Off",
     "backup_done_of": "{done} of {total} backed up",
-    "backup_no_room": "Your Drive is full. Backup waits until there is room."
+    "backup_no_room": "Your Drive is full. Backup waits until there is room.",
+    "notify_channel": "Drive uploads",
+    "notify_uploading": "Uploading to Drive",
+    "notify_left": "{count} left",
+    "notify_done": "Uploads finished",
+    "notify_done_body": "Uploaded: {count}"
   }
 }

@@ -1,6 +1,6 @@
 import 'package:bishare/core/storage/app_database.dart';
 import 'package:bishare/features/vault/data/vault_uploader.dart';
-import 'package:bishare/features/vault/presentation/drive/upload_batch.dart';
+import 'package:bishare/features/vault/data/vault_upload_batch.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

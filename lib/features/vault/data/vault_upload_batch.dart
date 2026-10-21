@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import '../../../../core/storage/app_database.dart';
-import '../../data/vault_uploader.dart';
+import '../../../core/storage/app_database.dart';
+import 'vault_uploader.dart';
 
 /// The uploads of one go, for a progress bar that moves one way (owner
 /// 2026-10-21: the bar "naik turun tidak teratur"). A go runs from the
