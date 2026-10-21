@@ -80,6 +80,8 @@
 	<string>BIShare uses the camera to scan QR codes for transfers, share links and rooms.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>BIShare lets you pick a contact to share it as a vCard with nearby devices.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>BIShare uses Face ID before it shows your Drive recovery phrase.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>BIShare finds nearby devices and transfers files over your local network.</string>
 	<key>NSMicrophoneUsageDescription</key>

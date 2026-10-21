@@ -123,6 +123,9 @@ dependencies:
   in_app_review: ^2.0.12
   google_sign_in: ^7.2.0
   sign_in_with_apple: ^8.2.0
+  local_auth_darwin: ^2.0.5
+  local_auth_windows: ^2.0.2
+  local_auth_platform_interface: ^1.1.0
 
 dev_dependencies:
   path_provider_platform_interface: ^2.1.3

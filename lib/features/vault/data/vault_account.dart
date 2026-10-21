@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
@@ -237,6 +238,234 @@ class VaultAccount extends ChangeNotifier {
     }
   }
 
+  // ---- the account as the server sees it (task 3.7) ---------------------------
+
+  Map<String, dynamic>? _info;
+
+  /// The sign-ins linked to this Drive ("apple", "google"), once [refreshInfo]
+  /// has run.
+  List<String> get linkedProviders => [
+    for (final i in (_info?['identities'] as List?) ?? const [])
+      if (i is Map && i['provider'] is String) i['provider'] as String,
+  ];
+
+  Future<void> refreshInfo() async {
+    final id = _vaultId;
+    if (id == null) return;
+    _info = await _api.info(id);
+    notifyListeners();
+  }
+
+  /// A sign-in made for one important request: linking, removing a device,
+  /// deleting the account. The server wants it less than ten minutes old and
+  /// bound to this device's key. Null when the person closed the sheet.
+  Future<ProviderToken?> _freshToken(String provider) async {
+    final nonce = await _keys.signinNonce();
+    return switch (provider) {
+      'google' => _signin.google(nonce),
+      'apple' => _signin.apple(nonce),
+      _ => throw ArgumentError.value(provider, 'provider'),
+    };
+  }
+
+  /// Link a second sign-in to this Drive, another way back in. Linking Google
+  /// also writes the key copy to its Drive app-data folder. False when the
+  /// person closed the sheet. Throws [VaultApiException]
+  /// (`VAULT_IDENTITY_IN_USE`: that account has its own Drive).
+  Future<bool> link(String provider) async {
+    final vaultId = _requireVault();
+    final token = await _freshToken(provider);
+    if (token == null) return false;
+    await _api.linkIdentity(
+      vaultId,
+      provider: token.provider,
+      idToken: token.idToken,
+    );
+    final vk = await _keys.vaultKey();
+    final serverHalf = await _keys.serverHalf();
+    if (vk != null && serverHalf != null) {
+      await keyCopy.save(
+        vaultId: vaultId,
+        vaultKey: vk,
+        serverHalf: serverHalf,
+        interactive: provider == 'google',
+      );
+    }
+    await refreshInfo();
+    return true;
+  }
+
+  // ---- the recovery phrase (task 3.7) -----------------------------------------
+
+  /// The 24 words that encode the vault key on this device. The caller shows
+  /// them only after the device lock (DeviceLock).
+  Future<String?> phrase() async {
+    final vk = await _keys.vaultKey();
+    return vk == null ? null : Rust.vaultPhraseFromKey(vk);
+  }
+
+  /// A device waiting for the key takes it from the phrase. Throws
+  /// [VaultApiException] `VAULT_PHRASE_INVALID` for words that are not a
+  /// phrase, `VAULT_KEY_MISMATCH` for another Drive's phrase.
+  Future<void> acceptPhrase(String phrase) async {
+    final Uint8List vk;
+    try {
+      vk = Rust.vaultKeyFromPhrase(
+        phrase.trim().toLowerCase().split(RegExp(r'\s+')).join(' '),
+      );
+    } on Object {
+      throw const VaultApiException(
+        'VAULT_PHRASE_INVALID',
+        'These words are not a recovery phrase',
+      );
+    }
+    await acceptVaultKey(vk, await _keyCheck());
+  }
+
+  // ---- the key by QR code (task 3.8) -------------------------------------------
+
+  /// A device waiting for the key: open a five-minute pairing slot and make
+  /// the QR code another device of the same Drive scans.
+  Future<VaultPairing> startPairing() async {
+    _requireVault();
+    final slot = await _api.openPairSlot();
+    final key = Rust.vaultGrantKeyGenerate();
+    return VaultPairing._(slot, key.secret, key.public);
+  }
+
+  /// Wait for the other device to leave the key in the slot. True once the
+  /// key is here and checked; false when [cancelled] or the slot ran out.
+  Future<bool> awaitGrant(
+    VaultPairing pairing, {
+    Duration every = const Duration(seconds: 2),
+    Duration limit = const Duration(minutes: 5),
+    bool Function()? cancelled,
+  }) async {
+    final vaultId = _requireVault();
+    final keyCheck = await _keyCheck();
+    final until = DateTime.now().add(limit);
+    while (DateTime.now().isBefore(until)) {
+      if (cancelled?.call() ?? false) return false;
+      final ({Uint8List box, Uint8List granterPub, String vaultId})? got;
+      try {
+        got = await _api.takePairSlot(pairing.slot);
+      } on VaultApiException catch (e) {
+        if (e.code == 'VAULT_PAIR_NOT_FOUND') return false;
+        if (e.code != 'NETWORK') rethrow;
+        await Future<void>.delayed(every);
+        continue;
+      }
+      if (got != null) {
+        if (got.vaultId != vaultId) {
+          throw const VaultApiException(
+            'VAULT_KEY_MISMATCH',
+            'That device belongs to another Drive',
+          );
+        }
+        final Uint8List vk;
+        try {
+          vk = Rust.vaultAcceptGrant(
+            vaultId: vaultId,
+            mineSecret: pairing._secret,
+            granterPub: got.granterPub,
+            boxed: got.box,
+            expectedKeyCheck: keyCheck,
+          );
+        } on Object {
+          throw const VaultApiException(
+            'VAULT_KEY_MISMATCH',
+            'The key from that device does not fit this Drive',
+          );
+        }
+        await acceptVaultKey(vk, keyCheck);
+        return true;
+      }
+      await Future<void>.delayed(every);
+    }
+    return false;
+  }
+
+  /// A device with the key: hand it to the device whose QR code was scanned.
+  /// The key in the code came from the camera, never from the server, so the
+  /// server cannot swap it. Throws [FormatException] for a code that is not a
+  /// Drive pairing code.
+  Future<void> grantTo(String scanned) async {
+    final vaultId = _requireVault();
+    final code = VaultPairing.parse(scanned);
+    final vk = await _keys.vaultKey();
+    if (vk == null) {
+      throw const VaultApiException(
+        'VAULT_NO_KEY',
+        'This device does not have the key yet',
+      );
+    }
+    final mine = Rust.vaultGrantKeyGenerate();
+    final box = Rust.vaultGrant(
+      vaultKey: vk,
+      vaultId: vaultId,
+      mineSecret: mine.secret,
+      newPub: code.publicKey,
+    );
+    await _api.fillPairSlot(
+      vaultId,
+      code.slot,
+      box: box,
+      granterPub: mine.public,
+    );
+  }
+
+  // ---- deleting the account (task 3.9) ----------------------------------------
+
+  /// Delete the Drive account: a fresh sign-in, the key copy removed from
+  /// iCloud Keychain and Google Drive, then the account and every file on the
+  /// server, then everything Drive on this device. Null when the person
+  /// closed the sign-in sheet; otherwise the places the key copy could not be
+  /// removed from (unreadable without the deleted server half, but the person
+  /// should know).
+  Future<List<String>?> deleteAccount(String provider) async {
+    final vaultId = _requireVault();
+    final token = await _freshToken(provider);
+    if (token == null) return null;
+    // The copy first: if the server call then fails, the account is still
+    // there and the next start writes the copy again.
+    final left = await keyCopy.deleteAll(
+      vaultId,
+      interactive: provider == 'google',
+    );
+    await _api.deleteAccount(
+      vaultId,
+      provider: token.provider,
+      idToken: token.idToken,
+    );
+    await signOut();
+    return left;
+  }
+
+  String _requireVault() {
+    final id = _vaultId;
+    if (id == null) {
+      throw const VaultApiException(
+        'VAULT_NOT_SIGNED_IN',
+        'No Drive account on this device',
+      );
+    }
+    return id;
+  }
+
+  Future<String> _keyCheck() async {
+    final known = _last?.keyCheck ?? _info?['keyCheck'] as String?;
+    if (known != null) return known;
+    await refreshInfo();
+    final fetched = _info?['keyCheck'] as String?;
+    if (fetched == null) {
+      throw const VaultApiException(
+        'VAULT_NO_KEY',
+        'This Drive has no key yet',
+      );
+    }
+    return fetched;
+  }
+
   /// Forget Drive on this device. The account and its files stay.
   Future<void> signOut() async {
     await _keys.forgetVault();
@@ -244,7 +473,45 @@ class VaultAccount extends ChangeNotifier {
     keyCopy.reset();
     _vaultId = null;
     _last = null;
+    _info = null;
     _status = VaultStatus.signedOut;
     notifyListeners();
+  }
+}
+
+/// One pairing slot opened by a device waiting for the key (task 3.8), and
+/// the QR code it shows: `BSVP1.<slot>.<X25519 public key, base64url>`. Not a
+/// URL on purpose: a system camera app has nothing to open, and only Drive's
+/// own scanner reads it.
+class VaultPairing {
+  VaultPairing._(this.slot, this._secret, this.publicKey);
+
+  final String slot;
+  final Uint8List _secret;
+  final Uint8List publicKey;
+
+  static const _prefix = 'BSVP1';
+
+  String get code =>
+      '$_prefix.$slot.${base64Url.encode(publicKey).replaceAll('=', '')}';
+
+  /// Read a scanned code. Throws [FormatException].
+  static ({String slot, Uint8List publicKey}) parse(String raw) {
+    final parts = raw.trim().split('.');
+    if (parts.length != 3 ||
+        parts[0] != _prefix ||
+        !RegExp(r'^[A-Za-z0-9_-]{22}$').hasMatch(parts[1])) {
+      throw const FormatException('not a Drive pairing code');
+    }
+    final Uint8List key;
+    try {
+      key = base64Url.decode(base64Url.normalize(parts[2]));
+    } on FormatException {
+      throw const FormatException('not a Drive pairing code');
+    }
+    if (key.length != 32) {
+      throw const FormatException('not a Drive pairing code');
+    }
+    return (slot: parts[1], publicKey: key);
   }
 }

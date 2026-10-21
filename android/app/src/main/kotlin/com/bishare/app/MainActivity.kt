@@ -1,5 +1,7 @@
 package com.bishare.app
 
+import android.app.Activity
+import android.app.KeyguardManager
 import android.app.UiModeManager
 import android.content.ClipData
 import android.content.ClipDescription
@@ -55,6 +57,11 @@ class MainActivity : FlutterActivity() {
     private var clipChanges = 0
     private var clipListener: ClipboardManager.OnPrimaryClipChangedListener? = null
     private var pending: List<String>? = null
+
+    /// The Dart call waiting for the lock screen confirmation (Drive recovery
+    /// phrase, see lib/core/platform/device_lock.dart).
+    private var pendingLock: MethodChannel.Result? = null
+    private val lockRequest = 0x5641 // "VA"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -125,11 +132,50 @@ class MainActivity : FlutterActivity() {
         deviceChannel!!.setMethodCallHandler { call, result ->
             when (call.method) {
                 "isTv" -> result.success(isTvDevice())
+                "confirmDeviceLock" -> confirmDeviceLock(
+                    call.argument<String>("title"),
+                    call.argument<String>("reason"),
+                    result,
+                )
                 else -> result.notImplemented()
             }
         }
         // The intent that launched us (cold start) may be a share.
         handleShareIntent(intent, initial = true)
+    }
+
+    /**
+     * The system's own lock screen confirmation (PIN, pattern, password or
+     * biometrics, as the person set it up). Answers "ok", "cancelled", or
+     * "none" when the device has no screen lock. KeyguardManager rather than
+     * BiometricPrompt via local_auth, which would need a FragmentActivity.
+     */
+    private fun confirmDeviceLock(title: String?, reason: String?, result: MethodChannel.Result) {
+        val keyguard = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        if (!keyguard.isDeviceSecure) {
+            result.success("none")
+            return
+        }
+        @Suppress("DEPRECATION")
+        val intent = keyguard.createConfirmDeviceCredentialIntent(title, reason)
+        if (intent == null) {
+            result.success("none")
+            return
+        }
+        pendingLock?.success("cancelled")
+        pendingLock = result
+        @Suppress("DEPRECATION")
+        startActivityForResult(intent, lockRequest)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        @Suppress("DEPRECATION")
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == lockRequest) {
+            pendingLock?.success(if (resultCode == Activity.RESULT_OK) "ok" else "cancelled")
+            pendingLock = null
+        }
     }
 
     /** True on Android TV / Leanback devices (no touchscreen, remote-driven). */

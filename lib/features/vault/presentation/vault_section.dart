@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/config/feature_flags.dart';
@@ -134,9 +135,10 @@ class _VaultGroupState extends State<_VaultGroup> {
             ..add(const AppRowDivider(indent: 58))
             ..add(
               AppListTile(
-                leading: const Glyph(AppIcons.close),
-                title: Text('vault.sign_out'.tr()),
-                onTap: _busy ? null : _account.signOut,
+                leading: const Glyph(AppIcons.settings),
+                title: Text('vault.manage'.tr()),
+                trailing: const _Chevron(),
+                onTap: () => context.push('/drive-account'),
               ),
             );
         }
@@ -155,4 +157,17 @@ class _VaultGroupState extends State<_VaultGroup> {
       },
     );
   }
+}
+
+class _Chevron extends StatelessWidget {
+  const _Chevron();
+
+  @override
+  Widget build(BuildContext context) => AppSvgIcon(
+    AppIcons.chevronRight,
+    size: 18,
+    color: ShadTheme.of(
+      context,
+    ).colorScheme.mutedForeground.withValues(alpha: 0.6),
+  );
 }

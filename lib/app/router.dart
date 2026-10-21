@@ -18,6 +18,7 @@ import '../features/qr_beam/presentation/qr_beam_send_page.dart';
 import '../features/remote/presentation/remote_share_page.dart';
 import '../features/scanner/presentation/scanner_page.dart';
 import '../features/tv/presentation/tv_shell.dart';
+import '../features/vault/presentation/vault_account_page.dart';
 import 'main_shell.dart';
 
 /// Arguments for the image gallery route (passed via `extra`).
@@ -114,6 +115,18 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: 'clipboard',
           builder: (context, state) => const ClipboardHistoryPage(),
+        ),
+        // BIShare Drive (drive-plan.md phase 3); reachable only from the Drive
+        // group in Settings, which shows only while vault_enabled allows it.
+        GoRoute(
+          path: 'drive-account',
+          builder: (context, state) => const VaultAccountPage(),
+          routes: [
+            GoRoute(
+              path: 'scan',
+              builder: (context, state) => const VaultPairScanPage(),
+            ),
+          ],
         ),
       ],
     ),
