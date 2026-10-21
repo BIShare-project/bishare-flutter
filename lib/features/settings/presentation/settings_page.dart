@@ -9,6 +9,7 @@ import '../../../core/l10n/app_locales.dart';
 import '../../../core/server/transfer_types.dart';
 import '../../../core/ui/app_ui.dart';
 import '../domain/settings.dart' as s;
+import '../../vault/presentation/vault_section.dart';
 import 'settings_cubit.dart';
 import 'widgets/about_section.dart';
 import 'widgets/accent_row.dart';
@@ -64,6 +65,8 @@ class SettingsPage extends StatelessWidget {
                             ),
                           ),
                         ),
+                        // BIShare Drive, for testers: nothing unless vault_enabled.
+                        const VaultSection(),
                         AppSectionHeader('settings.appearance'.tr()),
                         AppGroup(
                           child: Column(

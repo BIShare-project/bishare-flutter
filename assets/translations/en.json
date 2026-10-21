@@ -700,5 +700,22 @@
     "scan_hint": "Scan with BIShare on any device on this Wi-Fi to download.",
     "one_time_24h": "One-time · 24h",
     "timed_5min": "Timed · 5 min"
+  },
+  "vault": {
+    "title": "Drive (testing)",
+    "signed_out": "Encrypted storage for your files. Sign in to try it.",
+    "sign_in_google": "Sign in with Google",
+    "sign_in_apple": "Sign in with Apple",
+    "ready": "Signed in. This device has the key to your Drive.",
+    "needs_key": "Signed in. This device still needs the key from another device.",
+    "pending": "Signed in. Another of your devices must approve this one.",
+    "plan_free": "Free plan, 5 GB",
+    "sign_out": "Sign out of Drive on this device",
+    "error_unavailable": "Drive is not available yet.",
+    "error_not_invited": "Drive is in testing and this account is not on the list yet.",
+    "error_network": "No connection. Try again.",
+    "error_generic": "Sign-in did not work. Try again.",
+    "tester_on": "Drive testing is on for this device.",
+    "tester_off": "Drive testing is off for this device."
   }
 }
