@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
 import 'sync_tables.dart';
+import 'vault_tables.dart';
 
 part 'app_database.g.dart';
 
@@ -84,8 +85,13 @@ class ClipboardHistory extends Table {
     SyncPeerState,
     ExpectedChanges,
     SyncCloudBlobs,
+    // BIShare Drive (schemaVersion 5) — see vault_tables.dart.
+    VaultObjects,
+    VaultTransfers,
+    VaultState,
+    VaultBackedUpAssets,
   ],
-  daos: [SyncDao],
+  daos: [SyncDao, VaultDao],
 )
 class AppDatabase extends _$AppDatabase {
   /// Pass a custom [executor] in tests (e.g. `NativeDatabase.memory()`); the app
@@ -94,7 +100,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'bishare'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   /// The ONE incremental upgrade path. Every future schema bump adds its own
   /// `if (from < N)` block below (from < 4, from < 5, …) — never edit or
@@ -120,6 +126,13 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(syncPeerState);
         await m.createTable(expectedChanges);
         await m.createTable(syncCloudBlobs);
+      }
+      if (from < 5) {
+        // BIShare Drive (drive-plan.md task 4.1). Additive, as above.
+        await m.createTable(vaultObjects);
+        await m.createTable(vaultTransfers);
+        await m.createTable(vaultState);
+        await m.createTable(vaultBackedUpAssets);
       }
     },
   );

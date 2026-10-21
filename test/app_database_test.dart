@@ -412,4 +412,51 @@ void main() {
 
     await db.close();
   });
+
+  test('migration v4→v5: creates the Drive tables, keeps v4 data', () async {
+    final dir = await Directory.systemTemp.createTemp('bishare_db_test');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/app.db');
+
+    // A real database at the current schema, then turned back into v4 by
+    // dropping the four Drive tables, so AppDatabase runs onUpgrade(4 → 5)
+    // on a database that has every v4 table exactly as drift made it.
+    final first = AppDatabase(NativeDatabase(file));
+    await first.insertRecord(TransferRecordsCompanion.insert(
+      fileName: 'old.jpg',
+      fileSize: 5,
+      direction: 'received',
+      deviceAlias: 'x',
+      timestamp: DateTime(2026, 1, 1),
+    ));
+    await first.close();
+
+    final db = AppDatabase(NativeDatabase(file, setup: (raw) {
+      if (raw.userVersion != 5) return;
+      for (final t in ['vault_objects', 'vault_transfers', 'vault_state', 'vault_backed_up_assets']) {
+        raw.execute('DROP TABLE $t;');
+      }
+      raw.userVersion = 4;
+    }));
+
+    // v4 rows survive the upgrade...
+    expect((await db.watchAll().first).single.fileName, 'old.jpg');
+
+    // ...and the Drive tables exist and are usable.
+    final vault = db.vaultDao;
+    await vault.setStateValue('seq', '7');
+    expect(await vault.stateValue('seq'), '7');
+    await vault.upsertObjects([
+      VaultObjectsCompanion.insert(id: 'd', name: 'Photos', kind: 'dir', mtime: 1, seq: 1, createdAt: 1, encMeta: 'x'),
+      VaultObjectsCompanion.insert(id: 'f', parent: const Value('d'), name: 'b.jpg', kind: 'file', mtime: 1, seq: 2, createdAt: 1, encMeta: 'y'),
+      VaultObjectsCompanion.insert(id: 'a', name: 'a.txt', kind: 'file', mtime: 1, seq: 3, createdAt: 1, encMeta: 'z'),
+    ]);
+    expect((await vault.watchChildren(null).first).map((o) => o.name), ['Photos', 'a.txt'], reason: 'folders first');
+    expect((await vault.watchChildren('d').first).single.name, 'b.jpg');
+    await vault.clearAll();
+    expect(await vault.watchChildren(null).first, isEmpty);
+    expect((await db.watchAll().first).single.fileName, 'old.jpg', reason: 'clearing Drive touches nothing else');
+
+    await db.close();
+  });
 }

@@ -5354,6 +5354,2261 @@ class SyncCloudBlobsCompanion extends UpdateCompanion<SyncCloudBlob> {
   }
 }
 
+class $VaultObjectsTable extends VaultObjects
+    with TableInfo<$VaultObjectsTable, VaultObject> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VaultObjectsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _parentMeta = const VerificationMeta('parent');
+  @override
+  late final GeneratedColumn<String> parent = GeneratedColumn<String>(
+    'parent',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sizeMeta = const VerificationMeta('size');
+  @override
+  late final GeneratedColumn<int> size = GeneratedColumn<int>(
+    'size',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _mtimeMeta = const VerificationMeta('mtime');
+  @override
+  late final GeneratedColumn<int> mtime = GeneratedColumn<int>(
+    'mtime',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mimeMeta = const VerificationMeta('mime');
+  @override
+  late final GeneratedColumn<String> mime = GeneratedColumn<String>(
+    'mime',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _hashMeta = const VerificationMeta('hash');
+  @override
+  late final GeneratedColumn<String> hash = GeneratedColumn<String>(
+    'hash',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _blobIdMeta = const VerificationMeta('blobId');
+  @override
+  late final GeneratedColumn<String> blobId = GeneratedColumn<String>(
+    'blob_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _blobSizeMeta = const VerificationMeta(
+    'blobSize',
+  );
+  @override
+  late final GeneratedColumn<int> blobSize = GeneratedColumn<int>(
+    'blob_size',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _hasThumbMeta = const VerificationMeta(
+    'hasThumb',
+  );
+  @override
+  late final GeneratedColumn<bool> hasThumb = GeneratedColumn<bool>(
+    'has_thumb',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("has_thumb" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _seqMeta = const VerificationMeta('seq');
+  @override
+  late final GeneratedColumn<int> seq = GeneratedColumn<int>(
+    'seq',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _trashedAtMeta = const VerificationMeta(
+    'trashedAt',
+  );
+  @override
+  late final GeneratedColumn<int> trashedAt = GeneratedColumn<int>(
+    'trashed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _encMetaMeta = const VerificationMeta(
+    'encMeta',
+  );
+  @override
+  late final GeneratedColumn<String> encMeta = GeneratedColumn<String>(
+    'enc_meta',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    parent,
+    name,
+    kind,
+    size,
+    mtime,
+    mime,
+    hash,
+    blobId,
+    blobSize,
+    hasThumb,
+    seq,
+    createdAt,
+    trashedAt,
+    encMeta,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vault_objects';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VaultObject> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('parent')) {
+      context.handle(
+        _parentMeta,
+        parent.isAcceptableOrUnknown(data['parent']!, _parentMeta),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('size')) {
+      context.handle(
+        _sizeMeta,
+        size.isAcceptableOrUnknown(data['size']!, _sizeMeta),
+      );
+    }
+    if (data.containsKey('mtime')) {
+      context.handle(
+        _mtimeMeta,
+        mtime.isAcceptableOrUnknown(data['mtime']!, _mtimeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mtimeMeta);
+    }
+    if (data.containsKey('mime')) {
+      context.handle(
+        _mimeMeta,
+        mime.isAcceptableOrUnknown(data['mime']!, _mimeMeta),
+      );
+    }
+    if (data.containsKey('hash')) {
+      context.handle(
+        _hashMeta,
+        hash.isAcceptableOrUnknown(data['hash']!, _hashMeta),
+      );
+    }
+    if (data.containsKey('blob_id')) {
+      context.handle(
+        _blobIdMeta,
+        blobId.isAcceptableOrUnknown(data['blob_id']!, _blobIdMeta),
+      );
+    }
+    if (data.containsKey('blob_size')) {
+      context.handle(
+        _blobSizeMeta,
+        blobSize.isAcceptableOrUnknown(data['blob_size']!, _blobSizeMeta),
+      );
+    }
+    if (data.containsKey('has_thumb')) {
+      context.handle(
+        _hasThumbMeta,
+        hasThumb.isAcceptableOrUnknown(data['has_thumb']!, _hasThumbMeta),
+      );
+    }
+    if (data.containsKey('seq')) {
+      context.handle(
+        _seqMeta,
+        seq.isAcceptableOrUnknown(data['seq']!, _seqMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_seqMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('trashed_at')) {
+      context.handle(
+        _trashedAtMeta,
+        trashedAt.isAcceptableOrUnknown(data['trashed_at']!, _trashedAtMeta),
+      );
+    }
+    if (data.containsKey('enc_meta')) {
+      context.handle(
+        _encMetaMeta,
+        encMeta.isAcceptableOrUnknown(data['enc_meta']!, _encMetaMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_encMetaMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  VaultObject map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VaultObject(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      parent: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}parent'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      size: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size'],
+      ),
+      mtime: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}mtime'],
+      )!,
+      mime: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mime'],
+      ),
+      hash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hash'],
+      ),
+      blobId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}blob_id'],
+      ),
+      blobSize: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}blob_size'],
+      ),
+      hasThumb: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}has_thumb'],
+      )!,
+      seq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seq'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+      trashedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}trashed_at'],
+      ),
+      encMeta: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}enc_meta'],
+      )!,
+    );
+  }
+
+  @override
+  $VaultObjectsTable createAlias(String alias) {
+    return $VaultObjectsTable(attachedDatabase, alias);
+  }
+}
+
+class VaultObject extends DataClass implements Insertable<VaultObject> {
+  final String id;
+  final String? parent;
+  final String name;
+
+  /// 'file' or 'dir'.
+  final String kind;
+
+  /// Plaintext size of a file.
+  final int? size;
+
+  /// Modification time, Unix milliseconds.
+  final int mtime;
+  final String? mime;
+
+  /// b64u SHA-256 of the plaintext: what photo backup and the uploader
+  /// compare against, so the same file is not sent twice.
+  final String? hash;
+  final String? blobId;
+
+  /// Stored (ciphertext) size, what the quota counts.
+  final int? blobSize;
+  final bool hasThumb;
+  final int seq;
+  final int createdAt;
+  final int? trashedAt;
+  final String encMeta;
+  const VaultObject({
+    required this.id,
+    this.parent,
+    required this.name,
+    required this.kind,
+    this.size,
+    required this.mtime,
+    this.mime,
+    this.hash,
+    this.blobId,
+    this.blobSize,
+    required this.hasThumb,
+    required this.seq,
+    required this.createdAt,
+    this.trashedAt,
+    required this.encMeta,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || parent != null) {
+      map['parent'] = Variable<String>(parent);
+    }
+    map['name'] = Variable<String>(name);
+    map['kind'] = Variable<String>(kind);
+    if (!nullToAbsent || size != null) {
+      map['size'] = Variable<int>(size);
+    }
+    map['mtime'] = Variable<int>(mtime);
+    if (!nullToAbsent || mime != null) {
+      map['mime'] = Variable<String>(mime);
+    }
+    if (!nullToAbsent || hash != null) {
+      map['hash'] = Variable<String>(hash);
+    }
+    if (!nullToAbsent || blobId != null) {
+      map['blob_id'] = Variable<String>(blobId);
+    }
+    if (!nullToAbsent || blobSize != null) {
+      map['blob_size'] = Variable<int>(blobSize);
+    }
+    map['has_thumb'] = Variable<bool>(hasThumb);
+    map['seq'] = Variable<int>(seq);
+    map['created_at'] = Variable<int>(createdAt);
+    if (!nullToAbsent || trashedAt != null) {
+      map['trashed_at'] = Variable<int>(trashedAt);
+    }
+    map['enc_meta'] = Variable<String>(encMeta);
+    return map;
+  }
+
+  VaultObjectsCompanion toCompanion(bool nullToAbsent) {
+    return VaultObjectsCompanion(
+      id: Value(id),
+      parent: parent == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parent),
+      name: Value(name),
+      kind: Value(kind),
+      size: size == null && nullToAbsent ? const Value.absent() : Value(size),
+      mtime: Value(mtime),
+      mime: mime == null && nullToAbsent ? const Value.absent() : Value(mime),
+      hash: hash == null && nullToAbsent ? const Value.absent() : Value(hash),
+      blobId: blobId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(blobId),
+      blobSize: blobSize == null && nullToAbsent
+          ? const Value.absent()
+          : Value(blobSize),
+      hasThumb: Value(hasThumb),
+      seq: Value(seq),
+      createdAt: Value(createdAt),
+      trashedAt: trashedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trashedAt),
+      encMeta: Value(encMeta),
+    );
+  }
+
+  factory VaultObject.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VaultObject(
+      id: serializer.fromJson<String>(json['id']),
+      parent: serializer.fromJson<String?>(json['parent']),
+      name: serializer.fromJson<String>(json['name']),
+      kind: serializer.fromJson<String>(json['kind']),
+      size: serializer.fromJson<int?>(json['size']),
+      mtime: serializer.fromJson<int>(json['mtime']),
+      mime: serializer.fromJson<String?>(json['mime']),
+      hash: serializer.fromJson<String?>(json['hash']),
+      blobId: serializer.fromJson<String?>(json['blobId']),
+      blobSize: serializer.fromJson<int?>(json['blobSize']),
+      hasThumb: serializer.fromJson<bool>(json['hasThumb']),
+      seq: serializer.fromJson<int>(json['seq']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      trashedAt: serializer.fromJson<int?>(json['trashedAt']),
+      encMeta: serializer.fromJson<String>(json['encMeta']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'parent': serializer.toJson<String?>(parent),
+      'name': serializer.toJson<String>(name),
+      'kind': serializer.toJson<String>(kind),
+      'size': serializer.toJson<int?>(size),
+      'mtime': serializer.toJson<int>(mtime),
+      'mime': serializer.toJson<String?>(mime),
+      'hash': serializer.toJson<String?>(hash),
+      'blobId': serializer.toJson<String?>(blobId),
+      'blobSize': serializer.toJson<int?>(blobSize),
+      'hasThumb': serializer.toJson<bool>(hasThumb),
+      'seq': serializer.toJson<int>(seq),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'trashedAt': serializer.toJson<int?>(trashedAt),
+      'encMeta': serializer.toJson<String>(encMeta),
+    };
+  }
+
+  VaultObject copyWith({
+    String? id,
+    Value<String?> parent = const Value.absent(),
+    String? name,
+    String? kind,
+    Value<int?> size = const Value.absent(),
+    int? mtime,
+    Value<String?> mime = const Value.absent(),
+    Value<String?> hash = const Value.absent(),
+    Value<String?> blobId = const Value.absent(),
+    Value<int?> blobSize = const Value.absent(),
+    bool? hasThumb,
+    int? seq,
+    int? createdAt,
+    Value<int?> trashedAt = const Value.absent(),
+    String? encMeta,
+  }) => VaultObject(
+    id: id ?? this.id,
+    parent: parent.present ? parent.value : this.parent,
+    name: name ?? this.name,
+    kind: kind ?? this.kind,
+    size: size.present ? size.value : this.size,
+    mtime: mtime ?? this.mtime,
+    mime: mime.present ? mime.value : this.mime,
+    hash: hash.present ? hash.value : this.hash,
+    blobId: blobId.present ? blobId.value : this.blobId,
+    blobSize: blobSize.present ? blobSize.value : this.blobSize,
+    hasThumb: hasThumb ?? this.hasThumb,
+    seq: seq ?? this.seq,
+    createdAt: createdAt ?? this.createdAt,
+    trashedAt: trashedAt.present ? trashedAt.value : this.trashedAt,
+    encMeta: encMeta ?? this.encMeta,
+  );
+  VaultObject copyWithCompanion(VaultObjectsCompanion data) {
+    return VaultObject(
+      id: data.id.present ? data.id.value : this.id,
+      parent: data.parent.present ? data.parent.value : this.parent,
+      name: data.name.present ? data.name.value : this.name,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      size: data.size.present ? data.size.value : this.size,
+      mtime: data.mtime.present ? data.mtime.value : this.mtime,
+      mime: data.mime.present ? data.mime.value : this.mime,
+      hash: data.hash.present ? data.hash.value : this.hash,
+      blobId: data.blobId.present ? data.blobId.value : this.blobId,
+      blobSize: data.blobSize.present ? data.blobSize.value : this.blobSize,
+      hasThumb: data.hasThumb.present ? data.hasThumb.value : this.hasThumb,
+      seq: data.seq.present ? data.seq.value : this.seq,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      trashedAt: data.trashedAt.present ? data.trashedAt.value : this.trashedAt,
+      encMeta: data.encMeta.present ? data.encMeta.value : this.encMeta,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultObject(')
+          ..write('id: $id, ')
+          ..write('parent: $parent, ')
+          ..write('name: $name, ')
+          ..write('kind: $kind, ')
+          ..write('size: $size, ')
+          ..write('mtime: $mtime, ')
+          ..write('mime: $mime, ')
+          ..write('hash: $hash, ')
+          ..write('blobId: $blobId, ')
+          ..write('blobSize: $blobSize, ')
+          ..write('hasThumb: $hasThumb, ')
+          ..write('seq: $seq, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('trashedAt: $trashedAt, ')
+          ..write('encMeta: $encMeta')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    parent,
+    name,
+    kind,
+    size,
+    mtime,
+    mime,
+    hash,
+    blobId,
+    blobSize,
+    hasThumb,
+    seq,
+    createdAt,
+    trashedAt,
+    encMeta,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VaultObject &&
+          other.id == this.id &&
+          other.parent == this.parent &&
+          other.name == this.name &&
+          other.kind == this.kind &&
+          other.size == this.size &&
+          other.mtime == this.mtime &&
+          other.mime == this.mime &&
+          other.hash == this.hash &&
+          other.blobId == this.blobId &&
+          other.blobSize == this.blobSize &&
+          other.hasThumb == this.hasThumb &&
+          other.seq == this.seq &&
+          other.createdAt == this.createdAt &&
+          other.trashedAt == this.trashedAt &&
+          other.encMeta == this.encMeta);
+}
+
+class VaultObjectsCompanion extends UpdateCompanion<VaultObject> {
+  final Value<String> id;
+  final Value<String?> parent;
+  final Value<String> name;
+  final Value<String> kind;
+  final Value<int?> size;
+  final Value<int> mtime;
+  final Value<String?> mime;
+  final Value<String?> hash;
+  final Value<String?> blobId;
+  final Value<int?> blobSize;
+  final Value<bool> hasThumb;
+  final Value<int> seq;
+  final Value<int> createdAt;
+  final Value<int?> trashedAt;
+  final Value<String> encMeta;
+  final Value<int> rowid;
+  const VaultObjectsCompanion({
+    this.id = const Value.absent(),
+    this.parent = const Value.absent(),
+    this.name = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.size = const Value.absent(),
+    this.mtime = const Value.absent(),
+    this.mime = const Value.absent(),
+    this.hash = const Value.absent(),
+    this.blobId = const Value.absent(),
+    this.blobSize = const Value.absent(),
+    this.hasThumb = const Value.absent(),
+    this.seq = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.trashedAt = const Value.absent(),
+    this.encMeta = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VaultObjectsCompanion.insert({
+    required String id,
+    this.parent = const Value.absent(),
+    required String name,
+    required String kind,
+    this.size = const Value.absent(),
+    required int mtime,
+    this.mime = const Value.absent(),
+    this.hash = const Value.absent(),
+    this.blobId = const Value.absent(),
+    this.blobSize = const Value.absent(),
+    this.hasThumb = const Value.absent(),
+    required int seq,
+    required int createdAt,
+    this.trashedAt = const Value.absent(),
+    required String encMeta,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       name = Value(name),
+       kind = Value(kind),
+       mtime = Value(mtime),
+       seq = Value(seq),
+       createdAt = Value(createdAt),
+       encMeta = Value(encMeta);
+  static Insertable<VaultObject> custom({
+    Expression<String>? id,
+    Expression<String>? parent,
+    Expression<String>? name,
+    Expression<String>? kind,
+    Expression<int>? size,
+    Expression<int>? mtime,
+    Expression<String>? mime,
+    Expression<String>? hash,
+    Expression<String>? blobId,
+    Expression<int>? blobSize,
+    Expression<bool>? hasThumb,
+    Expression<int>? seq,
+    Expression<int>? createdAt,
+    Expression<int>? trashedAt,
+    Expression<String>? encMeta,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (parent != null) 'parent': parent,
+      if (name != null) 'name': name,
+      if (kind != null) 'kind': kind,
+      if (size != null) 'size': size,
+      if (mtime != null) 'mtime': mtime,
+      if (mime != null) 'mime': mime,
+      if (hash != null) 'hash': hash,
+      if (blobId != null) 'blob_id': blobId,
+      if (blobSize != null) 'blob_size': blobSize,
+      if (hasThumb != null) 'has_thumb': hasThumb,
+      if (seq != null) 'seq': seq,
+      if (createdAt != null) 'created_at': createdAt,
+      if (trashedAt != null) 'trashed_at': trashedAt,
+      if (encMeta != null) 'enc_meta': encMeta,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VaultObjectsCompanion copyWith({
+    Value<String>? id,
+    Value<String?>? parent,
+    Value<String>? name,
+    Value<String>? kind,
+    Value<int?>? size,
+    Value<int>? mtime,
+    Value<String?>? mime,
+    Value<String?>? hash,
+    Value<String?>? blobId,
+    Value<int?>? blobSize,
+    Value<bool>? hasThumb,
+    Value<int>? seq,
+    Value<int>? createdAt,
+    Value<int?>? trashedAt,
+    Value<String>? encMeta,
+    Value<int>? rowid,
+  }) {
+    return VaultObjectsCompanion(
+      id: id ?? this.id,
+      parent: parent ?? this.parent,
+      name: name ?? this.name,
+      kind: kind ?? this.kind,
+      size: size ?? this.size,
+      mtime: mtime ?? this.mtime,
+      mime: mime ?? this.mime,
+      hash: hash ?? this.hash,
+      blobId: blobId ?? this.blobId,
+      blobSize: blobSize ?? this.blobSize,
+      hasThumb: hasThumb ?? this.hasThumb,
+      seq: seq ?? this.seq,
+      createdAt: createdAt ?? this.createdAt,
+      trashedAt: trashedAt ?? this.trashedAt,
+      encMeta: encMeta ?? this.encMeta,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (parent.present) {
+      map['parent'] = Variable<String>(parent.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (size.present) {
+      map['size'] = Variable<int>(size.value);
+    }
+    if (mtime.present) {
+      map['mtime'] = Variable<int>(mtime.value);
+    }
+    if (mime.present) {
+      map['mime'] = Variable<String>(mime.value);
+    }
+    if (hash.present) {
+      map['hash'] = Variable<String>(hash.value);
+    }
+    if (blobId.present) {
+      map['blob_id'] = Variable<String>(blobId.value);
+    }
+    if (blobSize.present) {
+      map['blob_size'] = Variable<int>(blobSize.value);
+    }
+    if (hasThumb.present) {
+      map['has_thumb'] = Variable<bool>(hasThumb.value);
+    }
+    if (seq.present) {
+      map['seq'] = Variable<int>(seq.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (trashedAt.present) {
+      map['trashed_at'] = Variable<int>(trashedAt.value);
+    }
+    if (encMeta.present) {
+      map['enc_meta'] = Variable<String>(encMeta.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultObjectsCompanion(')
+          ..write('id: $id, ')
+          ..write('parent: $parent, ')
+          ..write('name: $name, ')
+          ..write('kind: $kind, ')
+          ..write('size: $size, ')
+          ..write('mtime: $mtime, ')
+          ..write('mime: $mime, ')
+          ..write('hash: $hash, ')
+          ..write('blobId: $blobId, ')
+          ..write('blobSize: $blobSize, ')
+          ..write('hasThumb: $hasThumb, ')
+          ..write('seq: $seq, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('trashedAt: $trashedAt, ')
+          ..write('encMeta: $encMeta, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $VaultTransfersTable extends VaultTransfers
+    with TableInfo<$VaultTransfersTable, VaultTransfer> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VaultTransfersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _directionMeta = const VerificationMeta(
+    'direction',
+  );
+  @override
+  late final GeneratedColumn<String> direction = GeneratedColumn<String>(
+    'direction',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _objectIdMeta = const VerificationMeta(
+    'objectId',
+  );
+  @override
+  late final GeneratedColumn<String> objectId = GeneratedColumn<String>(
+    'object_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _parentMeta = const VerificationMeta('parent');
+  @override
+  late final GeneratedColumn<String> parent = GeneratedColumn<String>(
+    'parent',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _localPathMeta = const VerificationMeta(
+    'localPath',
+  );
+  @override
+  late final GeneratedColumn<String> localPath = GeneratedColumn<String>(
+    'local_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sealedPathMeta = const VerificationMeta(
+    'sealedPath',
+  );
+  @override
+  late final GeneratedColumn<String> sealedPath = GeneratedColumn<String>(
+    'sealed_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sizeMeta = const VerificationMeta('size');
+  @override
+  late final GeneratedColumn<int> size = GeneratedColumn<int>(
+    'size',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _uploadIdMeta = const VerificationMeta(
+    'uploadId',
+  );
+  @override
+  late final GeneratedColumn<String> uploadId = GeneratedColumn<String>(
+    'upload_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _encMetaMeta = const VerificationMeta(
+    'encMeta',
+  );
+  @override
+  late final GeneratedColumn<String> encMeta = GeneratedColumn<String>(
+    'enc_meta',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _partsDoneMeta = const VerificationMeta(
+    'partsDone',
+  );
+  @override
+  late final GeneratedColumn<String> partsDone = GeneratedColumn<String>(
+    'parts_done',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _bytesDoneMeta = const VerificationMeta(
+    'bytesDone',
+  );
+  @override
+  late final GeneratedColumn<int> bytesDone = GeneratedColumn<int>(
+    'bytes_done',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _errorMeta = const VerificationMeta('error');
+  @override
+  late final GeneratedColumn<String> error = GeneratedColumn<String>(
+    'error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    direction,
+    objectId,
+    parent,
+    name,
+    localPath,
+    sealedPath,
+    size,
+    state,
+    uploadId,
+    encMeta,
+    partsDone,
+    bytesDone,
+    error,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vault_transfers';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VaultTransfer> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('direction')) {
+      context.handle(
+        _directionMeta,
+        direction.isAcceptableOrUnknown(data['direction']!, _directionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_directionMeta);
+    }
+    if (data.containsKey('object_id')) {
+      context.handle(
+        _objectIdMeta,
+        objectId.isAcceptableOrUnknown(data['object_id']!, _objectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_objectIdMeta);
+    }
+    if (data.containsKey('parent')) {
+      context.handle(
+        _parentMeta,
+        parent.isAcceptableOrUnknown(data['parent']!, _parentMeta),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('local_path')) {
+      context.handle(
+        _localPathMeta,
+        localPath.isAcceptableOrUnknown(data['local_path']!, _localPathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_localPathMeta);
+    }
+    if (data.containsKey('sealed_path')) {
+      context.handle(
+        _sealedPathMeta,
+        sealedPath.isAcceptableOrUnknown(data['sealed_path']!, _sealedPathMeta),
+      );
+    }
+    if (data.containsKey('size')) {
+      context.handle(
+        _sizeMeta,
+        size.isAcceptableOrUnknown(data['size']!, _sizeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sizeMeta);
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_stateMeta);
+    }
+    if (data.containsKey('upload_id')) {
+      context.handle(
+        _uploadIdMeta,
+        uploadId.isAcceptableOrUnknown(data['upload_id']!, _uploadIdMeta),
+      );
+    }
+    if (data.containsKey('enc_meta')) {
+      context.handle(
+        _encMetaMeta,
+        encMeta.isAcceptableOrUnknown(data['enc_meta']!, _encMetaMeta),
+      );
+    }
+    if (data.containsKey('parts_done')) {
+      context.handle(
+        _partsDoneMeta,
+        partsDone.isAcceptableOrUnknown(data['parts_done']!, _partsDoneMeta),
+      );
+    }
+    if (data.containsKey('bytes_done')) {
+      context.handle(
+        _bytesDoneMeta,
+        bytesDone.isAcceptableOrUnknown(data['bytes_done']!, _bytesDoneMeta),
+      );
+    }
+    if (data.containsKey('error')) {
+      context.handle(
+        _errorMeta,
+        error.isAcceptableOrUnknown(data['error']!, _errorMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  VaultTransfer map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VaultTransfer(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      direction: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}direction'],
+      )!,
+      objectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}object_id'],
+      )!,
+      parent: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}parent'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      localPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_path'],
+      )!,
+      sealedPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sealed_path'],
+      ),
+      size: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}size'],
+      )!,
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
+      uploadId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}upload_id'],
+      ),
+      encMeta: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}enc_meta'],
+      ),
+      partsDone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}parts_done'],
+      ),
+      bytesDone: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bytes_done'],
+      )!,
+      error: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $VaultTransfersTable createAlias(String alias) {
+    return $VaultTransfersTable(attachedDatabase, alias);
+  }
+}
+
+class VaultTransfer extends DataClass implements Insertable<VaultTransfer> {
+  final int id;
+
+  /// 'up' or 'down'.
+  final String direction;
+  final String objectId;
+  final String? parent;
+  final String name;
+
+  /// Upload: the file to send. Download: where the file goes.
+  final String localPath;
+
+  /// Upload: the sealed temporary file, once made.
+  final String? sealedPath;
+
+  /// Plaintext size.
+  final int size;
+
+  /// 'queued', 'sealing', 'sending', 'finishing', 'receiving', 'done',
+  /// 'failed', 'cancelled'.
+  final String state;
+  final String? uploadId;
+  final String? encMeta;
+
+  /// Multipart: JSON list of `{"n": part number, "e": ETag}` already sent.
+  final String? partsDone;
+  final int bytesDone;
+  final String? error;
+  final int createdAt;
+  final int updatedAt;
+  const VaultTransfer({
+    required this.id,
+    required this.direction,
+    required this.objectId,
+    this.parent,
+    required this.name,
+    required this.localPath,
+    this.sealedPath,
+    required this.size,
+    required this.state,
+    this.uploadId,
+    this.encMeta,
+    this.partsDone,
+    required this.bytesDone,
+    this.error,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['direction'] = Variable<String>(direction);
+    map['object_id'] = Variable<String>(objectId);
+    if (!nullToAbsent || parent != null) {
+      map['parent'] = Variable<String>(parent);
+    }
+    map['name'] = Variable<String>(name);
+    map['local_path'] = Variable<String>(localPath);
+    if (!nullToAbsent || sealedPath != null) {
+      map['sealed_path'] = Variable<String>(sealedPath);
+    }
+    map['size'] = Variable<int>(size);
+    map['state'] = Variable<String>(state);
+    if (!nullToAbsent || uploadId != null) {
+      map['upload_id'] = Variable<String>(uploadId);
+    }
+    if (!nullToAbsent || encMeta != null) {
+      map['enc_meta'] = Variable<String>(encMeta);
+    }
+    if (!nullToAbsent || partsDone != null) {
+      map['parts_done'] = Variable<String>(partsDone);
+    }
+    map['bytes_done'] = Variable<int>(bytesDone);
+    if (!nullToAbsent || error != null) {
+      map['error'] = Variable<String>(error);
+    }
+    map['created_at'] = Variable<int>(createdAt);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  VaultTransfersCompanion toCompanion(bool nullToAbsent) {
+    return VaultTransfersCompanion(
+      id: Value(id),
+      direction: Value(direction),
+      objectId: Value(objectId),
+      parent: parent == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parent),
+      name: Value(name),
+      localPath: Value(localPath),
+      sealedPath: sealedPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sealedPath),
+      size: Value(size),
+      state: Value(state),
+      uploadId: uploadId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(uploadId),
+      encMeta: encMeta == null && nullToAbsent
+          ? const Value.absent()
+          : Value(encMeta),
+      partsDone: partsDone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(partsDone),
+      bytesDone: Value(bytesDone),
+      error: error == null && nullToAbsent
+          ? const Value.absent()
+          : Value(error),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory VaultTransfer.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VaultTransfer(
+      id: serializer.fromJson<int>(json['id']),
+      direction: serializer.fromJson<String>(json['direction']),
+      objectId: serializer.fromJson<String>(json['objectId']),
+      parent: serializer.fromJson<String?>(json['parent']),
+      name: serializer.fromJson<String>(json['name']),
+      localPath: serializer.fromJson<String>(json['localPath']),
+      sealedPath: serializer.fromJson<String?>(json['sealedPath']),
+      size: serializer.fromJson<int>(json['size']),
+      state: serializer.fromJson<String>(json['state']),
+      uploadId: serializer.fromJson<String?>(json['uploadId']),
+      encMeta: serializer.fromJson<String?>(json['encMeta']),
+      partsDone: serializer.fromJson<String?>(json['partsDone']),
+      bytesDone: serializer.fromJson<int>(json['bytesDone']),
+      error: serializer.fromJson<String?>(json['error']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'direction': serializer.toJson<String>(direction),
+      'objectId': serializer.toJson<String>(objectId),
+      'parent': serializer.toJson<String?>(parent),
+      'name': serializer.toJson<String>(name),
+      'localPath': serializer.toJson<String>(localPath),
+      'sealedPath': serializer.toJson<String?>(sealedPath),
+      'size': serializer.toJson<int>(size),
+      'state': serializer.toJson<String>(state),
+      'uploadId': serializer.toJson<String?>(uploadId),
+      'encMeta': serializer.toJson<String?>(encMeta),
+      'partsDone': serializer.toJson<String?>(partsDone),
+      'bytesDone': serializer.toJson<int>(bytesDone),
+      'error': serializer.toJson<String?>(error),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  VaultTransfer copyWith({
+    int? id,
+    String? direction,
+    String? objectId,
+    Value<String?> parent = const Value.absent(),
+    String? name,
+    String? localPath,
+    Value<String?> sealedPath = const Value.absent(),
+    int? size,
+    String? state,
+    Value<String?> uploadId = const Value.absent(),
+    Value<String?> encMeta = const Value.absent(),
+    Value<String?> partsDone = const Value.absent(),
+    int? bytesDone,
+    Value<String?> error = const Value.absent(),
+    int? createdAt,
+    int? updatedAt,
+  }) => VaultTransfer(
+    id: id ?? this.id,
+    direction: direction ?? this.direction,
+    objectId: objectId ?? this.objectId,
+    parent: parent.present ? parent.value : this.parent,
+    name: name ?? this.name,
+    localPath: localPath ?? this.localPath,
+    sealedPath: sealedPath.present ? sealedPath.value : this.sealedPath,
+    size: size ?? this.size,
+    state: state ?? this.state,
+    uploadId: uploadId.present ? uploadId.value : this.uploadId,
+    encMeta: encMeta.present ? encMeta.value : this.encMeta,
+    partsDone: partsDone.present ? partsDone.value : this.partsDone,
+    bytesDone: bytesDone ?? this.bytesDone,
+    error: error.present ? error.value : this.error,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  VaultTransfer copyWithCompanion(VaultTransfersCompanion data) {
+    return VaultTransfer(
+      id: data.id.present ? data.id.value : this.id,
+      direction: data.direction.present ? data.direction.value : this.direction,
+      objectId: data.objectId.present ? data.objectId.value : this.objectId,
+      parent: data.parent.present ? data.parent.value : this.parent,
+      name: data.name.present ? data.name.value : this.name,
+      localPath: data.localPath.present ? data.localPath.value : this.localPath,
+      sealedPath: data.sealedPath.present
+          ? data.sealedPath.value
+          : this.sealedPath,
+      size: data.size.present ? data.size.value : this.size,
+      state: data.state.present ? data.state.value : this.state,
+      uploadId: data.uploadId.present ? data.uploadId.value : this.uploadId,
+      encMeta: data.encMeta.present ? data.encMeta.value : this.encMeta,
+      partsDone: data.partsDone.present ? data.partsDone.value : this.partsDone,
+      bytesDone: data.bytesDone.present ? data.bytesDone.value : this.bytesDone,
+      error: data.error.present ? data.error.value : this.error,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultTransfer(')
+          ..write('id: $id, ')
+          ..write('direction: $direction, ')
+          ..write('objectId: $objectId, ')
+          ..write('parent: $parent, ')
+          ..write('name: $name, ')
+          ..write('localPath: $localPath, ')
+          ..write('sealedPath: $sealedPath, ')
+          ..write('size: $size, ')
+          ..write('state: $state, ')
+          ..write('uploadId: $uploadId, ')
+          ..write('encMeta: $encMeta, ')
+          ..write('partsDone: $partsDone, ')
+          ..write('bytesDone: $bytesDone, ')
+          ..write('error: $error, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    direction,
+    objectId,
+    parent,
+    name,
+    localPath,
+    sealedPath,
+    size,
+    state,
+    uploadId,
+    encMeta,
+    partsDone,
+    bytesDone,
+    error,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VaultTransfer &&
+          other.id == this.id &&
+          other.direction == this.direction &&
+          other.objectId == this.objectId &&
+          other.parent == this.parent &&
+          other.name == this.name &&
+          other.localPath == this.localPath &&
+          other.sealedPath == this.sealedPath &&
+          other.size == this.size &&
+          other.state == this.state &&
+          other.uploadId == this.uploadId &&
+          other.encMeta == this.encMeta &&
+          other.partsDone == this.partsDone &&
+          other.bytesDone == this.bytesDone &&
+          other.error == this.error &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class VaultTransfersCompanion extends UpdateCompanion<VaultTransfer> {
+  final Value<int> id;
+  final Value<String> direction;
+  final Value<String> objectId;
+  final Value<String?> parent;
+  final Value<String> name;
+  final Value<String> localPath;
+  final Value<String?> sealedPath;
+  final Value<int> size;
+  final Value<String> state;
+  final Value<String?> uploadId;
+  final Value<String?> encMeta;
+  final Value<String?> partsDone;
+  final Value<int> bytesDone;
+  final Value<String?> error;
+  final Value<int> createdAt;
+  final Value<int> updatedAt;
+  const VaultTransfersCompanion({
+    this.id = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.objectId = const Value.absent(),
+    this.parent = const Value.absent(),
+    this.name = const Value.absent(),
+    this.localPath = const Value.absent(),
+    this.sealedPath = const Value.absent(),
+    this.size = const Value.absent(),
+    this.state = const Value.absent(),
+    this.uploadId = const Value.absent(),
+    this.encMeta = const Value.absent(),
+    this.partsDone = const Value.absent(),
+    this.bytesDone = const Value.absent(),
+    this.error = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  VaultTransfersCompanion.insert({
+    this.id = const Value.absent(),
+    required String direction,
+    required String objectId,
+    this.parent = const Value.absent(),
+    required String name,
+    required String localPath,
+    this.sealedPath = const Value.absent(),
+    required int size,
+    required String state,
+    this.uploadId = const Value.absent(),
+    this.encMeta = const Value.absent(),
+    this.partsDone = const Value.absent(),
+    this.bytesDone = const Value.absent(),
+    this.error = const Value.absent(),
+    required int createdAt,
+    required int updatedAt,
+  }) : direction = Value(direction),
+       objectId = Value(objectId),
+       name = Value(name),
+       localPath = Value(localPath),
+       size = Value(size),
+       state = Value(state),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<VaultTransfer> custom({
+    Expression<int>? id,
+    Expression<String>? direction,
+    Expression<String>? objectId,
+    Expression<String>? parent,
+    Expression<String>? name,
+    Expression<String>? localPath,
+    Expression<String>? sealedPath,
+    Expression<int>? size,
+    Expression<String>? state,
+    Expression<String>? uploadId,
+    Expression<String>? encMeta,
+    Expression<String>? partsDone,
+    Expression<int>? bytesDone,
+    Expression<String>? error,
+    Expression<int>? createdAt,
+    Expression<int>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (direction != null) 'direction': direction,
+      if (objectId != null) 'object_id': objectId,
+      if (parent != null) 'parent': parent,
+      if (name != null) 'name': name,
+      if (localPath != null) 'local_path': localPath,
+      if (sealedPath != null) 'sealed_path': sealedPath,
+      if (size != null) 'size': size,
+      if (state != null) 'state': state,
+      if (uploadId != null) 'upload_id': uploadId,
+      if (encMeta != null) 'enc_meta': encMeta,
+      if (partsDone != null) 'parts_done': partsDone,
+      if (bytesDone != null) 'bytes_done': bytesDone,
+      if (error != null) 'error': error,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  VaultTransfersCompanion copyWith({
+    Value<int>? id,
+    Value<String>? direction,
+    Value<String>? objectId,
+    Value<String?>? parent,
+    Value<String>? name,
+    Value<String>? localPath,
+    Value<String?>? sealedPath,
+    Value<int>? size,
+    Value<String>? state,
+    Value<String?>? uploadId,
+    Value<String?>? encMeta,
+    Value<String?>? partsDone,
+    Value<int>? bytesDone,
+    Value<String?>? error,
+    Value<int>? createdAt,
+    Value<int>? updatedAt,
+  }) {
+    return VaultTransfersCompanion(
+      id: id ?? this.id,
+      direction: direction ?? this.direction,
+      objectId: objectId ?? this.objectId,
+      parent: parent ?? this.parent,
+      name: name ?? this.name,
+      localPath: localPath ?? this.localPath,
+      sealedPath: sealedPath ?? this.sealedPath,
+      size: size ?? this.size,
+      state: state ?? this.state,
+      uploadId: uploadId ?? this.uploadId,
+      encMeta: encMeta ?? this.encMeta,
+      partsDone: partsDone ?? this.partsDone,
+      bytesDone: bytesDone ?? this.bytesDone,
+      error: error ?? this.error,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (direction.present) {
+      map['direction'] = Variable<String>(direction.value);
+    }
+    if (objectId.present) {
+      map['object_id'] = Variable<String>(objectId.value);
+    }
+    if (parent.present) {
+      map['parent'] = Variable<String>(parent.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (localPath.present) {
+      map['local_path'] = Variable<String>(localPath.value);
+    }
+    if (sealedPath.present) {
+      map['sealed_path'] = Variable<String>(sealedPath.value);
+    }
+    if (size.present) {
+      map['size'] = Variable<int>(size.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (uploadId.present) {
+      map['upload_id'] = Variable<String>(uploadId.value);
+    }
+    if (encMeta.present) {
+      map['enc_meta'] = Variable<String>(encMeta.value);
+    }
+    if (partsDone.present) {
+      map['parts_done'] = Variable<String>(partsDone.value);
+    }
+    if (bytesDone.present) {
+      map['bytes_done'] = Variable<int>(bytesDone.value);
+    }
+    if (error.present) {
+      map['error'] = Variable<String>(error.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultTransfersCompanion(')
+          ..write('id: $id, ')
+          ..write('direction: $direction, ')
+          ..write('objectId: $objectId, ')
+          ..write('parent: $parent, ')
+          ..write('name: $name, ')
+          ..write('localPath: $localPath, ')
+          ..write('sealedPath: $sealedPath, ')
+          ..write('size: $size, ')
+          ..write('state: $state, ')
+          ..write('uploadId: $uploadId, ')
+          ..write('encMeta: $encMeta, ')
+          ..write('partsDone: $partsDone, ')
+          ..write('bytesDone: $bytesDone, ')
+          ..write('error: $error, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $VaultStateTable extends VaultState
+    with TableInfo<$VaultStateTable, VaultStateData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VaultStateTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [key, value];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vault_state';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VaultStateData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {key};
+  @override
+  VaultStateData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VaultStateData(
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value'],
+      )!,
+    );
+  }
+
+  @override
+  $VaultStateTable createAlias(String alias) {
+    return $VaultStateTable(attachedDatabase, alias);
+  }
+}
+
+class VaultStateData extends DataClass implements Insertable<VaultStateData> {
+  final String key;
+  final String value;
+  const VaultStateData({required this.key, required this.value});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['key'] = Variable<String>(key);
+    map['value'] = Variable<String>(value);
+    return map;
+  }
+
+  VaultStateCompanion toCompanion(bool nullToAbsent) {
+    return VaultStateCompanion(key: Value(key), value: Value(value));
+  }
+
+  factory VaultStateData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VaultStateData(
+      key: serializer.fromJson<String>(json['key']),
+      value: serializer.fromJson<String>(json['value']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'key': serializer.toJson<String>(key),
+      'value': serializer.toJson<String>(value),
+    };
+  }
+
+  VaultStateData copyWith({String? key, String? value}) =>
+      VaultStateData(key: key ?? this.key, value: value ?? this.value);
+  VaultStateData copyWithCompanion(VaultStateCompanion data) {
+    return VaultStateData(
+      key: data.key.present ? data.key.value : this.key,
+      value: data.value.present ? data.value.value : this.value,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultStateData(')
+          ..write('key: $key, ')
+          ..write('value: $value')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(key, value);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VaultStateData &&
+          other.key == this.key &&
+          other.value == this.value);
+}
+
+class VaultStateCompanion extends UpdateCompanion<VaultStateData> {
+  final Value<String> key;
+  final Value<String> value;
+  final Value<int> rowid;
+  const VaultStateCompanion({
+    this.key = const Value.absent(),
+    this.value = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VaultStateCompanion.insert({
+    required String key,
+    required String value,
+    this.rowid = const Value.absent(),
+  }) : key = Value(key),
+       value = Value(value);
+  static Insertable<VaultStateData> custom({
+    Expression<String>? key,
+    Expression<String>? value,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (key != null) 'key': key,
+      if (value != null) 'value': value,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VaultStateCompanion copyWith({
+    Value<String>? key,
+    Value<String>? value,
+    Value<int>? rowid,
+  }) {
+    return VaultStateCompanion(
+      key: key ?? this.key,
+      value: value ?? this.value,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultStateCompanion(')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $VaultBackedUpAssetsTable extends VaultBackedUpAssets
+    with TableInfo<$VaultBackedUpAssetsTable, VaultBackedUpAsset> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VaultBackedUpAssetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _assetIdMeta = const VerificationMeta(
+    'assetId',
+  );
+  @override
+  late final GeneratedColumn<String> assetId = GeneratedColumn<String>(
+    'asset_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hashMeta = const VerificationMeta('hash');
+  @override
+  late final GeneratedColumn<String> hash = GeneratedColumn<String>(
+    'hash',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _objectIdMeta = const VerificationMeta(
+    'objectId',
+  );
+  @override
+  late final GeneratedColumn<String> objectId = GeneratedColumn<String>(
+    'object_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _atMeta = const VerificationMeta('at');
+  @override
+  late final GeneratedColumn<int> at = GeneratedColumn<int>(
+    'at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [assetId, hash, objectId, at];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vault_backed_up_assets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VaultBackedUpAsset> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('asset_id')) {
+      context.handle(
+        _assetIdMeta,
+        assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_assetIdMeta);
+    }
+    if (data.containsKey('hash')) {
+      context.handle(
+        _hashMeta,
+        hash.isAcceptableOrUnknown(data['hash']!, _hashMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hashMeta);
+    }
+    if (data.containsKey('object_id')) {
+      context.handle(
+        _objectIdMeta,
+        objectId.isAcceptableOrUnknown(data['object_id']!, _objectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_objectIdMeta);
+    }
+    if (data.containsKey('at')) {
+      context.handle(_atMeta, at.isAcceptableOrUnknown(data['at']!, _atMeta));
+    } else if (isInserting) {
+      context.missing(_atMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {assetId};
+  @override
+  VaultBackedUpAsset map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VaultBackedUpAsset(
+      assetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}asset_id'],
+      )!,
+      hash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hash'],
+      )!,
+      objectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}object_id'],
+      )!,
+      at: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}at'],
+      )!,
+    );
+  }
+
+  @override
+  $VaultBackedUpAssetsTable createAlias(String alias) {
+    return $VaultBackedUpAssetsTable(attachedDatabase, alias);
+  }
+}
+
+class VaultBackedUpAsset extends DataClass
+    implements Insertable<VaultBackedUpAsset> {
+  final String assetId;
+  final String hash;
+  final String objectId;
+  final int at;
+  const VaultBackedUpAsset({
+    required this.assetId,
+    required this.hash,
+    required this.objectId,
+    required this.at,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['asset_id'] = Variable<String>(assetId);
+    map['hash'] = Variable<String>(hash);
+    map['object_id'] = Variable<String>(objectId);
+    map['at'] = Variable<int>(at);
+    return map;
+  }
+
+  VaultBackedUpAssetsCompanion toCompanion(bool nullToAbsent) {
+    return VaultBackedUpAssetsCompanion(
+      assetId: Value(assetId),
+      hash: Value(hash),
+      objectId: Value(objectId),
+      at: Value(at),
+    );
+  }
+
+  factory VaultBackedUpAsset.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VaultBackedUpAsset(
+      assetId: serializer.fromJson<String>(json['assetId']),
+      hash: serializer.fromJson<String>(json['hash']),
+      objectId: serializer.fromJson<String>(json['objectId']),
+      at: serializer.fromJson<int>(json['at']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'assetId': serializer.toJson<String>(assetId),
+      'hash': serializer.toJson<String>(hash),
+      'objectId': serializer.toJson<String>(objectId),
+      'at': serializer.toJson<int>(at),
+    };
+  }
+
+  VaultBackedUpAsset copyWith({
+    String? assetId,
+    String? hash,
+    String? objectId,
+    int? at,
+  }) => VaultBackedUpAsset(
+    assetId: assetId ?? this.assetId,
+    hash: hash ?? this.hash,
+    objectId: objectId ?? this.objectId,
+    at: at ?? this.at,
+  );
+  VaultBackedUpAsset copyWithCompanion(VaultBackedUpAssetsCompanion data) {
+    return VaultBackedUpAsset(
+      assetId: data.assetId.present ? data.assetId.value : this.assetId,
+      hash: data.hash.present ? data.hash.value : this.hash,
+      objectId: data.objectId.present ? data.objectId.value : this.objectId,
+      at: data.at.present ? data.at.value : this.at,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultBackedUpAsset(')
+          ..write('assetId: $assetId, ')
+          ..write('hash: $hash, ')
+          ..write('objectId: $objectId, ')
+          ..write('at: $at')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(assetId, hash, objectId, at);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VaultBackedUpAsset &&
+          other.assetId == this.assetId &&
+          other.hash == this.hash &&
+          other.objectId == this.objectId &&
+          other.at == this.at);
+}
+
+class VaultBackedUpAssetsCompanion extends UpdateCompanion<VaultBackedUpAsset> {
+  final Value<String> assetId;
+  final Value<String> hash;
+  final Value<String> objectId;
+  final Value<int> at;
+  final Value<int> rowid;
+  const VaultBackedUpAssetsCompanion({
+    this.assetId = const Value.absent(),
+    this.hash = const Value.absent(),
+    this.objectId = const Value.absent(),
+    this.at = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VaultBackedUpAssetsCompanion.insert({
+    required String assetId,
+    required String hash,
+    required String objectId,
+    required int at,
+    this.rowid = const Value.absent(),
+  }) : assetId = Value(assetId),
+       hash = Value(hash),
+       objectId = Value(objectId),
+       at = Value(at);
+  static Insertable<VaultBackedUpAsset> custom({
+    Expression<String>? assetId,
+    Expression<String>? hash,
+    Expression<String>? objectId,
+    Expression<int>? at,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (assetId != null) 'asset_id': assetId,
+      if (hash != null) 'hash': hash,
+      if (objectId != null) 'object_id': objectId,
+      if (at != null) 'at': at,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VaultBackedUpAssetsCompanion copyWith({
+    Value<String>? assetId,
+    Value<String>? hash,
+    Value<String>? objectId,
+    Value<int>? at,
+    Value<int>? rowid,
+  }) {
+    return VaultBackedUpAssetsCompanion(
+      assetId: assetId ?? this.assetId,
+      hash: hash ?? this.hash,
+      objectId: objectId ?? this.objectId,
+      at: at ?? this.at,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (assetId.present) {
+      map['asset_id'] = Variable<String>(assetId.value);
+    }
+    if (hash.present) {
+      map['hash'] = Variable<String>(hash.value);
+    }
+    if (objectId.present) {
+      map['object_id'] = Variable<String>(objectId.value);
+    }
+    if (at.present) {
+      map['at'] = Variable<int>(at.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultBackedUpAssetsCompanion(')
+          ..write('assetId: $assetId, ')
+          ..write('hash: $hash, ')
+          ..write('objectId: $objectId, ')
+          ..write('at: $at, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5376,7 +7631,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $SyncCloudBlobsTable syncCloudBlobs = $SyncCloudBlobsTable(this);
+  late final $VaultObjectsTable vaultObjects = $VaultObjectsTable(this);
+  late final $VaultTransfersTable vaultTransfers = $VaultTransfersTable(this);
+  late final $VaultStateTable vaultState = $VaultStateTable(this);
+  late final $VaultBackedUpAssetsTable vaultBackedUpAssets =
+      $VaultBackedUpAssetsTable(this);
   late final SyncDao syncDao = SyncDao(this as AppDatabase);
+  late final VaultDao vaultDao = VaultDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5393,6 +7654,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     syncPeerState,
     expectedChanges,
     syncCloudBlobs,
+    vaultObjects,
+    vaultTransfers,
+    vaultState,
+    vaultBackedUpAssets,
   ];
 }
 
@@ -8129,6 +10394,1139 @@ typedef $$SyncCloudBlobsTableProcessedTableManager =
       SyncCloudBlob,
       PrefetchHooks Function()
     >;
+typedef $$VaultObjectsTableCreateCompanionBuilder =
+    VaultObjectsCompanion Function({
+      required String id,
+      Value<String?> parent,
+      required String name,
+      required String kind,
+      Value<int?> size,
+      required int mtime,
+      Value<String?> mime,
+      Value<String?> hash,
+      Value<String?> blobId,
+      Value<int?> blobSize,
+      Value<bool> hasThumb,
+      required int seq,
+      required int createdAt,
+      Value<int?> trashedAt,
+      required String encMeta,
+      Value<int> rowid,
+    });
+typedef $$VaultObjectsTableUpdateCompanionBuilder =
+    VaultObjectsCompanion Function({
+      Value<String> id,
+      Value<String?> parent,
+      Value<String> name,
+      Value<String> kind,
+      Value<int?> size,
+      Value<int> mtime,
+      Value<String?> mime,
+      Value<String?> hash,
+      Value<String?> blobId,
+      Value<int?> blobSize,
+      Value<bool> hasThumb,
+      Value<int> seq,
+      Value<int> createdAt,
+      Value<int?> trashedAt,
+      Value<String> encMeta,
+      Value<int> rowid,
+    });
+
+class $$VaultObjectsTableFilterComposer
+    extends Composer<_$AppDatabase, $VaultObjectsTable> {
+  $$VaultObjectsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get parent => $composableBuilder(
+    column: $table.parent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get mtime => $composableBuilder(
+    column: $table.mtime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mime => $composableBuilder(
+    column: $table.mime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get hash => $composableBuilder(
+    column: $table.hash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get blobId => $composableBuilder(
+    column: $table.blobId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get blobSize => $composableBuilder(
+    column: $table.blobSize,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get hasThumb => $composableBuilder(
+    column: $table.hasThumb,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get trashedAt => $composableBuilder(
+    column: $table.trashedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get encMeta => $composableBuilder(
+    column: $table.encMeta,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$VaultObjectsTableOrderingComposer
+    extends Composer<_$AppDatabase, $VaultObjectsTable> {
+  $$VaultObjectsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get parent => $composableBuilder(
+    column: $table.parent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get mtime => $composableBuilder(
+    column: $table.mtime,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mime => $composableBuilder(
+    column: $table.mime,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hash => $composableBuilder(
+    column: $table.hash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get blobId => $composableBuilder(
+    column: $table.blobId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get blobSize => $composableBuilder(
+    column: $table.blobSize,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get hasThumb => $composableBuilder(
+    column: $table.hasThumb,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get trashedAt => $composableBuilder(
+    column: $table.trashedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get encMeta => $composableBuilder(
+    column: $table.encMeta,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$VaultObjectsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VaultObjectsTable> {
+  $$VaultObjectsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get parent =>
+      $composableBuilder(column: $table.parent, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<int> get size =>
+      $composableBuilder(column: $table.size, builder: (column) => column);
+
+  GeneratedColumn<int> get mtime =>
+      $composableBuilder(column: $table.mtime, builder: (column) => column);
+
+  GeneratedColumn<String> get mime =>
+      $composableBuilder(column: $table.mime, builder: (column) => column);
+
+  GeneratedColumn<String> get hash =>
+      $composableBuilder(column: $table.hash, builder: (column) => column);
+
+  GeneratedColumn<String> get blobId =>
+      $composableBuilder(column: $table.blobId, builder: (column) => column);
+
+  GeneratedColumn<int> get blobSize =>
+      $composableBuilder(column: $table.blobSize, builder: (column) => column);
+
+  GeneratedColumn<bool> get hasThumb =>
+      $composableBuilder(column: $table.hasThumb, builder: (column) => column);
+
+  GeneratedColumn<int> get seq =>
+      $composableBuilder(column: $table.seq, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get trashedAt =>
+      $composableBuilder(column: $table.trashedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get encMeta =>
+      $composableBuilder(column: $table.encMeta, builder: (column) => column);
+}
+
+class $$VaultObjectsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VaultObjectsTable,
+          VaultObject,
+          $$VaultObjectsTableFilterComposer,
+          $$VaultObjectsTableOrderingComposer,
+          $$VaultObjectsTableAnnotationComposer,
+          $$VaultObjectsTableCreateCompanionBuilder,
+          $$VaultObjectsTableUpdateCompanionBuilder,
+          (
+            VaultObject,
+            BaseReferences<_$AppDatabase, $VaultObjectsTable, VaultObject>,
+          ),
+          VaultObject,
+          PrefetchHooks Function()
+        > {
+  $$VaultObjectsTableTableManager(_$AppDatabase db, $VaultObjectsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VaultObjectsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VaultObjectsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$VaultObjectsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String?> parent = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<int?> size = const Value.absent(),
+                Value<int> mtime = const Value.absent(),
+                Value<String?> mime = const Value.absent(),
+                Value<String?> hash = const Value.absent(),
+                Value<String?> blobId = const Value.absent(),
+                Value<int?> blobSize = const Value.absent(),
+                Value<bool> hasThumb = const Value.absent(),
+                Value<int> seq = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int?> trashedAt = const Value.absent(),
+                Value<String> encMeta = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VaultObjectsCompanion(
+                id: id,
+                parent: parent,
+                name: name,
+                kind: kind,
+                size: size,
+                mtime: mtime,
+                mime: mime,
+                hash: hash,
+                blobId: blobId,
+                blobSize: blobSize,
+                hasThumb: hasThumb,
+                seq: seq,
+                createdAt: createdAt,
+                trashedAt: trashedAt,
+                encMeta: encMeta,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                Value<String?> parent = const Value.absent(),
+                required String name,
+                required String kind,
+                Value<int?> size = const Value.absent(),
+                required int mtime,
+                Value<String?> mime = const Value.absent(),
+                Value<String?> hash = const Value.absent(),
+                Value<String?> blobId = const Value.absent(),
+                Value<int?> blobSize = const Value.absent(),
+                Value<bool> hasThumb = const Value.absent(),
+                required int seq,
+                required int createdAt,
+                Value<int?> trashedAt = const Value.absent(),
+                required String encMeta,
+                Value<int> rowid = const Value.absent(),
+              }) => VaultObjectsCompanion.insert(
+                id: id,
+                parent: parent,
+                name: name,
+                kind: kind,
+                size: size,
+                mtime: mtime,
+                mime: mime,
+                hash: hash,
+                blobId: blobId,
+                blobSize: blobSize,
+                hasThumb: hasThumb,
+                seq: seq,
+                createdAt: createdAt,
+                trashedAt: trashedAt,
+                encMeta: encMeta,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$VaultObjectsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VaultObjectsTable,
+      VaultObject,
+      $$VaultObjectsTableFilterComposer,
+      $$VaultObjectsTableOrderingComposer,
+      $$VaultObjectsTableAnnotationComposer,
+      $$VaultObjectsTableCreateCompanionBuilder,
+      $$VaultObjectsTableUpdateCompanionBuilder,
+      (
+        VaultObject,
+        BaseReferences<_$AppDatabase, $VaultObjectsTable, VaultObject>,
+      ),
+      VaultObject,
+      PrefetchHooks Function()
+    >;
+typedef $$VaultTransfersTableCreateCompanionBuilder =
+    VaultTransfersCompanion Function({
+      Value<int> id,
+      required String direction,
+      required String objectId,
+      Value<String?> parent,
+      required String name,
+      required String localPath,
+      Value<String?> sealedPath,
+      required int size,
+      required String state,
+      Value<String?> uploadId,
+      Value<String?> encMeta,
+      Value<String?> partsDone,
+      Value<int> bytesDone,
+      Value<String?> error,
+      required int createdAt,
+      required int updatedAt,
+    });
+typedef $$VaultTransfersTableUpdateCompanionBuilder =
+    VaultTransfersCompanion Function({
+      Value<int> id,
+      Value<String> direction,
+      Value<String> objectId,
+      Value<String?> parent,
+      Value<String> name,
+      Value<String> localPath,
+      Value<String?> sealedPath,
+      Value<int> size,
+      Value<String> state,
+      Value<String?> uploadId,
+      Value<String?> encMeta,
+      Value<String?> partsDone,
+      Value<int> bytesDone,
+      Value<String?> error,
+      Value<int> createdAt,
+      Value<int> updatedAt,
+    });
+
+class $$VaultTransfersTableFilterComposer
+    extends Composer<_$AppDatabase, $VaultTransfersTable> {
+  $$VaultTransfersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get objectId => $composableBuilder(
+    column: $table.objectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get parent => $composableBuilder(
+    column: $table.parent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localPath => $composableBuilder(
+    column: $table.localPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sealedPath => $composableBuilder(
+    column: $table.sealedPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uploadId => $composableBuilder(
+    column: $table.uploadId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get encMeta => $composableBuilder(
+    column: $table.encMeta,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get partsDone => $composableBuilder(
+    column: $table.partsDone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get bytesDone => $composableBuilder(
+    column: $table.bytesDone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$VaultTransfersTableOrderingComposer
+    extends Composer<_$AppDatabase, $VaultTransfersTable> {
+  $$VaultTransfersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get objectId => $composableBuilder(
+    column: $table.objectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get parent => $composableBuilder(
+    column: $table.parent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localPath => $composableBuilder(
+    column: $table.localPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sealedPath => $composableBuilder(
+    column: $table.sealedPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get size => $composableBuilder(
+    column: $table.size,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get uploadId => $composableBuilder(
+    column: $table.uploadId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get encMeta => $composableBuilder(
+    column: $table.encMeta,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get partsDone => $composableBuilder(
+    column: $table.partsDone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get bytesDone => $composableBuilder(
+    column: $table.bytesDone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get error => $composableBuilder(
+    column: $table.error,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$VaultTransfersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VaultTransfersTable> {
+  $$VaultTransfersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
+
+  GeneratedColumn<String> get objectId =>
+      $composableBuilder(column: $table.objectId, builder: (column) => column);
+
+  GeneratedColumn<String> get parent =>
+      $composableBuilder(column: $table.parent, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get localPath =>
+      $composableBuilder(column: $table.localPath, builder: (column) => column);
+
+  GeneratedColumn<String> get sealedPath => $composableBuilder(
+    column: $table.sealedPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get size =>
+      $composableBuilder(column: $table.size, builder: (column) => column);
+
+  GeneratedColumn<String> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
+
+  GeneratedColumn<String> get uploadId =>
+      $composableBuilder(column: $table.uploadId, builder: (column) => column);
+
+  GeneratedColumn<String> get encMeta =>
+      $composableBuilder(column: $table.encMeta, builder: (column) => column);
+
+  GeneratedColumn<String> get partsDone =>
+      $composableBuilder(column: $table.partsDone, builder: (column) => column);
+
+  GeneratedColumn<int> get bytesDone =>
+      $composableBuilder(column: $table.bytesDone, builder: (column) => column);
+
+  GeneratedColumn<String> get error =>
+      $composableBuilder(column: $table.error, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$VaultTransfersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VaultTransfersTable,
+          VaultTransfer,
+          $$VaultTransfersTableFilterComposer,
+          $$VaultTransfersTableOrderingComposer,
+          $$VaultTransfersTableAnnotationComposer,
+          $$VaultTransfersTableCreateCompanionBuilder,
+          $$VaultTransfersTableUpdateCompanionBuilder,
+          (
+            VaultTransfer,
+            BaseReferences<_$AppDatabase, $VaultTransfersTable, VaultTransfer>,
+          ),
+          VaultTransfer,
+          PrefetchHooks Function()
+        > {
+  $$VaultTransfersTableTableManager(
+    _$AppDatabase db,
+    $VaultTransfersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VaultTransfersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VaultTransfersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$VaultTransfersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> direction = const Value.absent(),
+                Value<String> objectId = const Value.absent(),
+                Value<String?> parent = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> localPath = const Value.absent(),
+                Value<String?> sealedPath = const Value.absent(),
+                Value<int> size = const Value.absent(),
+                Value<String> state = const Value.absent(),
+                Value<String?> uploadId = const Value.absent(),
+                Value<String?> encMeta = const Value.absent(),
+                Value<String?> partsDone = const Value.absent(),
+                Value<int> bytesDone = const Value.absent(),
+                Value<String?> error = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+              }) => VaultTransfersCompanion(
+                id: id,
+                direction: direction,
+                objectId: objectId,
+                parent: parent,
+                name: name,
+                localPath: localPath,
+                sealedPath: sealedPath,
+                size: size,
+                state: state,
+                uploadId: uploadId,
+                encMeta: encMeta,
+                partsDone: partsDone,
+                bytesDone: bytesDone,
+                error: error,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String direction,
+                required String objectId,
+                Value<String?> parent = const Value.absent(),
+                required String name,
+                required String localPath,
+                Value<String?> sealedPath = const Value.absent(),
+                required int size,
+                required String state,
+                Value<String?> uploadId = const Value.absent(),
+                Value<String?> encMeta = const Value.absent(),
+                Value<String?> partsDone = const Value.absent(),
+                Value<int> bytesDone = const Value.absent(),
+                Value<String?> error = const Value.absent(),
+                required int createdAt,
+                required int updatedAt,
+              }) => VaultTransfersCompanion.insert(
+                id: id,
+                direction: direction,
+                objectId: objectId,
+                parent: parent,
+                name: name,
+                localPath: localPath,
+                sealedPath: sealedPath,
+                size: size,
+                state: state,
+                uploadId: uploadId,
+                encMeta: encMeta,
+                partsDone: partsDone,
+                bytesDone: bytesDone,
+                error: error,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$VaultTransfersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VaultTransfersTable,
+      VaultTransfer,
+      $$VaultTransfersTableFilterComposer,
+      $$VaultTransfersTableOrderingComposer,
+      $$VaultTransfersTableAnnotationComposer,
+      $$VaultTransfersTableCreateCompanionBuilder,
+      $$VaultTransfersTableUpdateCompanionBuilder,
+      (
+        VaultTransfer,
+        BaseReferences<_$AppDatabase, $VaultTransfersTable, VaultTransfer>,
+      ),
+      VaultTransfer,
+      PrefetchHooks Function()
+    >;
+typedef $$VaultStateTableCreateCompanionBuilder =
+    VaultStateCompanion Function({
+      required String key,
+      required String value,
+      Value<int> rowid,
+    });
+typedef $$VaultStateTableUpdateCompanionBuilder =
+    VaultStateCompanion Function({
+      Value<String> key,
+      Value<String> value,
+      Value<int> rowid,
+    });
+
+class $$VaultStateTableFilterComposer
+    extends Composer<_$AppDatabase, $VaultStateTable> {
+  $$VaultStateTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$VaultStateTableOrderingComposer
+    extends Composer<_$AppDatabase, $VaultStateTable> {
+  $$VaultStateTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$VaultStateTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VaultStateTable> {
+  $$VaultStateTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+}
+
+class $$VaultStateTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VaultStateTable,
+          VaultStateData,
+          $$VaultStateTableFilterComposer,
+          $$VaultStateTableOrderingComposer,
+          $$VaultStateTableAnnotationComposer,
+          $$VaultStateTableCreateCompanionBuilder,
+          $$VaultStateTableUpdateCompanionBuilder,
+          (
+            VaultStateData,
+            BaseReferences<_$AppDatabase, $VaultStateTable, VaultStateData>,
+          ),
+          VaultStateData,
+          PrefetchHooks Function()
+        > {
+  $$VaultStateTableTableManager(_$AppDatabase db, $VaultStateTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VaultStateTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VaultStateTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$VaultStateTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> key = const Value.absent(),
+                Value<String> value = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VaultStateCompanion(key: key, value: value, rowid: rowid),
+          createCompanionCallback:
+              ({
+                required String key,
+                required String value,
+                Value<int> rowid = const Value.absent(),
+              }) => VaultStateCompanion.insert(
+                key: key,
+                value: value,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$VaultStateTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VaultStateTable,
+      VaultStateData,
+      $$VaultStateTableFilterComposer,
+      $$VaultStateTableOrderingComposer,
+      $$VaultStateTableAnnotationComposer,
+      $$VaultStateTableCreateCompanionBuilder,
+      $$VaultStateTableUpdateCompanionBuilder,
+      (
+        VaultStateData,
+        BaseReferences<_$AppDatabase, $VaultStateTable, VaultStateData>,
+      ),
+      VaultStateData,
+      PrefetchHooks Function()
+    >;
+typedef $$VaultBackedUpAssetsTableCreateCompanionBuilder =
+    VaultBackedUpAssetsCompanion Function({
+      required String assetId,
+      required String hash,
+      required String objectId,
+      required int at,
+      Value<int> rowid,
+    });
+typedef $$VaultBackedUpAssetsTableUpdateCompanionBuilder =
+    VaultBackedUpAssetsCompanion Function({
+      Value<String> assetId,
+      Value<String> hash,
+      Value<String> objectId,
+      Value<int> at,
+      Value<int> rowid,
+    });
+
+class $$VaultBackedUpAssetsTableFilterComposer
+    extends Composer<_$AppDatabase, $VaultBackedUpAssetsTable> {
+  $$VaultBackedUpAssetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get assetId => $composableBuilder(
+    column: $table.assetId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get hash => $composableBuilder(
+    column: $table.hash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get objectId => $composableBuilder(
+    column: $table.objectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get at => $composableBuilder(
+    column: $table.at,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$VaultBackedUpAssetsTableOrderingComposer
+    extends Composer<_$AppDatabase, $VaultBackedUpAssetsTable> {
+  $$VaultBackedUpAssetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get assetId => $composableBuilder(
+    column: $table.assetId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hash => $composableBuilder(
+    column: $table.hash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get objectId => $composableBuilder(
+    column: $table.objectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get at => $composableBuilder(
+    column: $table.at,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$VaultBackedUpAssetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VaultBackedUpAssetsTable> {
+  $$VaultBackedUpAssetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get assetId =>
+      $composableBuilder(column: $table.assetId, builder: (column) => column);
+
+  GeneratedColumn<String> get hash =>
+      $composableBuilder(column: $table.hash, builder: (column) => column);
+
+  GeneratedColumn<String> get objectId =>
+      $composableBuilder(column: $table.objectId, builder: (column) => column);
+
+  GeneratedColumn<int> get at =>
+      $composableBuilder(column: $table.at, builder: (column) => column);
+}
+
+class $$VaultBackedUpAssetsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VaultBackedUpAssetsTable,
+          VaultBackedUpAsset,
+          $$VaultBackedUpAssetsTableFilterComposer,
+          $$VaultBackedUpAssetsTableOrderingComposer,
+          $$VaultBackedUpAssetsTableAnnotationComposer,
+          $$VaultBackedUpAssetsTableCreateCompanionBuilder,
+          $$VaultBackedUpAssetsTableUpdateCompanionBuilder,
+          (
+            VaultBackedUpAsset,
+            BaseReferences<
+              _$AppDatabase,
+              $VaultBackedUpAssetsTable,
+              VaultBackedUpAsset
+            >,
+          ),
+          VaultBackedUpAsset,
+          PrefetchHooks Function()
+        > {
+  $$VaultBackedUpAssetsTableTableManager(
+    _$AppDatabase db,
+    $VaultBackedUpAssetsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VaultBackedUpAssetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VaultBackedUpAssetsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$VaultBackedUpAssetsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> assetId = const Value.absent(),
+                Value<String> hash = const Value.absent(),
+                Value<String> objectId = const Value.absent(),
+                Value<int> at = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VaultBackedUpAssetsCompanion(
+                assetId: assetId,
+                hash: hash,
+                objectId: objectId,
+                at: at,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String assetId,
+                required String hash,
+                required String objectId,
+                required int at,
+                Value<int> rowid = const Value.absent(),
+              }) => VaultBackedUpAssetsCompanion.insert(
+                assetId: assetId,
+                hash: hash,
+                objectId: objectId,
+                at: at,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$VaultBackedUpAssetsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VaultBackedUpAssetsTable,
+      VaultBackedUpAsset,
+      $$VaultBackedUpAssetsTableFilterComposer,
+      $$VaultBackedUpAssetsTableOrderingComposer,
+      $$VaultBackedUpAssetsTableAnnotationComposer,
+      $$VaultBackedUpAssetsTableCreateCompanionBuilder,
+      $$VaultBackedUpAssetsTableUpdateCompanionBuilder,
+      (
+        VaultBackedUpAsset,
+        BaseReferences<
+          _$AppDatabase,
+          $VaultBackedUpAssetsTable,
+          VaultBackedUpAsset
+        >,
+      ),
+      VaultBackedUpAsset,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -8155,4 +11553,12 @@ class $AppDatabaseManager {
       $$ExpectedChangesTableTableManager(_db, _db.expectedChanges);
   $$SyncCloudBlobsTableTableManager get syncCloudBlobs =>
       $$SyncCloudBlobsTableTableManager(_db, _db.syncCloudBlobs);
+  $$VaultObjectsTableTableManager get vaultObjects =>
+      $$VaultObjectsTableTableManager(_db, _db.vaultObjects);
+  $$VaultTransfersTableTableManager get vaultTransfers =>
+      $$VaultTransfersTableTableManager(_db, _db.vaultTransfers);
+  $$VaultStateTableTableManager get vaultState =>
+      $$VaultStateTableTableManager(_db, _db.vaultState);
+  $$VaultBackedUpAssetsTableTableManager get vaultBackedUpAssets =>
+      $$VaultBackedUpAssetsTableTableManager(_db, _db.vaultBackedUpAssets);
 }
