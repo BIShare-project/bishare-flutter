@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -84,9 +85,15 @@ class VaultBackground {
       switch (m[0]) {
         case 'ping':
           reply.send('pong');
+        // Answered once the work is done: the run that asked keeps the
+        // process awake meanwhile (audit P9: answered at once, the system
+        // froze the app before anything went).
         case 'backup':
-          reply.send('ok');
-          unawaited(onBackup());
+          unawaited(
+            onBackup()
+                .catchError((Object e) => debugPrint('[vault] backup: $e'))
+                .whenComplete(() => reply.send('ok')),
+          );
       }
     });
     _app = port;
@@ -163,18 +170,30 @@ class VaultBackground {
     final app = IsolateNameServer.lookupPortByName(appPort);
     if (app != null &&
         await _ask(app, 'ping', const Duration(seconds: 2)) == 'pong') {
-      await _ask(app, 'backup', const Duration(seconds: 2));
+      await _ask(app, 'backup', _budget);
+      if (Platform.isIOS) await _again();
       return true;
     }
 
     await Rust.ensureInitialized();
     final prefs = await SharedPreferences.getInstance();
     final keys = VaultKeyStore();
-    if (await keys.vaultId() == null || await keys.vaultKey() == null) {
+    final vaultId = await keys.vaultId();
+    if (vaultId == null || await keys.vaultKey() == null) {
+      return true;
+    }
+    final api = VaultApi(keys);
+    // Still a device of an open Drive: the flag on, this device not removed,
+    // the account there (audit P4). Else nothing is sent and the job stops
+    // until the app schedules it again.
+    try {
+      await api.info(vaultId);
+    } on VaultApiException catch (e) {
+      const gone = {'VAULT_UNAVAILABLE', 'VAULT_NOT_FOUND', 'VAULT_AUTH'};
+      if (gone.contains(e.code)) await schedule(on: false, wifiOnly: true);
       return true;
     }
     final db = AppDatabase();
-    final api = VaultApi(keys);
     final sync = VaultSync(api: api, keys: keys, dao: db.vaultDao);
     final thumbs = VaultThumbs(api: api, keys: keys, dao: db.vaultDao);
     final uploader = VaultUploader(
@@ -224,6 +243,9 @@ class VaultBackground {
         debugPrint('[vault] background pull: $e');
       }
       await backup.runInBackground(_budget);
+      // iOS runs a processing task once: the next one is asked for here
+      // (audit P9: it was asked for only when the app started).
+      if (Platform.isIOS) await _again();
       return true;
     } finally {
       await notice.stop(summary: true);
@@ -231,6 +253,28 @@ class VaultBackground {
       IsolateNameServer.removePortNameMapping(runPort);
       me.close();
       await db.close();
+    }
+  }
+
+  static Future<void> _again() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('vault.photoBackup') != true) return;
+    await schedule(
+      on: true,
+      wifiOnly: prefs.getBool('vault.photoBackupWifiOnly') ?? true,
+    );
+  }
+
+  static const _time = MethodChannel('app.bishare/background');
+
+  /// iOS: ask for the minute or so iOS gives an app that leaves the screen
+  /// while a file is going up, and give it back when the queue is done.
+  static Future<void> extraTime(bool on) async {
+    if (kIsWeb || !Platform.isIOS) return;
+    try {
+      await _time.invokeMethod<void>(on ? 'begin' : 'end');
+    } on Object catch (e) {
+      debugPrint('[vault] background time: $e');
     }
   }
 

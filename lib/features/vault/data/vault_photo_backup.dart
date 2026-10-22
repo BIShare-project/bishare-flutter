@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/storage/app_database.dart';
@@ -41,8 +44,10 @@ class VaultPhotoBackup extends ChangeNotifier {
     Future<bool> Function()? onWifi,
     Future<void> Function()? catchUp,
     Stream<void>? networkChanges,
+    Future<List<String>> Function()? exportDirs,
     this.batch = 30,
   }) : _library = library,
+       _exportDirs = exportDirs ?? _appTempDirs,
        _dao = dao,
        _uploader = uploader,
        _files = files,
@@ -67,6 +72,109 @@ class VaultPhotoBackup extends ChangeNotifier {
   /// at the library in between would send that photo a second time.
   final Future<void> Function()? _catchUp;
   final Stream<void> _networkChanges;
+
+  /// The app's own temporary folders: the only places a library export is
+  /// deleted from (an iOS export, Android's copy), so the photo itself is
+  /// never touched.
+  final Future<List<String>> Function() _exportDirs;
+  List<String>? _dirs;
+
+  /// Rounds in a row whose every photo failed (audit P4): after two, rounds
+  /// stop starting each other and wait for the next reason to look (the
+  /// library changed, the network came back, the app came back).
+  int _stalled = 0;
+
+  /// An upload said this device can no longer send to this Drive: nothing
+  /// more is looked at until the next start or the switch turned on again.
+  bool _lost = false;
+
+  /// Each photo's failed tries and when it may go again (owner 2026-10-22:
+  /// a failed photo was tried without end, or not until something else
+  /// started a round). Kept in the index's state table, so it lasts across
+  /// starts. After [maxTries] a photo waits for "Try again" ([retryGaveUp]).
+  static const _kRetries = 'photoBackupRetries';
+  static const maxTries = 5;
+
+  /// The wait after each failed try: the first goes again at once, from a
+  /// fresh copy (an export the system cleared).
+  static const _waits = [
+    Duration.zero,
+    Duration(minutes: 5),
+    Duration(minutes: 30),
+    Duration(hours: 2),
+  ];
+  Map<String, (int, int)> _retries = {};
+  Timer? _retryTimer;
+
+  /// Photos left out after [maxTries] failed tries.
+  int get gaveUp => _retries.values.where((r) => r.$1 >= maxTries).length;
+
+  Future<void> _loadRetries() async {
+    try {
+      final raw = await _dao.stateValue(_kRetries);
+      if (raw == null) return;
+      _retries = {
+        for (final e in (jsonDecode(raw) as Map<String, dynamic>).entries)
+          e.key: (
+            ((e.value as List)[0] as num).toInt(),
+            ((e.value as List)[1] as num).toInt(),
+          ),
+      };
+    } on Object {
+      _retries = {};
+    }
+  }
+
+  Future<void> _saveRetries() => _dao.setStateValue(
+    _kRetries,
+    jsonEncode({
+      for (final e in _retries.entries) e.key: [e.value.$1, e.value.$2],
+    }),
+  );
+
+  /// The photos left out after [maxTries] go again now.
+  Future<void> retryGaveUp() async {
+    final ids = {
+      for (final e in _retries.entries)
+        if (e.value.$1 >= maxTries) e.key,
+    };
+    if (ids.isEmpty) return;
+    _retries.removeWhere((id, _) => ids.contains(id));
+    await _saveRetries();
+    await _dao.deleteTransfers([
+      for (final t in await _dao.watchTransfers().first)
+        if (ids.contains(t.assetId) && t.state == 'failed') t.id,
+    ]);
+    _stalled = 0;
+    _lost = false;
+    notifyListeners();
+    unawaited(scan());
+  }
+
+  /// The next look when a photo's wait is over (on screen only).
+  void _scheduleRetry() {
+    _retryTimer?.cancel();
+    if (!_started || _until != null) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final due = [
+      for (final r in _retries.values)
+        if (r.$1 < maxTries && r.$2 > now) r.$2,
+    ];
+    if (due.isEmpty) return;
+    final at = due.reduce(min);
+    _retryTimer = Timer(
+      Duration(milliseconds: at - now + 500),
+      () => unawaited(scan()),
+    );
+  }
+
+  /// Upload errors that say this device can no longer send to this Drive.
+  static const _lostErrors = {
+    'VAULT_AUTH',
+    'VAULT_NOT_FOUND',
+    'VAULT_UNAVAILABLE',
+    'VAULT_NOT_SIGNED_IN',
+  };
 
   /// Photos looked at (exported, hashed, queued) per round.
   final int batch;
@@ -147,6 +255,8 @@ class VaultPhotoBackup extends ChangeNotifier {
   Future<void> start() async {
     if (_started || !available) return;
     _started = true;
+    _lost = false;
+    _stalled = 0;
     _uploader.mayStart = _mayStart;
     _followBacked();
     _access = await _library.access();
@@ -193,6 +303,8 @@ class VaultPhotoBackup extends ChangeNotifier {
   /// Sign-out: nothing more is looked at or queued.
   Future<void> stop() async {
     _started = false;
+    _retryTimer?.cancel();
+    _retryTimer = null;
     _uploader.mayStart = null;
     for (final s in _subs) {
       await s.cancel();
@@ -210,6 +322,17 @@ class VaultPhotoBackup extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The account is leaving this device (sign-out, another account): the
+  /// switch goes with it, so the next account does not start sending the
+  /// whole camera roll by itself (audit P6).
+  Future<void> forget() async {
+    await stop();
+    await _prefs.remove(_kOn);
+    _noRoom = false;
+    _stalled = 0;
+    notifyListeners();
+  }
+
   /// Turn backup on (asking for the library first) or off. False when the
   /// library cannot be read: the switch stays off and the screen says why.
   Future<bool> setOn(bool value) async {
@@ -219,7 +342,13 @@ class VaultPhotoBackup extends ChangeNotifier {
       if (_access == PhotoAccess.none) return false;
     }
     await _prefs.setBool(_kOn, value);
-    if (value) _noRoom = false;
+    if (value) {
+      _noRoom = false;
+      _lost = false;
+      _stalled = 0;
+      _retries = {};
+      await _saveRetries();
+    }
     notifyListeners();
     if (value) unawaited(scan());
     return true;
@@ -250,6 +379,11 @@ class VaultPhotoBackup extends ChangeNotifier {
   Future<void> backUp(List<PhotoAsset> assets) async {
     if (assets.isEmpty) return;
     _noRoom = false;
+    await _loadRetries();
+    if (assets.any((a) => _retries.containsKey(a.id))) {
+      _retries.removeWhere((id, _) => assets.any((a) => a.id == id));
+      await _saveRetries();
+    }
     _now.addAll(assets.map((a) => a.id));
     final uploads = await _dao.watchAssetUploads().first;
     await _queue([
@@ -294,7 +428,10 @@ class VaultPhotoBackup extends ChangeNotifier {
   }
 
   Future<void> _scanOnce() async {
-    if (!_started || _timeUp || await _keys.vaultKey() == null) return;
+    if (!_started || _lost || _timeUp || await _keys.vaultKey() == null) {
+      return;
+    }
+    await _discardFinished();
     if (_access == PhotoAccess.none) _access = await _library.access();
     if (_access == PhotoAccess.none) return;
     final uploads = await _dao.watchAssetUploads().first;
@@ -334,8 +471,36 @@ class VaultPhotoBackup extends ChangeNotifier {
       _noRoom = true;
       notifyListeners();
     }
+    await _loadRetries();
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
     if (failed.isNotEmpty) {
-      await _dao.deleteTransfers([for (final t in failed) t.id]);
+      final again = <int>[];
+      for (final t in failed) {
+        final id = t.assetId!;
+        final tries = _retries[id]?.$1 ?? 0;
+        // Left out already: its row stays, so its badge says failed.
+        if (tries >= maxTries) continue;
+        // Not the photo's fault: a full Drive, a device that lost the Drive.
+        final counts =
+            !_roomErrors.contains(t.error) && !_lostErrors.contains(t.error);
+        if (counts && tries + 1 >= maxTries) {
+          _retries[id] = (tries + 1, 0);
+          continue;
+        }
+        if (counts) {
+          _retries[id] = (tries + 1, nowMs + _waits[tries].inMilliseconds);
+        }
+        await _discard(t.localPath);
+        again.add(t.id);
+      }
+      await _dao.deleteTransfers(again);
+      await _saveRetries();
+      notifyListeners();
+    }
+    // Backed up since: nothing to remember about them.
+    if (_retries.keys.any(backed.contains)) {
+      _retries.removeWhere((id, _) => backed.contains(id));
+      await _saveRetries();
     }
 
     final total = await _library.count();
@@ -353,7 +518,10 @@ class VaultPhotoBackup extends ChangeNotifier {
         left++;
         final state = uploads[a.id];
         final busy = state != null && state != 'failed' && state != 'done';
-        if (!busy && todo.length < batch) todo.add(a);
+        final retry = _retries[a.id];
+        final resting =
+            retry != null && (retry.$1 >= maxTries || retry.$2 > nowMs);
+        if (!busy && !resting && todo.length < batch) todo.add(a);
       }
       if (!counting && todo.length >= batch) break;
     }
@@ -371,12 +539,29 @@ class VaultPhotoBackup extends ChangeNotifier {
     if (queued > 0) {
       await _uploader.run();
       await _tickOff();
+      final ids = {for (final a in todo) a.id};
+      final mine = [
+        for (final t in await _dao.watchTransfers().first)
+          if (ids.contains(t.assetId)) t,
+      ];
+      final failedNow = [
+        for (final t in mine)
+          if (t.state == 'failed') t,
+      ];
+      final lost = failedNow.any((t) => _lostErrors.contains(t.error));
+      if (lost) _lost = true;
+      _stalled = lost || (mine.isNotEmpty && failedNow.length == mine.length)
+          ? _stalled + 1
+          : 0;
+      await _discardFinished();
       // Only when the batch is through: offline, or on mobile data with
-      // "Wi-Fi only", the next round waits for the network to say so.
+      // "Wi-Fi only", the next round waits for the network to say so. Nor
+      // after this device lost the Drive, or two rounds that all failed.
       final stuck = (await _dao.pendingTransfers()).any(
         (t) => t.assetId != null,
       );
-      if (!stuck) _again = true;
+      if (!stuck && !lost && _stalled < 2) _again = true;
+      _scheduleRetry();
     } else if (todo.length == batch) {
       // All of them were already in the Drive: look at the next ones.
       _again = true;
@@ -404,6 +589,7 @@ class VaultPhotoBackup extends ChangeNotifier {
       final there = await _dao.liveFileWithHash(hash);
       if (there != null) {
         await _dao.markAssetBackedUp(a.id, hash, there.id);
+        await _discard(got.file.path);
         continue;
       }
       // An iOS export is a fresh file: give it the time the photo was
@@ -426,6 +612,42 @@ class VaultPhotoBackup extends ChangeNotifier {
     }
     return queued;
   }
+
+  /// Delete library exports whose upload is over (sent, failed, cancelled),
+  /// and photo_manager's own cache once no photo is waiting (audit P3: a
+  /// large library filled the phone with exported originals).
+  Future<void> _discardFinished() async {
+    var waiting = false;
+    for (final t in await _dao.watchTransfers().first) {
+      if (t.assetId == null) continue;
+      if (t.state == 'done' || t.state == 'failed' || t.state == 'cancelled') {
+        await _discard(t.localPath);
+      } else {
+        waiting = true;
+      }
+    }
+    if (!waiting) await _library.clearExports();
+  }
+
+  /// [path], when it is an export in the app's own temporary folders.
+  Future<void> _discard(String? path) async {
+    if (path == null) return;
+    try {
+      final dirs = _dirs ??= await _exportDirs().catchError(
+        (Object _) => const <String>[],
+      );
+      if (!dirs.any((d) => p.isWithin(d, path))) return;
+      final f = File(path);
+      if (await f.exists()) await f.delete();
+    } on Object catch (e) {
+      debugPrint('[vault] photo export not deleted: $e');
+    }
+  }
+
+  static Future<List<String>> _appTempDirs() async => [
+    (await getTemporaryDirectory()).path,
+    if (!Platform.isIOS) (await getApplicationCacheDirectory()).path,
+  ];
 
   /// The Drive folder photos go to, made the first time (and again if it was
   /// deleted or trashed).

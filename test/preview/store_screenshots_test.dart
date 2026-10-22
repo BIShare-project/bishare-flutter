@@ -219,6 +219,9 @@ class _Backup extends Mock implements VaultPhotoBackup {}
 
 /// A phone's camera roll: 30 photos and videos, newest first.
 class _Library implements PhotoLibrary {
+  @override
+  Future<void> clearExports() async {}
+
   static final _assets = [
     for (var i = 0; i < 30; i++)
       PhotoAsset(

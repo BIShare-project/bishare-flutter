@@ -979,6 +979,11 @@
       "zero": "已全部备份",
       "other": "还剩 {} 项"
     },
+    "backup_gave_up": {
+      "one": "{} 张照片尝试 5 次后仍未能备份",
+      "other": "{} 张照片尝试 5 次后仍未能备份"
+    },
+    "backup_try_again": "重试",
     "backup_counting": "正在检查备份情况…",
     "backup_wifi_only": "仅限 Wi-Fi",
     "backup_wifi_only_body": "不使用移动数据，立即备份的照片除外。",

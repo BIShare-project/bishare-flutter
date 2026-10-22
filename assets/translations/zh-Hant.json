@@ -979,6 +979,11 @@
       "zero": "已全部備份",
       "other": "還剩 {} 項"
     },
+    "backup_gave_up": {
+      "one": "{} 張照片嘗試 5 次後仍未能備份",
+      "other": "{} 張照片嘗試 5 次後仍未能備份"
+    },
+    "backup_try_again": "重試",
     "backup_counting": "正在檢查備份狀況…",
     "backup_wifi_only": "僅限 Wi-Fi",
     "backup_wifi_only_body": "不使用行動數據，立即備份的照片除外。",

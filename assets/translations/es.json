@@ -979,6 +979,11 @@
       "one": "Falta {} foto o vídeo",
       "other": "Faltan {} fotos y vídeos"
     },
+    "backup_gave_up": {
+      "one": "{} foto no se pudo copiar tras 5 intentos",
+      "other": "{} fotos no se pudieron copiar tras 5 intentos"
+    },
+    "backup_try_again": "Reintentar",
     "backup_counting": "Comprobando qué tiene copia…",
     "backup_wifi_only": "Solo con Wi-Fi",
     "backup_wifi_only_body": "Sin datos móviles, salvo para las fotos que copies ahora.",

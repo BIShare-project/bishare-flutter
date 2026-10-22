@@ -979,6 +979,11 @@
       "zero": "모두 백업됨",
       "other": "{}개 남음"
     },
+    "backup_gave_up": {
+      "one": "사진 {}장을 5번 시도했지만 백업하지 못했습니다",
+      "other": "사진 {}장을 5번 시도했지만 백업하지 못했습니다"
+    },
+    "backup_try_again": "다시 시도",
     "backup_counting": "백업 여부 확인 중…",
     "backup_wifi_only": "Wi-Fi에서만",
     "backup_wifi_only_body": "모바일 데이터를 쓰지 않습니다. 지금 백업하는 사진은 예외입니다.",

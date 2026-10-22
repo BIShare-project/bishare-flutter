@@ -980,6 +980,11 @@
       "one": "{} photo or video left",
       "other": "{} photos and videos left"
     },
+    "backup_gave_up": {
+      "one": "{} photo could not be backed up after 5 tries",
+      "other": "{} photos could not be backed up after 5 tries"
+    },
+    "backup_try_again": "Try again",
     "backup_counting": "Checking what is backed up…",
     "backup_wifi_only": "Wi-Fi only",
     "backup_wifi_only_body": "No mobile data, except for photos you back up now.",

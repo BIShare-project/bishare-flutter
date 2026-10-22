@@ -260,6 +260,10 @@ class VaultUploader extends ChangeNotifier {
         });
   }
 
+  /// The queue being worked through, if it is (for the time iOS gives an
+  /// app that leaves the screen mid-upload).
+  Future<void>? get running => _running;
+
   /// Awaited before the queue starts: the app makes a background run that
   /// is sending stop first (VaultBackground.takeOver).
   Future<void> Function()? beforeRun;

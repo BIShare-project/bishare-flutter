@@ -25,9 +25,16 @@ class _Keys extends Mock implements VaultKeyStore {}
 
 /// A camera roll of files in a temporary folder, newest first.
 class _Library implements PhotoLibrary {
-  _Library(this.files);
+  @override
+  Future<void> clearExports() async {}
+
+  _Library(this.files, {this.exportDir});
 
   final List<File> files;
+
+  /// Set: [original] hands out a fresh copy here each time, as iOS exports.
+  final Directory? exportDir;
+  int _exports = 0;
   PhotoAccess granted = PhotoAccess.full;
   PhotoAccess? onAsk;
   final StreamController<void> changed = StreamController<void>.broadcast();
@@ -53,7 +60,10 @@ class _Library implements PhotoLibrary {
   @override
   Future<({File file, String name})?> original(PhotoAsset asset) async {
     final f = files[int.parse(asset.id.substring(1))];
-    return (file: f, name: f.uri.pathSegments.last);
+    final dir = exportDir;
+    if (dir == null) return (file: f, name: f.uri.pathSegments.last);
+    final copy = await f.copy('${dir.path}/${asset.id}-${_exports++}.jpg');
+    return (file: copy, name: f.uri.pathSegments.last);
   }
 
   @override
@@ -168,6 +178,7 @@ void main() {
     _Library library, {
     int batch = 30,
     Future<void> Function()? catchUp,
+    List<String> exportDirs = const [],
   }) {
     final b = VaultPhotoBackup(
       library: library,
@@ -181,6 +192,7 @@ void main() {
       networkChanges: network.stream,
       batch: batch,
       catchUp: catchUp,
+      exportDirs: () async => exportDirs,
     );
     backups.add(b);
     return b;
@@ -468,5 +480,190 @@ void main() {
     expect(s('e'), PhotoBackupState.notBackedUp);
     expect(s('f'), PhotoBackupState.notBackedUp);
     expect(s('z'), PhotoBackupState.notBackedUp);
+  });
+
+  group('what a backup leaves behind (audit P3, P4, P6)', () {
+    test('an export goes once its photo is sent, at once when the photo is '
+        'already in the Drive; the photos themselves stay', () async {
+      final exports = Directory('${tmp.path}/exports')..createSync();
+      final a = photo('a.jpg', 'first');
+      final b = photo('b.jpg', 'second');
+      final library = _Library([a, b], exportDir: exports);
+      await driveHas('x', 'first');
+      await prefs.setBool('vault.photoBackup', true);
+      final backup = make(library, exportDirs: [exports.path]);
+      await backup.start();
+      await backup.scan();
+
+      final left = exports.listSync().map((e) => e.uri.pathSegments.last);
+      expect(left, [
+        'a1-1.jpg',
+      ], reason: 'a0 was in the Drive: its export went');
+      final queued = (await dao.watchTransfers().first).single;
+      await dao.updateTransfer(
+        queued.id,
+        const VaultTransfersCompanion(state: Value('done')),
+      );
+      await backup.scan();
+      expect(exports.listSync(), isEmpty, reason: 'sent: its export went too');
+      expect(a.existsSync() && b.existsSync(), isTrue);
+    });
+
+    test('rounds stop after two in a row where every photo failed', () async {
+      final library = _Library([
+        photo('a.jpg', 'one'),
+        photo('b.jpg', 'two'),
+        photo('c.jpg', 'three'),
+      ]);
+      when(uploader.run).thenAnswer((_) async {
+        for (final t in await dao.watchTransfers().first) {
+          await dao.updateTransfer(
+            t.id,
+            const VaultTransfersCompanion(
+              state: Value('failed'),
+              error: Value('SERVER'),
+            ),
+          );
+        }
+      });
+      await prefs.setBool('vault.photoBackup', true);
+      final backup = make(library, batch: 1);
+      await backup.start();
+      await backup.scan();
+      verify(
+        () => uploader.enqueueAsset(
+          any(),
+          assetId: any(named: 'assetId'),
+          name: any(named: 'name'),
+          parent: any(named: 'parent'),
+        ),
+      ).called(2);
+    });
+
+    test('a device that lost the Drive stops after one round', () async {
+      final library = _Library([photo('a.jpg', 'one'), photo('b.jpg', 'two')]);
+      when(uploader.run).thenAnswer((_) async {
+        for (final t in await dao.watchTransfers().first) {
+          await dao.updateTransfer(
+            t.id,
+            const VaultTransfersCompanion(
+              state: Value('failed'),
+              error: Value('VAULT_AUTH'),
+            ),
+          );
+        }
+      });
+      await prefs.setBool('vault.photoBackup', true);
+      final backup = make(library, batch: 1);
+      await backup.start();
+      await backup.scan();
+      verify(
+        () => uploader.enqueueAsset(
+          any(),
+          assetId: any(named: 'assetId'),
+          name: any(named: 'name'),
+          parent: any(named: 'parent'),
+        ),
+      ).called(1);
+    });
+
+    Future<void> failAll(String code) async {
+      for (final t in await dao.watchTransfers().first) {
+        if (t.state == 'failed') continue;
+        await dao.updateTransfer(
+          t.id,
+          VaultTransfersCompanion(
+            state: const Value('failed'),
+            error: Value(code),
+          ),
+        );
+      }
+    }
+
+    test(
+      'a failed photo goes again at once, then rests; the others go on',
+      () async {
+        final library = _Library([
+          photo('a.jpg', 'one'),
+          photo('b.jpg', 'two'),
+        ]);
+        // a0 fails every time, the rest goes through.
+        when(uploader.run).thenAnswer((_) async {
+          for (final t in await dao.watchTransfers().first) {
+            if (t.state != 'queued') continue;
+            await dao.updateTransfer(
+              t.id,
+              VaultTransfersCompanion(
+                state: Value(t.assetId == 'a0' ? 'failed' : 'done'),
+                error: Value(t.assetId == 'a0' ? 'MISSING' : null),
+              ),
+            );
+          }
+        });
+        await prefs.setBool('vault.photoBackup', true);
+        final backup = make(library, batch: 1);
+        await backup.start();
+        await backup.scan();
+        await backup.scan();
+        final queued = verify(
+          () => uploader.enqueueAsset(
+            any(),
+            assetId: captureAny(named: 'assetId'),
+            name: any(named: 'name'),
+            parent: any(named: 'parent'),
+          ),
+        ).captured;
+        expect(queued, [
+          'a0',
+          'a0',
+          'a1',
+        ], reason: 'a0 rests after its 2nd try');
+        expect(backup.gaveUp, 0);
+      },
+    );
+
+    test('after five failed tries a photo waits for "Try again"', () async {
+      final library = _Library([photo('a.jpg', 'one')]);
+      when(uploader.run).thenAnswer((_) => failAll('MISSING'));
+      // Four tries already, the wait over.
+      await dao.setStateValue('photoBackupRetries', '{"a0":[4,0]}');
+      await prefs.setBool('vault.photoBackup', true);
+      final backup = make(library);
+      await backup.start();
+      await backup.scan();
+      await backup.scan();
+      expect(backup.gaveUp, 1);
+      final rows = await dao.watchTransfers().first;
+      expect(rows.single.state, 'failed', reason: 'its badge says failed');
+      verify(
+        () => uploader.enqueueAsset(
+          any(),
+          assetId: 'a0',
+          name: any(named: 'name'),
+          parent: any(named: 'parent'),
+        ),
+      ).called(1);
+
+      when(uploader.run).thenAnswer((_) async {});
+      await backup.retryGaveUp();
+      await backup.scan();
+      expect(backup.gaveUp, 0);
+      verify(
+        () => uploader.enqueueAsset(
+          any(),
+          assetId: 'a0',
+          name: any(named: 'name'),
+          parent: any(named: 'parent'),
+        ),
+      ).called(1);
+    });
+
+    test('the switch goes with the account', () async {
+      await prefs.setBool('vault.photoBackup', true);
+      final backup = make(_Library([]));
+      expect(backup.on, isTrue);
+      await backup.forget();
+      expect(backup.on, isFalse);
+    });
   });
 }

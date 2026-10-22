@@ -979,6 +979,11 @@
       "one": "{} foto atau video lagi",
       "other": "{} foto dan video lagi"
     },
+    "backup_gave_up": {
+      "one": "{} foto gagal di-backup setelah 5 kali coba",
+      "other": "{} foto gagal di-backup setelah 5 kali coba"
+    },
+    "backup_try_again": "Coba lagi",
     "backup_counting": "Memeriksa yang sudah dicadangkan…",
     "backup_wifi_only": "Hanya Wi-Fi",
     "backup_wifi_only_body": "Tanpa data seluler, kecuali foto yang Anda cadangkan sekarang.",

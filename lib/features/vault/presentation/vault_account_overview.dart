@@ -385,6 +385,25 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(status, style: muted),
+          if (backup.on && backup.gaveUp > 0) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'vault.backup_gave_up'.plural(backup.gaveUp),
+                    style: muted.copyWith(color: cs.destructive),
+                  ),
+                ),
+                AppButton(
+                  label: 'vault.backup_try_again'.tr(),
+                  variant: AppButtonVariant.outline,
+                  size: AppButtonSize.small,
+                  onPressed: () => unawaited(backup.retryGaveUp()),
+                ),
+              ],
+            ),
+          ],
           if (progress != null) ...[
             const SizedBox(height: 7),
             _Progress(value: progress),

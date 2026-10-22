@@ -27,8 +27,43 @@ import workmanager_apple
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
+  /// The time iOS gives an app that leaves the screen while a Drive file is
+  /// going up (VaultBackground.extraTime in Dart).
+  private var uploadTime: UIBackgroundTaskIdentifier = .invalid
+
+  private func beginUploadTime() {
+    guard uploadTime == .invalid else { return }
+    uploadTime = UIApplication.shared.beginBackgroundTask(withName: "Drive uploads") { [weak self] in
+      self?.endUploadTime()
+    }
+  }
+
+  private func endUploadTime() {
+    guard uploadTime != .invalid else { return }
+    UIApplication.shared.endBackgroundTask(uploadTime)
+    uploadTime = .invalid
+  }
+
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    // Drive uploads: the file in flight finishes after the app leaves the
+    // screen, within the time iOS gives (about 30 seconds).
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "BIShareBackgroundTime") {
+      let channel = FlutterMethodChannel(
+        name: "app.bishare/background", binaryMessenger: registrar.messenger())
+      channel.setMethodCallHandler { [weak self] call, result in
+        switch call.method {
+        case "begin":
+          self?.beginUploadTime()
+          result(nil)
+        case "end":
+          self?.endUploadTime()
+          result(nil)
+        default:
+          result(FlutterMethodNotImplemented)
+        }
+      }
+    }
     // Offline "Nearby" over MultipeerConnectivity. Add BIShareNearbyPlugin.swift
     // to the iOS Runner target in Xcode for this to compile.
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "BIShareNearbyPlugin") {

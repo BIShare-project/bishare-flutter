@@ -236,7 +236,8 @@ Future<void> setupLocator() async {
         // names into it again, or keep sending its files.
         onForget: () async {
           await VaultBackground.schedule(on: false, wifiOnly: true);
-          await getIt<VaultPhotoBackup>().stop();
+          // The backup switch goes with the account (audit P6).
+          await getIt<VaultPhotoBackup>().forget();
           await getIt<VaultSync>().stop();
           await getIt<VaultUploader>().stop();
           await getIt<VaultThumbs>().clear();
@@ -350,21 +351,37 @@ Future<void> setupLocator() async {
         Future<void> backupNow() async {
           if (account.status != VaultStatus.ready) return;
           await photos.scan();
-          unawaited(uploader.run());
+          await uploader.run();
         }
 
         await VaultBackground.initialize(onBackup: backupNow);
-        // Uploads going on while the app is out of sight show in the
-        // notification shade (Android).
+        // Uploads show in the notification shade (Android), held by a
+        // foreground service so closing the app does not stop them.
         final notice = VaultUploadNotice(
           dao: db.vaultDao,
           uploader: uploader,
           prefs: prefs,
-        );
+          foreground: true,
+        )..hidden = false;
+        unawaited(notice.start());
         AppLifecycleListener(
           onResume: () => VaultBackground.listen(onBackup: backupNow),
-          onHide: () => unawaited(notice.start()),
-          onShow: () => unawaited(notice.stop()),
+          onHide: () {
+            notice.hidden = true;
+            // iOS: the file in flight gets the time iOS gives.
+            final run = uploader.running;
+            if (run == null) return;
+            unawaited(VaultBackground.extraTime(true));
+            unawaited(
+              run
+                  .then((_) {}, onError: (Object _) {})
+                  .whenComplete(() => VaultBackground.extraTime(false)),
+            );
+          },
+          onShow: () {
+            notice.hidden = false;
+            unawaited(VaultBackground.extraTime(false));
+          },
         );
 
         // Runs while the app is closed follow the switch (task 5.4).

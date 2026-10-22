@@ -979,6 +979,11 @@
       "one": "Noch {} Foto oder Video",
       "other": "Noch {} Fotos und Videos"
     },
+    "backup_gave_up": {
+      "one": "{} Foto konnte nach 5 Versuchen nicht gesichert werden",
+      "other": "{} Fotos konnten nach 5 Versuchen nicht gesichert werden"
+    },
+    "backup_try_again": "Erneut versuchen",
     "backup_counting": "Prüfe, was schon gesichert ist …",
     "backup_wifi_only": "Nur über WLAN",
     "backup_wifi_only_body": "Keine mobilen Daten, außer für Fotos, die Sie jetzt sichern.",

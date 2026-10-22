@@ -66,6 +66,10 @@ abstract class PhotoLibrary {
 
   /// iOS limited access: the system sheet to choose more photos.
   Future<void> chooseMore();
+
+  /// Drop the plugin's own copies of exported originals (nothing waits for
+  /// them any more).
+  Future<void> clearExports();
 }
 
 /// [PhotoLibrary] over the photo_manager plugin.
@@ -142,6 +146,15 @@ class DevicePhotoLibrary implements PhotoLibrary {
       file: file,
       name: title.isEmpty ? file.uri.pathSegments.last : title,
     );
+  }
+
+  @override
+  Future<void> clearExports() async {
+    try {
+      await PhotoManager.clearFileCache();
+    } on Object catch (e) {
+      debugPrint('[vault] photo cache: $e');
+    }
   }
 
   @override

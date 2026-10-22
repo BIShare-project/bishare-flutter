@@ -17,6 +17,9 @@ import 'helpers/vault_local.dart';
 
 /// A camera roll of JPEG files in a folder, newest first.
 class _DiskLibrary implements PhotoLibrary {
+  @override
+  Future<void> clearExports() async {}
+
   _DiskLibrary(this.files);
 
   final List<File> files;

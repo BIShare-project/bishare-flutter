@@ -979,6 +979,11 @@
       "one": "Encore {} photo ou vidéo",
       "other": "Encore {} photos et vidéos"
     },
+    "backup_gave_up": {
+      "one": "{} photo n’a pas pu être sauvegardée après 5 essais",
+      "other": "{} photos n’ont pas pu être sauvegardées après 5 essais"
+    },
+    "backup_try_again": "Réessayer",
     "backup_counting": "Vérification de ce qui est sauvegardé…",
     "backup_wifi_only": "Wi-Fi uniquement",
     "backup_wifi_only_body": "Pas de données mobiles, sauf pour les photos que vous sauvegardez maintenant.",

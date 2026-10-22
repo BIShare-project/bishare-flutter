@@ -979,6 +979,11 @@
       "zero": "すべてバックアップ済み",
       "other": "残り{}件"
     },
+    "backup_gave_up": {
+      "one": "{} 枚の写真を5回試してもバックアップできませんでした",
+      "other": "{} 枚の写真を5回試してもバックアップできませんでした"
+    },
+    "backup_try_again": "もう一度試す",
     "backup_counting": "バックアップ済みか確認中…",
     "backup_wifi_only": "Wi-Fiのみ",
     "backup_wifi_only_body": "モバイルデータは使いません。今すぐバックアップする写真は除きます。",

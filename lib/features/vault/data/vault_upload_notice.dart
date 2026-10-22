@@ -21,12 +21,20 @@ import 'vault_uploader.dart';
 ///
 /// It is posted again every few seconds with a short timeout, so a process
 /// the system freezes cannot leave a stuck "uploading" behind.
+///
+/// In the app ([foreground]) the notification belongs to a foreground
+/// service of type dataSync while files go up: without one, Samsung froze
+/// the app seconds after it left the screen and killed it soon after
+/// (logcat, owner's SM-A245F, 2026-10-22), so a backup stopped as soon as
+/// the app was closed. The service starts while the app is on screen (a
+/// background start is refused since Android 12) and ends with the queue.
 class VaultUploadNotice {
   VaultUploadNotice({
     required VaultDao dao,
     required VaultUploader uploader,
     required SharedPreferences prefs,
     this.initialize = false,
+    this.foreground = false,
     FlutterLocalNotificationsPlugin? plugin,
   }) : _dao = dao,
        _uploader = uploader,
@@ -41,6 +49,14 @@ class VaultUploadNotice {
   /// A background isolate sets the plugin up itself; the app's own isolate
   /// already did (NotificationService).
   final bool initialize;
+
+  /// The app's isolate: hold a foreground service while files go up.
+  final bool foreground;
+
+  /// The app is out of sight: progress shows here, and "Uploads finished"
+  /// after it. On screen, the notification shows only as the service's.
+  bool hidden = true;
+  bool _service = false;
 
   static const _channel = 'bishare_drive_uploads';
   static const _progressId = 7701;
@@ -145,6 +161,7 @@ class VaultUploadNotice {
     await _sub?.cancel();
     _sub = null;
     _last = '';
+    await _stopService();
     if (summary) {
       await _finish();
     } else {
@@ -156,9 +173,16 @@ class VaultUploadNotice {
   Future<void> _update() async {
     final batch = UploadBatch.of(_transfers, _uploader);
     if (batch == null || batch.running.isEmpty) {
-      if (_shown) await _finish();
+      await _stopService();
+      if (_shown && hidden) {
+        await _finish();
+      } else if (_shown) {
+        await _clear();
+        _since = null;
+      }
       return;
     }
+    if (!hidden && !foreground) return;
     _since = batch.start;
     final t = _texts;
     final bar = ((_bar.of(batch) ?? 0) * 1000).round();
@@ -173,28 +197,48 @@ class VaultUploadNotice {
     _last = key;
     _postedAt = now;
     _shown = true;
+    final details = AndroidNotificationDetails(
+      _channel,
+      t['channel']!,
+      importance: Importance.low,
+      priority: Priority.low,
+      ongoing: true,
+      autoCancel: false,
+      onlyAlertOnce: true,
+      silent: true,
+      showProgress: true,
+      maxProgress: 1000,
+      progress: bar,
+      subText: left,
+      // A service's notification goes with the service; a plain one must
+      // not outlive a process the system froze.
+      timeoutAfter: _service || foreground ? null : 30000,
+    );
+    if (foreground && !_service) {
+      try {
+        await _android?.startForegroundService(
+          id: _progressId,
+          title: t['uploading'],
+          body: body,
+          notificationDetails: details,
+          startType: AndroidServiceStartType.startNotSticky,
+          foregroundServiceTypes: {
+            AndroidServiceForegroundType.foregroundServiceTypeDataSync,
+          },
+        );
+        _service = true;
+        return;
+      } on Object catch (e) {
+        // Refused (started while out of sight): a plain notification.
+        debugPrint('[vault] upload service: $e');
+      }
+    }
     try {
       await _plugin.show(
         id: _progressId,
         title: t['uploading'],
         body: body,
-        notificationDetails: NotificationDetails(
-          android: AndroidNotificationDetails(
-            _channel,
-            t['channel']!,
-            importance: Importance.low,
-            priority: Priority.low,
-            ongoing: true,
-            autoCancel: false,
-            onlyAlertOnce: true,
-            silent: true,
-            showProgress: true,
-            maxProgress: 1000,
-            progress: bar,
-            subText: left,
-            timeoutAfter: 30000,
-          ),
-        ),
+        notificationDetails: NotificationDetails(android: details),
       );
     } on Object catch (e) {
       debugPrint('[vault] upload notice: $e');
@@ -233,6 +277,21 @@ class VaultUploadNotice {
       );
     } on Object catch (e) {
       debugPrint('[vault] upload notice: $e');
+    }
+  }
+
+  AndroidFlutterLocalNotificationsPlugin? get _android => _plugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >();
+
+  Future<void> _stopService() async {
+    if (!_service) return;
+    _service = false;
+    try {
+      await _android?.stopForegroundService();
+    } on Object catch (e) {
+      debugPrint('[vault] upload service: $e');
     }
   }
 
