@@ -6,7 +6,6 @@ build/
 .packages
 .pub-cache/
 .pub/
-/pubspec.lock
 
 # Rust target/
 rust/target/
