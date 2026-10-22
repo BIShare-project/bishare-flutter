@@ -367,7 +367,11 @@
     "sender_nearby": "Aparelho próximo",
     "waiting_scan": "Aguardando o destinatário escanear…",
     "keep_open": "Mantenha esta tela aberta. O arquivo é transmitido direto — nada fica salvo on-line.",
-    "create_link": "Criar link"
+    "create_link": "Criar link",
+    "keep_longer_title": "Precisa por mais tempo?",
+    "keep_longer_body": "Este link para de funcionar depois de 24 horas. No BIShare Drive o arquivo fica até você apagar, e você pode compartilhá-lo com um link que vale até 30 dias ou até você desativar.",
+    "keep_longer_saved": "Adicionado aos envios do Drive. Quando estiver no Drive, escolha Compartilhar como link para um link que dura mais.",
+    "keep_longer_setup": "Configurar o Drive"
   },
   "room": {
     "connecting_create_local": "Criando uma sala local",

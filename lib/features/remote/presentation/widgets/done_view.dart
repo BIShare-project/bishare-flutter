@@ -1,10 +1,16 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/config/feature_flags.dart';
+import '../../../../core/di/locator.dart';
 import '../../../../core/ui/app_ui.dart';
+import '../../../vault/presentation/drive/drive_actions.dart';
 import '../../data/cloud_transfer_service.dart';
 
 /// What the Share button sends: the file's name and size, how long the link
@@ -21,9 +27,12 @@ String _shareMessage(CloudUploadResult result) {
 }
 
 class DoneView extends StatelessWidget {
-  const DoneView({super.key, required this.result});
+  const DoneView({super.key, required this.result, this.path});
 
   final CloudUploadResult result;
+
+  /// The file that was sent, for "Save to Drive".
+  final String? path;
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +88,13 @@ class DoneView extends StatelessWidget {
                       );
                     }
                   },
-                  child: Text('common.copy'.tr()),
+                  // Long words (Russian) shrink to fit a narrow phone.
+                  child: Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('common.copy'.tr()),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -93,13 +108,94 @@ class DoneView extends StatelessWidget {
                       subject: result.fileName,
                     ),
                   ),
-                  child: Text('common.share'.tr()),
+                  child: Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('common.share'.tr()),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
+          _KeepLonger(path: path),
         ],
       ),
+    );
+  }
+}
+
+/// Under a link that ends in 24 hours: where the file can stay longer. Drive
+/// keeps it, and a link from Drive lasts up to 30 days or until it is turned
+/// off. Nothing unless Drive is on for this device (the vault_enabled flag).
+class _KeepLonger extends StatefulWidget {
+  const _KeepLonger({required this.path});
+
+  final String? path;
+
+  @override
+  State<_KeepLonger> createState() => _KeepLongerState();
+}
+
+class _KeepLongerState extends State<_KeepLonger> {
+  bool _saved = false;
+
+  Future<void> _save(String path) async {
+    final ok = await saveToDrive(context, [path]);
+    if (ok && mounted) setState(() => _saved = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final flags = getIt<FeatureFlags>();
+    return ListenableBuilder(
+      listenable: flags,
+      builder: (context, _) {
+        if (!flags.vaultVisible) return const SizedBox.shrink();
+        final cs = ShadTheme.of(context).colorScheme;
+        final path = widget.path;
+        final ready = driveReady;
+        final canSave = ready && path != null && File(path).existsSync();
+        return AppCard(
+          margin: const EdgeInsets.only(top: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'remote.keep_longer_title'.tr(),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: cs.foreground,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                (_saved
+                        ? 'remote.keep_longer_saved'
+                        : 'remote.keep_longer_body')
+                    .tr(),
+                style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+              ),
+              if (!_saved && (canSave || !ready)) ...[
+                const SizedBox(height: 12),
+                ShadButton.outline(
+                  leading: const AppSvgIcon(AppIcons.cloudDone, size: 18),
+                  onPressed: canSave
+                      ? () => _save(path)
+                      : () => context.push('/drive-account'),
+                  child: Text(
+                    (canSave
+                            ? 'vault.save_to_drive'
+                            : 'remote.keep_longer_setup')
+                        .tr(),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }

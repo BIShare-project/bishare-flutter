@@ -51,6 +51,7 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
   String _pickedName = '';
   int _pickedSize = 0;
   CloudUploadResult? _result;
+  String? _sentPath;
   String _streamCode = '';
   String? _streamKey;
   String _error = '';
@@ -146,6 +147,7 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
       _fraction = 0;
       _pickedName = name;
       _pickedSize = file.existsSync() ? file.lengthSync() : 0;
+      _sentPath = file.path;
     });
     // Size gate: the backend rejects oversized uploads anyway — catch it here
     // before any bytes leave.
@@ -240,7 +242,7 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
                     name: _pickedName,
                     size: _pickedSize,
                   ),
-                  _Phase.done => DoneView(result: _result!),
+                  _Phase.done => DoneView(result: _result!, path: _sentPath),
                   _Phase.streamWaiting => StreamWaitingView(
                     code: _streamCode,
                     keyFragment: _streamKey,

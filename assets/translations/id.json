@@ -367,7 +367,11 @@
     "sender_nearby": "Perangkat terdekat",
     "waiting_scan": "Menunggu penerima memindai…",
     "keep_open": "Biarkan layar ini tetap terbuka. File dialirkan langsung — tidak ada yang disimpan secara online.",
-    "create_link": "Buat tautan"
+    "create_link": "Buat tautan",
+    "keep_longer_title": "Perlu lebih lama?",
+    "keep_longer_body": "Tautan ini berhenti berfungsi setelah 24 jam. Di BIShare Drive, file tetap ada sampai Anda menghapusnya, dan bisa dibagikan dengan tautan yang berlaku hingga 30 hari atau sampai Anda matikan.",
+    "keep_longer_saved": "Masuk antrean unggah Drive. Setelah ada di Drive, pilih Bagikan sebagai tautan untuk tautan yang lebih lama.",
+    "keep_longer_setup": "Siapkan Drive"
   },
   "room": {
     "connecting_create_local": "Membuat ruangan lokal",

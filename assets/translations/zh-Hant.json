@@ -367,7 +367,11 @@
     "sender_nearby": "附近的裝置",
     "waiting_scan": "正在等待接收方掃描…",
     "keep_open": "請保持此畫面開啟。檔案直接傳送，不會在線上儲存任何內容。",
-    "create_link": "建立連結"
+    "create_link": "建立連結",
+    "keep_longer_title": "需要保留更久？",
+    "keep_longer_body": "這個連結 24 小時後失效。在 BIShare Drive 中，檔案會一直保留到你刪除為止，還能用最長 30 天或直到你關閉為止的連結來分享。",
+    "keep_longer_saved": "已加入 Drive 上傳佇列。檔案進入 Drive 後，選擇「以連結分享」即可取得更長效的連結。",
+    "keep_longer_setup": "設定 Drive"
   },
   "room": {
     "connecting_create_local": "正在建立本機房間",
