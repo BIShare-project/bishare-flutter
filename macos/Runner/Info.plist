@@ -56,6 +56,8 @@
 	<string>MainMenu</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>BIShare records a short voice message so you can send it to nearby devices.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>BIShare lets you choose photos and videos from your library to send to your devices.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
