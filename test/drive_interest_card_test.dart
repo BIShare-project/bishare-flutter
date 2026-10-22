@@ -7,10 +7,13 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _Flags extends FeatureFlags {
-  _Flags(super.prefs, this.on);
+  _Flags(super.prefs, this.on, {this.drive = false});
   bool on;
+  final bool drive;
   @override
   bool get driveInterestEnabled => on;
+  @override
+  bool get vaultVisible => drive;
 }
 
 class _Telemetry extends TelemetryService {
@@ -50,6 +53,7 @@ void main() {
     WidgetTester tester, {
     bool flag = true,
     bool telemetry = true,
+    bool drive = false,
     Map<String, Object> stored = const {},
   }) async {
     SharedPreferences.setMockInitialValues({DriveInterestCard.launchesKey: 5, ...stored});
@@ -58,7 +62,7 @@ void main() {
     await tester.pumpWidget(
       ShadApp(
         home: Scaffold(
-          body: DriveInterestCard(prefs: prefs, flags: _Flags(prefs, flag), telemetry: t),
+          body: DriveInterestCard(prefs: prefs, flags: _Flags(prefs, flag, drive: drive), telemetry: t),
         ),
       ),
     );
@@ -70,6 +74,12 @@ void main() {
 
   testWidgets('hidden with the flag off, and nothing is counted', (tester) async {
     final (_, t) = await pump(tester, flag: false);
+    expect(question, findsNothing);
+    expect(t.events, isEmpty);
+  });
+
+  testWidgets('hidden where Drive itself shows, and nothing is counted', (tester) async {
+    final (_, t) = await pump(tester, drive: true);
     expect(question, findsNothing);
     expect(t.events, isEmpty);
   });

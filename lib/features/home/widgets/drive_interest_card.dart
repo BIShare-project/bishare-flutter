@@ -97,7 +97,8 @@ class _DriveInterestCardState extends State<DriveInterestCard> {
     final prefs = _prefs, flags = _flags, telemetry = _telemetry;
     if (prefs == null || flags == null || telemetry == null) return false;
     return DriveInterestCard.shouldShow(
-      flagOn: flags.driveInterestEnabled,
+      // Where Drive itself shows, the question about it is moot (audit P14).
+      flagOn: flags.driveInterestEnabled && !flags.vaultVisible,
       telemetryOn: telemetry.enabled,
       launches: prefs.getInt(DriveInterestCard.launchesKey) ?? 0,
       answer: prefs.getString(DriveInterestCard.answerKey),
