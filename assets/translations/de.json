@@ -1128,6 +1128,7 @@
     "remind_end_title": "Dein Drive-Tarif endet bald",
     "remind_end_body": "Dein Tarif endet am {date}. Wenn dein Drive dann mehr als die kostenlose Größe enthält, ist es nur noch lesbar.",
     "remind_free_title": "Dein kostenloses Drive wird nicht genutzt",
+    "remind_channel": "Erinnerungen zu Ihrem Drive-Tarif",
     "remind_free_body": "Ein kostenloses Drive, das 12 Monate lang kein Gerät öffnet, wird gelöscht. Öffne BIShare vor dem {date}, um es zu behalten."
   }
 }

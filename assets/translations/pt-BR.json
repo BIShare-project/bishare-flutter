@@ -1128,6 +1128,7 @@
     "remind_end_title": "Seu plano do Drive termina em breve",
     "remind_end_body": "Seu plano termina em {date}. Se o seu Drive tiver mais que o tamanho grátis nessa data, ele ficará só para leitura.",
     "remind_free_title": "Seu Drive grátis não está sendo usado",
+    "remind_channel": "Lembretes sobre seu plano do Drive",
     "remind_free_body": "Um Drive grátis que nenhum dispositivo abre por 12 meses é apagado. Abra o BIShare antes de {date} para mantê-lo."
   }
 }

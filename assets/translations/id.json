@@ -1128,6 +1128,7 @@
     "remind_end_title": "Paket Drive Anda segera berakhir",
     "remind_end_body": "Paket Anda berakhir pada {date}. Kalau Drive Anda saat itu berisi lebih dari ukuran gratis, Drive jadi hanya bisa dibaca.",
     "remind_free_title": "Drive gratis Anda belum dipakai",
+    "remind_channel": "Pengingat tentang paket Drive Anda",
     "remind_free_body": "Drive gratis yang tidak dibuka perangkat mana pun selama 12 bulan akan dihapus. Buka BIShare sebelum {date} untuk menyimpannya."
   }
 }

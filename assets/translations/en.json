@@ -1128,6 +1128,7 @@
     "remind_end_title": "Your Drive plan ends soon",
     "remind_end_body": "Your plan ends on {date}. If your Drive holds more than the free size then, it becomes read-only.",
     "remind_free_title": "Your free Drive hasn't been used",
+    "remind_channel": "Reminders about your Drive plan",
     "remind_free_body": "A free Drive that no device opens for 12 months is deleted. Open BIShare before {date} to keep it."
   }
 }

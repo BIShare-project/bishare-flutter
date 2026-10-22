@@ -1128,6 +1128,7 @@
     "remind_end_title": "你的 Drive 方案即將結束",
     "remind_end_body": "你的方案將於 {date} 結束。屆時如果 Drive 超出免費容量，將變為唯讀。",
     "remind_free_title": "你的免費 Drive 尚未使用",
+    "remind_channel": "關於你的 Drive 方案的提醒",
     "remind_free_body": "12 個月內沒有任何裝置開啟的免費 Drive 會被刪除。請在 {date} 之前開啟 BIShare 以保留它。"
   }
 }

@@ -1128,6 +1128,7 @@
     "remind_end_title": "Votre forfait Drive se termine bientôt",
     "remind_end_body": "Votre forfait se termine le {date}. Si votre Drive contient alors plus que la taille gratuite, il passe en lecture seule.",
     "remind_free_title": "Votre Drive gratuit n’est pas utilisé",
+    "remind_channel": "Rappels concernant votre forfait Drive",
     "remind_free_body": "Un Drive gratuit qu’aucun appareil n’ouvre pendant 12 mois est supprimé. Ouvrez BIShare avant le {date} pour le garder."
   }
 }

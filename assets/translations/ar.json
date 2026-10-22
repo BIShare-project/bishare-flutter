@@ -1153,6 +1153,7 @@
     "remind_end_title": "خطة Drive تنتهي قريبًا",
     "remind_end_body": "تنتهي خطتك في {date}. إذا كان Drive حينها يحتوي على أكثر من الحجم المجاني، يصبح للقراءة فقط.",
     "remind_free_title": "لم تستخدم Drive المجاني",
+    "remind_channel": "تذكيرات بشأن خطة Drive الخاصة بك",
     "remind_free_body": "يُحذف Drive المجاني الذي لا يفتحه أي جهاز لمدة 12 شهرًا. افتح BIShare قبل {date} للاحتفاظ به."
   }
 }

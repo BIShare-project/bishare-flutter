@@ -1128,6 +1128,7 @@
     "remind_end_title": "Drive のプランがまもなく終了します",
     "remind_end_body": "プランは {date} に終了します。そのとき Drive が無料の容量を超えていると、読み取り専用になります。",
     "remind_free_title": "無料の Drive が使われていません",
+    "remind_channel": "Driveプランに関するリマインダー",
     "remind_free_body": "12 か月間どのデバイスからも開かれていない無料の Drive は削除されます。残すには {date} までに BIShare を開いてください。"
   }
 }
