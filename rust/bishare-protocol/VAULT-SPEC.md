@@ -244,8 +244,19 @@ QR text         "BSVW1." ‖ slot ‖ "." ‖ b64u(newPub) ‖ "." ‖ b64u(brow
 A `web` device is removed by the server after 12 hours without a request, or
 30 days when `stay` was true; "Lock" in the browser removes it at once.
 
+Windows and Linux open the Drive the same way (owner, 2026-10-22: no Apple or
+Google sign-in there). The app sends `"desktop": true` with the slot, and the
+server keeps `stay` true for it; the approving device sees `desktop` in the
+slot and says "computer" rather than "browser". The computer is enrolled as a
+device of kind `desktop`, which is treated as `web` everywhere else: removed
+after 30 days without a request, removable by any device without a sign-in,
+and unable to approve another device or to remove an `app` device. Its device
+key is the installation's own (as any app device), so a computer approved
+again keeps its device id.
+
 Removing a device (`DELETE /vault/:id/devices/:device`): a device may always
-remove itself. Any device may remove a `web` device without signing in again.
+remove itself. Any device may remove a `web` or `desktop` device without
+signing in again.
 Removing an `app` device (a phone or computer) takes a fresh Apple or Google
 sign-in in the body (`provider`, `idToken`); without one the server answers
 403 `VAULT_SIGNIN_REQUIRED`. So a stolen browser can never remove the phones
