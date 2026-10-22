@@ -1,9 +1,27 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../core/rust/rust_facade.dart';
+
+/// The command that lets the Snap package reach the system keyring.
+const snapKeyringCommand = 'snap connect bishare:password-manager-service';
+
+/// Whether [e] is the system keyring refusing the Snap package (audit D3):
+/// the package declares the password-manager-service interface, but until
+/// the Snap Store connects it by itself, the person runs
+/// [snapKeyringCommand] once.
+bool snapKeyringRefused(
+  Object e, {
+  bool? linux,
+  Map<String, String>? environment,
+}) =>
+    e is PlatformException &&
+    (linux ?? Platform.isLinux) &&
+    (environment ?? Platform.environment).containsKey('SNAP');
 
 /// Where this device keeps its Drive secrets (drive-plan.md task 3.5).
 ///

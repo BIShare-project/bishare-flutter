@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/di/locator.dart';
 import '../../../core/ui/app_ui.dart';
 import '../data/vault_account.dart';
 import '../data/vault_api.dart';
+import '../data/vault_keys.dart';
 
 /// Windows and Linux open the Drive without a sign-in of their own (owner,
 /// 2026-10-22): this computer shows a code, and BIShare on a phone, tablet
@@ -28,6 +30,10 @@ Future<void> showVaultDesktopPairing(BuildContext context) async {
     toast(context, 'vault.pair_done'.tr(), type: ToastType.success);
   }
 }
+
+/// Whether an error is the Snap keyring refusing; tests stand in for Linux.
+@visibleForTesting
+bool Function(Object) keyringRefused = snapKeyringRefused;
 
 /// The code and its state: the sheet's body (and the screenshots').
 class VaultDesktopPairingPanel extends StatefulWidget {
@@ -86,7 +92,7 @@ class _VaultDesktopPairingPanelState extends State<VaultDesktopPairingPanel> {
       if (mounted) setState(() => _error = _errorText(e.code));
     } on Object catch (e) {
       debugPrint('[vault] pairing: $e');
-      if (mounted) setState(() => _error = 'vault.error_failed'.tr());
+      if (mounted) setState(() => _error = _otherError(e));
     }
   }
 
@@ -119,10 +125,21 @@ class _VaultDesktopPairingPanelState extends State<VaultDesktopPairingPanel> {
           });
         }
       }
+    } on Object catch (e) {
+      // The keychain refused the key (a Snap without its keyring interface):
+      // say so, rather than look again every 2 s in silence.
+      debugPrint('[vault] pairing: $e');
+      _timer?.cancel();
+      if (mounted) setState(() => _error = _otherError(e));
     } finally {
       _looking = false;
     }
   }
+
+  String get _keyringText => 'vault.error_snap_keyring'.tr();
+
+  String _otherError(Object e) =>
+      keyringRefused(e) ? _keyringText : 'vault.error_failed'.tr();
 
   String _errorText(String code) => switch (code) {
     'NETWORK' => 'vault.error_network'.tr(),
@@ -144,6 +161,10 @@ class _VaultDesktopPairingPanelState extends State<VaultDesktopPairingPanel> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(_error!, textAlign: TextAlign.center, style: muted),
+          if (_error == _keyringText) ...[
+            const SizedBox(height: 10),
+            const _Command(snapKeyringCommand),
+          ],
           const SizedBox(height: 14),
           // Approved already: finishing needs no new code, only another try.
           if (p != null && p.taken)
@@ -227,6 +248,49 @@ class _VaultDesktopPairingPanelState extends State<VaultDesktopPairingPanel> {
             ],
           ),
       ],
+    );
+  }
+}
+
+/// A terminal command to copy, in a monospace box.
+class _Command extends StatelessWidget {
+  const _Command(this.command);
+
+  final String command;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = ShadTheme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
+      decoration: BoxDecoration(
+        color: cs.muted,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SelectableText(
+              command,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 12,
+                color: cs.foreground,
+              ),
+            ),
+          ),
+          AppIconButton(
+            icon: AppIcons.copyDuplicate,
+            tooltip: 'common.copy'.tr(),
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: command));
+              if (context.mounted) {
+                toast(context, 'vault.copied'.tr(), type: ToastType.success);
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 }

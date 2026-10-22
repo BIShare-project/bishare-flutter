@@ -1162,6 +1162,7 @@
     "remind_end_body": "요금제가 {date}에 끝납니다. 그때 Drive에 무료 용량보다 많은 파일이 있으면 읽기 전용이 됩니다.",
     "remind_free_title": "무료 Drive를 쓰지 않고 있습니다",
     "remind_channel": "Drive 요금제 알림",
-    "remind_free_body": "12개월 동안 어떤 기기에서도 열지 않은 무료 Drive는 삭제됩니다. 유지하려면 {date} 전에 BIShare를 여세요."
+    "remind_free_body": "12개월 동안 어떤 기기에서도 열지 않은 무료 Drive는 삭제됩니다. 유지하려면 {date} 전에 BIShare를 여세요.",
+    "error_snap_keyring": "BIShare가 이 컴퓨터의 키링에 접근하지 못했습니다. Drive는 여기에 키를 보관합니다. 터미널에서 아래 명령을 한 번 실행해 허용한 뒤 다시 시도하세요:"
   }
 }

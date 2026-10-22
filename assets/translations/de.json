@@ -1162,6 +1162,7 @@
     "remind_end_body": "Dein Tarif endet am {date}. Wenn dein Drive dann mehr als die kostenlose Größe enthält, ist es nur noch lesbar.",
     "remind_free_title": "Dein kostenloses Drive wird nicht genutzt",
     "remind_channel": "Erinnerungen zu Ihrem Drive-Tarif",
-    "remind_free_body": "Ein kostenloses Drive, das 12 Monate lang kein Gerät öffnet, wird gelöscht. Öffne BIShare vor dem {date}, um es zu behalten."
+    "remind_free_body": "Ein kostenloses Drive, das 12 Monate lang kein Gerät öffnet, wird gelöscht. Öffne BIShare vor dem {date}, um es zu behalten.",
+    "error_snap_keyring": "BIShare erreicht den Schlüsselbund dieses Computers nicht, in dem Drive seinen Schlüssel ablegt. Erlaube es einmalig mit diesem Befehl im Terminal und versuche es dann erneut:"
   }
 }

@@ -1162,6 +1162,7 @@
     "remind_end_body": "Tu plan termina el {date}. Si entonces tu Drive tiene más que el tamaño gratuito, pasará a ser de solo lectura.",
     "remind_free_title": "No has usado tu Drive gratuito",
     "remind_channel": "Recordatorios sobre tu plan de Drive",
-    "remind_free_body": "Un Drive gratuito que ningún dispositivo abre durante 12 meses se borra. Abre BIShare antes del {date} para conservarlo."
+    "remind_free_body": "Un Drive gratuito que ningún dispositivo abre durante 12 meses se borra. Abre BIShare antes del {date} para conservarlo.",
+    "error_snap_keyring": "BIShare no pudo acceder al llavero de este ordenador, donde Drive guarda su clave. Permítelo una vez ejecutando esto en una terminal y vuelve a intentarlo:"
   }
 }
