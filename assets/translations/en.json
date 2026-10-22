@@ -704,8 +704,8 @@
     "timed_5min": "Timed · 5 min"
   },
   "vault": {
-    "title": "Drive (testing)",
-    "signed_out": "Encrypted storage for your files. Sign in to try it.",
+    "title": "Drive",
+    "signed_out": "Encrypted storage for your files. Sign in to start.",
     "sign_in_google": "Sign in with Google",
     "sign_in_apple": "Sign in with Apple",
     "ready": "Signed in. This device has the key to your Drive.",

@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../core/di/locator.dart';
+import '../core/l10n/app_locales.dart';
 import '../core/theme/app_theme.dart';
 import '../features/clipboard/presentation/clipboard_cubit.dart';
 import '../features/devices/presentation/devices_cubit.dart';
@@ -103,37 +104,45 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
         ),
       ],
       child: BlocBuilder<SettingsCubit, Settings>(
-        builder: (context, settings) => ShadApp.router(
-          title: 'BIShare',
-          debugShowCheckedModeBanner: false,
-          // easy_localization: delegates + supported locales + active locale.
-          localizationsDelegates: context.localizationDelegates,
-          supportedLocales: context.supportedLocales,
-          locale: context.locale,
-          theme: AppTheme.light(settings.accent),
-          darkTheme: AppTheme.dark(settings.accent),
-          themeMode: settings.themeMode,
-          // Apply IBM Plex Sans to raw Material text too (not just shadcn).
-          materialThemeBuilder: (context, theme) => theme.copyWith(
-            textTheme: theme.textTheme.apply(fontFamily: AppTheme.fontFamily),
-          ),
-          routerConfig: appRouter,
-          // Status-bar icons follow the app theme (dark icons on the light
-          // theme). Full-screen dark pages override this with their own region.
-          builder: (context, child) {
-            final dark =
-                settings.themeMode == ThemeMode.dark ||
-                (settings.themeMode == ThemeMode.system &&
-                    MediaQuery.platformBrightnessOf(context) ==
-                        Brightness.dark);
-            return AnnotatedRegion<SystemUiOverlayStyle>(
-              value: dark
-                  ? SystemUiOverlayStyle.light
-                  : SystemUiOverlayStyle.dark,
-              child: child ?? const SizedBox.shrink(),
+        builder: (context, settings) {
+          final tag = context.locale.toLanguageTag();
+          if (appLocaleTag.value != tag) {
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => appLocaleTag.value = tag,
             );
-          },
-        ),
+          }
+          return ShadApp.router(
+            title: 'BIShare',
+            debugShowCheckedModeBanner: false,
+            // easy_localization: delegates + supported locales + active locale.
+            localizationsDelegates: context.localizationDelegates,
+            supportedLocales: context.supportedLocales,
+            locale: context.locale,
+            theme: AppTheme.light(settings.accent),
+            darkTheme: AppTheme.dark(settings.accent),
+            themeMode: settings.themeMode,
+            // Apply IBM Plex Sans to raw Material text too (not just shadcn).
+            materialThemeBuilder: (context, theme) => theme.copyWith(
+              textTheme: theme.textTheme.apply(fontFamily: AppTheme.fontFamily),
+            ),
+            routerConfig: appRouter,
+            // Status-bar icons follow the app theme (dark icons on the light
+            // theme). Full-screen dark pages override this with their own region.
+            builder: (context, child) {
+              final dark =
+                  settings.themeMode == ThemeMode.dark ||
+                  (settings.themeMode == ThemeMode.system &&
+                      MediaQuery.platformBrightnessOf(context) ==
+                          Brightness.dark);
+              return AnnotatedRegion<SystemUiOverlayStyle>(
+                value: dark
+                    ? SystemUiOverlayStyle.light
+                    : SystemUiOverlayStyle.dark,
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
+          );
+        },
       ),
     );
   }

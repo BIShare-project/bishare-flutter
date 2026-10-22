@@ -1,5 +1,10 @@
 import 'package:flutter/widgets.dart';
 
+/// The language the app shows now (a BCP 47 tag), for what is written
+/// outside a widget, such as the Drive reminders' dates; set by the app as it
+/// builds, so listeners hear a change of language.
+final ValueNotifier<String?> appLocaleTag = ValueNotifier(null);
+
 /// The 13 supported app locales — `en` is the source & fallback. Region/script
 /// variants (`pt-BR`, `zh-Hans`, `zh-Hant`) map to matching JSON files under
 /// `assets/translations/`.

@@ -704,8 +704,8 @@
     "timed_5min": "Temporal · 5 min"
   },
   "vault": {
-    "title": "Drive (en pruebas)",
-    "signed_out": "Almacenamiento cifrado para tus archivos. Inicia sesión para probarlo.",
+    "title": "Drive",
+    "signed_out": "Almacenamiento cifrado para tus archivos. Inicia sesión para empezar.",
     "sign_in_google": "Iniciar sesión con Google",
     "sign_in_apple": "Iniciar sesión con Apple",
     "ready": "Sesión iniciada. Este dispositivo tiene la llave de tu Drive.",

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older. Drive's work folder holds files being uploaded
+     without their encryption (compressed copies, sealed parts): never in a
+     device backup. The secure storage's preferences open only with this
+     device's keystore, so a restored copy would be unreadable anyway. -->
+<full-backup-content>
+    <exclude domain="file" path="vault/" />
+    <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+</full-backup-content>

@@ -704,8 +704,8 @@
     "timed_5min": "限時 · 5 分鐘"
   },
   "vault": {
-    "title": "Drive（測試中）",
-    "signed_out": "為你的檔案提供加密儲存空間。登入即可試用。",
+    "title": "Drive",
+    "signed_out": "為你的檔案提供加密儲存空間。登入即可開始。",
     "sign_in_google": "使用 Google 登入",
     "sign_in_apple": "使用 Apple 登入",
     "ready": "已登入。這部裝置擁有你的 Drive 金鑰。",

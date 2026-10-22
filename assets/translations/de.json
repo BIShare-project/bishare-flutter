@@ -704,8 +704,8 @@
     "timed_5min": "Befristet · 5 Min."
   },
   "vault": {
-    "title": "Drive (Test)",
-    "signed_out": "Verschlüsselter Speicher für Ihre Dateien. Melden Sie sich an, um ihn auszuprobieren.",
+    "title": "Drive",
+    "signed_out": "Verschlüsselter Speicher für Ihre Dateien. Melden Sie sich an, um zu beginnen.",
     "sign_in_google": "Mit Google anmelden",
     "sign_in_apple": "Mit Apple anmelden",
     "ready": "Angemeldet. Dieses Gerät hat den Schlüssel zu Ihrem Drive.",

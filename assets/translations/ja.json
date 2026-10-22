@@ -704,8 +704,8 @@
     "timed_5min": "期限付き · 5分"
   },
   "vault": {
-    "title": "Drive（テスト中）",
-    "signed_out": "ファイルのための暗号化ストレージです。サインインして試せます。",
+    "title": "Drive",
+    "signed_out": "ファイルのための暗号化ストレージです。サインインして始めましょう。",
     "sign_in_google": "Googleでサインイン",
     "sign_in_apple": "Appleでサインイン",
     "ready": "サインイン済み。このデバイスにDriveの鍵があります。",

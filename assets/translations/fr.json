@@ -704,8 +704,8 @@
     "timed_5min": "Limité · 5 min"
   },
   "vault": {
-    "title": "Drive (test)",
-    "signed_out": "Un stockage chiffré pour vos fichiers. Connectez-vous pour l’essayer.",
+    "title": "Drive",
+    "signed_out": "Un stockage chiffré pour vos fichiers. Connectez-vous pour commencer.",
     "sign_in_google": "Se connecter avec Google",
     "sign_in_apple": "Se connecter avec Apple",
     "ready": "Connecté. Cet appareil a la clé de votre Drive.",

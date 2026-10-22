@@ -114,10 +114,10 @@ class VaultReminders {
               AndroidFlutterLocalNotificationsPlugin
             >()
             ?.createNotificationChannel(
-              const AndroidNotificationChannel(
+              AndroidNotificationChannel(
                 'bishare_drive',
                 'Drive',
-                description: 'Reminders about your Drive plan',
+                description: 'vault.remind_channel'.tr(),
               ),
             );
       }
@@ -138,14 +138,14 @@ class VaultReminders {
           body: r.body,
           scheduledDate: tz.TZDateTime.from(r.at.toUtc(), tz.UTC),
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          notificationDetails: const NotificationDetails(
+          notificationDetails: NotificationDetails(
             android: AndroidNotificationDetails(
               'bishare_drive',
               'Drive',
-              channelDescription: 'Reminders about your Drive plan',
+              channelDescription: 'vault.remind_channel'.tr(),
             ),
-            iOS: DarwinNotificationDetails(presentAlert: true),
-            macOS: DarwinNotificationDetails(presentAlert: true),
+            iOS: const DarwinNotificationDetails(presentAlert: true),
+            macOS: const DarwinNotificationDetails(presentAlert: true),
           ),
         );
       }

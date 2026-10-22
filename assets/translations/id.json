@@ -704,8 +704,8 @@
     "timed_5min": "Berwaktu · 5 menit"
   },
   "vault": {
-    "title": "Drive (uji coba)",
-    "signed_out": "Penyimpanan terenkripsi untuk file Anda. Masuk untuk mencobanya.",
+    "title": "Drive",
+    "signed_out": "Penyimpanan terenkripsi untuk file Anda. Masuk untuk memulai.",
     "sign_in_google": "Masuk dengan Google",
     "sign_in_apple": "Masuk dengan Apple",
     "ready": "Sudah masuk. Perangkat ini memegang kunci Drive Anda.",

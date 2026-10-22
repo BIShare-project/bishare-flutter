@@ -13,6 +13,7 @@ import '../review/review_prompter.dart';
 import '../telemetry/telemetry_service.dart';
 
 import '../config/feature_flags.dart';
+import '../l10n/app_locales.dart';
 import '../storage/save_folder_channel.dart';
 import '../storage/android_downloads_channel.dart';
 import '../../features/clipboard/data/clipboard_history_store.dart';
@@ -337,11 +338,15 @@ Future<void> setupLocator() async {
         // Reminders on the dates the server named (task 7.6), kept in step
         // with what it says.
         final reminders = VaultReminders();
-        account.addListener(
-          () => unawaited(
-            reminders.sync(account, (d) => DateFormat.yMMMd().format(d)),
+        // In the app's language, and again when it changes (audit P12).
+        void remind() => unawaited(
+          reminders.sync(
+            account,
+            (d) => DateFormat.yMMMd(appLocaleTag.value).format(d),
           ),
         );
+        account.addListener(remind);
+        appLocaleTag.addListener(remind);
         final photos = getIt<VaultPhotoBackup>();
         final uploader = getIt<VaultUploader>()
           // A background run that is sending stops before the app sends.

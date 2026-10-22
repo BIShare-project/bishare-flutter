@@ -59,6 +59,21 @@ import workmanager_apple
         case "end":
           self?.endUploadTime()
           result(nil)
+        case "excludeFromBackup":
+          // Drive's work folder: plain copies of files being uploaded.
+          guard let path = (call.arguments as? [String: Any])?["path"] as? String else {
+            result(false)
+            return
+          }
+          var url = URL(fileURLWithPath: path, isDirectory: true)
+          var values = URLResourceValues()
+          values.isExcludedFromBackup = true
+          do {
+            try url.setResourceValues(values)
+            result(true)
+          } catch {
+            result(false)
+          }
         default:
           result(FlutterMethodNotImplemented)
         }

@@ -704,8 +704,8 @@
     "timed_5min": "Temporário · 5 min"
   },
   "vault": {
-    "title": "Drive (em teste)",
-    "signed_out": "Armazenamento criptografado para seus arquivos. Entre para experimentar.",
+    "title": "Drive",
+    "signed_out": "Armazenamento criptografado para seus arquivos. Entre para começar.",
     "sign_in_google": "Entrar com o Google",
     "sign_in_apple": "Entrar com a Apple",
     "ready": "Conectado. Este dispositivo tem a chave do seu Drive.",

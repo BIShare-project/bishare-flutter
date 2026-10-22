@@ -14,6 +14,7 @@ import '../../../core/rust/rust_facade.dart';
 import '../../../core/storage/app_database.dart';
 import '../../../core/storage/vault_tables.dart';
 import 'vault_api.dart';
+import 'vault_background.dart';
 import 'vault_file_work.dart';
 import 'vault_files.dart';
 import 'vault_keys.dart';
@@ -122,8 +123,17 @@ class VaultUploader extends ChangeNotifier {
       '${(await getApplicationSupportDirectory()).path}/vault/work',
     );
     await dir.create(recursive: true);
+    if (!_outOfBackups) {
+      // Plain copies of what goes up: never in an iCloud backup (audit P11;
+      // Android's backup rules leave the folder out too). Once a run, for
+      // folders made by an earlier version as well.
+      _outOfBackups = true;
+      await VaultBackground.excludeFromBackup(dir.path);
+    }
     return dir;
   }
+
+  static bool _outOfBackups = false;
 
   /// Queue [files] for the folder [parent] (null: the top of the Drive) and
   /// start the queue. A name already used there (or by a file still in the

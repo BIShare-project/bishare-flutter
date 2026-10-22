@@ -267,6 +267,16 @@ class VaultBackground {
 
   static const _time = MethodChannel('app.bishare/background');
 
+  /// iOS: keep [path] (a folder) out of iCloud backups.
+  static Future<void> excludeFromBackup(String path) async {
+    if (kIsWeb || !Platform.isIOS) return;
+    try {
+      await _time.invokeMethod<void>('excludeFromBackup', {'path': path});
+    } on Object catch (e) {
+      debugPrint('[vault] backup exclusion: $e');
+    }
+  }
+
   /// iOS: ask for the minute or so iOS gives an app that leaves the screen
   /// while a file is going up, and give it back when the queue is done.
   static Future<void> extraTime(bool on) async {

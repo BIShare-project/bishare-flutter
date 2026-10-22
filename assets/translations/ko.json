@@ -704,8 +704,8 @@
     "timed_5min": "시간 제한 · 5분"
   },
   "vault": {
-    "title": "Drive (테스트 중)",
-    "signed_out": "파일을 위한 암호화 저장공간입니다. 로그인해서 사용해 보세요.",
+    "title": "Drive",
+    "signed_out": "파일을 위한 암호화 저장공간입니다. 로그인해서 시작하세요.",
     "sign_in_google": "Google로 로그인",
     "sign_in_apple": "Apple로 로그인",
     "ready": "로그인됨. 이 기기에 Drive 키가 있습니다.",
