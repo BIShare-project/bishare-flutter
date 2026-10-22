@@ -260,6 +260,55 @@ sign-in in the body (`provider`, `idToken`); without one the server answers
 403 `VAULT_SIGNIN_REQUIRED`. So a stolen browser can never remove the phones
 and computers that are able to remove it.
 
+## Links from Drive (added 2026-10-22)
+
+A file, or a folder with the files under it, that anyone with the link opens
+in a browser, for 1, 7 or 30 days or until the owner turns it off
+(drive-plan.md 6B.3). The server learns which objects a link covers, never
+their names or keys.
+
+```
+link id         16 random bytes made by the device, b64u (22 characters)
+link key        32 random bytes made by the device; it travels only in the link,
+                after `#`, so browsers never send it:
+                https://get.bishare.app/d/<link id>#<b64u(link key)>
+K_link          HKDF(link key, "bishare-vault-link-v1", 32)
+manifest        b64u(box(K_link, utf8(JSON), aad = utf8("bishare-vault-link-v1|" ‖ link id)))
+```
+
+The JSON is one object, keys in this order, no whitespace:
+
+| Key | Value |
+|---|---|
+| `v` | `1` |
+| `k` | `"file"` or `"dir"` |
+| `n` | the shared file's or folder's name (rules of `n` above) |
+| `vault` | the vault id (a thumbnail's AAD names it) |
+| `items` | the files, each an object with the keys below |
+
+| Item key | Value |
+|---|---|
+| `id` | object id |
+| `path` | where the file sits under the shared folder: names joined by single `/`, ending with the file's name, no empty, `.` or `..` segment, no U+0000; for a file link, exactly `n` |
+| `s` | plaintext size |
+| `t` | MIME type, never empty |
+| `m` | modification time, Unix milliseconds |
+| `fk` | b64u(file key) |
+| `z` | `"deflate"`, only when the blob is compressed (see "Compression") |
+| `th` | `true`, only when the object has a thumbnail |
+
+A file link lists exactly one file; a folder link lists at most 1999 (the
+server takes 2000 ids: the folder and its files), each object once. Folders
+appear only inside paths: an empty folder is not listed. A reader rejects
+`v` ≠ 1, an unknown `k` or `z`, a bad path or name, an invalid id, a vault id
+that is not one, an `fk` that is not 32 bytes, and an empty `t`.
+
+The recipient's browser downloads each blob through a short signed URL the
+server hands out for the objects the link covers, and opens it as BSE2 with
+`fk` (inflating when `z` says so); a thumbnail opens as in "Thumbnails" with
+`vault` and `id`. A folder link shows the folder as it was when the device
+last sent its manifest; the device sends it again after a change.
+
 ## Signed requests
 
 Every request to `/api/v1/vault/*` other than sign-in carries one header:

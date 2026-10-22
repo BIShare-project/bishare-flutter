@@ -29,6 +29,7 @@ void main() {
   final grant = v['grant'] as Map<String, dynamic>;
   final dedupe = v['dedupe'] as Map<String, dynamic>;
   final compressed = v['compressed'] as Map<String, dynamic>;
+  final link = v['link'] as Map<String, dynamic>;
   late bool rust;
 
   setUpAll(() async {
@@ -210,6 +211,37 @@ void main() {
     final sealed = Rust.vaultSealThumbnail(fileKey: fileKey, vaultId: vaultId, objectId: objectId, jpeg: [1, 2, 3]);
     expect(Rust.vaultOpenThumbnail(fileKey: fileKey, vaultId: vaultId, objectId: objectId, sealed: sealed), [1, 2, 3]);
     expect(() => Rust.vaultOpenThumbnail(fileKey: fileKey, vaultId: vaultId, objectId: dir['objectId'] as String, sealed: sealed), throwsA(anything));
+  });
+
+  test('a link manifest opens from the vectors and a fresh one round-trips', () {
+    if (!rust) return markTestSkipped(rustUnavailableReason);
+    final key = _b64u(link['linkKey'] as String);
+    final id = link['linkId'] as String;
+    expect(Rust.vaultOpenLinkJson(linkKey: key, linkId: id, sealed: link['manifest'] as String), link['manifestJson']);
+    // Bound to its id: the same box under another link id does not open.
+    expect(() => Rust.vaultOpenLinkJson(linkKey: key, linkId: file['objectId'] as String, sealed: link['manifest'] as String), throwsA(anything));
+    final fresh = Rust.vaultGenerateLinkKey();
+    expect(fresh, hasLength(32));
+    final sealed = Rust.vaultSealLink(
+      linkKey: fresh,
+      linkId: id,
+      kind: 'file',
+      name: 'a.txt',
+      vaultId: vaultId,
+      files: [
+        VaultLinkFile(objectId: file['objectId'] as String, path: 'a.txt', size: 3, mime: 'text/plain', mtimeMs: 1, fileKey: _b64u(file['fileKey'] as String), hasThumb: false),
+      ],
+    );
+    final json = jsonDecode(Rust.vaultOpenLinkJson(linkKey: fresh, linkId: id, sealed: sealed)) as Map<String, dynamic>;
+    expect(json['k'], 'file');
+    expect((json['items'] as List).single['path'], 'a.txt');
+    // A file link's path is the file's name.
+    expect(
+      () => Rust.vaultSealLink(linkKey: fresh, linkId: id, kind: 'file', name: 'a.txt', vaultId: vaultId, files: [
+        VaultLinkFile(objectId: file['objectId'] as String, path: 'b.txt', size: 3, mime: 'text/plain', mtimeMs: 1, fileKey: _b64u(file['fileKey'] as String), hasThumb: false),
+      ]),
+      throwsA(anything),
+    );
   });
 
   test('device name opens from the vectors, only for its own device', () {

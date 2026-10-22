@@ -60,6 +60,11 @@ const INFO_DEDUPE: &[u8] = b"bishare-vault-dedupe-v1";
 const AAD_META: &str = "bishare-vault-meta-v1";
 const AAD_THUMB: &str = "bishare-vault-thumb-v1";
 const AAD_DEVICE: &str = "bishare-vault-device-v1";
+const INFO_LINK: &[u8] = b"bishare-vault-link-v1";
+const AAD_LINK: &str = "bishare-vault-link-v1";
+pub const LINK_VERSION: u32 = 1;
+/// Files one link may list (the server takes 2000 ids: the folder and its files).
+pub const LINK_MAX_FILES: usize = 1999;
 /// Longest device name a writer emits, in characters.
 pub const DEVICE_NAME_MAX: usize = 100;
 const REQ_PREFIX: &str = "bishare-vault-req-v1";
@@ -919,6 +924,200 @@ impl Authorization {
     }
 }
 
+// ── links from Drive (added 2026-10-22) ─────────────────────────────────────
+
+/// One file a link opens.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LinkFile {
+    pub object_id: String,
+    /// Where the file sits under the shared folder, `/`-separated and ending
+    /// with its name; for a file link, the name.
+    pub path: String,
+    pub size: u64,
+    pub mime: String,
+    pub mtime_ms: i64,
+    pub file_key: [u8; KEY_SIZE],
+    pub compression: Option<Compression>,
+    pub has_thumb: bool,
+}
+
+/// What a link opens: one file, or a folder with the files under it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LinkManifest {
+    pub kind: ObjectKind,
+    /// The shared file's or folder's name.
+    pub name: String,
+    /// The vault the files are in (a thumbnail's AAD names it).
+    pub vault_id: String,
+    pub files: Vec<LinkFile>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct LinkWire {
+    v: u32,
+    k: String,
+    n: String,
+    vault: String,
+    items: Vec<LinkFileWire>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct LinkFileWire {
+    id: String,
+    path: String,
+    s: u64,
+    t: String,
+    m: i64,
+    fk: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    z: Option<String>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    th: bool,
+}
+
+/// A path under the shared folder: segments that are names (not empty, not
+/// `.` or `..`, no NUL), joined by single `/`.
+fn valid_link_path(path: &str) -> bool {
+    !path.is_empty() && path.split('/').all(|seg| !seg.is_empty() && seg != "." && seg != ".." && !seg.contains('\0'))
+}
+
+impl LinkManifest {
+    fn validate(&self) -> Result<()> {
+        if self.name.is_empty() || self.name.contains('/') || self.name.contains('\0') {
+            return Err(bad("link name"));
+        }
+        if !is_vault_id(&self.vault_id) {
+            return Err(VaultError::InvalidVaultId);
+        }
+        match self.kind {
+            ObjectKind::File if self.files.len() != 1 => return Err(bad("a file link lists one file")),
+            _ if self.files.len() > LINK_MAX_FILES => return Err(bad("too many files")),
+            _ => {}
+        }
+        let mut seen = std::collections::HashSet::new();
+        for f in &self.files {
+            if !is_object_id(&f.object_id) {
+                return Err(VaultError::InvalidObjectId);
+            }
+            if !seen.insert(f.object_id.as_str()) {
+                return Err(bad("a file listed twice"));
+            }
+            let path_ok = match self.kind {
+                ObjectKind::File => f.path == self.name,
+                ObjectKind::Dir => valid_link_path(&f.path),
+            };
+            if !path_ok {
+                return Err(bad("file path"));
+            }
+            if f.mime.is_empty() {
+                return Err(bad("file without mime type"));
+            }
+        }
+        Ok(())
+    }
+
+    /// The canonical JSON of the spec.
+    pub fn to_json(&self) -> Result<String> {
+        self.validate()?;
+        let wire = LinkWire {
+            v: LINK_VERSION,
+            k: self.kind.wire().to_string(),
+            n: self.name.clone(),
+            vault: self.vault_id.clone(),
+            items: self
+                .files
+                .iter()
+                .map(|f| LinkFileWire {
+                    id: f.object_id.clone(),
+                    path: f.path.clone(),
+                    s: f.size,
+                    t: f.mime.clone(),
+                    m: f.mtime_ms,
+                    fk: b64u(&f.file_key),
+                    z: f.compression.map(|c| c.wire().to_string()),
+                    th: f.has_thumb,
+                })
+                .collect(),
+        };
+        serde_json::to_string(&wire).map_err(|e| bad(&e.to_string()))
+    }
+
+    /// Reads any JSON serialization; unknown keys are ignored.
+    pub fn from_json(json: &str) -> Result<Self> {
+        let wire: LinkWire = serde_json::from_str(json).map_err(|e| {
+            bad(match e.classify() {
+                serde_json::error::Category::Data => "a field is missing, doubled or of the wrong type",
+                _ => "not JSON",
+            })
+        })?;
+        if wire.v != LINK_VERSION {
+            return Err(bad("unknown version"));
+        }
+        let kind = match wire.k.as_str() {
+            "file" => ObjectKind::File,
+            "dir" => ObjectKind::Dir,
+            _ => return Err(bad("unknown kind")),
+        };
+        let mut files = Vec::with_capacity(wire.items.len());
+        for it in wire.items {
+            let file_key = from_b64u(&it.fk)
+                .and_then(|v| <[u8; 32]>::try_from(v).ok())
+                .ok_or_else(|| bad("file key is not 32 bytes"))?;
+            let compression = match it.z.as_deref() {
+                None => None,
+                Some("deflate") => Some(Compression::Deflate),
+                Some(_) => return Err(bad("unknown compression")),
+            };
+            files.push(LinkFile {
+                object_id: it.id,
+                path: it.path,
+                size: it.s,
+                mime: it.t,
+                mtime_ms: it.m,
+                file_key,
+                compression,
+                has_thumb: it.th,
+            });
+        }
+        let manifest = LinkManifest { kind, name: wire.n, vault_id: wire.vault, files };
+        manifest.validate()?;
+        Ok(manifest)
+    }
+}
+
+/// The key a link carries after `#`: 32 random bytes.
+pub fn generate_link_key() -> [u8; KEY_SIZE] {
+    random()
+}
+
+fn link_aad(link_id: &str) -> Result<Vec<u8>> {
+    if !is_object_id(link_id) {
+        return Err(VaultError::InvalidObjectId);
+    }
+    Ok(format!("{AAD_LINK}|{link_id}").into_bytes())
+}
+
+/// The sealed manifest the server keeps for a link: b64u of a box under
+/// HKDF(link key), bound to the link id. `nonce` is fixed only by tests.
+pub fn seal_link(
+    link_key: &[u8; KEY_SIZE],
+    link_id: &str,
+    manifest: &LinkManifest,
+    nonce: Option<[u8; NONCE_SIZE]>,
+) -> Result<String> {
+    let aad = link_aad(link_id)?;
+    let json = manifest.to_json()?;
+    Ok(b64u(&seal(&hkdf32(link_key, INFO_LINK), &nonce_or_random(nonce), json.as_bytes(), &aad)))
+}
+
+pub fn open_link(link_key: &[u8; KEY_SIZE], link_id: &str, sealed: &str) -> Result<LinkManifest> {
+    let aad = link_aad(link_id)?;
+    let boxed = from_b64u(sealed).ok_or(VaultError::SealedBoxTooShort)?;
+    let plain = open(&hkdf32(link_key, INFO_LINK), &boxed, &aad)?;
+    let json = String::from_utf8(plain).map_err(|_| bad("not UTF-8"))?;
+    LinkManifest::from_json(&json)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1033,6 +1232,39 @@ mod tests {
         }
     }
 
+    /// A folder link over the vector file (in a subfolder) and the compressed one.
+    fn link_manifest(i: &Inputs) -> LinkManifest {
+        let fm = file_meta(i);
+        let cm = compressed_meta(i);
+        LinkManifest {
+            kind: ObjectKind::Dir,
+            name: "Photos 2026".to_string(),
+            vault_id: i.vault_id.clone(),
+            files: vec![
+                LinkFile {
+                    object_id: i.file_id.clone(),
+                    path: format!("Trip/{}", fm.name),
+                    size: fm.size.unwrap(),
+                    mime: fm.mime.clone().unwrap(),
+                    mtime_ms: fm.mtime_ms,
+                    file_key: fm.file_key.unwrap(),
+                    compression: None,
+                    has_thumb: true,
+                },
+                LinkFile {
+                    object_id: b64u(&seq::<16>(0x20)),
+                    path: cm.name.clone(),
+                    size: cm.size.unwrap(),
+                    mime: cm.mime.clone().unwrap(),
+                    mtime_ms: cm.mtime_ms,
+                    file_key: cm.file_key.unwrap(),
+                    compression: Some(Compression::Deflate),
+                    has_thumb: false,
+                },
+            ],
+        }
+    }
+
     fn vectors() -> serde_json::Value {
         let i = inputs();
         let k_meta = meta_key(&i.vk);
@@ -1126,6 +1358,14 @@ mod tests {
                 "nonce": b64u(&seq::<12>(0x48)),
                 "encMeta": seal_meta(&k_meta, &i.vault_id, &b64u(&seq::<16>(0x20)), &cm, Some(seq::<12>(0x48))).unwrap(),
             },
+            "link": {
+                "linkId": b64u(&seq::<16>(0x34)),
+                "linkKey": b64u(&seq::<32>(0x5c)),
+                "manifestKey": b64u(&hkdf32(&seq::<32>(0x5c), INFO_LINK)),
+                "manifestJson": link_manifest(&i).to_json().unwrap(),
+                "nonce": b64u(&seq::<12>(0x64)),
+                "manifest": seal_link(&seq::<32>(0x5c), &b64u(&seq::<16>(0x34)), &link_manifest(&i), Some(seq::<12>(0x64))).unwrap(),
+            },
             "grant": {
                 "newPriv": b64u(&i.new_priv),
                 "newPub": b64u(&new_key.public_bytes()),
@@ -1153,6 +1393,60 @@ mod tests {
         let current = std::fs::read_to_string(FIXTURE)
             .expect("test/fixtures/vault_vectors.json exists (cargo test -- --ignored write_vectors)");
         assert_eq!(pretty(&vectors()), current, "vault_vectors.json drifted from vault.rs");
+    }
+
+    #[test]
+    fn a_link_opens_with_its_key_and_id_only() {
+        let i = inputs();
+        let m = link_manifest(&i);
+        let key = generate_link_key();
+        let id = generate_object_id();
+        let sealed = seal_link(&key, &id, &m, None).unwrap();
+        assert_eq!(open_link(&key, &id, &sealed).unwrap(), m);
+        assert!(matches!(open_link(&key, &generate_object_id(), &sealed), Err(VaultError::AuthFailed)));
+        assert!(matches!(open_link(&generate_link_key(), &id, &sealed), Err(VaultError::AuthFailed)));
+        assert!(matches!(open_link(&key, "not-an-id", &sealed), Err(VaultError::InvalidObjectId)));
+    }
+
+    #[test]
+    fn a_link_manifest_breaking_a_rule_is_refused() {
+        let i = inputs();
+        let good = link_manifest(&i);
+        let with_path = |p: &str| {
+            let mut m = good.clone();
+            m.files[0].path = p.to_string();
+            m
+        };
+        for p in ["", "/a", "a/", "a//b", "../a", "a/./b", "a\0b"] {
+            assert!(with_path(p).to_json().is_err(), "path {p:?}");
+        }
+        assert!(with_path("deep/er/still.txt").to_json().is_ok());
+        // A file link lists exactly its file, under its own name.
+        let mut file = good.clone();
+        file.kind = ObjectKind::File;
+        file.files.truncate(1);
+        assert!(file.to_json().is_err());
+        file.files[0].path = file.name.clone();
+        assert!(file.to_json().is_ok());
+        let mut twice = good.clone();
+        twice.files[1].object_id = twice.files[0].object_id.clone();
+        assert!(twice.to_json().is_err());
+        let mut many = good.clone();
+        many.files = (0..=LINK_MAX_FILES)
+            .map(|n| LinkFile { object_id: b64u(&(n as u128).to_le_bytes()), path: format!("f{n}"), ..good.files[1].clone() })
+            .collect();
+        assert!(many.to_json().is_err());
+        many.files.pop();
+        assert!(many.to_json().is_ok());
+        let mut vault = good.clone();
+        vault.vault_id = "nope".into();
+        assert!(vault.to_json().is_err());
+        // Read back: an unknown version, kind or compression is refused.
+        let json = good.to_json().unwrap();
+        assert!(LinkManifest::from_json(&json.replacen("\"v\":1", "\"v\":2", 1)).is_err());
+        assert!(LinkManifest::from_json(&json.replacen("\"k\":\"dir\"", "\"k\":\"box\"", 1)).is_err());
+        assert!(LinkManifest::from_json(&json.replacen("\"z\":\"deflate\"", "\"z\":\"zstd\"", 1)).is_err());
+        assert_eq!(LinkManifest::from_json(&json).unwrap(), good);
     }
 
     #[test]

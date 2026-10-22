@@ -430,3 +430,75 @@ pub fn vault_verify_request(
     )
     .map_err(err)
 }
+
+// ── links from Drive (VAULT-SPEC "Links from Drive") ────────────────────────
+
+/// One file a link opens. `path` is where it sits under the shared folder
+/// (`/`-separated, ending with its name); for a file link, the file's name.
+pub struct VaultLinkFile {
+    pub object_id: String,
+    pub path: String,
+    pub size: i64,
+    pub mime: String,
+    pub mtime_ms: i64,
+    pub file_key: Vec<u8>,
+    pub compression: Option<String>,
+    pub has_thumb: bool,
+}
+
+/// The key a link carries after `#`.
+#[flutter_rust_bridge::frb(sync)]
+pub fn vault_generate_link_key() -> Vec<u8> {
+    v::generate_link_key().to_vec()
+}
+
+/// The sealed manifest the server keeps for a link. `kind` is "file" or "dir".
+#[flutter_rust_bridge::frb(sync)]
+pub fn vault_seal_link(
+    link_key: Vec<u8>,
+    link_id: String,
+    kind: String,
+    name: String,
+    vault_id: String,
+    files: Vec<VaultLinkFile>,
+) -> Result<String, String> {
+    let kind = match kind.as_str() {
+        "file" => v::ObjectKind::File,
+        "dir" => v::ObjectKind::Dir,
+        other => return Err(format!("unknown kind {other:?}")),
+    };
+    let files = files
+        .into_iter()
+        .map(|f| {
+            let compression = match f.compression.as_deref() {
+                None => None,
+                Some("deflate") => Some(v::Compression::Deflate),
+                Some(other) => return Err(format!("unknown compression {other:?}")),
+            };
+            if f.size < 0 {
+                return Err("size must not be negative".to_string());
+            }
+            Ok(v::LinkFile {
+                object_id: f.object_id,
+                path: f.path,
+                size: f.size as u64,
+                mime: f.mime,
+                mtime_ms: f.mtime_ms,
+                file_key: key32(&f.file_key, "file key")?,
+                compression,
+                has_thumb: f.has_thumb,
+            })
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+    let manifest = v::LinkManifest { kind, name, vault_id, files };
+    v::seal_link(&key32(&link_key, "link key")?, &link_id, &manifest, None).map_err(err)
+}
+
+/// Opens a sealed manifest and gives its canonical JSON (the tests compare it
+/// with the vectors; the browser is the side that reads links).
+#[flutter_rust_bridge::frb(sync)]
+pub fn vault_open_link_json(link_key: Vec<u8>, link_id: String, sealed: String) -> Result<String, String> {
+    v::open_link(&key32(&link_key, "link key")?, &link_id, &sealed)
+        .and_then(|m| m.to_json())
+        .map_err(err)
+}

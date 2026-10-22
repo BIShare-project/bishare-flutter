@@ -70,6 +70,14 @@
     "nonce": "UFFSU1RVVldYWVpb",
     "serverHalf": "MDEyMzQ1Njc4OTo7PD0-P0BBQkNERUZHSElKS0xNTk8"
   },
+  "link": {
+    "linkId": "NDU2Nzg5Ojs8PT4_QEFCQw",
+    "linkKey": "XF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ens",
+    "manifest": "ZGVmZ2hpamtsbW5vExKI1KXpw3jcQjCc96l3R2OQHlkIpoLKHhPROphxlhPpziKecUAvQdVMtzws_QfzwiqVDOtqbMH1a3U0urLaVdwN8PQxRxT8De5_aFOcTEP-jmSx9jUN9jrrRiq99szqzMZJi02mBn0Hf1fmO63oVfW_vKS7E0WgjM5uAY4iOgzbokkDyFcUCVWcqBiKKT8xOAEKQ6rVkH27DvJrkCp-q7S0Z_-X3xih7Ap8esUHl7hCfgSU0ZuXoOdH-8W-VbBdA437Vh0XGoSpjti4T_lc_nwNTv6WafHPvA0DNoy0EuLwVPts9oI7IXgeNmdNnX2yfk6c98QChrA61A2NYCkhTxPu1wlCVJL3aSkjmtamr_6x3JbDhjtTTA4wzpEo_MlKBsOaIkIt7uth0CbtvAJWG5C3i-b6J9q5M_OhfHMH3xmjPBF20HxejUgAaW5E50MzXOES7wHyAgDSxvC9NYvYEZQYR4NNb6Ymm_UsNhPiNABQ9OFPCM97pmS-X83SXKOuUDcym8dDGqKxOofjk7AYsqIA8y-l6BfiyrcwZjPqfk4jKF-w9Qt1qRLWlm3gCewBHDh0d0FiVQ",
+    "manifestJson": "{\"v\":1,\"k\":\"dir\",\"n\":\"Photos 2026\",\"vault\":\"aaaqeayeaudaocajbifqydiob4\",\"items\":[{\"id\":\"cHFyc3R1dnd4eXp7fH1-fw\",\"path\":\"Trip/Résumé 📄 final.pdf\",\"s\":138,\"t\":\"application/pdf\",\"m\":1728000000123,\"fk\":\"gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp8\",\"th\":true},{\"id\":\"ICEiIyQlJicoKSorLC0uLw\",\"path\":\"inventory.csv\",\"s\":1573,\"t\":\"text/csv\",\"m\":1728000000456,\"fk\":\"iImKi4yNjo-QkZKTlJWWl5iZmpucnZ6foKGio6Slpqc\",\"z\":\"deflate\"}]}",
+    "manifestKey": "4KQY6s5S5ADBO9hn38bdFcvCoHSWMSyOsxhFLndHbBQ",
+    "nonce": "ZGVmZ2hpamtsbW5v"
+  },
   "metaKey": "Is2lcLEY7mbNh7cs8nhA492NOpcvlntJZWXU-UejQX0",
   "note": "Written by the Rust tests in bishare-flutter/rust/bishare-protocol/src/vault.rs (VAULT-SPEC.md). Binary values are base64url without padding; 'seq' inputs are consecutive bytes.",
   "pairRequest": {

@@ -289,6 +289,39 @@ void vaultVerifyRequest({
   signature: signature,
 );
 
+/// The key a link carries after `#`.
+Uint8List vaultGenerateLinkKey() =>
+    RustLib.instance.api.crateApiVaultVaultGenerateLinkKey();
+
+/// The sealed manifest the server keeps for a link. `kind` is "file" or "dir".
+String vaultSealLink({
+  required List<int> linkKey,
+  required String linkId,
+  required String kind,
+  required String name,
+  required String vaultId,
+  required List<VaultLinkFile> files,
+}) => RustLib.instance.api.crateApiVaultVaultSealLink(
+  linkKey: linkKey,
+  linkId: linkId,
+  kind: kind,
+  name: name,
+  vaultId: vaultId,
+  files: files,
+);
+
+/// Opens a sealed manifest and gives its canonical JSON (the tests compare it
+/// with the vectors; the browser is the side that reads links).
+String vaultOpenLinkJson({
+  required List<int> linkKey,
+  required String linkId,
+  required String sealed,
+}) => RustLib.instance.api.crateApiVaultVaultOpenLinkJson(
+  linkKey: linkKey,
+  linkId: linkId,
+  sealed: sealed,
+);
+
 /// A one-off X25519 key pair for handing the vault key to another device.
 class VaultGrantKey {
   final Uint8List secret;
@@ -306,6 +339,55 @@ class VaultGrantKey {
           runtimeType == other.runtimeType &&
           secret == other.secret &&
           public == other.public;
+}
+
+/// One file a link opens. `path` is where it sits under the shared folder
+/// (`/`-separated, ending with its name); for a file link, the file's name.
+class VaultLinkFile {
+  final String objectId;
+  final String path;
+  final PlatformInt64 size;
+  final String mime;
+  final PlatformInt64 mtimeMs;
+  final Uint8List fileKey;
+  final String? compression;
+  final bool hasThumb;
+
+  const VaultLinkFile({
+    required this.objectId,
+    required this.path,
+    required this.size,
+    required this.mime,
+    required this.mtimeMs,
+    required this.fileKey,
+    this.compression,
+    required this.hasThumb,
+  });
+
+  @override
+  int get hashCode =>
+      objectId.hashCode ^
+      path.hashCode ^
+      size.hashCode ^
+      mime.hashCode ^
+      mtimeMs.hashCode ^
+      fileKey.hashCode ^
+      compression.hashCode ^
+      hasThumb.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VaultLinkFile &&
+          runtimeType == other.runtimeType &&
+          objectId == other.objectId &&
+          path == other.path &&
+          size == other.size &&
+          mime == other.mime &&
+          mtimeMs == other.mtimeMs &&
+          fileKey == other.fileKey &&
+          compression == other.compression &&
+          hasThumb == other.hasThumb;
 }
 
 /// What is sealed about one file or folder. `kind` is "file" or "dir"; the
