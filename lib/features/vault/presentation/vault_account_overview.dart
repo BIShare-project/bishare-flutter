@@ -228,7 +228,19 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
           AppListTile(
             leading: const Glyph(AppIcons.starFavorite),
             title: Text('vault.plan'.tr()),
-            trailing: Text(_planText(quota), style: muted),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(_planText(quota), style: muted),
+                const SizedBox(width: 6),
+                AppSvgIcon(
+                  AppIcons.chevronRight,
+                  size: 16,
+                  color: cs.mutedForeground,
+                ),
+              ],
+            ),
+            onTap: () => context.push('/drive-plans'),
           ),
           if (_account.region != null) ...[
             const AppRowDivider(indent: 58),

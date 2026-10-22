@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/di/locator.dart';
@@ -71,6 +72,16 @@ class _DriveStoragePageState extends State<DriveStoragePage> {
                               used: _account.usedBytes,
                               quota: _account.quotaBytes,
                               byKind: by,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                              child: AppButton(
+                                label: 'vault.plans_get_more'.tr(),
+                                icon: AppIcons.storageUsage,
+                                variant: AppButtonVariant.secondary,
+                                fullWidth: true,
+                                onPressed: () => context.push('/drive-plans'),
+                              ),
                             ),
                             AppGroup(
                               child: Column(

@@ -342,6 +342,29 @@ class VaultAccount extends ChangeNotifier {
     return at == null ? null : DateTime.fromMillisecondsSinceEpoch(at);
   }
 
+  /// "free", "active", "grace" (the store is retrying a failed renewal; full
+  /// access), "lapsed" (read-only until [lapseEnds]) or "deleting".
+  String get state =>
+      _info?['state'] as String? ?? _last?.state ?? 'free';
+
+  /// When a lapsed Drive above the free size is emptied.
+  DateTime? get lapseEnds {
+    final at = (_info?['lapseEndsAt'] as num?)?.toInt();
+    return at == null ? null : DateTime.fromMillisecondsSinceEpoch(at);
+  }
+
+  /// The store the plan is billed by ("apple", "google", "test"), and whether
+  /// it renews; null on the free plan.
+  String? get planStore => _info?['store'] as String?;
+  bool? get planRenews => _info?['renews'] as bool?;
+
+  /// After a purchase: the plan the server answered, until the next
+  /// [refreshInfo] brings the rest.
+  void applyPlan(Map<String, dynamic> plan) {
+    _info = {...?_info, ...plan};
+    notifyListeners();
+  }
+
   Future<void> refreshInfo() async {
     final id = _vaultId;
     if (id == null) return;

@@ -166,10 +166,12 @@ void main() {
   });
 
   test('sizes the way the quota counts them', () {
-    expect(decimalBytes(999), '999 B');
-    expect(decimalBytes(5000000000), '5 GB');
-    expect(decimalBytes(1834000000), '1.83 GB');
-    expect(decimalBytes(2400000), '2.4 MB');
-    expect(decimalBytes(12000000000), '12 GB');
+    expect(plainBytes(999), '999 B');
+    expect(plainBytes(5000000000), '5 GB');
+    expect(plainBytes(1834000000), '1.83 GB');
+    expect(plainBytes(2400000), '2.4 MB');
+    expect(plainBytes(12000000000), '12 GB');
+    expect(plainBytes(1000000000000), '1 TB');
+    expect(decimalBytes(5000000000), '\u20685 GB\u2069');
   });
 }

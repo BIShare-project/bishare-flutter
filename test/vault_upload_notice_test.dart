@@ -70,7 +70,11 @@ void main() {
         notificationDetails: captureAny(named: 'notificationDetails'),
       ),
     ).captured;
-    expect(shown.first, '500 KB of 2 MB');
+    // Sizes are bidi-isolated (decimalBytes); the words around them are not.
+    expect(
+      (shown.first as String).replaceAll(RegExp('[\u2068\u2069]'), ''),
+      '500 KB of 2 MB',
+    );
     final android = (shown[1] as NotificationDetails).android!;
     expect(android.progress, 250);
     expect(android.ongoing, isTrue);

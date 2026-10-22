@@ -19,6 +19,7 @@ import '../features/remote/presentation/remote_share_page.dart';
 import '../features/scanner/presentation/scanner_page.dart';
 import '../features/tv/presentation/tv_shell.dart';
 import '../features/vault/presentation/vault_account_page.dart';
+import '../features/vault/presentation/drive/drive_plans_page.dart';
 import '../features/vault/presentation/drive/drive_storage_page.dart';
 import '../features/vault/presentation/drive/drive_transfers_page.dart';
 import 'main_shell.dart';
@@ -127,6 +128,10 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: 'drive-storage',
           builder: (context, state) => const DriveStoragePage(),
+        ),
+        GoRoute(
+          path: 'drive-plans',
+          builder: (context, state) => const DrivePlansPage(),
         ),
         GoRoute(
           path: 'drive-account',

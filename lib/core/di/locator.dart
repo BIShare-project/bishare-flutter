@@ -35,6 +35,8 @@ import '../../features/web_nearby/data/web_nearby_service.dart';
 import '../../features/vault/data/vault_account.dart';
 import '../../features/vault/data/vault_api.dart';
 import '../../features/vault/data/vault_background.dart';
+import '../../features/vault/data/vault_purchases.dart';
+import '../../features/vault/data/vault_reminders.dart';
 import '../../features/vault/data/vault_downloader.dart';
 import '../../features/vault/data/vault_downloads.dart';
 import '../../features/vault/data/vault_files.dart';
@@ -299,6 +301,13 @@ Future<void> setupLocator() async {
         sync: getIt<VaultSync>(),
       ),
     )
+    // Plans bought through the App Store or Google Play (phase 7).
+    ..registerLazySingleton<VaultPurchases>(
+      () => VaultPurchases(
+        account: getIt<VaultAccount>(),
+        api: getIt<VaultApi>(),
+      ),
+    )
     ..registerLazySingleton<PhotoLibrary>(DevicePhotoLibrary.new)
     ..registerLazySingleton<VaultPhotoBackup>(
       () => VaultPhotoBackup(
@@ -319,9 +328,19 @@ Future<void> setupLocator() async {
   void vaultStart() {
     if (!featureFlags.vaultVisible) return;
     featureFlags.removeListener(vaultStart);
+    // Unfinished store purchases are handed over as soon as someone listens.
+    getIt<VaultPurchases>().start();
     unawaited(
       getIt<VaultAccount>().load().then((_) async {
         final account = getIt<VaultAccount>();
+        // Reminders on the dates the server named (task 7.6), kept in step
+        // with what it says.
+        final reminders = VaultReminders();
+        account.addListener(
+          () => unawaited(
+            reminders.sync(account, (d) => DateFormat.yMMMd().format(d)),
+          ),
+        );
         final photos = getIt<VaultPhotoBackup>();
         final uploader = getIt<VaultUploader>()
           // A background run that is sending stops before the app sends.

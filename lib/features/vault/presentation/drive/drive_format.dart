@@ -6,8 +6,13 @@ import '../../../../core/storage/app_database.dart';
 import '../../data/vault_downloads.dart';
 
 /// Sizes the way the quota counts them: 1 GB = 1,000,000,000 bytes. Whole
-/// numbers lose their decimals ("5 GB", not "5.00 GB").
-String decimalBytes(int bytes) {
+/// numbers lose their decimals ("5 GB", not "5.00 GB"). Isolated (FSI…PDI)
+/// so "100 GB" keeps its order inside Arabic text instead of showing as
+/// "GB 100".
+String decimalBytes(int bytes) => '\u2068${plainBytes(bytes)}\u2069';
+
+/// [decimalBytes] without the isolate, for tests and logs.
+String plainBytes(int bytes) {
   String n(double v, int digits) {
     final s = v.toStringAsFixed(digits);
     return s.contains('.') ? s.replaceFirst(RegExp(r'\.?0+$'), '') : s;
@@ -16,7 +21,8 @@ String decimalBytes(int bytes) {
   if (bytes < 1000) return '$bytes B';
   if (bytes < 1000 * 1000) return '${n(bytes / 1000, 0)} KB';
   if (bytes < 1000 * 1000 * 1000) return '${n(bytes / 1e6, 1)} MB';
-  return '${n(bytes / 1e9, bytes < 10e9 ? 2 : 1)} GB';
+  if (bytes < 1e12) return '${n(bytes / 1e9, bytes < 10e9 ? 2 : 1)} GB';
+  return '${n(bytes / 1e12, 2)} TB';
 }
 
 /// A name the local file system takes.

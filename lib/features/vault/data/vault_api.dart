@@ -310,6 +310,24 @@ class VaultApi {
       await _send('GET', '/api/v1/vault/$vaultId', vaultId: vaultId)
           as Map<String, dynamic>;
 
+  /// Hand the server what the store gave this device for a Drive plan
+  /// (drive-plan.md task 7.2): `{'store': 'apple', 'signedTransaction': jws}`
+  /// or `{'store': 'google', 'purchaseToken': token}`. The server checks it
+  /// with the store and answers the plan it now has.
+  Future<Map<String, dynamic>> entitlement(
+    String vaultId,
+    Map<String, Object> purchase,
+  ) async =>
+      Map<String, dynamic>.from(
+        await _send(
+              'POST',
+              '/api/v1/vault/$vaultId/entitlement',
+              vaultId: vaultId,
+              json: purchase,
+            )
+            as Map,
+      );
+
   /// Register the key check of a vault key this device just made. A 409
   /// `VAULT_KEY_EXISTS` means another device was first.
   Future<void> registerKeyCheck(String vaultId, String keyCheck) => _send(

@@ -29,6 +29,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- QR scanning -->
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Android TV: run without a touchscreen and support the Leanback launcher.
@@ -111,6 +112,22 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/clipboard_paths" />
         </provider>
+        <!-- Drive reminders on dates the app knows (a plan ending, a read-only
+             Drive about to be emptied, an unused free Drive): scheduled local
+             notifications, kept across a restart of the phone. -->
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

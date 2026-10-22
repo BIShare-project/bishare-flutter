@@ -28,6 +28,7 @@ import 'drive_actions.dart';
 import 'drive_controller.dart';
 import 'drive_format.dart';
 import 'drive_gallery_view.dart';
+import 'drive_plans_page.dart';
 import 'drive_widgets.dart';
 
 /// BIShare Drive's file manager (drive-plan.md tasks 4.7, 4.8, 4.10): the
@@ -720,6 +721,7 @@ class _DrivePageState extends State<DrivePage> {
   Widget _queueAndContent() {
     Widget content = Column(
       children: [
+        DrivePlanNotice(account: _account),
         _UploadStrip(uploader: _uploader, transfers: _transfers),
         Expanded(
           child: _phoneGallery

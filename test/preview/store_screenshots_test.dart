@@ -53,6 +53,9 @@ import 'package:bishare/features/settings/domain/settings.dart';
 import 'package:bishare/features/settings/presentation/settings_cubit.dart';
 import 'package:bishare/features/settings/presentation/settings_page.dart';
 import 'package:bishare/features/vault/data/vault_account.dart';
+import 'package:bishare/features/vault/data/vault_purchases.dart';
+import 'package:bishare/features/vault/presentation/drive/drive_plans_page.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:bishare/features/vault/data/vault_downloads.dart';
 import 'package:bishare/features/vault/data/vault_key_copy.dart';
 import 'package:bishare/features/vault/data/vault_sync.dart';
@@ -178,6 +181,8 @@ class _Settings extends MockCubit<Settings> implements SettingsCubit {}
 class _WebNearby extends MockCubit<WebNearbyState> implements WebNearbyCubit {}
 
 class _Account extends Mock implements VaultAccount {}
+
+class _Purchases extends Mock implements VaultPurchases {}
 
 class _KeyCopy extends Mock implements VaultKeyCopy {}
 
@@ -424,6 +429,41 @@ void _registerDrive(String self, {required bool phone}) {
   when(() => account.plan).thenReturn('free');
   when(() => account.region).thenReturn('weur');
   when(() => account.reservedBytes).thenReturn(0);
+  when(() => account.state).thenReturn('free');
+  when(() => account.planEnds).thenReturn(null);
+  when(() => account.lapseEnds).thenReturn(null);
+  when(() => account.planStore).thenReturn(null);
+  when(() => account.planRenews).thenReturn(null);
+  when(() => account.vaultId).thenReturn('gtghb5lzztcv2lnacs3ldy7eni');
+  // The plans at US prices, as the store would list them (task 7.1).
+  final purchases = _Purchases();
+  ProductDetails product(String id, String price, double raw) => ProductDetails(
+    id: id,
+    title: id,
+    description: '',
+    price: price,
+    rawPrice: raw,
+    currencyCode: 'USD',
+  );
+  when(() => purchases.products).thenReturn({
+    for (final p in [
+      product('drive_100gb_monthly', r'$2.49', 2.49),
+      product('drive_100gb_yearly', r'$24.99', 24.99),
+      product('drive_250gb_monthly', r'$5.99', 5.99),
+      product('drive_250gb_yearly', r'$59.99', 59.99),
+      product('drive_500gb_monthly', r'$9.99', 9.99),
+      product('drive_500gb_yearly', r'$99.99', 99.99),
+      product('drive_1tb_monthly', r'$19.99', 19.99),
+      product('drive_1tb_yearly', r'$199.99', 199.99),
+    ])
+      p.id: p,
+  });
+  when(() => purchases.loading).thenReturn(false);
+  when(() => purchases.available).thenReturn(true);
+  when(() => purchases.busyProduct).thenReturn(null);
+  when(() => purchases.restoring).thenReturn(false);
+  when(() => purchases.lastError).thenReturn(null);
+  when(purchases.load).thenAnswer((_) async {});
   final now = DateTime.now().millisecondsSinceEpoch;
   when(() => account.devices()).thenAnswer(
     (_) async => [
@@ -474,6 +514,7 @@ void _registerDrive(String self, {required bool phone}) {
   when(() => backup.scanning).thenReturn(false);
   when(() => backup.left).thenReturn(7);
   when(() => backup.total).thenReturn(30);
+  when(() => backup.noRoom).thenReturn(false);
   when(
     () => backup.refreshAccess(ask: any(named: 'ask')),
   ).thenAnswer((_) async {});
@@ -481,6 +522,7 @@ void _registerDrive(String self, {required bool phone}) {
     ..registerSingleton<VaultPhotoBackup>(backup)
     ..registerSingleton<AppDatabase>(db)
     ..registerSingleton<VaultAccount>(account)
+    ..registerSingleton<VaultPurchases>(purchases)
     ..registerSingleton<VaultSync>(sync)
     ..registerSingleton<VaultUploader>(uploader)
     ..registerSingleton<VaultDownloads>(downloads)
@@ -643,6 +685,8 @@ final List<(String, int?, Widget, DriveView?)> _driveScreens = [
   ('drive/2_photos', 1, const DrivePage(), DriveView.media),
   ('drive/3_account', null, const VaultAccountPage(), null),
   ('drive/4_grid', 1, const DrivePage(), DriveView.files),
+  // Also the App Store's review screenshot of the purchase screen (7.8).
+  ('drive/6_plans', null, const DrivePlansPage(), null),
 ];
 
 Future<void> _settle(WidgetTester tester, [int rounds = 12]) async {
