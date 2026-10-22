@@ -93,7 +93,7 @@ class _VaultDesktopPairingPanelState extends State<VaultDesktopPairingPanel> {
   Future<void> _look() async {
     final p = _pairing;
     if (p == null || _looking || _done) return;
-    if (p.expired) {
+    if (p.expired && !p.taken) {
       _timer?.cancel();
       setState(() => _expired = true);
       return;
@@ -145,11 +145,22 @@ class _VaultDesktopPairingPanelState extends State<VaultDesktopPairingPanel> {
         children: [
           Text(_error!, textAlign: TextAlign.center, style: muted),
           const SizedBox(height: 14),
-          AppButton(
-            label: 'vault.pair_new_code'.tr(),
-            fullWidth: true,
-            onPressed: () => unawaited(_start()),
-          ),
+          // Approved already: finishing needs no new code, only another try.
+          if (p != null && p.taken)
+            AppButton(
+              label: 'vault.retry'.tr(),
+              fullWidth: true,
+              onPressed: () {
+                setState(() => _error = null);
+                unawaited(_look());
+              },
+            )
+          else
+            AppButton(
+              label: 'vault.pair_new_code'.tr(),
+              fullWidth: true,
+              onPressed: () => unawaited(_start()),
+            ),
         ],
       );
     }

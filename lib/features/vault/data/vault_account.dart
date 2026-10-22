@@ -807,8 +807,11 @@ class VaultAccount extends ChangeNotifier {
   /// computer, which then holds the key and is ready. The key is checked
   /// against the account's key check before it is kept.
   Future<bool> checkDesktopPairing(VaultDesktopPairing pairing) async {
-    final got = await _api.takeDesktopPair(pairing.slot);
+    // The server hands the box over once: after a failure further down it is
+    // used again from here, not asked for (the slot is gone by then).
+    final got = pairing._taken ?? await _api.takeDesktopPair(pairing.slot);
     if (got == null) return false;
+    pairing._taken = got;
     // Another account was on this computer before: its key, index and queue
     // must not stay.
     final previous = await _keys.vaultId();
@@ -1056,6 +1059,12 @@ class VaultDesktopPairing {
 
   /// The hand-off key's secret half; never leaves this object.
   final Uint8List _secret;
+
+  /// What the phone sent, once taken from the server.
+  ({String vaultId, Uint8List box, Uint8List granterPub})? _taken;
+
+  /// The phone approved and its answer is here: the code no longer matters.
+  bool get taken => _taken != null;
 
   bool get expired => DateTime.now().isAfter(expiresAt);
 }
