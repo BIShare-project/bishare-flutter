@@ -235,6 +235,12 @@ void main() {
     final json = jsonDecode(Rust.vaultOpenLinkJson(linkKey: fresh, linkId: id, sealed: sealed)) as Map<String, dynamic>;
     expect(json['k'], 'file');
     expect((json['items'] as List).single['path'], 'a.txt');
+    // The sealed link key opens for its own vault and link.
+    final kMeta = Rust.vaultMetaKey(vk);
+    expect(Rust.vaultOpenLinkKey(metaKey: kMeta, vaultId: vaultId, linkId: id, sealed: link['encKey'] as String), key);
+    final enc = Rust.vaultSealLinkKey(metaKey: kMeta, vaultId: vaultId, linkId: id, linkKey: fresh);
+    expect(Rust.vaultOpenLinkKey(metaKey: kMeta, vaultId: vaultId, linkId: id, sealed: enc), fresh);
+    expect(() => Rust.vaultOpenLinkKey(metaKey: kMeta, vaultId: vaultId, linkId: file['objectId'] as String, sealed: enc), throwsA(anything));
     // A file link's path is the file's name.
     expect(
       () => Rust.vaultSealLink(linkKey: fresh, linkId: id, kind: 'file', name: 'a.txt', vaultId: vaultId, files: [

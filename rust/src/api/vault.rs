@@ -502,3 +502,16 @@ pub fn vault_open_link_json(link_key: Vec<u8>, link_id: String, sealed: String) 
         .and_then(|m| m.to_json())
         .map_err(err)
 }
+
+/// The link key sealed with the metadata key, kept by the server with the link.
+#[flutter_rust_bridge::frb(sync)]
+pub fn vault_seal_link_key(meta_key: Vec<u8>, vault_id: String, link_id: String, link_key: Vec<u8>) -> Result<String, String> {
+    v::seal_link_key(&key32(&meta_key, "meta key")?, &vault_id, &link_id, &key32(&link_key, "link key")?, None).map_err(err)
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn vault_open_link_key(meta_key: Vec<u8>, vault_id: String, link_id: String, sealed: String) -> Result<Vec<u8>, String> {
+    v::open_link_key(&key32(&meta_key, "meta key")?, &vault_id, &link_id, &sealed)
+        .map(|k| k.to_vec())
+        .map_err(err)
+}

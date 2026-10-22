@@ -274,7 +274,12 @@ link key        32 random bytes made by the device; it travels only in the link,
                 https://get.bishare.app/d/<link id>#<b64u(link key)>
 K_link          HKDF(link key, "bishare-vault-link-v1", 32)
 manifest        b64u(box(K_link, utf8(JSON), aad = utf8("bishare-vault-link-v1|" ‖ link id)))
+enc_link_key    b64u(box(K_meta, link key, aad = utf8("bishare-vault-linkkey-v1|" ‖ vault id ‖ "|" ‖ link id)))
 ```
+
+The server keeps `enc_link_key` with the link so every device of the vault
+can show the link again and send a folder link's manifest anew; it cannot
+open it.
 
 The JSON is one object, keys in this order, no whitespace:
 

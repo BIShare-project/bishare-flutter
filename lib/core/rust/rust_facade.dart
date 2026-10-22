@@ -241,6 +241,28 @@ class Rust {
     required String linkId,
     required String sealed,
   }) => rv.vaultOpenLinkJson(linkKey: linkKey, linkId: linkId, sealed: sealed);
+  static String vaultSealLinkKey({
+    required List<int> metaKey,
+    required String vaultId,
+    required String linkId,
+    required List<int> linkKey,
+  }) => rv.vaultSealLinkKey(
+    metaKey: metaKey,
+    vaultId: vaultId,
+    linkId: linkId,
+    linkKey: linkKey,
+  );
+  static Uint8List vaultOpenLinkKey({
+    required List<int> metaKey,
+    required String vaultId,
+    required String linkId,
+    required String sealed,
+  }) => rv.vaultOpenLinkKey(
+    metaKey: metaKey,
+    vaultId: vaultId,
+    linkId: linkId,
+    sealed: sealed,
+  );
   static rv.VaultGrantKey vaultGrantKeyGenerate() => rv.vaultGrantKeyGenerate();
   static Uint8List vaultGrant({
     required List<int> vaultKey,

@@ -322,6 +322,31 @@ String vaultOpenLinkJson({
   sealed: sealed,
 );
 
+/// The link key sealed with the metadata key, kept by the server with the link.
+String vaultSealLinkKey({
+  required List<int> metaKey,
+  required String vaultId,
+  required String linkId,
+  required List<int> linkKey,
+}) => RustLib.instance.api.crateApiVaultVaultSealLinkKey(
+  metaKey: metaKey,
+  vaultId: vaultId,
+  linkId: linkId,
+  linkKey: linkKey,
+);
+
+Uint8List vaultOpenLinkKey({
+  required List<int> metaKey,
+  required String vaultId,
+  required String linkId,
+  required String sealed,
+}) => RustLib.instance.api.crateApiVaultVaultOpenLinkKey(
+  metaKey: metaKey,
+  vaultId: vaultId,
+  linkId: linkId,
+  sealed: sealed,
+);
+
 /// A one-off X25519 key pair for handing the vault key to another device.
 class VaultGrantKey {
   final Uint8List secret;

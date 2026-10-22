@@ -62,6 +62,7 @@ const AAD_THUMB: &str = "bishare-vault-thumb-v1";
 const AAD_DEVICE: &str = "bishare-vault-device-v1";
 const INFO_LINK: &[u8] = b"bishare-vault-link-v1";
 const AAD_LINK: &str = "bishare-vault-link-v1";
+const AAD_LINK_KEY: &str = "bishare-vault-linkkey-v1";
 pub const LINK_VERSION: u32 = 1;
 /// Files one link may list (the server takes 2000 ids: the folder and its files).
 pub const LINK_MAX_FILES: usize = 1999;
@@ -1110,6 +1111,30 @@ pub fn seal_link(
     Ok(b64u(&seal(&hkdf32(link_key, INFO_LINK), &nonce_or_random(nonce), json.as_bytes(), &aad)))
 }
 
+fn link_key_aad(vault_id: &str, link_id: &str) -> Result<Vec<u8>> {
+    check_ids(vault_id, link_id)?;
+    Ok(format!("{AAD_LINK_KEY}|{vault_id}|{link_id}").into_bytes())
+}
+
+/// The link key, sealed with K_meta so every device of the vault can show the
+/// link again; the server keeps it next to the link and cannot open it.
+pub fn seal_link_key(
+    meta_key: &[u8; KEY_SIZE],
+    vault_id: &str,
+    link_id: &str,
+    link_key: &[u8; KEY_SIZE],
+    nonce: Option<[u8; NONCE_SIZE]>,
+) -> Result<String> {
+    let aad = link_key_aad(vault_id, link_id)?;
+    Ok(b64u(&seal(meta_key, &nonce_or_random(nonce), link_key, &aad)))
+}
+
+pub fn open_link_key(meta_key: &[u8; KEY_SIZE], vault_id: &str, link_id: &str, sealed: &str) -> Result<[u8; KEY_SIZE]> {
+    let aad = link_key_aad(vault_id, link_id)?;
+    let boxed = from_b64u(sealed).ok_or(VaultError::SealedBoxTooShort)?;
+    open(meta_key, &boxed, &aad)?.try_into().map_err(|_| VaultError::InvalidKey)
+}
+
 pub fn open_link(link_key: &[u8; KEY_SIZE], link_id: &str, sealed: &str) -> Result<LinkManifest> {
     let aad = link_aad(link_id)?;
     let boxed = from_b64u(sealed).ok_or(VaultError::SealedBoxTooShort)?;
@@ -1365,6 +1390,8 @@ mod tests {
                 "manifestJson": link_manifest(&i).to_json().unwrap(),
                 "nonce": b64u(&seq::<12>(0x64)),
                 "manifest": seal_link(&seq::<32>(0x5c), &b64u(&seq::<16>(0x34)), &link_manifest(&i), Some(seq::<12>(0x64))).unwrap(),
+                "keyNonce": b64u(&seq::<12>(0x6c)),
+                "encKey": seal_link_key(&k_meta, &i.vault_id, &b64u(&seq::<16>(0x34)), &seq::<32>(0x5c), Some(seq::<12>(0x6c))).unwrap(),
             },
             "grant": {
                 "newPriv": b64u(&i.new_priv),
@@ -1406,6 +1433,12 @@ mod tests {
         assert!(matches!(open_link(&key, &generate_object_id(), &sealed), Err(VaultError::AuthFailed)));
         assert!(matches!(open_link(&generate_link_key(), &id, &sealed), Err(VaultError::AuthFailed)));
         assert!(matches!(open_link(&key, "not-an-id", &sealed), Err(VaultError::InvalidObjectId)));
+        // The sealed key opens for its own vault and link only.
+        let k_meta = meta_key(&i.vk);
+        let enc = seal_link_key(&k_meta, &i.vault_id, &id, &key, None).unwrap();
+        assert_eq!(open_link_key(&k_meta, &i.vault_id, &id, &enc).unwrap(), key);
+        assert!(matches!(open_link_key(&k_meta, &i.vault_id, &generate_object_id(), &enc), Err(VaultError::AuthFailed)));
+        assert!(matches!(open_link_key(&meta_key(&seq(0x11)), &i.vault_id, &id, &enc), Err(VaultError::AuthFailed)));
     }
 
     #[test]
