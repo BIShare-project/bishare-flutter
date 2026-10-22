@@ -11,6 +11,8 @@ convertRegionPrices), no local overrides.
   python3 store/products.py --plan          what --apply would create (reads only)
   python3 store/products.py --apply asc     create what is missing in App Store Connect
   python3 store/products.py --apply play    create and activate what is missing in Play
+  python3 store/products.py --review-shot store/screens/plans-review.png
+                                            the App Review screenshot on each subscription
 
 Apple: one group "BIShare Drive"; the same size monthly and yearly share a
 level, a bigger size is a higher level, so changing size is an upgrade or a
@@ -240,36 +242,90 @@ def apply_asc(dry: bool) -> int:
                 st, d = L.asc("POST", "/v1/subscriptionGroupLocalizations", {"data": {"type": "subscriptionGroupLocalizations", "attributes": {"locale": locale, "name": "BIShare Drive"}, "relationships": {"subscriptionGroup": {"data": {"type": "subscriptionGroups", "id": group["id"]}}}}})
                 asc_ok(st, d, f"group localization {locale}")
     for pid, size, period, usd, level in PRODUCTS:
-        if pid in subs:
-            print(f"  {pid}: exists ({subs[pid]['attributes'].get('state')})")
+        sub = subs.get(pid)
+        if sub is None:
+            print(f"  {pid}: create, {period}, US ${usd}, level {level}, {len(ASC_LANG)} localizations, all territories")
+            if dry:
+                continue
+            attrs = {
+                "name": f"Drive {TEXT['en']['size'][size]} {TEXT['en'][period]}",
+                "productId": pid,
+                "familySharable": False,
+                "subscriptionPeriod": "ONE_MONTH" if period == "month" else "ONE_YEAR",
+                "groupLevel": level,
+                "reviewNote": "End-to-end encrypted storage for BIShare Drive. Bought in the app's Drive tab after signing in; the server checks the signed transaction and raises the vault's quota.",
+            }
+            st, d = L.asc("POST", "/v1/subscriptions", {"data": {"type": "subscriptions", "attributes": attrs, "relationships": {"group": {"data": {"type": "subscriptionGroups", "id": group["id"]}}}}})
+            sub = asc_ok(st, d, f"create {pid}")["data"]
+        elif dry:
+            print(f"  {pid}: exists ({sub['attributes'].get('state')}); missing parts are filled in")
             continue
-        print(f"  {pid}: create, {period}, US ${usd}, level {level}, {len(ASC_LANG)} localizations, all territories")
-        if dry:
-            continue
-        attrs = {
-            "name": f"Drive {TEXT['en']['size'][size]} {TEXT['en'][period]}",
-            "productId": pid,
-            "familySharable": False,
-            "subscriptionPeriod": "ONE_MONTH" if period == "month" else "ONE_YEAR",
-            "groupLevel": level,
-            "reviewNote": "End-to-end encrypted storage for BIShare Drive. Bought in the app's Drive tab after signing in; the server checks the signed transaction and raises the vault's quota.",
-        }
-        st, d = L.asc("POST", "/v1/subscriptions", {"data": {"type": "subscriptions", "attributes": attrs, "relationships": {"group": {"data": {"type": "subscriptionGroups", "id": group["id"]}}}}})
-        sub = asc_ok(st, d, f"create {pid}")["data"]
+        sid = sub["id"]
+        # Whatever is missing, in the order App Store Connect takes it:
+        # localizations, then the territories, then a price in each of them.
+        st, d = L.asc("GET", f"/v1/subscriptions/{sid}/subscriptionLocalizations?limit=50")
+        have = {x["attributes"]["locale"] for x in asc_ok(st, d, f"{pid} localizations").get("data", [])}
         for locale, lang in ASC_LANG.items():
-            st, d = L.asc("POST", "/v1/subscriptionLocalizations", {"data": {"type": "subscriptionLocalizations", "attributes": {"locale": locale, "name": name(lang, size), "description": desc(lang, size)}, "relationships": {"subscription": {"data": {"type": "subscriptions", "id": sub["id"]}}}}})
+            if locale in have:
+                continue
+            st, d = L.asc("POST", "/v1/subscriptionLocalizations", {"data": {"type": "subscriptionLocalizations", "attributes": {"locale": locale, "name": name(lang, size), "description": desc(lang, size)}, "relationships": {"subscription": {"data": {"type": "subscriptions", "id": sid}}}}})
             asc_ok(st, d, f"{pid} localization {locale}")
-        us = asc_points(sub["id"], "USA").get(usd)
+        us = asc_points(sid, "USA").get(usd)
         if not us:
             raise SystemExit(f"{pid}: no US price point at ${usd}")
         prices = [("USA", us)] + asc_equalized(us)
-        for territory, point in prices:
-            st, d = L.asc("POST", "/v1/subscriptionPrices", {"data": {"type": "subscriptionPrices", "attributes": {"preserveCurrentPrice": False}, "relationships": {"subscription": {"data": {"type": "subscriptions", "id": sub["id"]}}, "subscriptionPricePoint": {"data": {"type": "subscriptionPricePoints", "id": point}}, "territory": {"data": {"type": "territories", "id": territory}}}}})
+        st, d = L.asc("GET", f"/v1/subscriptions/{sid}/subscriptionAvailability")
+        if st == 404:
+            st, d = L.asc("POST", "/v1/subscriptionAvailabilities", {"data": {"type": "subscriptionAvailabilities", "attributes": {"availableInNewTerritories": True}, "relationships": {"subscription": {"data": {"type": "subscriptions", "id": sid}}, "availableTerritories": {"data": [{"type": "territories", "id": t} for t, _ in prices]}}}})
+            asc_ok(st, d, f"{pid} availability")
+        else:
+            asc_ok(st, d, f"{pid} availability")
+        priced: set[str] = set()
+        path = f"/v1/subscriptions/{sid}/prices?limit=200&include=territory"
+        while path:
+            st, d = L.asc("GET", path)
+            asc_ok(st, d, f"{pid} prices")
+            priced |= {x["relationships"]["territory"]["data"]["id"] for x in d.get("data", []) if x.get("relationships", {}).get("territory", {}).get("data")}
+            nxt = d.get("links", {}).get("next")
+            path = nxt.replace("https://api.appstoreconnect.apple.com", "") if nxt else ""
+        todo = [(t, pt) for t, pt in prices if t not in priced]
+        for territory, point in todo:
+            st, d = L.asc("POST", "/v1/subscriptionPrices", {"data": {"type": "subscriptionPrices", "attributes": {"preserveCurrentPrice": False}, "relationships": {"subscription": {"data": {"type": "subscriptions", "id": sid}}, "subscriptionPricePoint": {"data": {"type": "subscriptionPricePoints", "id": point}}, "territory": {"data": {"type": "territories", "id": territory}}}}})
             asc_ok(st, d, f"{pid} price {territory}")
-        st, d = L.asc("POST", "/v1/subscriptionAvailabilities", {"data": {"type": "subscriptionAvailabilities", "attributes": {"availableInNewTerritories": True}, "relationships": {"subscription": {"data": {"type": "subscriptions", "id": sub["id"]}}, "availableTerritories": {"data": [{"type": "territories", "id": t} for t, _ in prices]}}}})
-        asc_ok(st, d, f"{pid} availability")
-        print(f"    done: {len(prices)} territories")
+        print(f"  {pid}: done ({len(ASC_LANG) - len(have)} localizations and {len(todo)} prices added, {len(prices)} territories)", flush=True)
         time.sleep(1)
+    return 0
+
+
+def asc_review_shot(png: str) -> int:
+    """The App Review screenshot of the purchase screen, on each Drive subscription
+    (App Store Connect wants one before a subscription can be submitted). This
+    only uploads; nothing is submitted for review."""
+    import hashlib
+    import pathlib
+
+    data = pathlib.Path(png).read_bytes()
+    md5 = hashlib.md5(data).hexdigest()
+    _, subs = asc_state()
+    for pid, *_ in PRODUCTS:
+        sub = subs.get(pid)
+        if sub is None:
+            print(f"  {pid}: missing, create it first")
+            continue
+        st, d = L.asc("GET", f"/v1/subscriptions/{sub['id']}/appStoreReviewScreenshot")
+        if st == 200 and d.get("data"):
+            a = d["data"]["attributes"]
+            if a.get("sourceFileChecksum") == md5 and (a.get("assetDeliveryState") or {}).get("state") == "COMPLETE":
+                print(f"  {pid}: review screenshot already there")
+                continue
+            L.asc("DELETE", f"/v1/subscriptionAppStoreReviewScreenshots/{d['data']['id']}")
+        st, d = L.asc("POST", "/v1/subscriptionAppStoreReviewScreenshots", {"data": {"type": "subscriptionAppStoreReviewScreenshots", "attributes": {"fileName": pathlib.Path(png).name, "fileSize": len(data)}, "relationships": {"subscription": {"data": {"type": "subscriptions", "id": sub["id"]}}}}})
+        shot = asc_ok(st, d, f"{pid} review screenshot")["data"]
+        for op in shot["attributes"]["uploadOperations"]:
+            L.put_chunk(op, data[op["offset"]: op["offset"] + op["length"]])
+        st, d = L.asc("PATCH", f"/v1/subscriptionAppStoreReviewScreenshots/{shot['id']}", {"data": {"type": "subscriptionAppStoreReviewScreenshots", "id": shot["id"], "attributes": {"uploaded": True, "sourceFileChecksum": md5}}})
+        asc_ok(st, d, f"{pid} review screenshot commit")
+        print(f"  {pid}: review screenshot uploaded")
     return 0
 
 
@@ -326,7 +382,9 @@ def apply_play(dry: bool) -> int:
                 }
             ],
         }
-        st, d = L.call("POST", f"{L.PLAY}/{L.PACKAGE}/subscriptions?productId={pid}&regionsVersion.version=2022/02", token, json_body(body))
+        # The regions version the conversion was made for (currencies change between versions).
+        version = conv.get("regionVersion", {}).get("version", "2022/02")
+        st, d = L.call("POST", f"{L.PLAY}/{L.PACKAGE}/subscriptions?productId={pid}&regionsVersion.version={version}", token, json_body(body))
         if st >= 300:
             raise SystemExit(f"{pid} create: HTTP {st} {d.get('error', {}).get('message', '')}")
         st, d = L.call("POST", f"{L.PLAY}/{L.PACKAGE}/subscriptions/{pid}/basePlans/{plan_id}:activate", token, json_body({}))
@@ -368,7 +426,10 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--plan", action="store_true", help="show what --apply would create")
     ap.add_argument("--apply", choices=["asc", "play"], help="create what is missing in one store")
+    ap.add_argument("--review-shot", metavar="PNG", help="upload the purchase screen as each subscription's App Review screenshot (no submission)")
     a = ap.parse_args()
+    if a.review_shot:
+        return asc_review_shot(a.review_shot)
     if check_text():
         print("store text over the limits; fix TEXT first")
         return 1
