@@ -64,6 +64,14 @@ class MainActivity : FlutterActivity() {
     private var pendingLock: MethodChannel.Result? = null
     private val lockRequest = 0x5641 // "VA"
 
+    /// A secret copied with setSecretText (the Drive recovery phrase): its
+    /// clip's time, and when it is to leave the clipboard.
+    private var secretStamp: Long? = null
+    private var secretDue = 0L
+    private val secretLabel = "BIShare secret"
+    private val secretHandler = Handler(Looper.getMainLooper())
+    private val secretClear = Runnable { clearSecret(focused = false) }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         // Share channel (existing)
@@ -124,7 +132,7 @@ class MainActivity : FlutterActivity() {
                     } else {
                         // Marked sensitive: no clipboard preview, no keyboard
                         // suggestion (Android 13+; the plain key before that).
-                        val clip = ClipData.newPlainText("BIShare", text)
+                        val clip = ClipData.newPlainText(secretLabel, text)
                         clip.description.extras = PersistableBundle().apply {
                             putBoolean(
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -136,6 +144,17 @@ class MainActivity : FlutterActivity() {
                             )
                         }
                         clipboard.setPrimaryClip(clip)
+                        // Taken off again here: Dart cannot read the clipboard
+                        // from the background to check it is still the secret.
+                        val ms = (call.argument<Int>("seconds") ?: 60) * 1000L
+                        secretStamp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            clipboard.primaryClipDescription?.timestamp ?: 0L
+                        } else {
+                            0L
+                        }
+                        secretDue = System.currentTimeMillis() + ms
+                        secretHandler.removeCallbacks(secretClear)
+                        secretHandler.postDelayed(secretClear, ms)
                         result.success(true)
                     }
                 }
@@ -367,7 +386,41 @@ class MainActivity : FlutterActivity() {
      */
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) clipChanges++
+        if (hasFocus) {
+            clipChanges++
+            clearSecret(focused = true)
+        }
+    }
+
+    /**
+     * Takes the copied secret off the clipboard once it is due, if it is still
+     * the one copied. Android 10+ shows the clipboard only to the app in front,
+     * so from the background nothing can be checked and it is tried again when
+     * the app has focus.
+     */
+    private fun clearSecret(focused: Boolean) {
+        val stamp = secretStamp ?: return
+        if (System.currentTimeMillis() < secretDue) return
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val desc = clipboard.primaryClipDescription
+        if (desc == null) {
+            // In front, nothing there: emptied meanwhile. Behind: wait for focus.
+            if (focused) secretStamp = null
+            return
+        }
+        val ours = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            desc.timestamp == stamp
+        } else {
+            desc.label == secretLabel
+        }
+        if (ours) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                clipboard.clearPrimaryClip()
+            } else {
+                clipboard.setPrimaryClip(ClipData.newPlainText("", ""))
+            }
+        }
+        secretStamp = null
     }
 
     /**
@@ -381,6 +434,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        secretHandler.removeCallbacks(secretClear)
         clipListener?.let {
             (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
                 .removePrimaryClipChangedListener(it)

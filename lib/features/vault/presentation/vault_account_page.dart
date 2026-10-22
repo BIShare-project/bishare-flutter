@@ -157,14 +157,16 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                child: ShadButton.outline(
-                  onPressed: () => _copyPhrase(phrase),
-                  leading: const AppSvgIcon(AppIcons.copyDuplicate, size: 15),
-                  child: Text('vault.phrase_copy'.tr()),
+              if (_canCopyPhrase) ...[
+                Expanded(
+                  child: ShadButton.outline(
+                    onPressed: () => _copyPhrase(phrase),
+                    leading: const AppSvgIcon(AppIcons.copyDuplicate, size: 15),
+                    child: Text('vault.phrase_copy'.tr()),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
+                const SizedBox(width: 8),
+              ],
               Expanded(
                 child: ShadButton.outline(
                   onPressed: () => _savePhrase(phrase),
@@ -181,16 +183,24 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
 
   /// Copy the phrase as a secret: marked sensitive where the system knows
   /// the idea, never sent by BIShare's clipboard sync, and taken off the
-  /// clipboard after a minute if it is still there.
+  /// clipboard after a minute by the system side (reading it back here
+  /// would show iOS's paste prompt, and Android refuses it in the
+  /// background). Only offered where that is so ([_canCopyPhrase]).
   Future<void> _copyPhrase(String phrase) async {
     ClipboardSecrets.mark(phrase);
-    await ClipboardImageChannel.setSecretText(phrase);
+    final expires = await ClipboardImageChannel.setSecretText(phrase);
     _say('vault.phrase_copied');
+    if (expires) return;
     Timer(const Duration(seconds: 60), () async {
       final now = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
       if (now == phrase) await Clipboard.setData(const ClipboardData(text: ''));
     });
   }
+
+  /// Windows keeps a clipboard history (and may send it to the cloud), and
+  /// Linux clipboard managers keep one too: there the phrase is saved or
+  /// written down, never copied.
+  static bool get _canCopyPhrase => ClipboardImageChannel.isSupported;
 
   /// Save the phrase as a text file where the person chooses (the system's
   /// own save dialog; nothing is left in the app's folders).

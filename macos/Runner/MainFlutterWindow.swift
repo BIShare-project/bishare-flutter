@@ -75,6 +75,13 @@ class MainFlutterWindow: NSWindow {
         pb.setString(text, forType: .string)
         pb.setString("", forType: NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType"))
         pb.setString("", forType: NSPasteboard.PasteboardType("org.nspasteboard.TransientType"))
+        // Gone after [seconds] unless something else was copied meanwhile;
+        // the change count tells without reading the pasteboard.
+        let seconds = (args?["seconds"] as? Int) ?? 60
+        let mine = pb.changeCount
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(seconds)) {
+          if pb.changeCount == mine { pb.clearContents() }
+        }
         result(true)
       default:
         result(FlutterMethodNotImplemented)

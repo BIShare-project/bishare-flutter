@@ -75,9 +75,11 @@ class ClipboardImageChannel {
   /// Put [text] on the clipboard marked as a secret, the way password
   /// managers do: Android's `EXTRA_IS_SENSITIVE` (no preview, no keyboard
   /// suggestion), macOS's `org.nspasteboard.ConcealedType`, and on iOS a
-  /// local-only item (no Universal Clipboard) that expires after [expire].
-  /// Elsewhere it is plain text. The caller clears it after [expire] too.
-  static Future<void> setSecretText(
+  /// local-only item (no Universal Clipboard). Each of those takes it off
+  /// the clipboard after [expire] if nothing else was copied meanwhile, and
+  /// then this answers true. Elsewhere it is plain text, false, and clearing
+  /// it is up to the caller.
+  static Future<bool> setSecretText(
     String text, {
     Duration expire = const Duration(seconds: 60),
   }) async {
@@ -87,12 +89,13 @@ class ClipboardImageChannel {
           'text': text,
           'seconds': expire.inSeconds,
         });
-        if (ok ?? false) return;
+        if (ok ?? false) return true;
       } on Object catch (e) {
         debugPrint('[clipboard] secret text: $e');
       }
     }
     await Clipboard.setData(ClipboardData(text: text));
+    return false;
   }
 
   /// Whether the clipboard is currently flagged as holding a secret — a
