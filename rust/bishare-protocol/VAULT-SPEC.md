@@ -244,6 +244,13 @@ QR text         "BSVW1." ‖ slot ‖ "." ‖ b64u(newPub) ‖ "." ‖ b64u(brow
 A `web` device is removed by the server after 12 hours without a request, or
 30 days when `stay` was true; "Lock" in the browser removes it at once.
 
+Removing a device (`DELETE /vault/:id/devices/:device`): a device may always
+remove itself. Any device may remove a `web` device without signing in again.
+Removing an `app` device (a phone or computer) takes a fresh Apple or Google
+sign-in in the body (`provider`, `idToken`); without one the server answers
+403 `VAULT_SIGNIN_REQUIRED`. So a stolen browser can never remove the phones
+and computers that are able to remove it.
+
 ## Signed requests
 
 Every request to `/api/v1/vault/*` other than sign-in carries one header:
