@@ -846,6 +846,7 @@
     "sort_kind": "類型",
     "n_selected": "已選取 {count} 項",
     "items_n": {
+      "one": "{} 個項目",
       "zero": "空的",
       "other": "{} 個項目"
     },
@@ -906,6 +907,7 @@
     "info_added": "新增時間",
     "info_same": "相同內容",
     "info_same_value": {
+      "one": "與另外 {} 個檔案相同，只儲存一次",
       "other": "與另外 {} 個檔案相同，只儲存一次"
     },
     "info_private": "在你的裝置上加密。BIShare 只看得到大小和時間。",
@@ -927,15 +929,18 @@
     "downloads": "下載",
     "uploaded": "已上傳",
     "uploading_n": {
+      "one": "正在上傳 {} 個檔案",
       "other": "正在上傳 {} 個檔案"
     },
     "uploads_stopped": {
+      "one": "{} 個上傳已停止",
       "other": "{} 個上傳已停止"
     },
     "retry": "再試一次",
     "storage": "儲存空間",
     "storage_note": "{folders} 個資料夾中有 {files} 個檔案。重複的內容只儲存一次。縮圖也計入總量。",
     "days_left": {
+      "one": "還剩 {} 天",
       "zero": "今天刪除",
       "other": "還剩 {} 天"
     },
@@ -965,6 +970,7 @@
     "backup_title": "備份照片和影片",
     "backup_off_body": "已關閉。開啟後，這支手機上的照片和影片會進入你 Drive 中的「{folder}」資料夾，並先在手機上加密。",
     "backup_left": {
+      "one": "還剩 {} 項",
       "zero": "已全部備份",
       "other": "還剩 {} 項"
     },
@@ -973,6 +979,7 @@
     "backup_wifi_only_body": "不使用行動數據，立即備份的照片除外。",
     "backup_now": "立即備份",
     "backup_added_n": {
+      "one": "已將 {} 項加入上傳",
       "zero": "未加入任何項目",
       "other": "已將 {} 項加入上傳"
     },

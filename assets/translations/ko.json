@@ -846,6 +846,7 @@
     "sort_kind": "종류",
     "n_selected": "{count}개 선택됨",
     "items_n": {
+      "one": "항목 {}개",
       "zero": "비어 있음",
       "other": "항목 {}개"
     },
@@ -906,6 +907,7 @@
     "info_added": "추가일",
     "info_same": "같은 내용",
     "info_same_value": {
+      "one": "다른 파일 {}개와 같음, 한 번만 저장",
       "other": "다른 파일 {}개와 같음, 한 번만 저장"
     },
     "info_private": "기기에서 암호화됩니다. BIShare는 크기와 시간만 볼 수 있습니다.",
@@ -927,15 +929,18 @@
     "downloads": "다운로드",
     "uploaded": "업로드됨",
     "uploading_n": {
+      "one": "파일 {}개 업로드 중",
       "other": "파일 {}개 업로드 중"
     },
     "uploads_stopped": {
+      "one": "업로드 {}개가 멈췄습니다",
       "other": "업로드 {}개가 멈췄습니다"
     },
     "retry": "다시 시도",
     "storage": "저장공간",
     "storage_note": "폴더 {folders}개에 파일 {files}개. 중복된 내용은 한 번만 저장됩니다. 미리보기 이미지도 전체 용량에 포함됩니다.",
     "days_left": {
+      "one": "{}일 남음",
       "zero": "오늘 삭제됨",
       "other": "{}일 남음"
     },
@@ -965,6 +970,7 @@
     "backup_title": "사진 및 동영상 백업",
     "backup_off_body": "꺼져 있습니다. 켜면 이 휴대폰의 사진과 동영상이 Drive의 ‘{folder}’ 폴더로 들어갑니다. 먼저 휴대폰에서 암호화됩니다.",
     "backup_left": {
+      "one": "{}개 남음",
       "zero": "모두 백업됨",
       "other": "{}개 남음"
     },
@@ -973,6 +979,7 @@
     "backup_wifi_only_body": "모바일 데이터를 쓰지 않습니다. 지금 백업하는 사진은 예외입니다.",
     "backup_now": "지금 백업",
     "backup_added_n": {
+      "one": "{}개를 업로드에 추가했습니다",
       "zero": "추가된 항목 없음",
       "other": "{}개를 업로드에 추가했습니다"
     },
