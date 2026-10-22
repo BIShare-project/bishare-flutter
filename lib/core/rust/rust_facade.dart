@@ -276,6 +276,24 @@ class Rust {
     ts: ts,
     body: body,
   );
+
+  /// The `Authorization` header of this device while it waits in a pairing
+  /// slot (Windows and Linux, approved by a phone), before it has a vault.
+  static String vaultPairAuthorization({
+    required List<int> seed,
+    required String slot,
+    required String method,
+    required String pathAndQuery,
+    required int ts,
+    required List<int> body,
+  }) => rv.vaultPairAuthorization(
+    seed: seed,
+    slot: slot,
+    method: method,
+    pathAndQuery: pathAndQuery,
+    ts: ts,
+    body: body,
+  );
   static String vaultAuthorization({
     required List<int> seed,
     required String vaultId,

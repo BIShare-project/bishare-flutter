@@ -235,6 +235,25 @@ String vaultSignRequest({
   body: body,
 );
 
+/// The `Authorization` header of this device while it waits in pairing slot
+/// [slot] (VAULT-SPEC "Opening the Drive in a browser"; Windows and Linux use
+/// it too), before it belongs to any vault.
+String vaultPairAuthorization({
+  required List<int> seed,
+  required String slot,
+  required String method,
+  required String pathAndQuery,
+  required PlatformInt64 ts,
+  required List<int> body,
+}) => RustLib.instance.api.crateApiVaultVaultPairAuthorization(
+  seed: seed,
+  slot: slot,
+  method: method,
+  pathAndQuery: pathAndQuery,
+  ts: ts,
+  body: body,
+);
+
 /// The complete `Authorization` header value for one request.
 String vaultAuthorization({
   required List<int> seed,

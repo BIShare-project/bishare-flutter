@@ -378,6 +378,22 @@ pub fn vault_sign_request(
         .sign_request(&method, &path_and_query, ts, &body))
 }
 
+/// The `Authorization` header of this device while it waits in pairing slot
+/// [slot] (VAULT-SPEC "Opening the Drive in a browser"; Windows and Linux use
+/// it too), before it belongs to any vault.
+#[flutter_rust_bridge::frb(sync)]
+pub fn vault_pair_authorization(
+    seed: Vec<u8>,
+    slot: String,
+    method: String,
+    path_and_query: String,
+    ts: i64,
+    body: Vec<u8>,
+) -> Result<String, String> {
+    Ok(v::DeviceKey::from_seed(&key32(&seed, "device seed")?)
+        .pair_authorization(&slot, &method, &path_and_query, ts, &body))
+}
+
 /// The complete `Authorization` header value for one request.
 #[flutter_rust_bridge::frb(sync)]
 pub fn vault_authorization(

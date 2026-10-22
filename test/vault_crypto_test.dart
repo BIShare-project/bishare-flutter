@@ -25,6 +25,7 @@ void main() {
   final keyCopy = v['keyCopy'] as Map<String, dynamic>;
   final device = v['device'] as Map<String, dynamic>;
   final request = v['request'] as Map<String, dynamic>;
+  final pairRequest = v['pairRequest'] as Map<String, dynamic>;
   final grant = v['grant'] as Map<String, dynamic>;
   final dedupe = v['dedupe'] as Map<String, dynamic>;
   final compressed = v['compressed'] as Map<String, dynamic>;
@@ -100,6 +101,17 @@ void main() {
     expect(() => Rust.vaultVerifyRequest(publicKey: pub, method: method, pathAndQuery: path, ts: ts, body: utf8.encode('{}'), signature: sig), throwsA(anything));
     final other = Rust.vaultDevicePublicKey(Rust.vaultDeviceKeyGenerate());
     expect(() => Rust.vaultVerifyRequest(publicKey: other, method: method, pathAndQuery: path, ts: ts, body: body, signature: sig), throwsA(anything));
+  });
+
+  test('a device waiting in a pairing slot signs as the vectors do', () {
+    if (!rust) return markTestSkipped(rustUnavailableReason);
+    final seed = _b64u(device['seed'] as String);
+    final path = pairRequest['pathAndQuery'] as String;
+    final ts = pairRequest['ts'] as int;
+    expect(
+      Rust.vaultPairAuthorization(seed: seed, slot: pairRequest['slot'] as String, method: 'GET', pathAndQuery: path, ts: ts, body: const []),
+      pairRequest['authorization'],
+    );
   });
 
   test('file and folder metadata open from the vectors and round-trip', () {

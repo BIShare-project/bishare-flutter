@@ -72,6 +72,14 @@
   },
   "metaKey": "Is2lcLEY7mbNh7cs8nhA492NOpcvlntJZWXU-UejQX0",
   "note": "Written by the Rust tests in bishare-flutter/rust/bishare-protocol/src/vault.rs (VAULT-SPEC.md). Binary values are base64url without padding; 'seq' inputs are consecutive bytes.",
+  "pairRequest": {
+    "authorization": "BIShare-Vault-Pair v=1,slot=QEFCQ0RFRkdISUpLTE1OTw,ts=1728000000,sig=q7TQaVpFcsZv2zbLdUvuqMXc97D0MP5IktuDmUdbfE3QSmIR7rNjRlv16Tkhge92JvDmH4KEAufSk_Sy9eguDQ",
+    "message": "bishare-vault-pair-v1\nGET\n/api/v1/vault/web-pair/slots/QEFCQ0RFRkdISUpLTE1OTw/box\n1728000000\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "method": "GET",
+    "pathAndQuery": "/api/v1/vault/web-pair/slots/QEFCQ0RFRkdISUpLTE1OTw/box",
+    "slot": "QEFCQ0RFRkdISUpLTE1OTw",
+    "ts": 1728000000
+  },
   "phrase": "avoid mass luggage choice fabric argue gather cash brand thought elegant dinner acoustic much milk lucky change deer apart february ready bird reward van",
   "request": {
     "authorization": "BIShare-Vault v=1,vault=aaaqeayeaudaocajbifqydiob4,device=aIlNWPGPLDTUnrL0sRDgQg,ts=1728000000,sig=3I8marqCDyVibG8LxNXo1JKnGgKfHY0SCdC21HkwlE0YZiXAuo1pSYXCmSf3xFobgqFBPvJTLYYfro9INbz9DA",

@@ -63,6 +63,8 @@ const AAD_DEVICE: &str = "bishare-vault-device-v1";
 /// Longest device name a writer emits, in characters.
 pub const DEVICE_NAME_MAX: usize = 100;
 const REQ_PREFIX: &str = "bishare-vault-req-v1";
+const PAIR_PREFIX: &str = "bishare-vault-pair-v1";
+pub const PAIR_SCHEME: &str = "BIShare-Vault-Pair";
 const NONCE_PREFIX: &[u8] = b"bishare-vault-nonce-v1";
 const PHRASE_WORDS: usize = 24;
 
@@ -766,6 +768,17 @@ pub fn request_message(method: &str, path_and_query: &str, ts: i64, body: &[u8])
     )
 }
 
+/// The bytes the signature of a device waiting in a pairing slot covers
+/// (VAULT-SPEC "Opening the Drive in a browser"): a request's fields under
+/// their own label, so neither signature can stand in for the other.
+pub fn pair_message(method: &str, path_and_query: &str, ts: i64, body: &[u8]) -> String {
+    format!(
+        "{PAIR_PREFIX}\n{}\n{path_and_query}\n{ts}\n{}",
+        method.to_ascii_uppercase(),
+        hex(&Sha256::digest(body))
+    )
+}
+
 impl DeviceKey {
     pub fn generate() -> Self {
         Self::from_seed(&random())
@@ -795,6 +808,15 @@ impl DeviceKey {
     pub fn sign_request(&self, method: &str, path_and_query: &str, ts: i64, body: &[u8]) -> String {
         let message = request_message(method, path_and_query, ts, body);
         b64u(&self.signing.sign(message.as_bytes()).to_bytes())
+    }
+
+    /// The `Authorization` header of this device while it waits in pairing
+    /// slot [slot], before it belongs to any vault (a browser, or a computer
+    /// approved by a phone).
+    pub fn pair_authorization(&self, slot: &str, method: &str, path_and_query: &str, ts: i64, body: &[u8]) -> String {
+        let message = pair_message(method, path_and_query, ts, body);
+        let sig = b64u(&self.signing.sign(message.as_bytes()).to_bytes());
+        format!("{PAIR_SCHEME} v=1,slot={slot},ts={ts},sig={sig}")
     }
 
     /// The complete `Authorization` header value for one request.
@@ -1023,6 +1045,8 @@ mod tests {
             .wrap_key(&new_key.public_bytes(), &new_key.public_bytes(), &granter.public_bytes())
             .unwrap();
         let signature = device.sign_request(i.req_method, &i.req_path, i.req_ts, i.req_body);
+        let pair_slot = b64u(&seq::<16>(0x40));
+        let pair_path = format!("/api/v1/vault/web-pair/slots/{pair_slot}/box");
         let k_dedupe = dedupe_key(&i.vk);
         let cm = compressed_meta(&i);
         let c_plain = compressible_plaintext();
@@ -1057,6 +1081,14 @@ mod tests {
                 "message": request_message(i.req_method, &i.req_path, i.req_ts, i.req_body),
                 "signature": signature,
                 "authorization": device.authorization(&i.vault_id, i.req_method, &i.req_path, i.req_ts, i.req_body).unwrap(),
+            },
+            "pairRequest": {
+                "slot": pair_slot,
+                "method": "GET",
+                "pathAndQuery": pair_path,
+                "ts": i.req_ts,
+                "message": pair_message("GET", &pair_path, i.req_ts, b""),
+                "authorization": device.pair_authorization(&pair_slot, "GET", &pair_path, i.req_ts, b""),
             },
             "file": {
                 "objectId": i.file_id,
@@ -1121,6 +1153,24 @@ mod tests {
         let current = std::fs::read_to_string(FIXTURE)
             .expect("test/fixtures/vault_vectors.json exists (cargo test -- --ignored write_vectors)");
         assert_eq!(pretty(&vectors()), current, "vault_vectors.json drifted from vault.rs");
+    }
+
+    #[test]
+    fn pair_signature_covers_the_pair_message_only() {
+        let i = inputs();
+        let device = DeviceKey::from_seed(&i.device_seed);
+        let slot = b64u(&seq::<16>(0x40));
+        let path = format!("/api/v1/vault/web-pair/slots/{slot}/box");
+        let header = device.pair_authorization(&slot, "get", &path, i.req_ts, b"");
+        let prefix = format!("{PAIR_SCHEME} v=1,slot={slot},ts={},sig=", i.req_ts);
+        let sig_b64u = header.strip_prefix(&prefix).expect("the header names the slot and time");
+        let sig = Signature::from_bytes(&from_b64u(sig_b64u).unwrap().try_into().unwrap());
+        let key = VerifyingKey::from_bytes(&device.public_bytes()).unwrap();
+        assert!(key.verify_strict(pair_message("GET", &path, i.req_ts, b"").as_bytes(), &sig).is_ok());
+        assert!(
+            key.verify_strict(request_message("GET", &path, i.req_ts, b"").as_bytes(), &sig).is_err(),
+            "a pairing signature is no request signature"
+        );
     }
 
     #[test]
