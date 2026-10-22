@@ -248,6 +248,11 @@ def glyph(size: int, kind: str, color) -> Image.Image:
         d.pieslice((s * 0.2, s * 0.5, s * 0.52, s * 0.86), 180, 360, fill=W)
         d.ellipse((s * 0.55, s * 0.32, s * 0.7, s * 0.47), fill=W)
         d.pieslice((s * 0.5, s * 0.52, s * 0.78, s * 0.84), 180, 360, fill=W)
+    elif kind == "cloud":
+        d.ellipse((s * 0.22, s * 0.44, s * 0.46, s * 0.68), fill=W)
+        d.ellipse((s * 0.36, s * 0.3, s * 0.64, s * 0.58), fill=W)
+        d.ellipse((s * 0.54, s * 0.42, s * 0.78, s * 0.66), fill=W)
+        d.rounded_rectangle((s * 0.3, s * 0.52, s * 0.7, s * 0.68), radius=s * 0.04, fill=W)
     elif kind == "noaccount":
         d.ellipse((c - s * 0.1, s * 0.25, c + s * 0.1, s * 0.45), fill=W)
         d.pieslice((c - s * 0.2, s * 0.5, c + s * 0.2, s * 0.9), 180, 360, fill=W)
@@ -318,6 +323,7 @@ CHIP_Y = {
     "qr_beam": (0.19, 0.36),
     "rooms": (0.28, 0.5),
     "settings": (0.3, 0.5),
+    "drive": (0.36, 0.56),
 }
 
 # logical width of each raw preset in points, so status bars scale right

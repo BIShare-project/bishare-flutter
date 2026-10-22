@@ -10,7 +10,7 @@ https://snapcraft.io/bishare/listing
 |---|---|
 | `banner-1920x640.png` | Featured banner (the store requires 3:1, not 16:9) |
 | `banner-icon-512.png` | Banner icon beside it |
-| `01-send-anything.png` … `05-yours-to-set-up.png` | Screenshots, in that order |
+| `01-send-anything.png` … `05-yours-to-set-up.png`, `06-drive.png` | Screenshots, in that order |
 
 Also set on that page, because neither can live in the snap:
 

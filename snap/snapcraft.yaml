@@ -38,7 +38,12 @@ description: |
   * Files are encrypted before upload; the key stays in the link and never
     reaches the relay
   * Local transfers never leave your network
-  * No account, no sign-up, no tracking
+  * No account needed to send, no tracking
+
+  **BIShare Drive**, if you want it: end-to-end encrypted storage for your
+  files, 5 GB free. A computer opens the Drive when your phone approves it
+  (scan a code with the BIShare app); the key never reaches our servers.
+  Larger plans are bought in the phone app.
 
   More:
 
@@ -67,7 +72,7 @@ apps:
       - home            # open/save files the user explicitly picks
       - removable-media # save to USB drives / mounted volumes
       - audio-playback  # notification / transfer sounds
-      # Drive keeps its keys and the Google sign-in in the desktop keyring
+      # Drive keeps its keys in the desktop keyring
       # (libsecret, flutter_secure_storage). Not connected by itself:
       # `snap connect bishare:password-manager-service` until the Snap Store
       # grants auto-connect.

@@ -60,7 +60,7 @@ def trim_dead_space(shot, keep_left=236):
     return shot.crop((0, 0, shot.width, bottom)) if bottom < shot.height - 8 else shot
 
 def build(src, head, sub, out, scale=1.28, trim=False):
-    shot = Image.open(os.path.join(SP, "shots", src)).convert("RGB")
+    shot = Image.open(os.path.join(SP, "raw", src)).convert("RGB")
     if trim:
         shot = trim_dead_space(shot)
         scale = min(1.46, (H - 290) / shot.height)
@@ -74,7 +74,7 @@ def build(src, head, sub, out, scale=1.28, trim=False):
     top, bottom = 196, H
     y = top + (bottom - top - card.height)//2
     im.paste(card, ((W-card.width)//2, max(top-52, y)), card)
-    path = os.path.join(SP, "store", out)
+    path = os.path.join(SP, "windows", out)
     im.save(path, "PNG")
     print(f"  {out}  {im.size[0]}x{im.size[1]}  {os.path.getsize(path)//1024} KB")
 
@@ -93,3 +93,7 @@ build("I-devices.png", "Windows, iPhone, Android, Mac and Linux",
 build("C-settings.png", "Yours to set up",
       "Name, theme, accent colours and 13 languages",
       "05-settings.png")
+# test/preview/store_screenshots_test.dart, preset "windows", en/6_drive.png
+build("L-drive.png", "BIShare Drive: only you hold the key",
+      "End-to-end encrypted storage for your files. 5 GB free, more with a plan",
+      "06-drive.png", trim=True)

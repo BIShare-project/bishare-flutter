@@ -21,8 +21,9 @@
 // (store/screens/instance_fonts.py), so one process serves one such language.
 //
 // Drive (drive-plan.md task 4.11) is drawn too, into `<lang>/drive/`, which
-// frame.py does not read: Drive is not in the stores' screenshots while it is
-// in testing, but every language is checked for overflows and missing keys.
+// frame.py does not read, so every language is checked for overflows and
+// missing keys. One Drive screen goes to the stores as `6_drive`: the photos
+// and their backup on phones and tablets, the file manager on computers.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -147,11 +148,22 @@ const Map<String, _Preset> _presets = {
 };
 
 /// Drawn only when named in BISHARE_SHOTS_PRESETS, to look at screens no
-/// store gets: Windows (the Drive approved by a phone, no sign-in).
+/// store gets: Windows (the Drive approved by a phone, no sign-in), and the
+/// window at its real size for the Microsoft Store and Snap screenshots
+/// (store/screenshots/compose.py).
 const Map<String, _Preset> _reviewPresets = {
   'windows': (
     // Taller than the window, to see whole pages.
     size: Size(1000, 1500),
+    ratio: 2,
+    platform: TargetPlatform.windows,
+    insets: EdgeInsets.zero,
+    self: 'Windows PC',
+    type: 'desktop',
+  ),
+  'windows_store': (
+    // The window's fixed size (desktop_service.dart).
+    size: Size(1000, 680),
     ratio: 2,
     platform: TargetPlatform.windows,
     insets: EdgeInsets.zero,
@@ -563,6 +575,7 @@ void _registerDrive(String self, {required bool phone}) {
   when(() => backup.left).thenReturn(7);
   when(() => backup.total).thenReturn(30);
   when(() => backup.noRoom).thenReturn(false);
+  when(() => backup.gaveUp).thenReturn(0);
   when(
     () => backup.refreshAccess(ask: any(named: 'ask')),
   ).thenAnswer((_) async {});
@@ -962,6 +975,7 @@ Future<void> _run(
     final lang = _tag(locale);
     for (final (file, tab, page, view) in <(String, int?, Widget, DriveView?)>[
       for (final (file, tab, page) in _screens) (file, tab, page, null),
+      ('6_drive', 1, const DrivePage(), phone ? DriveView.media : null),
       ..._driveScreens,
       if (preset.platform == TargetPlatform.windows) ..._desktopScreens,
     ]) {

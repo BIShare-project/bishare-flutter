@@ -12,6 +12,7 @@ set from `raw/`.
 | `03-rooms.png` | Rooms: one code, several devices |
 | `04-devices.png` | Windows, iPhone, Android, Mac and Linux |
 | `05-settings.png` | Yours to set up |
+| `06-drive.png` | BIShare Drive: only you hold the key (raw `L-drive.png` from the store screenshot test, preset `windows_store`) |
 | `store-logo-2160.png` | Product logo, transparent background, from `logo.svg` |
 | `promo-16x9-2400x1350.png` | Promotional image |
 
