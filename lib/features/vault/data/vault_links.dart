@@ -295,15 +295,28 @@ class VaultLinks {
     }
   }
 
-  /// Sends again every folder link this device keeps whose folder changed
-  /// since it was last sent. Links found gone are dropped from the list.
+  /// Whether this run already asked the server which folder links exist.
+  bool _discovered = false;
+
+  /// Sends again every folder link whose folder changed since it was last
+  /// sent. The links this device knows are kept in its preferences; once a
+  /// run, the server's list adds the ones made on other devices or in a
+  /// browser (sent again once, as nothing says what they last listed). Links
+  /// found gone are dropped.
   Future<int> refreshFolders() async {
     final known = _folders();
-    if (known.isEmpty) return 0;
+    if (known.isEmpty && _discovered) return 0;
+    _discovered = true;
     final (:vaultId, :vk) = await _vault();
     var sent = 0;
     final links = {for (final l in await _api.links(vaultId)) l.id: l};
-    for (final MapEntry(key: id, value: print) in known.entries) {
+    final todo = {
+      ...known,
+      for (final l in links.values)
+        if (l.kind == 'folder' && l.encKey != null && !known.containsKey(l.id))
+          l.id: '',
+    };
+    for (final MapEntry(key: id, value: print) in todo.entries) {
       final l = links[id];
       if (l == null || l.kind != 'folder' || l.encKey == null) {
         await _forget(id);

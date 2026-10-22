@@ -669,6 +669,19 @@ void main() {
       );
       expect(m3['items'] as List, hasLength(2));
 
+      // Another device (its own preferences) learns of the folder link from the
+      // server, sends it once, and then only when the folder changes.
+      SharedPreferences.setMockInitialValues({});
+      final other = VaultLinks(
+        api: a.api,
+        keys: a.keys,
+        dao: a.db.vaultDao,
+        prefs: await SharedPreferences.getInstance(),
+      );
+      expect(await other.refreshFolders(), 1);
+      expect(await other.refreshFolders(), 0);
+      expect(await open(folderLink.url!), isNotNull);
+
       // Turned off: it no longer opens, and is no longer listed.
       await links.revoke(folderLink.id);
       expect(await open(folderLink.url!), isNull);
