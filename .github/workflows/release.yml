@@ -510,6 +510,7 @@ jobs:
           $s = ""
           if ($env:OAUTH_JSON) { $s = ($env:OAUTH_JSON | ConvertFrom-Json).installed.client_secret }
           if ($s) { echo "::add-mask::$s" }
+          else { echo "::warning::GOOGLE_DESKTOP_OAUTH_JSON is missing or is not a Desktop client's JSON: this build has no Google sign-in for Drive." }
           echo "VAULT_GOOGLE_DESKTOP_SECRET=$s" >> $env:GITHUB_ENV
       - name: Build Windows (release)
         run: flutter build windows --release --dart-define=VAULT_GOOGLE_DESKTOP_SECRET=$env:VAULT_GOOGLE_DESKTOP_SECRET
@@ -657,7 +658,7 @@ jobs:
           # See the Windows job: kept out of the repository, empty when unset.
           S=""
           if [ -n "$OAUTH_JSON" ]; then S=$(printf '%s' "$OAUTH_JSON" | jq -r '.installed.client_secret // empty'); fi
-          if [ -n "$S" ]; then echo "::add-mask::$S"; fi
+          if [ -n "$S" ]; then echo "::add-mask::$S"; else echo "::warning::GOOGLE_DESKTOP_OAUTH_JSON is missing or is not a Desktop client's JSON: this build has no Google sign-in for Drive."; fi
           echo "VAULT_GOOGLE_DESKTOP_SECRET=$S" >> "$GITHUB_ENV"
       - name: Build Linux (release)
         run: flutter build linux --release --dart-define=VAULT_GOOGLE_DESKTOP_SECRET="$VAULT_GOOGLE_DESKTOP_SECRET"

@@ -33,6 +33,22 @@ jobs:
         with:
           submodules: false
 
+      # As in release.yml, but snapcraft builds in its own container, which
+      # takes the source tree and not this job's environment: the secret goes
+      # in as a file that snap/snapcraft.yaml reads and deletes.
+      - name: Google desktop client secret (Drive sign-in; absent when unset)
+        env:
+          OAUTH_JSON: ${{ secrets.GOOGLE_DESKTOP_OAUTH_JSON }}
+        run: |
+          S=""
+          if [ -n "$OAUTH_JSON" ]; then S=$(printf '%s' "$OAUTH_JSON" | jq -r '.installed.client_secret // empty'); fi
+          if [ -n "$S" ]; then
+            echo "::add-mask::$S"
+            printf '%s' "$S" > .vault-desktop-secret
+          else
+            echo "::warning::GOOGLE_DESKTOP_OAUTH_JSON is missing or is not a Desktop client's JSON: this snap has no Google sign-in for Drive."
+          fi
+
       - name: Build snap
         id: snapcraft
         uses: snapcore/action-build@v1

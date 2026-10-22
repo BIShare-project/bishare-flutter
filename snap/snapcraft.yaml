@@ -67,6 +67,11 @@ apps:
       - home            # open/save files the user explicitly picks
       - removable-media # save to USB drives / mounted volumes
       - audio-playback  # notification / transfer sounds
+      # Drive keeps its keys and the Google sign-in in the desktop keyring
+      # (libsecret, flutter_secure_storage). Not connected by itself:
+      # `snap connect bishare:password-manager-service` until the Snap Store
+      # grants auto-connect.
+      - password-manager-service
 
 # Clang 18 for the native plugins. flutter_zxing compiles zxing-cpp, whose C++20
 # ranges core22's clang 14 cannot build ("no matching function for call to
@@ -154,3 +159,16 @@ parts:
       flutter_rust_bridge_codegen generate
       dart run build_runner build --delete-conflicting-outputs
       craftctl default
+      # The Google desktop client secret for Drive sign-in, which release.yml
+      # passes to the other Linux builds as a dart-define. The plugin's build
+      # takes no extra flags, so when snap.yml left the secret here, build
+      # again with it (with the plugin's own SDK) and copy that bundle over.
+      if [ -s .vault-desktop-secret ]; then
+        { set +x; } 2>/dev/null # the scriptlet traces commands; not this one
+        secret="$(cat .vault-desktop-secret)"
+        rm -f .vault-desktop-secret
+        "$CRAFT_PART_BUILD/flutter-distro/bin/flutter" build linux --release \
+          --target lib/main.dart \
+          --dart-define=VAULT_GOOGLE_DESKTOP_SECRET="$secret"
+        cp -r build/linux/*/release/bundle/* "$CRAFT_PART_INSTALL/"
+      fi
