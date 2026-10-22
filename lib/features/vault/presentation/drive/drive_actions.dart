@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/config/feature_flags.dart';
 import '../../../../core/di/locator.dart';
+import '../../../../core/identity/device_identity.dart';
 import '../../../../core/io/media_picker.dart';
 import '../../../../core/server/transfer_server.dart';
 import '../../../../core/storage/app_database.dart';
@@ -23,7 +24,7 @@ import '../../data/vault_downloads.dart';
 import '../../data/vault_files.dart';
 import '../../data/vault_keys.dart';
 import '../../data/vault_meta.dart';
-import '../../data/vault_shares.dart';
+import '../../data/vault_links.dart';
 import '../../data/vault_uploader.dart';
 import 'drive_controller.dart';
 import 'drive_format.dart';
@@ -59,6 +60,12 @@ class DriveActions {
     'VAULT_READ_ONLY' => 'vault.error_read_only',
     'TRANSFER_TOO_LARGE' => 'vault.error_too_large_to_share',
     'TRANSFER_RATE_LIMITED' => 'vault.error_rate_limited',
+    'RATE_LIMITED' => 'vault.error_rate_limited',
+    'VAULT_LINK_LIMIT' => 'vault.error_link_limit',
+    'VAULT_LINK_TOO_MANY' => 'vault.error_link_too_many',
+    'VAULT_LINK_NOT_FOUND' => 'vault.error_link_gone',
+    'VAULT_LINK_EXPIRED' => 'vault.error_link_gone',
+    'SMTP_NOT_CONFIGURED' || 'EMAIL_FAILED' => 'vault.link_email_failed',
     _ => 'vault.error_failed',
   };
 
@@ -583,124 +590,266 @@ class DriveActions {
     );
   }
 
+  /// A link to [o], a file or a folder, that anyone opens in a browser
+  /// (drive-plan.md 6B.3). Links to it that still open come first; a new one
+  /// lasts 1, 7 or 30 days, or until it is turned off.
   Future<void> shareLink(VaultObject o) async {
-    final hours = ValueNotifier<int>(12);
-    final oneTime = ValueNotifier<bool>(false);
-    final go = await showAppSheet<bool>(
+    final links = getIt<VaultLinks>();
+    var existing = const <VaultLink>[];
+    if (!await _guard(() async => existing = await links.list(root: o.id))) {
+      return;
+    }
+    if (!context.mounted) return;
+    final days = ValueNotifier<int>(7);
+    final pick = await showAppSheet<Object>(
       context,
-      icon: AppIcons.shareLink,
+      icon: AppIcons.linkCopy,
       title: 'vault.link_title'.tr(),
       subtitle: 'vault.link_body'.tr(namedArgs: {'name': o.name}),
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          for (final l in existing)
+            AppSheetAction(
+              icon: AppIcons.linkCopy,
+              label: _linkSummary(l),
+              onTap: () => Navigator.pop(ctx, l),
+            ),
+          if (existing.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              'vault.link_new'.tr(),
+              style: ShadTheme.of(ctx).textTheme.muted.copyWith(fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+          ],
           ValueListenableBuilder<int>(
-            valueListenable: hours,
-            builder: (_, h, _) => Row(
+            valueListenable: days,
+            builder: (_, d, _) => Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                for (final v in const [6, 12, 24])
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: v == h
-                          ? ShadButton(
-                              onPressed: () {},
-                              child: Text(
-                                'vault.link_hours'.tr(namedArgs: {'h': '$v'}),
-                              ),
-                            )
-                          : ShadButton.outline(
-                              onPressed: () => hours.value = v,
-                              child: Text(
-                                'vault.link_hours'.tr(namedArgs: {'h': '$v'}),
-                              ),
-                            ),
-                    ),
+                for (final v in const [1, 7, 30, 0])
+                  (v == d ? ShadButton.new : ShadButton.outline)(
+                    onPressed: () => days.value = v,
+                    child: Text(_lifetime(v)),
                   ),
               ],
             ),
           ),
-          const SizedBox(height: 10),
-          ValueListenableBuilder<bool>(
-            valueListenable: oneTime,
-            builder: (_, v, _) => ShadCheckbox(
-              value: v,
-              onChanged: (x) => oneTime.value = x,
-              label: Text('vault.link_one_time'.tr()),
-            ),
-          ),
           const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: ShadButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text('vault.link_create'.tr()),
-            ),
+          ShadButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('vault.link_create'.tr()),
           ),
         ],
       ),
     );
-    if (go != true) {
-      hours.dispose();
-      oneTime.dispose();
-      return;
-    }
-    ({String url, DateTime? expiresAt, bool viaUpload})? made;
-    await _guard(() async {
-      made = await getIt<VaultShares>().share(
-        o.id,
-        hours: hours.value,
-        oneTime: oneTime.value,
-      );
-    });
-    hours.dispose();
-    oneTime.dispose();
+    final lifetime = days.value;
+    days.dispose();
+    if (pick is VaultLink) return _showLink(pick);
+    if (pick != true) return;
+    VaultLink? made;
+    await _guard(() async => made = await links.create(o, days: lifetime));
     final link = made;
-    if (link == null || !context.mounted) return;
+    if (link != null && context.mounted) await _showLink(link);
+  }
+
+  String _lifetime(int days) => days == 0
+      ? 'vault.link_forever'.tr()
+      : 'vault.link_days'.plural(days);
+
+  /// When [l] stops opening, in the app's language.
+  String _ends(VaultLink l) => l.expiresAt == null
+      ? 'vault.link_until_off'.tr()
+      : 'vault.link_until'.tr(
+          namedArgs: {
+            'when': DateFormat.MMMd(
+              context.locale.toLanguageTag(),
+            ).add_jm().format(l.expiresAt!.toLocal()),
+          },
+        );
+
+  String _linkSummary(VaultLink l) =>
+      '${_ends(l)} · ${'vault.link_opens'.plural(l.opens)}';
+
+  /// The link, with what can be done with it.
+  Future<void> _showLink(VaultLink link) async {
+    final url = link.url;
     await showAppSheet<void>(
       context,
       icon: AppIcons.linkCopy,
-      title: 'vault.link_ready'.tr(),
-      subtitle: link.expiresAt == null
-          ? null
-          : 'vault.link_until'.tr(
-              namedArgs: {
-                'when': DateFormat.MMMd(
-                  context.locale.toLanguageTag(),
-                ).add_jm().format(link.expiresAt!.toLocal()),
-              },
-            ),
+      title: link.name ?? 'vault.link_ready'.tr(),
+      subtitle: _ends(link),
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          BiShareQr(data: link.url, size: 200),
-          const SizedBox(height: 12),
-          SelectableText(link.url, maxLines: 2, textAlign: TextAlign.center),
-          const SizedBox(height: 14),
+          if (url != null) ...[
+            BiShareQr(data: url, size: 200),
+            const SizedBox(height: 12),
+            SelectableText(url, maxLines: 2, textAlign: TextAlign.center),
+            const SizedBox(height: 14),
+            AppSheetAction(
+              icon: AppIcons.copyDuplicate,
+              label: 'vault.link_copy'.tr(),
+              onTap: () async {
+                await Clipboard.setData(ClipboardData(text: url));
+                if (ctx.mounted) Navigator.pop(ctx);
+                _say('vault.link_copied', type: ToastType.success);
+              },
+            ),
+            AppSheetAction(
+              icon: AppIcons.shareLink,
+              label: 'vault.link_share'.tr(),
+              onTap: () {
+                Navigator.pop(ctx);
+                unawaited(
+                  _shareSheet(
+                    ShareParams(text: url, sharePositionOrigin: _origin()),
+                  ),
+                );
+              },
+            ),
+            AppSheetAction(
+              icon: AppIcons.mailSend,
+              label: 'vault.link_email'.tr(),
+              onTap: () {
+                Navigator.pop(ctx);
+                unawaited(_emailLink(link));
+              },
+            ),
+          ] else
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                'vault.link_no_key'.tr(),
+                textAlign: TextAlign.center,
+                style: ShadTheme.of(ctx).textTheme.muted,
+              ),
+            ),
           AppSheetAction(
-            icon: AppIcons.copyDuplicate,
-            label: 'vault.link_copy'.tr(),
-            onTap: () async {
-              await Clipboard.setData(ClipboardData(text: link.url));
-              if (ctx.mounted) Navigator.pop(ctx);
-              _say('vault.link_copied', type: ToastType.success);
-            },
-          ),
-          AppSheetAction(
-            icon: AppIcons.shareLink,
-            label: 'vault.link_share'.tr(),
+            icon: AppIcons.close,
+            label: 'vault.link_turn_off'.tr(),
+            destructive: true,
             onTap: () {
               Navigator.pop(ctx);
-              unawaited(
-                _shareSheet(
-                  ShareParams(text: link.url, sharePositionOrigin: _origin()),
-                ),
-              );
+              unawaited(turnOffLink(link));
             },
           ),
         ],
       ),
     );
+  }
+
+  /// Mail the link to someone; BIShare sends it, signed with this device's name.
+  Future<void> _emailLink(VaultLink link) async {
+    final controller = TextEditingController();
+    final to = await showAppSheet<String>(
+      context,
+      icon: AppIcons.mailSend,
+      title: 'vault.link_email_title'.tr(),
+      subtitle: 'vault.link_email_body'.tr(),
+      builder: (ctx) {
+        void submit() => Navigator.pop(ctx, controller.text.trim());
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ShadInput(
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.emailAddress,
+              placeholder: Text('vault.link_email_hint'.tr()),
+              onSubmitted: (_) => submit(),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ShadButton(
+                onPressed: submit,
+                child: Text('vault.link_email_send'.tr()),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    if (to == null || to.isEmpty) return;
+    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(to)) {
+      _say('vault.link_email_bad', type: ToastType.error);
+      return;
+    }
+    final sent = await _guard(
+      () => getIt<VaultLinks>().email(
+        link,
+        to: to,
+        name: getIt<DeviceIdentity>().alias,
+      ),
+    );
+    if (sent) {
+      _say('vault.link_email_sent', type: ToastType.success, args: {'to': to});
+    }
+  }
+
+  /// Turn [link] off after a confirmation; true when it was.
+  Future<bool> turnOffLink(VaultLink link) async {
+    final cs = ShadTheme.of(context).colorScheme;
+    final ok = await showAppSheet<bool>(
+      context,
+      icon: AppIcons.close,
+      iconColor: cs.destructive,
+      title: 'vault.link_turn_off_title'.tr(),
+      subtitle: 'vault.link_turn_off_body'.tr(),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppSheetAction(
+            icon: AppIcons.close,
+            label: 'vault.link_turn_off'.tr(),
+            destructive: true,
+            onTap: () => Navigator.pop(ctx, true),
+          ),
+          AppSheetAction(
+            icon: AppIcons.close,
+            label: 'vault.cancel'.tr(),
+            onTap: () => Navigator.pop(ctx, false),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return false;
+    final done = await _guard(() => getIt<VaultLinks>().revoke(link.id));
+    if (done) _say('vault.link_turned_off', type: ToastType.success);
+    return done;
+  }
+
+  /// Every link of the Drive that still opens (drive-plan.md 6B.3).
+  Future<void> manageLinks() async {
+    var all = const <VaultLink>[];
+    if (!await _guard(() async => all = await getIt<VaultLinks>().list())) {
+      return;
+    }
+    if (!context.mounted) return;
+    final pick = await showAppSheet<VaultLink>(
+      context,
+      icon: AppIcons.linkCopy,
+      title: 'vault.links_title'.tr(),
+      subtitle: all.isEmpty ? 'vault.links_empty'.tr() : null,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final l in all)
+            AppSheetAction(
+              icon: l.folder ? AppIcons.folder : AppIcons.fileDocument,
+              label:
+                  '${l.name ?? 'vault.link_gone_name'.tr()} · ${_linkSummary(l)}',
+              onTap: () => Navigator.pop(ctx, l),
+            ),
+        ],
+      ),
+    );
+    if (pick != null && context.mounted) await _showLink(pick);
   }
 
   // ---- the folder picker ----------------------------------------------------------------

@@ -44,6 +44,7 @@ import '../../features/vault/data/vault_files.dart';
 import '../../features/vault/data/vault_keys.dart';
 import '../../features/vault/data/vault_photo_backup.dart';
 import '../../features/vault/data/vault_photo_library.dart';
+import '../../features/vault/data/vault_links.dart';
 import '../../features/vault/data/vault_shares.dart';
 import '../../features/vault/data/vault_sync.dart';
 import '../../features/vault/data/vault_thumbs.dart';
@@ -254,6 +255,14 @@ Future<void> setupLocator() async {
         dao: db.vaultDao,
       ),
     )
+    ..registerLazySingleton<VaultLinks>(
+      () => VaultLinks(
+        api: getIt<VaultApi>(),
+        keys: getIt<VaultKeyStore>(),
+        dao: db.vaultDao,
+        prefs: prefs,
+      ),
+    )
     ..registerLazySingleton<VaultThumbs>(
       () => VaultThumbs(
         api: getIt<VaultApi>(),
@@ -347,6 +356,26 @@ Future<void> setupLocator() async {
         );
         account.addListener(remind);
         appLocaleTag.addListener(remind);
+        // A folder link lists the folder as it was when it was sent: after
+        // each sync this device sends again the ones whose folder changed.
+        final sync = getIt<VaultSync>();
+        var wasSyncing = false;
+        Future<void>? refreshing;
+        sync.addListener(() {
+          final ended = wasSyncing && !sync.syncing;
+          wasSyncing = sync.syncing;
+          if (!ended || refreshing != null) return;
+          if (account.status != VaultStatus.ready) return;
+          refreshing = getIt<VaultLinks>()
+              .refreshFolders()
+              .then(
+                (_) {},
+                onError: (Object e) {
+                  debugPrint('[vault] folder links: $e');
+                },
+              )
+              .whenComplete(() => refreshing = null);
+        });
         final photos = getIt<VaultPhotoBackup>();
         final uploader = getIt<VaultUploader>()
           // A background run that is sending stops before the app sends.

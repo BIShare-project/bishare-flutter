@@ -102,12 +102,16 @@ class AppSheetAction extends StatelessWidget {
           children: [
             AppSvgIcon(icon, size: 20, color: color),
             const SizedBox(width: 14),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 15.5,
-                fontWeight: FontWeight.w500,
-                color: color,
+            // A long label (a Drive link's name and lifetime) wraps instead
+            // of running off the sheet.
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w500,
+                  color: color,
+                ),
               ),
             ),
           ],

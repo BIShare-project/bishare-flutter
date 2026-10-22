@@ -250,6 +250,55 @@ class VaultShare {
   final String deleteToken;
 }
 
+/// A link from Drive as the server lists it (drive-plan.md 6B.3).
+class VaultLinkInfo {
+  const VaultLinkInfo({
+    required this.id,
+    required this.encKey,
+    required this.kind,
+    required this.root,
+    required this.objects,
+    required this.createdAt,
+    required this.expiresAt,
+    required this.opens,
+  });
+
+  factory VaultLinkInfo.fromJson(Map<String, dynamic> j) {
+    DateTime? at(Object? v) => v == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch((v as num).toInt());
+    return VaultLinkInfo(
+      id: j['id'] as String,
+      encKey: j['encKey'] as String?,
+      kind: j['kind'] as String,
+      root: j['root'] as String,
+      objects: (j['objects'] as num).toInt(),
+      createdAt: at(j['createdAt'])!,
+      expiresAt: at(j['expiresAt']),
+      opens: (j['opens'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  final String id;
+
+  /// The link key sealed with the metadata key; null for a link kept without it.
+  final String? encKey;
+
+  /// "file" or "folder".
+  final String kind;
+
+  /// The shared file or folder.
+  final String root;
+
+  /// Objects it covers: the file, or the folder and its files.
+  final int objects;
+  final DateTime createdAt;
+
+  /// Null: until it is turned off.
+  final DateTime? expiresAt;
+  final int opens;
+}
+
 Map<int, String> _partUrls(Object? list) => {
   for (final p in (list as List?) ?? const [])
     ((p as Map)['partNumber'] as num).toInt(): p['url'] as String,
@@ -749,6 +798,81 @@ class VaultApi {
       deleteToken: data['deleteToken'] as String,
     );
   }
+
+  // ---- links from Drive (drive-plan.md 6B.3) -----------------------------------------
+
+  /// Make a link: [days] is 1, 7 or 30, or 0 for until it is turned off.
+  Future<VaultLinkInfo> createLink(
+    String vaultId, {
+    required String linkId,
+    required String kind,
+    required List<String> objectIds,
+    required String manifest,
+    required String encKey,
+    required int days,
+  }) async => VaultLinkInfo.fromJson(
+    await _send(
+          'POST',
+          '/api/v1/vault/$vaultId/links',
+          vaultId: vaultId,
+          json: {
+            'linkId': linkId,
+            'kind': kind,
+            'objectIds': objectIds,
+            'manifest': manifest,
+            'encKey': encKey,
+            'days': days,
+          },
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// What a link covers, sent again (a folder that changed); its lifetime stays.
+  Future<VaultLinkInfo> updateLink(
+    String vaultId,
+    String linkId, {
+    required String kind,
+    required List<String> objectIds,
+    required String manifest,
+  }) async => VaultLinkInfo.fromJson(
+    await _send(
+          'PUT',
+          '/api/v1/vault/$vaultId/links/$linkId',
+          vaultId: vaultId,
+          json: {'kind': kind, 'objectIds': objectIds, 'manifest': manifest},
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// The Drive's links that still open, newest first.
+  Future<List<VaultLinkInfo>> links(String vaultId) async {
+    final data =
+        await _send('GET', '/api/v1/vault/$vaultId/links', vaultId: vaultId)
+            as Map<String, dynamic>;
+    return [
+      for (final l in data['links'] as List)
+        VaultLinkInfo.fromJson(Map<String, dynamic>.from(l as Map)),
+    ];
+  }
+
+  Future<void> revokeLink(String vaultId, String linkId) =>
+      _send('DELETE', '/api/v1/vault/$vaultId/links/$linkId', vaultId: vaultId);
+
+  /// The link emailed to [to]. [link] is the whole link, key included: the
+  /// server takes it only as this link's own address.
+  Future<void> emailLink(
+    String vaultId,
+    String linkId, {
+    required String to,
+    required String link,
+    String? name,
+    String? title,
+  }) => _send(
+    'POST',
+    '/api/v1/vault/$vaultId/links/$linkId/email',
+    vaultId: vaultId,
+    json: {'to': to, 'link': link, 'name': ?name, 'title': ?title},
+  );
 
   // ---- transport ----------------------------------------------------------------
 

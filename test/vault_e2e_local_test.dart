@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:bishare/features/vault/data/vault_account.dart';
 import 'package:bishare/features/vault/data/vault_api.dart';
+import 'package:bishare/features/vault/data/vault_links.dart';
 import 'package:bishare/core/crypto/bse2.dart';
 import 'package:bishare/core/rust/rust_facade.dart';
 import 'package:bishare/features/vault/data/vault_thumbs.dart';
@@ -15,6 +16,7 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'helpers/rust_test_lib.dart';
 import 'helpers/vault_local.dart';
@@ -528,4 +530,150 @@ void main() {
 
     await phone.account.deleteAccount('google');
   }, timeout: const Timeout(Duration(minutes: 2)));
+
+  test(
+    'links from Drive: a file and a folder, opened as a browser would',
+    () async {
+      if (!rust) return markTestSkipped(rustUnavailableReason);
+      SharedPreferences.setMockInitialValues({});
+      final a = await VaultLocalDevice.signIn(
+        'links',
+        api,
+        mint,
+        '$subject-links',
+        tmp,
+      );
+      final links = VaultLinks(
+        api: a.api,
+        keys: a.keys,
+        dao: a.db.vaultDao,
+        prefs: await SharedPreferences.getInstance(),
+      );
+      final when = DateTime.utc(2024, 1, 2, 3, 4);
+      final noteBytes = Uint8List.fromList(
+        utf8.encode('A note for a link.\n' * 20),
+      );
+      final csvBytes = Uint8List.fromList(
+        List.generate(300 << 10, (i) => '0123456789,\n'.codeUnitAt(i % 12)),
+      );
+      final album = await a.files.mkdir('Album');
+      final trip = await a.files.mkdir('Trip', parent: album);
+      await a.uploader.enqueue([await file('note.txt', noteBytes, when)]);
+      await a.uploader.enqueue([
+        await file('table.csv', csvBytes, when),
+      ], parent: trip);
+      await a.uploader.run();
+      await a.sync.pull();
+      expect(await a.failed(), isEmpty);
+      final top = await a.db.vaultDao.watchChildren(null).first;
+      final note = top.firstWhere((o) => o.name == 'note.txt');
+      final albumRow = top.firstWhere((o) => o.name == 'Album');
+
+      // What a browser does with a link: the sealed manifest from the public
+      // route, opened with the key after #; then a signed URL per file.
+      final web = Dio(BaseOptions(baseUrl: api, validateStatus: (_) => true));
+      Future<Map<String, dynamic>?> open(String url) async {
+        final id = url.substring(VaultLinks.host.length, url.indexOf('#'));
+        final res = await web.get<Map<String, dynamic>>(
+          '/api/v1/vault/links/$id',
+        );
+        if (res.statusCode != 200) return null;
+        final key = base64Url.decode(
+          base64Url.normalize(url.substring(url.indexOf('#') + 1)),
+        );
+        return jsonDecode(
+              Rust.vaultOpenLinkJson(
+                linkKey: key,
+                linkId: id,
+                sealed: (res.data!['data'] as Map)['manifest'] as String,
+              ),
+            )
+            as Map<String, dynamic>;
+      }
+
+      Future<Uint8List> fetch(String linkId, Map<String, dynamic> item) async {
+        final res = await web.post<Map<String, dynamic>>(
+          '/api/v1/vault/links/$linkId/downloads',
+          data: {
+            'objectIds': [item['id']],
+          },
+        );
+        final url =
+            (((res.data!['data'] as Map)['items'] as List).single as Map)['url']
+                as String;
+        final sealed = (await Dio().get<List<int>>(
+          url,
+          options: Options(responseType: ResponseType.bytes),
+        )).data!;
+        final enc = File('${tmp.path}/link-${item['id']}.bse2')
+          ..writeAsBytesSync(sealed);
+        final out = File('${tmp.path}/link-${item['id']}.out');
+        await Bse2.decryptFile(
+          input: enc,
+          output: out,
+          key: base64Url.decode(base64Url.normalize(item['fk'] as String)),
+        );
+        final plain = out.readAsBytesSync();
+        return item['z'] == 'deflate'
+            ? Rust.vaultInflateRaw(plain, item['s'] as int)
+            : plain;
+      }
+
+      // A file link, for 7 days.
+      final fileLink = await links.create(note, days: 7);
+      expect(fileLink.url, startsWith(VaultLinks.host));
+      expect(fileLink.expiresAt!.difference(DateTime.now()).inDays, 6);
+      final m1 = (await open(fileLink.url!))!;
+      expect(m1['k'], 'file');
+      expect(m1['n'], 'note.txt');
+      final item1 = (m1['items'] as List).single as Map<String, dynamic>;
+      expect(item1['path'], 'note.txt');
+      expect(await fetch(fileLink.id, item1), noteBytes);
+
+      // A folder link, until turned off: its files with their paths.
+      final folderLink = await links.create(albumRow, days: 0);
+      expect(folderLink.expiresAt, isNull);
+      expect(folderLink.files, 1);
+      final m2 = (await open(folderLink.url!))!;
+      expect(m2['k'], 'dir');
+      final item2 = (m2['items'] as List).single as Map<String, dynamic>;
+      expect(item2['path'], 'Trip/table.csv');
+      expect(
+        item2['z'],
+        'deflate',
+        reason: 'stored compressed, said so in the manifest',
+      );
+      expect(await fetch(folderLink.id, item2), csvBytes);
+
+      // Listed back with the same links (the key opens from its sealed copy).
+      final listed = {for (final l in await links.list()) l.id: l};
+      expect(listed[fileLink.id]!.url, fileLink.url);
+      expect(listed[folderLink.id]!.url, folderLink.url);
+      expect(listed[folderLink.id]!.name, 'Album');
+      expect((await links.list(root: note.id)).map((l) => l.id), [fileLink.id]);
+
+      // A file added to the folder reaches the link after the next refresh,
+      // once.
+      expect(await links.refreshFolders(), 0, reason: 'nothing changed yet');
+      await a.uploader.enqueue([
+        await file('later.txt', noteBytes, when),
+      ], parent: album);
+      await a.uploader.run();
+      await a.sync.pull();
+      expect(await links.refreshFolders(), 1);
+      expect(await links.refreshFolders(), 0);
+      final m3 = (await open(folderLink.url!))!;
+      expect(
+        [for (final i in m3['items'] as List) (i as Map)['path']]..sort(),
+        ['Trip/table.csv', 'later.txt'],
+      );
+      expect(m3['items'] as List, hasLength(2));
+
+      // Turned off: it no longer opens, and is no longer listed.
+      await links.revoke(folderLink.id);
+      expect(await open(folderLink.url!), isNull);
+      expect((await links.list()).map((l) => l.id), [fileLink.id]);
+      await links.revoke(fileLink.id);
+    },
+  );
 }

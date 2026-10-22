@@ -310,12 +310,11 @@ class _DrivePageState extends State<DrivePage> {
           onTap: () => _act.download([o], choose: true),
         ),
       ],
-      if (file)
-        AppMenuAction(
-          icon: AppIcons.linkCopy,
-          label: 'vault.share_link'.tr(),
-          onTap: () => _act.shareLink(o),
-        ),
+      AppMenuAction(
+        icon: AppIcons.linkCopy,
+        label: 'vault.share_link'.tr(),
+        onTap: () => _act.shareLink(o),
+      ),
       AppMenuAction(
         icon: AppIcons.renameEdit,
         label: 'vault.rename'.tr(),
@@ -372,6 +371,11 @@ class _DrivePageState extends State<DrivePage> {
           destructive: true,
           onTap: () => _act.deleteForGood(_visible, all: true),
         ),
+      AppMenuAction(
+        icon: AppIcons.linkCopy,
+        label: 'vault.links_title'.tr(),
+        onTap: _act.manageLinks,
+      ),
       AppMenuAction(
         icon: AppIcons.transferP2p,
         label: 'vault.transfers'.tr(),
