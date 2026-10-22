@@ -28,10 +28,20 @@ class _DriveStoragePageState extends State<DriveStoragePage> {
   late final Stream<List<VaultObject>> _live = _dao.watchLive();
   late final Stream<List<VaultObject>> _trash = _dao.watchTrash();
 
+  /// The totals follow uploads (VaultAccount.followUsage).
+  StreamSubscription<Object?>? _usage;
+
   @override
   void initState() {
     super.initState();
     unawaited(_account.refreshInfo().catchError((Object _) {}));
+    _usage = _account.followUsage();
+  }
+
+  @override
+  void dispose() {
+    unawaited(_usage?.cancel());
+    super.dispose();
   }
 
   @override

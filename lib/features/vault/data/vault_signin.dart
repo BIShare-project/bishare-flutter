@@ -7,7 +7,6 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'google_app_data.dart';
 import 'vault_config.dart';
-import 'vault_google_desktop.dart';
 import 'vault_keys.dart';
 
 /// An ID token from Apple or Google, bound to this device's key by its nonce.
@@ -35,9 +34,9 @@ class VaultSigninException implements Exception {
 }
 
 /// The provider flows: Apple and Google on iOS and macOS, Google on Android
-/// (task 3.2), Google on Windows and Linux through the browser (task 3.4,
-/// [VaultGoogleDesktop]). Apple on Android, Windows and Linux comes with task
-/// 3.3 and the rest of 3.4.
+/// (task 3.2). Windows and Linux have none (owner, 2026-10-22): a phone,
+/// tablet or Mac of the Drive approves the computer instead ([byApproval],
+/// VaultAccount.startDesktopPairing). Apple on Android comes with task 3.3.
 ///
 /// Nothing is asked for but the sign-in itself: no email, no name, no profile
 /// scope. The server keeps only a keyed hash of the account id.
@@ -46,10 +45,9 @@ class VaultSigninException implements Exception {
 /// public key sent with it, so a token taken from one device cannot enrol
 /// another (VAULT-SPEC "Sign-in nonce").
 class VaultSignin {
-  VaultSignin(this._keys) : _desktop = VaultGoogleDesktop(_keys);
+  VaultSignin(this._keys);
 
   final VaultKeyStore _keys;
-  final VaultGoogleDesktop _desktop;
 
   /// One nonce per installation: the device key never changes, and
   /// `GoogleSignIn.initialize` may run only once.
@@ -59,23 +57,27 @@ class VaultSignin {
   static bool get _googleNative =>
       Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
 
-  static bool get googleAvailable =>
-      _googleNative || VaultGoogleDesktop.available;
+  static bool get googleAvailable => _googleNative && !byApproval;
 
-  static bool get appleAvailable => Platform.isIOS || Platform.isMacOS;
+  static bool get appleAvailable =>
+      (Platform.isIOS || Platform.isMacOS) && !byApproval;
 
-  /// The Drive app-data tokens of whichever Google flow this platform uses,
-  /// for the key copy.
-  GoogleDriveAccess get googleDrive =>
-      _googleNative ? _NativeGoogleDrive(this) : _desktop;
+  /// Windows and Linux: no Apple or Google sign-in. The computer shows a
+  /// code and a device of the Drive approves it, as for a browser. Read from
+  /// defaultTargetPlatform so the store screenshots can draw these screens
+  /// on any host.
+  static bool get byApproval =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux);
+
+  /// The Drive app-data tokens of Google sign-in, for the key copy.
+  GoogleDriveAccess get googleDrive => _NativeGoogleDrive(this);
 
   /// Null when the person closes the sheet.
   Future<ProviderToken?> google(String nonce) async {
     if (!_googleNative) {
-      final idToken = await _desktop.signIn(nonce);
-      if (idToken == null) return null;
-      await _keys.setGoogleHere(true);
-      return ProviderToken(provider: 'google', idToken: idToken);
+      throw const VaultSigninException('no Google sign-in on this platform');
     }
     try {
       await _initGoogle(nonce);
@@ -184,15 +186,12 @@ class VaultSignin {
     return data?.accessToken;
   }
 
-  /// Sign-out of Drive: forget this device's Google sign-in for Drive (and on
-  /// Windows and Linux revoke its grant), so nothing Google stays behind.
+  /// Sign-out of Drive: forget this device's Google sign-in for Drive, so
+  /// nothing Google stays behind.
   Future<void> forgetGoogle() async {
     await _keys.setGoogleHere(false);
     _googleAccount = null;
-    if (!_googleNative) {
-      await _desktop.forget();
-      return;
-    }
+    if (!_googleNative) return;
     try {
       // Signing out needs Google set up on this run, even when this run never
       // signed in (the nonce is this device's, as at any sign-in).

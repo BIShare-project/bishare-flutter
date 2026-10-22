@@ -317,16 +317,15 @@ class VaultApi {
   Future<Map<String, dynamic>> entitlement(
     String vaultId,
     Map<String, Object> purchase,
-  ) async =>
-      Map<String, dynamic>.from(
-        await _send(
-              'POST',
-              '/api/v1/vault/$vaultId/entitlement',
-              vaultId: vaultId,
-              json: purchase,
-            )
-            as Map,
-      );
+  ) async => Map<String, dynamic>.from(
+    await _send(
+          'POST',
+          '/api/v1/vault/$vaultId/entitlement',
+          vaultId: vaultId,
+          json: purchase,
+        )
+        as Map,
+  );
 
   /// Register the key check of a vault key this device just made. A 409
   /// `VAULT_KEY_EXISTS` means another device was first.
@@ -361,16 +360,21 @@ class VaultApi {
     json: {'provider': provider, 'idToken': idToken},
   );
 
+  /// [provider] and [idToken]: a fresh sign-in, needed only to remove a
+  /// device signed in with Apple or Google. This device itself, a browser
+  /// or a computer approved by a phone go without one.
   Future<void> removeDevice(
     String vaultId,
     String deviceId, {
-    required String provider,
-    required String idToken,
+    String? provider,
+    String? idToken,
   }) => _send(
     'DELETE',
     '/api/v1/vault/$vaultId/devices/$deviceId',
     vaultId: vaultId,
-    json: {'provider': provider, 'idToken': idToken},
+    json: provider == null
+        ? const <String, dynamic>{}
+        : {'provider': provider, 'idToken': idToken},
   );
 
   Future<void> deleteAccount(
@@ -431,6 +435,59 @@ class VaultApi {
             )
             as Map,
       );
+
+  /// Windows and Linux, which have no sign-in of their own (owner,
+  /// 2026-10-22): open a slot as a browser does, flagged as a computer, and
+  /// wait there for a device of the Drive to approve this one. Unsigned:
+  /// this computer belongs to no vault yet.
+  Future<({String slot, String code, int expiresAt})> openDesktopPair({
+    required String devicePub,
+    required String boxPub,
+    required String name,
+  }) async {
+    final data =
+        await _send(
+              'POST',
+              '/api/v1/vault/web-pair',
+              signed: false,
+              json: {
+                'devicePub': devicePub,
+                'boxPub': boxPub,
+                'name': name,
+                'stay': true,
+                'desktop': true,
+              },
+            )
+            as Map<String, dynamic>;
+    return (
+      slot: data['slot'] as String,
+      code: data['code'] as String,
+      expiresAt: (data['expiresAt'] as num).toInt(),
+    );
+  }
+
+  /// The approval's box for this computer's slot, signed with its device key
+  /// as the slot's own (BIShare-Vault-Pair). Null while nobody approved.
+  Future<({String vaultId, Uint8List box, Uint8List granterPub})?>
+  takeDesktopPair(String slot) async {
+    final data =
+        await _send(
+              'GET',
+              '/api/v1/vault/web-pair/slots/$slot/box',
+              pairSlot: slot,
+            )
+            as Map<String, dynamic>;
+    if (data['ready'] != true) return null;
+    return (
+      vaultId: data['vaultId'] as String,
+      box: _b64u(data['box'] as String),
+      granterPub: _b64u(data['granterPub'] as String),
+    );
+  }
+
+  /// This computer shows another code: the old one can no longer be approved.
+  Future<void> cancelDesktopPair(String slot) =>
+      _send('DELETE', '/api/v1/vault/web-pair/slots/$slot', pairSlot: slot);
 
   /// Approve the browser: it becomes a device of the vault, and takes [box].
   Future<void> approveWebPair(
@@ -696,6 +753,7 @@ class VaultApi {
     Map<String, dynamic>? json,
     Uint8List? raw,
     bool signed = true,
+    String? pairSlot,
   }) async {
     final body =
         raw ??
@@ -706,7 +764,17 @@ class VaultApi {
       if (json != null) Headers.contentTypeHeader: Headers.jsonContentType,
       if (raw != null) Headers.contentTypeHeader: 'application/octet-stream',
     };
-    if (signed) {
+    if (pairSlot != null) {
+      // A computer waiting in its pairing slot: no vault yet, the slot instead.
+      headers['Authorization'] = Rust.vaultPairAuthorization(
+        seed: await _keys.deviceSeed(),
+        slot: pairSlot,
+        method: method,
+        pathAndQuery: path,
+        ts: now().millisecondsSinceEpoch ~/ 1000,
+        body: body,
+      );
+    } else if (signed) {
       final id = vaultId ?? await _keys.vaultId();
       if (id == null) {
         throw const VaultApiException(

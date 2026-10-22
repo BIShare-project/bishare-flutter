@@ -335,7 +335,7 @@ void main() {
       (await b.account.devices()).firstWhere((d) => d.thisDevice).name,
       'Kitchen tablet',
     );
-    expect(await a.account.removeDevice(bId, 'google'), isTrue);
+    expect(await a.account.removeDevice(bId, provider: 'google'), isTrue);
     listed = await a.account.devices();
     expect(listed.map((d) => d.id), isNot(contains(bId)));
     await b.account.refreshInfo();
@@ -459,5 +459,72 @@ void main() {
     expect(web.single.id, Rust.vaultDeviceId(browserPub));
 
     await a.account.deleteAccount('google');
+  }, timeout: const Timeout(Duration(minutes: 2)));
+
+  test('a Windows or Linux computer approved by a phone', () async {
+    if (!rust) return markTestSkipped(rustUnavailableReason);
+    final phone = await VaultLocalDevice.signIn(
+      'phone',
+      api,
+      mint,
+      'desk-${DateTime.now().microsecondsSinceEpoch}',
+      tmp,
+    );
+    final pc = VaultLocalDevice.fresh('pc', api, tmp);
+    await pc.account.load();
+    expect(pc.account.status, VaultStatus.signedOut);
+
+    final pairing = await pc.account.startDesktopPairing();
+    expect(pairing.qr, startsWith('BSVW1.${pairing.slot}.'));
+    expect(pairing.code, matches(RegExp(r'^[A-Z2-9]{8}$')));
+    expect(await pc.account.checkDesktopPairing(pairing), isFalse);
+
+    // The phone scans the computer's code and sees a computer, not a browser.
+    final request = await phone.account.browserFromQr(pairing.qr);
+    expect(request.desktop, isTrue);
+    expect(request.code, pairing.code);
+    expect(request.name, 'Device pc');
+    await phone.account.approveBrowser(request);
+
+    expect(await pc.account.checkDesktopPairing(pairing), isTrue);
+    expect(pc.account.status, VaultStatus.ready);
+    expect(await pc.keys.vaultKey(), await phone.keys.vaultKey());
+    expect(await pc.keys.vaultId(), await phone.keys.vaultId());
+
+    // A folder made on the computer reaches the phone.
+    await pc.sync.pull();
+    await pc.files.mkdir('From the PC');
+    await phone.sync.pull();
+    final names = [
+      for (final o in await phone.db.vaultDao.liveFolders()) o.name,
+    ];
+    expect(names, contains('From the PC'));
+
+    // Listed on the phone as an approved computer, named as it asked.
+    await phone.account.refreshInfo();
+    final desks = (await phone.account.devices()).where((d) => d.desktop);
+    expect(desks.map((d) => d.name), ['Device pc']);
+    expect(desks.single.approved, isTrue);
+
+    // The computer leaves by itself, no sign-in needed.
+    await pc.account.disconnect();
+    expect(pc.account.status, VaultStatus.signedOut);
+    expect(await pc.keys.vaultKey(), isNull);
+    await phone.account.refreshInfo();
+    expect((await phone.account.devices()).where((d) => d.desktop), isEmpty);
+
+    // Approved again with a new code, the phone removes it without a sign-in.
+    final again = await pc.account.startDesktopPairing();
+    await phone.account.approveBrowser(
+      await phone.account.browserFromQr(again.qr),
+    );
+    expect(await pc.account.checkDesktopPairing(again), isTrue);
+    await phone.account.refreshInfo();
+    final pcId = await pc.keys.deviceId();
+    expect(await phone.account.removeDevice(pcId), isTrue);
+    await pc.account.refreshInfo();
+    expect(pc.account.status, VaultStatus.signedOut);
+
+    await phone.account.deleteAccount('google');
   }, timeout: const Timeout(Duration(minutes: 2)));
 }

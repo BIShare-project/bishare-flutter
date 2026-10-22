@@ -23,10 +23,6 @@ class VaultConfig {
   static const String googleAppleClientId =
       '975128452930-pav8rlui8upmgve3fntfsvj8eaprhoru.apps.googleusercontent.com';
 
-  /// The desktop client (Windows, Linux loopback flow, task 3.4).
-  static const String googleDesktopClientId =
-      '975128452930-1bordn6lu4pi8rtgumevojn4jiu0cu96.apps.googleusercontent.com';
-
   /// The one Google Drive scope Drive asks for: a hidden folder only this app
   /// can see, where the key copy lives (drive-plan.md "Where the key copy
   /// lives"). No other file in the person's Google Drive is visible to it.

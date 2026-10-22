@@ -40,7 +40,6 @@ class VaultKeyStore {
   static const _kServerHalf = 'vault.serverHalf';
   static const _kGoogleHere = 'vault.googleHere';
   static const _kGoogleEmail = 'vault.googleEmail';
-  static const _kGoogleRefresh = 'vault.googleRefresh';
   static const _kKeyPending = 'vault.keyPending';
 
   Uint8List? _seed;
@@ -118,14 +117,6 @@ class VaultKeyStore {
 
   Future<void> saveGoogleEmail(String email) =>
       _storage.write(key: _kGoogleEmail, value: email);
-
-  /// Windows and Linux only: the refresh token of the loopback flow
-  /// (VaultGoogleDesktop). It never leaves this device.
-  Future<String?> googleRefreshToken() => _storage.read(key: _kGoogleRefresh);
-
-  Future<void> saveGoogleRefreshToken(String? token) => token == null
-      ? _storage.delete(key: _kGoogleRefresh)
-      : _storage.write(key: _kGoogleRefresh, value: token);
 
   /// Forget the vault on this device (sign-out, account deleted). The device
   /// key stays, and so does the Google state: it belongs to the provider

@@ -10,6 +10,7 @@ import '../../../core/di/locator.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../settings/presentation/widgets/glyph.dart';
 import '../data/vault_account.dart';
+import '../data/vault_signin.dart';
 import 'vault_sign_in_buttons.dart';
 
 /// The Drive group in Settings (drive-plan.md phase 3, for testers). Renders
@@ -58,7 +59,12 @@ class _VaultGroupState extends State<_VaultGroup> {
               AppListTile(
                 leading: const Glyph(AppIcons.passwordLock),
                 title: Text('vault.title'.tr()),
-                subtitle: Text('vault.signed_out'.tr()),
+                subtitle: Text(
+                  (VaultSignin.byApproval
+                          ? 'vault.signed_out_desktop'
+                          : 'vault.signed_out')
+                      .tr(),
+                ),
               ),
             )
             ..add(
@@ -73,7 +79,11 @@ class _VaultGroupState extends State<_VaultGroup> {
               leading: const Glyph(AppIcons.passwordLock),
               title: Text('vault.title'.tr()),
               subtitle: Text(switch (status) {
-                VaultStatus.ready => 'vault.ready'.tr(),
+                VaultStatus.ready =>
+                  (VaultSignin.byApproval
+                          ? 'vault.ready_desktop'
+                          : 'vault.ready')
+                      .tr(),
                 VaultStatus.needsKey => 'vault.needs_key'.tr(),
                 VaultStatus.pendingApproval => 'vault.pending'.tr(),
                 VaultStatus.signedOut => '',

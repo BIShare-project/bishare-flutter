@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -347,11 +348,28 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         onSecondary: () => Navigator.pop(ctx, false),
       ),
     );
-    if (ok != true) return;
+    if (ok != true || !await _unlockToGive()) return;
     await _run(() async {
       await _account.grantTo(code);
       _say('vault.key_sent');
     });
+  }
+
+  /// The device's own lock before the vault key goes to another device: a
+  /// phone left unlocked, or a code someone else made, must not be enough.
+  /// No lock to ask for (none set, or Linux): the sheet the person just
+  /// confirmed is all there is.
+  Future<bool> _unlockToGive() async {
+    final lock = await DeviceLock.confirm(
+      title: 'vault.title'.tr(),
+      reason: 'vault.approve_lock_reason'.tr(),
+    );
+    if (!mounted || lock == DeviceLockResult.cancelled) return false;
+    if (lock == DeviceLockResult.failed) {
+      _say('vault.error_failed');
+      return false;
+    }
+    return true;
   }
 
   // ---- the web Drive (task 6.11) ------------------------------------------------------
@@ -437,12 +455,25 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     final cs = ShadTheme.of(context).colorScheme;
     final ok = await showAppSheet<bool>(
       context,
-      icon: AppIcons.globePublic,
-      title: 'vault.web_approve_title'.tr(),
+      icon: b.desktop ? AppIcons.monitor : AppIcons.globePublic,
+      title:
+          (b.desktop
+                  ? 'vault.desktop_approve_title'
+                  : 'vault.web_approve_title')
+              .tr(),
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // What is asking comes first; the name is the one it gave itself.
+          Text(
+            (b.desktop
+                    ? 'vault.approve_kind_computer'
+                    : 'vault.approve_kind_browser')
+                .tr(),
+            style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+          ),
+          const SizedBox(height: 2),
           Text(
             b.name,
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
@@ -464,7 +495,10 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            'vault.web_approve_body'.tr(namedArgs: {'name': b.name}),
+            (b.desktop
+                    ? 'vault.desktop_approve_body'
+                    : 'vault.web_approve_body')
+                .tr(namedArgs: {'name': b.name}),
             style: TextStyle(
               fontSize: 13,
               height: 1.4,
@@ -473,7 +507,8 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
           ),
           const SizedBox(height: 16),
           _Buttons(
-            primary: 'vault.web_approve'.tr(),
+            primary: (b.desktop ? 'vault.desktop_approve' : 'vault.web_approve')
+                .tr(),
             onPrimary: () => Navigator.pop(ctx, true),
             secondary: 'vault.cancel'.tr(),
             onSecondary: () => Navigator.pop(ctx, false),
@@ -481,14 +516,18 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         ],
       ),
     );
-    if (ok != true || !mounted) return;
+    if (ok != true || !mounted || !await _unlockToGive()) return;
     await _run(() async {
       await _account.approveBrowser(b);
       _devices = null;
       if (!mounted) return;
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(
-          content: Text('vault.web_opened'.tr(namedArgs: {'name': b.name})),
+          content: Text(
+            (b.desktop ? 'vault.desktop_opened' : 'vault.web_opened').tr(
+              namedArgs: {'name': b.name},
+            ),
+          ),
         ),
       );
     });
@@ -505,19 +544,14 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
           ).format(DateTime.fromMillisecondsSinceEpoch(d.lastSeenAt!));
     final sub = [
       if (d.web) 'vault.device_browser'.tr(),
+      if (d.desktop) 'vault.device_desktop'.tr(),
       if (d.thisDevice) 'vault.this_device'.tr(),
       if (d.pending) 'vault.device_pending'.tr(),
       if (!d.thisDevice && seen != null)
         'vault.last_seen'.tr(namedArgs: {'when': seen}),
     ].join(' · ');
     return AppListTile(
-      leading: Glyph(
-        d.web
-            ? AppIcons.globePublic
-            : d.thisDevice
-            ? AppIcons.smartphone
-            : AppIcons.monitor,
-      ),
+      leading: Glyph(_deviceIcon(d)),
       title: Text(
         d.name ?? 'vault.unnamed_device'.tr(),
         maxLines: 1,
@@ -529,10 +563,19 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     );
   }
 
+  /// A browser, a phone (this one, when it is a phone), or a computer.
+  static String _deviceIcon(VaultDeviceView d) {
+    if (d.web) return AppIcons.globePublic;
+    final phoneHere =
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.android;
+    return d.thisDevice && phoneHere ? AppIcons.smartphone : AppIcons.monitor;
+  }
+
   Future<void> _deviceMenu(VaultDeviceView d) async {
     final pick = await showAppSheet<String>(
       context,
-      icon: d.thisDevice ? AppIcons.smartphone : AppIcons.monitor,
+      icon: _deviceIcon(d),
       title: d.name ?? 'vault.unnamed_device'.tr(),
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
@@ -542,7 +585,9 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
             label: 'vault.rename'.tr(),
             onTap: () => Navigator.pop(ctx, 'rename'),
           ),
-          if (!d.thisDevice)
+          // An approved computer cannot sign in, so it removes only devices
+          // that need no sign-in to remove.
+          if (!d.thisDevice && (d.approved || !VaultSignin.byApproval))
             AppSheetAction(
               icon: AppIcons.trashDelete,
               label: 'vault.remove_device'.tr(),
@@ -594,6 +639,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
   }
 
   Future<void> _removeDevice(VaultDeviceView d) async {
+    if (d.approved) return _removeApproved(d);
     await _ensureInfo();
     if (!mounted) return;
     final providers = [
@@ -630,11 +676,76 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     );
     if (provider == null) return;
     await _run(() async {
-      if (await _account.removeDevice(d.id, provider)) {
+      if (await _account.removeDevice(d.id, provider: provider)) {
         _say('vault.device_removed');
       }
     });
     if (mounted) setState(() => _devices = null);
+  }
+
+  /// A browser, or a computer approved by a phone: no sign-in needed.
+  Future<void> _removeApproved(VaultDeviceView d) async {
+    final ok = await showAppSheet<bool>(
+      context,
+      icon: AppIcons.trashDelete,
+      iconColor: ShadTheme.of(context).colorScheme.destructive,
+      title: 'vault.remove_device_title'.tr(
+        namedArgs: {'name': d.name ?? 'vault.unnamed_device'.tr()},
+      ),
+      subtitle: 'vault.remove_approved_body'.tr(),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppSheetAction(
+            icon: AppIcons.trashDelete,
+            label: 'vault.remove_confirm'.tr(),
+            destructive: true,
+            onTap: () => Navigator.pop(ctx, true),
+          ),
+          AppSheetAction(
+            icon: AppIcons.close,
+            label: 'vault.cancel'.tr(),
+            onTap: () => Navigator.pop(ctx, false),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await _run(() async {
+      if (await _account.removeDevice(d.id)) _say('vault.device_removed');
+    });
+    if (mounted) setState(() => _devices = null);
+  }
+
+  /// Windows and Linux: the computer leaves the Drive by itself.
+  Future<void> _disconnect() async {
+    final cs = ShadTheme.of(context).colorScheme;
+    final ok = await showAppSheet<bool>(
+      context,
+      icon: AppIcons.close,
+      iconColor: cs.destructive,
+      title: 'vault.disconnect_title'.tr(),
+      subtitle: 'vault.disconnect_body'.tr(),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppSheetAction(
+            icon: AppIcons.close,
+            label: 'vault.disconnect'.tr(),
+            destructive: true,
+            onTap: () => Navigator.pop(ctx, true),
+          ),
+          AppSheetAction(
+            icon: AppIcons.close,
+            label: 'vault.cancel'.tr(),
+            onTap: () => Navigator.pop(ctx, false),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await _account.disconnect();
+    if (mounted) Navigator.of(context).maybePop();
   }
 
   // ---- the account -------------------------------------------------------------------
@@ -778,10 +889,16 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
           leading: const Glyph(AppIcons.passwordLock),
           title: Text('vault.title'.tr()),
           subtitle: Text(switch (status) {
-            VaultStatus.ready => 'vault.ready'.tr(),
+            VaultStatus.ready =>
+              (VaultSignin.byApproval ? 'vault.ready_desktop' : 'vault.ready')
+                  .tr(),
             VaultStatus.needsKey => 'vault.needs_key'.tr(),
             VaultStatus.pendingApproval => 'vault.pending'.tr(),
-            VaultStatus.signedOut => 'vault.signed_out'.tr(),
+            VaultStatus.signedOut =>
+              (VaultSignin.byApproval
+                      ? 'vault.signed_out_desktop'
+                      : 'vault.signed_out')
+                  .tr(),
           }),
         ),
       ),
@@ -841,40 +958,55 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
                   ),
                 );
               }
-              // Any device with the key can open the Drive in a browser.
-              if (rows.isNotEmpty) rows.add(const AppRowDivider(indent: 58));
-              rows.add(
-                AppListTile(
-                  leading: const Glyph(AppIcons.globePublic),
-                  title: Text('vault.web_open'.tr()),
-                  subtitle: Text('vault.web_open_body'.tr()),
-                  trailing: const _Chevron(),
-                  onTap: _busy ? null : _openWeb,
-                ),
-              );
+              // A device signed in with the key opens the Drive on a computer
+              // or in a browser; a computer approved itself cannot (server).
+              if (!VaultSignin.byApproval) {
+                if (rows.isNotEmpty) {
+                  rows.add(const AppRowDivider(indent: 58));
+                }
+                rows.add(
+                  AppListTile(
+                    leading: const Glyph(AppIcons.monitor),
+                    title: Text('vault.web_open'.tr()),
+                    subtitle: Text('vault.web_open_body'.tr()),
+                    trailing: const _Chevron(),
+                    onTap: _busy ? null : _openWeb,
+                  ),
+                );
+              }
               return Column(children: rows);
             },
           ),
         ),
       ],
       AppSectionHeader('vault.account'.tr()),
-      AppGroup(
-        child: Column(
-          children: [
-            AppListTile(
-              leading: const Glyph(AppIcons.close),
-              title: Text('vault.sign_out'.tr()),
-              onTap: _busy ? null : _signOut,
-            ),
-            const AppRowDivider(indent: 58),
-            AppListTile(
-              leading: const Glyph(AppIcons.trashDelete),
-              title: Text('vault.delete'.tr()),
-              onTap: _busy ? null : _delete,
-            ),
-          ],
+      if (VaultSignin.byApproval) ...[
+        AppGroup(
+          child: AppListTile(
+            leading: const Glyph(AppIcons.close),
+            title: Text('vault.disconnect'.tr()),
+            onTap: _busy ? null : _disconnect,
+          ),
         ),
-      ),
+        note('vault.desktop_delete_note'),
+      ] else
+        AppGroup(
+          child: Column(
+            children: [
+              AppListTile(
+                leading: const Glyph(AppIcons.close),
+                title: Text('vault.sign_out'.tr()),
+                onTap: _busy ? null : _signOut,
+              ),
+              const AppRowDivider(indent: 58),
+              AppListTile(
+                leading: const Glyph(AppIcons.trashDelete),
+                title: Text('vault.delete'.tr()),
+                onTap: _busy ? null : _delete,
+              ),
+            ],
+          ),
+        ),
     ];
   }
 

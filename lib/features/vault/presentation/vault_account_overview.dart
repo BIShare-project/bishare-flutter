@@ -48,6 +48,22 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
 
   VaultAccount get _account => widget.account;
 
+  /// The storage numbers follow uploads, a backup included
+  /// (VaultAccount.followUsage).
+  StreamSubscription<Object?>? _usage;
+
+  @override
+  void initState() {
+    super.initState();
+    _usage = _account.followUsage();
+  }
+
+  @override
+  void dispose() {
+    unawaited(_usage?.cancel());
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<VaultObject>>(

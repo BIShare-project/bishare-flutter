@@ -70,6 +70,7 @@ import 'package:bishare/features/vault/presentation/drive/drive_controller.dart'
 import 'package:bishare/features/vault/presentation/drive/drive_page.dart';
 import 'package:bishare/features/vault/presentation/drive/drive_widgets.dart';
 import 'package:bishare/features/vault/presentation/vault_account_page.dart';
+import 'package:bishare/features/vault/presentation/vault_desktop_pairing.dart';
 import 'package:bishare/features/web_nearby/presentation/web_nearby_cubit.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -141,6 +142,20 @@ const Map<String, _Preset> _presets = {
     platform: TargetPlatform.macOS,
     insets: EdgeInsets.zero,
     self: 'MacBook Pro',
+    type: 'desktop',
+  ),
+};
+
+/// Drawn only when named in BISHARE_SHOTS_PRESETS, to look at screens no
+/// store gets: Windows (the Drive approved by a phone, no sign-in).
+const Map<String, _Preset> _reviewPresets = {
+  'windows': (
+    // Taller than the window, to see whole pages.
+    size: Size(1000, 1500),
+    ratio: 2,
+    platform: TargetPlatform.windows,
+    insets: EdgeInsets.zero,
+    self: 'Windows PC',
     type: 'desktop',
   ),
 };
@@ -448,6 +463,21 @@ void _registerDrive(String self, {required bool phone}) {
   ).thenReturn(plan == null ? null : VaultPurchases.storeHere);
   when(() => account.planRenews).thenReturn(plan == null ? null : true);
   when(() => account.vaultId).thenReturn('gtghb5lzztcv2lnacs3ldy7eni');
+  // Windows: the code this computer shows until a phone approves it.
+  final pairing = VaultDesktopPairing(
+    slot: 'q3XbV0sLmQ8nT2rYc9fWkA',
+    code: 'K7Q49MZD',
+    expiresAt: DateTime.now().add(const Duration(minutes: 5)),
+    qr:
+        'BSVW1.q3XbV0sLmQ8nT2rYc9fWkA.'
+        'Ek3pQm4vXn8Rt2Ys6Wd1Lf9Ha5Jc0Gb7Uo3Ie2Kz4Nq.'
+        'Tq8Wm2Xd5Rv7Bn1Pk4Ls9Fh3Jy6Ga0Cu2Eo5Iz8Mb1Nx',
+    secret: Uint8List(32),
+  );
+  registerFallbackValue(pairing);
+  when(() => account.startDesktopPairing()).thenAnswer((_) async => pairing);
+  when(() => account.checkDesktopPairing(any())).thenAnswer((_) async => false);
+  when(() => account.cancelDesktopPairing(any())).thenAnswer((_) async {});
   // The plans at US prices, as the store would list them (task 7.1).
   final purchases = _Purchases();
   ProductDetails product(String id, String price, double raw) => ProductDetails(
@@ -484,6 +514,7 @@ void _registerDrive(String self, {required bool phone}) {
         id: 'd1',
         name: self,
         thisDevice: true,
+        desktop: self == 'Windows PC',
         pending: false,
         addedAt: now,
         lastSeenAt: now,
@@ -702,6 +733,60 @@ final List<(String, int?, Widget, DriveView?)> _driveScreens = [
   ('drive/6_plans', null, const DrivePlansPage(), null),
 ];
 
+/// Windows and Linux only: the code a phone scans to approve this computer.
+final List<(String, int?, Widget, DriveView?)> _desktopScreens = [
+  ('drive/9_connect', null, const _ConnectPreview(), null),
+];
+
+/// The pairing sheet's content on a page, as the sheet shows it.
+class _ConnectPreview extends StatelessWidget {
+  const _ConnectPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = ShadTheme.of(context).colorScheme;
+    return Scaffold(
+      backgroundColor: cs.background,
+      body: Center(
+        child: Container(
+          width: 460,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: cs.card,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: cs.border),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'vault.pair_title'.tr(),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'vault.pair_body'.tr(
+                  namedArgs: {
+                    'manage': 'vault.manage'.tr(),
+                    'open': 'vault.web_open'.tr(),
+                  },
+                ),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+              ),
+              const SizedBox(height: 16),
+              const VaultDesktopPairingPanel(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 Future<void> _settle(WidgetTester tester, [int rounds = 12]) async {
   for (var i = 0; i < rounds; i++) {
     await tester.runAsync(
@@ -748,7 +833,11 @@ void main() {
     // Soft shadows as on a device; the test binding draws them solid.
     debugDisableShadows = false;
     try {
-      for (final MapEntry(key: name, value: preset) in _presets.entries) {
+      for (final MapEntry(key: name, value: preset) in {
+        ..._presets,
+        for (final e in _reviewPresets.entries)
+          if (onlyPresets.contains(e.key)) e.key: e.value,
+      }.entries) {
         if (onlyPresets.isNotEmpty && !onlyPresets.contains(name)) continue;
         debugDefaultTargetPlatformOverride = preset.platform;
         try {
@@ -870,6 +959,7 @@ Future<void> _run(
     for (final (file, tab, page, view) in <(String, int?, Widget, DriveView?)>[
       for (final (file, tab, page) in _screens) (file, tab, page, null),
       ..._driveScreens,
+      if (preset.platform == TargetPlatform.windows) ..._desktopScreens,
     ]) {
       final only = _list('BISHARE_SHOTS_ONLY');
       if (only.isNotEmpty && !only.any(file.contains)) continue;

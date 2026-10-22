@@ -48,10 +48,15 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
     _account.addListener(_onAccount);
     unawaited(_purchases.load());
     unawaited(_account.refreshInfo().catchError((Object _) {}));
+    _usage = _account.followUsage();
   }
+
+  /// The fill under the title follows uploads (VaultAccount.followUsage).
+  StreamSubscription<Object?>? _usage;
 
   @override
   void dispose() {
+    unawaited(_usage?.cancel());
     _purchases.removeListener(_onPurchases);
     _account.removeListener(_onAccount);
     super.dispose();

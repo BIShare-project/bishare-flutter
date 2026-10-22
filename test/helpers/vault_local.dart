@@ -82,6 +82,18 @@ class VaultLocalDevice {
 
   /// The same installation after the app was killed: new objects, same
   /// keychain, database and files.
+  /// A device that never signs in: Windows or Linux, approved by a phone.
+  static VaultLocalDevice fresh(String name, String api, Directory tmp) =>
+      VaultLocalDevice._(
+        name,
+        api,
+        '',
+        '',
+        tmp,
+        VaultKeyStore(MemSecureStorage()),
+        AppDatabase(NativeDatabase.memory()),
+      ).._wire();
+
   VaultLocalDevice restart() => at(apiBase);
 
   /// The same installation talking to [base] (a closed port: no network).

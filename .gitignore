@@ -57,6 +57,3 @@ rust_builder/.dart_tool/
 
 # Cargo lock (optional - uncomment if you want to lock dependency versions)
 # rust/Cargo.lock
-
-# Written by .github/workflows/snap.yml for the snap build; never committed.
-.vault-desktop-secret

@@ -100,11 +100,15 @@ class _DrivePageState extends State<DrivePage> {
   /// Drive's own sidebar needs this much room next to the app's.
   static const _sidebarMinWidth = 720.0;
 
+  /// The storage line follows uploads (VaultAccount.followUsage).
+  StreamSubscription<Object?>? _usage;
+
   @override
   void initState() {
     super.initState();
     _account.addListener(_onAccount);
     unawaited(_account.load().then((_) => _onAccount()));
+    _usage = _account.followUsage();
     _ctrl.addListener(_onCtrl);
     _searchFocus.addListener(_onSearchFocus);
   }
@@ -124,6 +128,7 @@ class _DrivePageState extends State<DrivePage> {
   @override
   void dispose() {
     unawaited(_pathSub?.cancel());
+    unawaited(_usage?.cancel());
     _account.removeListener(_onAccount);
     _ctrl
       ..removeListener(_onCtrl)

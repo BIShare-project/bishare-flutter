@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -7,9 +9,12 @@ import '../../../core/ui/app_ui.dart';
 import '../data/vault_account.dart';
 import '../data/vault_api.dart';
 import '../data/vault_signin.dart';
+import 'vault_desktop_pairing.dart';
 
 /// "Continue with Google" and "Continue with Apple", where the platform has
-/// them, with the error under the buttons. Used in Settings and in Drive.
+/// them, with the error under the buttons; on Windows and Linux, which have
+/// no sign-in, "Connect with your phone" instead. Used in Settings and in
+/// Drive.
 class VaultSignInButtons extends StatefulWidget {
   const VaultSignInButtons({super.key});
 
@@ -50,6 +55,17 @@ class _VaultSignInButtonsState extends State<VaultSignInButtons> {
   @override
   Widget build(BuildContext context) {
     final muted = ShadTheme.of(context).textTheme.muted.copyWith(fontSize: 12);
+    if (VaultSignin.byApproval) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: AppButton(
+          label: 'vault.pair_connect'.tr(),
+          icon: AppIcons.qrShare,
+          fullWidth: true,
+          onPressed: () => unawaited(showVaultDesktopPairing(context)),
+        ),
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -81,6 +97,16 @@ class _VaultSignInButtonsState extends State<VaultSignInButtons> {
             padding: const EdgeInsets.only(top: 10),
             child: Text(_error!, style: muted, textAlign: TextAlign.center),
           ),
+        // A Drive made on another device opens with the same sign-in: the
+        // phrase is asked for only after it, when the key copy is not there.
+        Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Text(
+            'vault.sign_in_hint'.tr(),
+            style: muted.copyWith(height: 1.4),
+            textAlign: TextAlign.center,
+          ),
+        ),
       ],
     );
   }

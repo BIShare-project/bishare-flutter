@@ -50,7 +50,8 @@ class VaultAccount extends ChangeNotifier {
         keyCopy ??
         VaultKeyCopy([
           if (ICloudKeyCopyHolder.available) ICloudKeyCopyHolder(),
-          GoogleKeyCopyHolder(GoogleAppData(_signin.googleDrive)),
+          if (VaultSignin.googleAvailable)
+            GoogleKeyCopyHolder(GoogleAppData(_signin.googleDrive)),
         ]);
   }
 
@@ -344,8 +345,7 @@ class VaultAccount extends ChangeNotifier {
 
   /// "free", "active", "grace" (the store is retrying a failed renewal; full
   /// access), "lapsed" (read-only until [lapseEnds]) or "deleting".
-  String get state =>
-      _info?['state'] as String? ?? _last?.state ?? 'free';
+  String get state => _info?['state'] as String? ?? _last?.state ?? 'free';
 
   /// When a lapsed Drive above the free size is emptied.
   DateTime? get lapseEnds {
@@ -385,6 +385,30 @@ class VaultAccount extends ChangeNotifier {
     await _nameThisDevice();
   }
 
+  /// While a screen shows the storage: the server's count ([usedBytes], what
+  /// the quota uses) follows what goes up. The index moves when a file is
+  /// committed; [refreshInfo] runs three seconds after a change, at most
+  /// once per three seconds. The caller cancels the subscription.
+  StreamSubscription<Object?>? followUsage() {
+    final dao = _dao;
+    if (dao == null) return null;
+    int? seen;
+    Timer? soon;
+    return dao.watchLive().listen((objects) {
+      var total = objects.length;
+      for (final o in objects) {
+        total += o.size ?? 0;
+      }
+      if (seen != null && seen != total && !(soon?.isActive ?? false)) {
+        soon = Timer(
+          const Duration(seconds: 3),
+          () => unawaited(refreshInfo().catchError((Object _) {})),
+        );
+      }
+      seen = total;
+    });
+  }
+
   // ---- devices (task 4.9) --------------------------------------------------------
 
   /// The devices of this Drive (removed ones left out), names opened.
@@ -419,6 +443,7 @@ class VaultAccount extends ChangeNotifier {
           addedAt: (d['addedAt'] as num?)?.toInt() ?? 0,
           lastSeenAt: (d['lastSeenAt'] as num?)?.toInt(),
           web: d['kind'] == 'web',
+          desktop: d['kind'] == 'desktop',
         ),
       );
     }
@@ -465,16 +490,24 @@ class VaultAccount extends ChangeNotifier {
   /// Remove another device: it can no longer read or change anything, and
   /// cannot come back without signing in again. Needs a fresh sign-in.
   /// False when the person closed the sheet.
-  Future<bool> removeDevice(String deviceId, String provider) async {
+  /// Remove a device from the Drive. [provider]: the fresh sign-in a device
+  /// signed in with Apple or Google needs; without it only a browser or a
+  /// computer approved by a phone can go. False when the person closed the
+  /// sign-in sheet.
+  Future<bool> removeDevice(String deviceId, {String? provider}) async {
     final vaultId = _requireVault();
-    final token = await _freshToken(provider);
-    if (token == null) return false;
-    await _api.removeDevice(
-      vaultId,
-      deviceId,
-      provider: token.provider,
-      idToken: token.idToken,
-    );
+    if (provider == null) {
+      await _api.removeDevice(vaultId, deviceId);
+    } else {
+      final token = await _freshToken(provider);
+      if (token == null) return false;
+      await _api.removeDevice(
+        vaultId,
+        deviceId,
+        provider: token.provider,
+        idToken: token.idToken,
+      );
+    }
     _info = await _api.info(vaultId);
     notifyListeners();
     return true;
@@ -740,6 +773,103 @@ class VaultAccount extends ChangeNotifier {
     await refreshInfo();
   }
 
+  // ---- Windows and Linux: approved by a phone (owner, 2026-10-22) --------------
+
+  /// Open a pairing slot for this computer and the code to show for it. The
+  /// device key is the installation's own; the hand-off key lives only in
+  /// the returned pairing, in memory.
+  Future<VaultDesktopPairing> startDesktopPairing() async {
+    final hand = Rust.vaultGrantKeyGenerate();
+    final devicePub = _b64(await _keys.devicePublicKey());
+    final boxPub = _b64(hand.public);
+    var name = (_deviceName?.call() ?? '').trim();
+    if (name.isEmpty) {
+      name = defaultTargetPlatform == TargetPlatform.windows
+          ? 'Windows'
+          : 'Linux';
+    }
+    if (name.length > 80) name = name.substring(0, 80);
+    final slot = await _api.openDesktopPair(
+      devicePub: devicePub,
+      boxPub: boxPub,
+      name: name,
+    );
+    return VaultDesktopPairing(
+      slot: slot.slot,
+      code: slot.code,
+      expiresAt: DateTime.fromMillisecondsSinceEpoch(slot.expiresAt),
+      secret: hand.secret,
+      qr: 'BSVW1.${slot.slot}.$boxPub.$devicePub',
+    );
+  }
+
+  /// One look at [pairing]: true once a device of a Drive approved this
+  /// computer, which then holds the key and is ready. The key is checked
+  /// against the account's key check before it is kept.
+  Future<bool> checkDesktopPairing(VaultDesktopPairing pairing) async {
+    final got = await _api.takeDesktopPair(pairing.slot);
+    if (got == null) return false;
+    // Another account was on this computer before: its key, index and queue
+    // must not stay.
+    final previous = await _keys.vaultId();
+    if (previous != null && previous != got.vaultId) {
+      await _onForget?.call();
+      await _keys.forgetVault();
+      await _dao?.clearAll();
+    }
+    await _keys.saveVault(vaultId: got.vaultId);
+    _vaultId = got.vaultId;
+    _info = await _api.info(got.vaultId);
+    final keyCheck = _info?['keyCheck'] as String?;
+    final Uint8List vk;
+    try {
+      vk = Rust.vaultAcceptGrant(
+        vaultId: got.vaultId,
+        mineSecret: pairing._secret,
+        granterPub: got.granterPub,
+        boxed: got.box,
+        expectedKeyCheck: keyCheck ?? '',
+      );
+    } on Object {
+      throw const VaultApiException(
+        'VAULT_KEY_MISMATCH',
+        'The key from that device does not fit this Drive',
+      );
+    }
+    _checked = true;
+    await acceptVaultKey(vk, keyCheck!);
+    return true;
+  }
+
+  /// Forget a code this computer no longer shows; it runs out by itself in
+  /// five minutes anyway.
+  Future<void> cancelDesktopPairing(VaultDesktopPairing pairing) async {
+    try {
+      await _api.cancelDesktopPair(pairing.slot);
+    } on Object catch (e) {
+      debugPrint('[vault] cancel pairing: $e');
+    }
+  }
+
+  /// Windows and Linux: this computer leaves the Drive. Its access goes on
+  /// the server (a device may always remove itself) and everything Drive is
+  /// forgotten here; the account and its files stay. Offline, the server
+  /// removes it by itself after 30 days unused, or a phone removes it.
+  Future<void> disconnect() async {
+    final vaultId = _vaultId;
+    if (vaultId != null) {
+      try {
+        await _api.removeDevice(vaultId, await _keys.deviceId());
+      } on Object catch (e) {
+        debugPrint('[vault] disconnect: $e');
+      }
+    }
+    await signOut();
+  }
+
+  static String _b64(List<int> bytes) =>
+      base64Url.encode(bytes).replaceAll('=', '');
+
   // ---- deleting the account (task 3.9) ----------------------------------------
 
   /// Delete the Drive account: a fresh sign-in, the key copy removed from
@@ -899,7 +1029,35 @@ class VaultWebPairing {
       : code;
 }
 
-/// A browser asking to open the Drive, as the server describes it.
+/// This Windows or Linux computer waiting for a device of the Drive to
+/// approve it: the code it shows, as a browser at drive.bishare.app does
+/// (the same `BSVW1` text, the same letters).
+class VaultDesktopPairing {
+  VaultDesktopPairing({
+    required this.slot,
+    required this.code,
+    required this.expiresAt,
+    required this.qr,
+    required Uint8List secret,
+  }) : _secret = secret;
+
+  final String slot;
+
+  /// The 8 letters under the QR code, for the person to compare.
+  final String code;
+  final DateTime expiresAt;
+
+  /// `BSVW1.<slot>.<hand-off key>.<device key>`.
+  final String qr;
+
+  /// The hand-off key's secret half; never leaves this object.
+  final Uint8List _secret;
+
+  bool get expired => DateTime.now().isAfter(expiresAt);
+}
+
+/// A browser, or a Windows or Linux computer, asking to open the Drive, as
+/// the server describes it.
 class VaultBrowserRequest {
   VaultBrowserRequest._fromServer(
     this.slot,
@@ -908,9 +1066,13 @@ class VaultBrowserRequest {
   }) : name = (data['name'] as String?) ?? '',
        code = (data['code'] as String?) ?? '',
        devicePub = (data['devicePub'] as String?) ?? '',
-       boxPub = (data['boxPub'] as String?) ?? '';
+       boxPub = (data['boxPub'] as String?) ?? '',
+       desktop = data['desktop'] == true;
 
   final String slot;
+
+  /// A computer of the app (Windows, Linux), not a browser.
+  final bool desktop;
 
   /// "Chrome on macOS", as the browser named itself.
   final String name;
@@ -934,12 +1096,21 @@ class VaultDeviceView {
     required this.addedAt,
     required this.lastSeenAt,
     this.web = false,
+    this.desktop = false,
   });
 
   final String id;
 
   /// A browser (drive.bishare.app), removed by itself when unused.
   final bool web;
+
+  /// A Windows or Linux computer approved by another device, removed by
+  /// itself after 30 days unused.
+  final bool desktop;
+
+  /// Approved by another device rather than signed in: any device may remove
+  /// it without signing in again.
+  bool get approved => web || desktop;
 
   /// Null until the device has been named (or when the name does not open).
   final String? name;
