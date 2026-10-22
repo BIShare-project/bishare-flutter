@@ -1122,7 +1122,7 @@
     "plans_cta_yearly": "연간으로 변경",
     "plans_cta_monthly": "월간으로 변경",
     "plans_cta_current": "현재 요금제",
-    "plans_cta_note": "{price} · 자동 갱신. 언제든 해지할 수 있습니다.",
+    "plans_cta_note": "자동 갱신. 언제든 해지할 수 있습니다.",
     "remind_lapse_title": "Drive가 곧 비워집니다",
     "remind_lapse_body": "{date}에 Drive의 파일이 삭제됩니다. 갱신하거나 무료 용량까지 파일을 삭제하세요.",
     "remind_end_title": "Drive 요금제가 곧 끝납니다",

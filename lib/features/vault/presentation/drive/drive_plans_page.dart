@@ -620,6 +620,13 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
         children: [
           _BuyButton(
             label: label,
+            // The price as billed, right under what it buys (owner: "biar
+            // jelas"); the plan in force needs none.
+            price: current
+                ? null
+                : details == null
+                ? 'vault.plans_unavailable'.tr()
+                : _billed(details, yearly: _yearly),
             loading: _purchases.busyProduct == id,
             onPressed:
                 details == null || current || _purchases.busyProduct != null
@@ -628,11 +635,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
           ),
           const SizedBox(height: 9),
           Text(
-            details == null
-                ? 'vault.plans_unavailable'.tr()
-                : 'vault.plans_cta_note'.tr(
-                    namedArgs: {'price': _billed(details, yearly: _yearly)},
-                  ),
+            'vault.plans_cta_note'.tr(),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
@@ -1126,11 +1129,15 @@ class _UsageBar extends StatelessWidget {
 class _BuyButton extends StatelessWidget {
   const _BuyButton({
     required this.label,
+    required this.price,
     required this.loading,
     required this.onPressed,
   });
 
   final String label;
+
+  /// Under [label]: "$19.99 a month".
+  final String? price;
   final bool loading;
   final VoidCallback? onPressed;
 
@@ -1147,7 +1154,7 @@ class _BuyButton extends StatelessWidget {
       enabled: enabled,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        height: 54,
+        height: price == null ? 54 : 62,
         decoration: BoxDecoration(
           color: idle ? cs.muted : null,
           gradient: idle ? null : _brand(cs.primary),
@@ -1184,16 +1191,32 @@ class _BuyButton extends StatelessWidget {
                     )
                   : Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 16.5,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.1,
-                          color: fg,
-                        ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.1,
+                              color: fg,
+                            ),
+                          ),
+                          if (price != null)
+                            Text(
+                              price!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: fg.withValues(alpha: 0.85),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
             ),

@@ -1122,7 +1122,7 @@
     "plans_cta_yearly": "改为按年",
     "plans_cta_monthly": "改为按月",
     "plans_cta_current": "当前套餐",
-    "plans_cta_note": "{price}，自动续订，可随时取消。",
+    "plans_cta_note": "自动续订，可随时取消。",
     "remind_lapse_title": "你的 Drive 即将被清空",
     "remind_lapse_body": "{date} 你的 Drive 中的文件将被删除，除非你续订或删除文件直到不超过免费容量。",
     "remind_end_title": "你的 Drive 套餐即将结束",

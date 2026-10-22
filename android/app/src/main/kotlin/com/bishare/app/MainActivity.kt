@@ -370,6 +370,16 @@ class MainActivity : FlutterActivity() {
         if (hasFocus) clipChanges++
     }
 
+    /**
+     * Back on the app's first screen sends the app to the background instead
+     * of closing it, as Android 12 and later do for every app. Closing ended
+     * the Flutter engine, and a Drive upload with it (2026-10-22, logcat).
+     */
+    override fun popSystemNavigator(): Boolean {
+        moveTaskToBack(true)
+        return true
+    }
+
     override fun onDestroy() {
         clipListener?.let {
             (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)

@@ -1122,7 +1122,7 @@
     "plans_cta_yearly": "Ganti ke tahunan",
     "plans_cta_monthly": "Ganti ke bulanan",
     "plans_cta_current": "Paket Anda saat ini",
-    "plans_cta_note": "{price}, diperpanjang otomatis. Batalkan kapan saja.",
+    "plans_cta_note": "Diperpanjang otomatis. Batalkan kapan saja.",
     "remind_lapse_title": "Drive Anda akan segera dikosongkan",
     "remind_lapse_body": "Pada {date} file di Drive Anda dihapus, kecuali Anda memperpanjang atau menghapus file sampai ukuran gratis.",
     "remind_end_title": "Paket Drive Anda segera berakhir",

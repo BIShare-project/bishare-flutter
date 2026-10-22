@@ -1122,7 +1122,7 @@
     "plans_cta_yearly": "Mudar para anual",
     "plans_cta_monthly": "Mudar para mensal",
     "plans_cta_current": "Seu plano atual",
-    "plans_cta_note": "{price}, renovação automática. Cancele quando quiser.",
+    "plans_cta_note": "Renovação automática. Cancele quando quiser.",
     "remind_lapse_title": "Seu Drive será esvaziado em breve",
     "remind_lapse_body": "Em {date} os arquivos do seu Drive serão apagados, a menos que você renove ou apague arquivos até o tamanho grátis.",
     "remind_end_title": "Seu plano do Drive termina em breve",

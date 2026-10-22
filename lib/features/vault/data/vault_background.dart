@@ -256,6 +256,23 @@ class VaultBackground {
     }
   }
 
+  /// Android: a run as soon as the system allows, for uploads the app cannot
+  /// hold while out of sight (its foreground service was refused). A job is
+  /// not frozen while it runs; it asks the app to do the work if it is up.
+  static Future<void> runSoon() async {
+    if (kIsWeb || !Platform.isAndroid) return;
+    try {
+      await Workmanager().registerOneOffTask(
+        '$task.soon',
+        task,
+        constraints: Constraints(networkType: NetworkType.connected),
+        existingWorkPolicy: ExistingWorkPolicy.keep,
+      );
+    } on Object catch (e) {
+      debugPrint('[vault] background run soon: $e');
+    }
+  }
+
   static Future<void> _again() async {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool('vault.photoBackup') != true) return;

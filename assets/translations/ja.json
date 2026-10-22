@@ -1122,7 +1122,7 @@
     "plans_cta_yearly": "年額に変更",
     "plans_cta_monthly": "月額に変更",
     "plans_cta_current": "現在のプラン",
-    "plans_cta_note": "{price}・自動更新。いつでも解約できます。",
+    "plans_cta_note": "自動更新。いつでも解約できます。",
     "remind_lapse_title": "Drive がまもなく空になります",
     "remind_lapse_body": "{date} に Drive のファイルは削除されます。更新するか、無料の容量までファイルを削除してください。",
     "remind_end_title": "Drive のプランがまもなく終了します",

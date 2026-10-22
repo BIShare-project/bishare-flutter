@@ -1122,7 +1122,7 @@
     "plans_cta_yearly": "Auf jährliche Zahlung umstellen",
     "plans_cta_monthly": "Auf monatliche Zahlung umstellen",
     "plans_cta_current": "Dein aktueller Tarif",
-    "plans_cta_note": "{price}, verlängert sich automatisch. Jederzeit kündbar.",
+    "plans_cta_note": "Verlängert sich automatisch. Jederzeit kündbar.",
     "remind_lapse_title": "Dein Drive wird bald geleert",
     "remind_lapse_body": "Am {date} werden die Dateien in deinem Drive gelöscht, außer du verlängerst oder löschst Dateien bis zur kostenlosen Größe.",
     "remind_end_title": "Dein Drive-Tarif endet bald",

@@ -143,7 +143,7 @@
         <service
             android:name="com.dexterous.flutterlocalnotifications.ForegroundService"
             android:exported="false"
-            android:stopWithTask="false"
+            android:stopWithTask="true"
             android:foregroundServiceType="dataSync" />
     </application>
     <!-- Required to query activities that can process text, see:

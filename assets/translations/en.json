@@ -1122,7 +1122,7 @@
     "plans_cta_yearly": "Switch to yearly",
     "plans_cta_monthly": "Switch to monthly",
     "plans_cta_current": "Your current plan",
-    "plans_cta_note": "{price}, renews automatically. Cancel anytime.",
+    "plans_cta_note": "Renews automatically. Cancel anytime.",
     "remind_lapse_title": "Your Drive will be emptied soon",
     "remind_lapse_body": "On {date} the files in your Drive are deleted, unless you renew or delete files down to the free size.",
     "remind_end_title": "Your Drive plan ends soon",

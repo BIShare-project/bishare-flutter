@@ -1122,7 +1122,7 @@
     "plans_cta_yearly": "वार्षिक पर जाएँ",
     "plans_cta_monthly": "मासिक पर जाएँ",
     "plans_cta_current": "आपका मौजूदा प्लान",
-    "plans_cta_note": "{price}, अपने-आप रिन्यू होता है। कभी भी रद्द करें।",
+    "plans_cta_note": "अपने-आप रिन्यू होता है। कभी भी रद्द करें।",
     "remind_lapse_title": "आपका Drive जल्द ख़ाली होगा",
     "remind_lapse_body": "{date} को आपके Drive की फ़ाइलें हटा दी जाएँगी, जब तक आप रिन्यू न करें या फ़ाइलें मुफ़्त साइज़ तक न हटाएँ।",
     "remind_end_title": "आपका Drive प्लान जल्द ख़त्म होगा",

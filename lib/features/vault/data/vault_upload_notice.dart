@@ -35,6 +35,7 @@ class VaultUploadNotice {
     required SharedPreferences prefs,
     this.initialize = false,
     this.foreground = false,
+    this.onServiceRefused,
     FlutterLocalNotificationsPlugin? plugin,
   }) : _dao = dao,
        _uploader = uploader,
@@ -52,6 +53,10 @@ class VaultUploadNotice {
 
   /// The app's isolate: hold a foreground service while files go up.
   final bool foreground;
+
+  /// The service could not start (the uploads began while the app was out of
+  /// sight, which Android refuses): the work goes to a background job.
+  final Future<void> Function()? onServiceRefused;
 
   /// The app is out of sight: progress shows here, and "Uploads finished"
   /// after it. On screen, the notification shows only as the service's.
@@ -212,7 +217,7 @@ class VaultUploadNotice {
       subText: left,
       // A service's notification goes with the service; a plain one must
       // not outlive a process the system froze.
-      timeoutAfter: _service || foreground ? null : 30000,
+      timeoutAfter: _service ? null : 30000,
     );
     if (foreground && !_service) {
       try {
@@ -229,8 +234,11 @@ class VaultUploadNotice {
         _service = true;
         return;
       } on Object catch (e) {
-        // Refused (started while out of sight): a plain notification.
+        // Refused (started while out of sight): a plain notification, and a
+        // background job does the sending before the system freezes the app.
         debugPrint('[vault] upload service: $e');
+        final refused = onServiceRefused;
+        if (refused != null) unawaited(refused());
       }
     }
     try {

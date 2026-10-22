@@ -367,6 +367,7 @@ Future<void> setupLocator() async {
           uploader: uploader,
           prefs: prefs,
           foreground: true,
+          onServiceRefused: VaultBackground.runSoon,
         )..hidden = false;
         unawaited(notice.start());
         AppLifecycleListener(
