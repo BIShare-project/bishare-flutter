@@ -291,7 +291,7 @@ class _Api extends VaultApi {
   }
 
   @override
-  Future<void> deleteAccount(String vaultId, {required String provider, required String idToken}) async {
+  Future<void> deleteAccount(String vaultId, {required String provider, required String idToken, List<String> googleTokens = const []}) async {
     log.add('delete account ${idToken.startsWith('fresh:') ? 'fresh' : 'stale'}');
   }
 

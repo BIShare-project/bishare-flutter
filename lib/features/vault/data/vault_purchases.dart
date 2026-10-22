@@ -103,10 +103,25 @@ class VaultPurchases extends ChangeNotifier {
   /// a purchase cut off by a crash) as soon as anyone listens.
   void start() {
     if (!supported || _sub != null) return;
+    _account.addListener(_onAccount);
     _sub = _store.purchaseStream.listen(
       (list) => unawaited(_onPurchases(list)),
       onError: (Object e) => debugPrint('[vault] store: $e'),
     );
+  }
+
+  /// Purchases the store handed over before this run knew its Drive (the
+  /// account still loading at start, audit P13): reported once it does,
+  /// rather than left unfinished until the next start.
+  final List<PurchaseDetails> _waiting = [];
+
+  void _onAccount() {
+    if (_account.vaultId == null || _waiting.isEmpty) return;
+    final waiting = [..._waiting];
+    _waiting.clear();
+    for (final p in waiting) {
+      unawaited(_report(p));
+    }
   }
 
   /// The plans with this country's prices.
@@ -193,12 +208,40 @@ class VaultPurchases extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Android: the purchase tokens of this Drive's plans on this Play account,
+  /// for the server to stop them renewing when the Drive is deleted.
+  Future<List<String>> googleTokens() async {
+    if (!supported || !_android) return const [];
+    try {
+      final addition = _store
+          .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
+      final past = await addition.queryPastPurchases();
+      final vaultId = _account.vaultId;
+      return [
+        for (final p in past.pastPurchases)
+          if (productIds.contains(p.productID) &&
+              p.billingClientPurchase.obfuscatedAccountId == vaultId)
+            p.verificationData.serverVerificationData,
+      ];
+    } on Object catch (e) {
+      debugPrint('[vault] past purchases: $e');
+      return const [];
+    }
+  }
+
   Future<GooglePlayPurchaseDetails?> _currentGooglePurchase() async {
     final addition = _store
         .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
     final past = await addition.queryPastPurchases();
+    // Only this Drive's plan: one Play account may pay for two Drives, and
+    // replacing the other one's would end its plan (audit P7).
+    final vaultId = _account.vaultId;
     final mine = past.pastPurchases
-        .where((p) => productIds.contains(p.productID))
+        .where(
+          (p) =>
+              productIds.contains(p.productID) &&
+              p.billingClientPurchase.obfuscatedAccountId == vaultId,
+        )
         .toList();
     if (mine.isEmpty) return null;
     return mine.firstWhere(
@@ -216,7 +259,11 @@ class VaultPurchases extends ChangeNotifier {
         case PurchaseStatus.canceled:
         case PurchaseStatus.error:
           if (p.status == PurchaseStatus.error) lastError = 'STORE';
-          if (busyProduct == p.productID) busyProduct = null;
+          // Google Play reports a closed sheet or a refusal without the
+          // product (audit P2): whatever was in progress is over.
+          if (p.productID.isEmpty || busyProduct == p.productID) {
+            busyProduct = null;
+          }
           await _finish(p);
           notifyListeners();
         case PurchaseStatus.purchased:
@@ -227,11 +274,22 @@ class VaultPurchases extends ChangeNotifier {
   }
 
   Future<void> _report(PurchaseDetails p) async {
-    if (!productIds.contains(p.productID)) return _finish(p);
+    if (!productIds.contains(p.productID)) {
+      // "Nothing bought" from Google Play (an item already owned, a change
+      // that waits for the renewal) comes without a product too.
+      if (p.productID.isEmpty && busyProduct != null) {
+        busyProduct = null;
+        notifyListeners();
+      }
+      return _finish(p);
+    }
     final vaultId = _account.vaultId;
-    // Signed out: the purchase stays unfinished, and the store offers it
-    // again once a Drive is open here.
-    if (vaultId == null) return;
+    // No Drive known yet on this run: reported when there is one (or, signed
+    // out, the store offers it again once a Drive is open here).
+    if (vaultId == null) {
+      _waiting.add(p);
+      return;
+    }
     final proof = p.verificationData.serverVerificationData;
     try {
       final plan = await _api.entitlement(
@@ -272,6 +330,7 @@ class VaultPurchases extends ChangeNotifier {
 
   @override
   void dispose() {
+    _account.removeListener(_onAccount);
     unawaited(_sub?.cancel());
     super.dispose();
   }

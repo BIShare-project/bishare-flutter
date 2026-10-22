@@ -878,7 +878,10 @@ class VaultAccount extends ChangeNotifier {
   /// closed the sign-in sheet; otherwise the places the key copy could not be
   /// removed from (unreadable without the deleted server half, but the person
   /// should know).
-  Future<List<String>?> deleteAccount(String provider) async {
+  Future<List<String>?> deleteAccount(
+    String provider, {
+    List<String> googleTokens = const [],
+  }) async {
     final vaultId = _requireVault();
     final token = await _freshToken(provider);
     if (token == null) return null;
@@ -892,6 +895,7 @@ class VaultAccount extends ChangeNotifier {
       vaultId,
       provider: token.provider,
       idToken: token.idToken,
+      googleTokens: googleTokens,
     );
     await signOut();
     return left;

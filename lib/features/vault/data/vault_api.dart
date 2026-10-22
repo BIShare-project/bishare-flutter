@@ -377,15 +377,22 @@ class VaultApi {
         : {'provider': provider, 'idToken': idToken},
   );
 
+  /// [googleTokens]: this Drive's Google Play purchase tokens, so the server
+  /// stops the plan from renewing (it keeps only their hashes).
   Future<void> deleteAccount(
     String vaultId, {
     required String provider,
     required String idToken,
+    List<String> googleTokens = const [],
   }) => _send(
     'DELETE',
     '/api/v1/vault/$vaultId',
     vaultId: vaultId,
-    json: {'provider': provider, 'idToken': idToken},
+    json: {
+      'provider': provider,
+      'idToken': idToken,
+      if (googleTokens.isNotEmpty) 'googleTokens': googleTokens,
+    },
   );
 
   // ---- pairing (key by QR code, task 3.8) --------------------------------------

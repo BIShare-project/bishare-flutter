@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/clipboard/clipboard_channel.dart';
 import '../../../core/clipboard/clipboard_secrets.dart';
@@ -21,6 +22,7 @@ import '../../settings/presentation/widgets/glyph.dart';
 import '../data/vault_account.dart';
 import '../data/vault_api.dart';
 import '../data/vault_key_copy.dart';
+import '../data/vault_purchases.dart';
 import '../data/vault_signin.dart';
 import 'vault_account_overview.dart';
 
@@ -752,7 +754,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
 
   Future<void> _delete() async {
     await _ensureInfo();
-    if (!mounted) return;
+    if (!mounted || !await _planWarningPassed() || !mounted) return;
     final providers = [
       for (final p in _account.linkedProviders)
         if (_canSignIn(p)) p,
@@ -785,7 +787,10 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     );
     if (provider == null) return;
     await _run(() async {
-      final left = await _account.deleteAccount(provider);
+      final left = await _account.deleteAccount(
+        provider,
+        googleTokens: await getIt<VaultPurchases>().googleTokens(),
+      );
       if (left == null) return;
       if (!mounted) return;
       if (left.contains('google')) {
@@ -804,6 +809,57 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
       }
       if (mounted) Navigator.of(context).maybePop();
     });
+  }
+
+  /// A plan that still renews keeps billing after the Drive is gone unless it
+  /// is cancelled in its store (Apple has no call for that; Google Play is
+  /// asked by the server, but the person should check). False when the person
+  /// went to the store instead, or closed the sheet.
+  Future<bool> _planWarningPassed() async {
+    final store = _account.planStore;
+    final paid =
+        (_account.plan ?? 'free') != 'free' &&
+        (_account.state == 'active' || _account.state == 'grace') &&
+        _account.planRenews != false &&
+        (store == 'apple' || store == 'google');
+    if (!paid) return true;
+    final here = store == VaultPurchases.storeHere && VaultPurchases.supported;
+    final pick = await showAppSheet<String>(
+      context,
+      icon: AppIcons.circleAlert,
+      iconColor: ShadTheme.of(context).colorScheme.destructive,
+      title: 'vault.delete_plan_title'.tr(),
+      subtitle: 'vault.delete_plan_body_$store'.tr(),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (here)
+            AppSheetAction(
+              icon: AppIcons.externalLink,
+              label: 'vault.plans_manage'.tr(),
+              onTap: () => Navigator.pop(ctx, 'manage'),
+            ),
+          AppSheetAction(
+            icon: AppIcons.trashDelete,
+            label: 'vault.delete_plan_continue'.tr(),
+            destructive: true,
+            onTap: () => Navigator.pop(ctx, 'delete'),
+          ),
+          AppSheetAction(
+            icon: AppIcons.close,
+            label: 'vault.cancel'.tr(),
+            onTap: () => Navigator.pop(ctx),
+          ),
+        ],
+      ),
+    );
+    if (pick == 'manage') {
+      await launchUrl(
+        VaultPurchases.manageUri(_account.plan),
+        mode: LaunchMode.externalApplication,
+      );
+    }
+    return pick == 'delete';
   }
 
   Future<void> _signOut() async {
