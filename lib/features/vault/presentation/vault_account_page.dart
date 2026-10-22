@@ -564,15 +564,10 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     );
   }
 
-  /// A phone (this one, when it is a phone), a computer, or a browser. An
-  /// approved device is a computer when its name says Windows or Linux (the
-  /// name it gave itself), else a browser.
+  /// A browser, a phone (this one, when it is a phone), or a computer (an
+  /// approved one says so: VaultDeviceView.computer).
   static String _deviceIcon(VaultDeviceView d) {
-    if (d.web &&
-        !RegExp('windows|linux', caseSensitive: false).hasMatch(d.name ?? '')) {
-      return AppIcons.globePublic;
-    }
-    if (d.web) return AppIcons.monitor;
+    if (d.web && !d.computer) return AppIcons.globePublic;
     final phoneHere =
         defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.android;

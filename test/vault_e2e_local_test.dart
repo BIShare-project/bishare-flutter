@@ -505,6 +505,7 @@ void main() {
     final desks = (await phone.account.devices()).where((d) => d.web);
     expect(desks.map((d) => d.name), ['Device pc']);
     expect(desks.single.approved, isTrue);
+    expect(desks.single.computer, isTrue);
 
     // The computer leaves by itself, no sign-in needed.
     await pc.account.disconnect();
