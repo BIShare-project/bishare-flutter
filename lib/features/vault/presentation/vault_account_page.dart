@@ -545,8 +545,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
             locale,
           ).format(DateTime.fromMillisecondsSinceEpoch(d.lastSeenAt!));
     final sub = [
-      if (d.web) 'vault.device_browser'.tr(),
-      if (d.desktop) 'vault.device_desktop'.tr(),
+      if (d.web) 'vault.device_approved'.tr(),
       if (d.thisDevice) 'vault.this_device'.tr(),
       if (d.pending) 'vault.device_pending'.tr(),
       if (!d.thisDevice && seen != null)
@@ -565,9 +564,15 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     );
   }
 
-  /// A browser, a phone (this one, when it is a phone), or a computer.
+  /// A phone (this one, when it is a phone), a computer, or a browser. An
+  /// approved device is a computer when its name says Windows or Linux (the
+  /// name it gave itself), else a browser.
   static String _deviceIcon(VaultDeviceView d) {
-    if (d.web) return AppIcons.globePublic;
+    if (d.web &&
+        !RegExp('windows|linux', caseSensitive: false).hasMatch(d.name ?? '')) {
+      return AppIcons.globePublic;
+    }
+    if (d.web) return AppIcons.monitor;
     final phoneHere =
         defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.android;

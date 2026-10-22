@@ -443,7 +443,6 @@ class VaultAccount extends ChangeNotifier {
           addedAt: (d['addedAt'] as num?)?.toInt() ?? 0,
           lastSeenAt: (d['lastSeenAt'] as num?)?.toInt(),
           web: d['kind'] == 'web',
-          desktop: d['kind'] == 'desktop',
         ),
       );
     }
@@ -1100,21 +1099,16 @@ class VaultDeviceView {
     required this.addedAt,
     required this.lastSeenAt,
     this.web = false,
-    this.desktop = false,
   });
 
   final String id;
 
-  /// A browser (drive.bishare.app), removed by itself when unused.
+  /// Approved by another device rather than signed in (a browser at
+  /// drive.bishare.app, or a Windows or Linux computer): removed by itself
+  /// when unused, and any device may remove it without signing in again.
   final bool web;
 
-  /// A Windows or Linux computer approved by another device, removed by
-  /// itself after 30 days unused.
-  final bool desktop;
-
-  /// Approved by another device rather than signed in: any device may remove
-  /// it without signing in again.
-  bool get approved => web || desktop;
+  bool get approved => web;
 
   /// Null until the device has been named (or when the name does not open).
   final String? name;

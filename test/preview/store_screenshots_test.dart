@@ -517,7 +517,7 @@ void _registerDrive(String self, {required bool phone}) {
         id: 'd1',
         name: self,
         thisDevice: true,
-        desktop: self == 'Windows PC',
+        web: self == 'Windows PC',
         pending: false,
         addedAt: now,
         lastSeenAt: now,

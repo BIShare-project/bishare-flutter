@@ -502,7 +502,7 @@ void main() {
 
     // Listed on the phone as an approved computer, named as it asked.
     await phone.account.refreshInfo();
-    final desks = (await phone.account.devices()).where((d) => d.desktop);
+    final desks = (await phone.account.devices()).where((d) => d.web);
     expect(desks.map((d) => d.name), ['Device pc']);
     expect(desks.single.approved, isTrue);
 
@@ -511,7 +511,7 @@ void main() {
     expect(pc.account.status, VaultStatus.signedOut);
     expect(await pc.keys.vaultKey(), isNull);
     await phone.account.refreshInfo();
-    expect((await phone.account.devices()).where((d) => d.desktop), isEmpty);
+    expect((await phone.account.devices()).where((d) => d.web), isEmpty);
 
     // Approved again with a new code, the phone removes it without a sign-in.
     final again = await pc.account.startDesktopPairing();
