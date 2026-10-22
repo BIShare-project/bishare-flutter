@@ -1,9 +1,42 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_picker_android/image_picker_android.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
+import '../storage/vault_tables.dart';
+
+/// Removes the photo copies that iOS builds up to 2.6.3 left behind.
+///
+/// file_picker 10 copied every photo picked on iOS into
+/// `Documents/picked_images` and never deleted it, so each send kept a full
+/// duplicate (also in the iCloud backup). Its successor copies into `tmp`,
+/// which iOS clears by itself. A copy that a queued Drive upload still reads
+/// is kept; names are compared, not paths, because the app's container path
+/// changes on every update.
+Future<void> sweepLegacyPickedImages(VaultDao dao) async {
+  if (!Platform.isIOS) return;
+  try {
+    final docs = await getApplicationDocumentsDirectory();
+    final dir = Directory(p.join(docs.path, 'picked_images'));
+    if (!await dir.exists()) return;
+    final keep = {
+      for (final t in await dao.pendingTransfers())
+        if (t.localPath.contains('/picked_images/')) p.basename(t.localPath),
+    };
+    await for (final e in dir.list()) {
+      if (e is File && !keep.contains(p.basename(e.path))) await e.delete();
+    }
+    if (keep.isEmpty) await dir.delete(recursive: true);
+  } on Object catch (e) {
+    debugPrint('[media] picked_images sweep failed: $e');
+  }
+}
 
 /// Pick photos and videos with the platform's gallery picker, not its file
 /// manager.
@@ -34,9 +67,28 @@ Future<List<String>> pickMediaPaths({bool allowMultiple = true}) async {
     final file = await picker.pickMedia();
     return file == null ? const [] : [file.path];
   }
-  final res = await FilePicker.platform.pickFiles(
-    allowMultiple: allowMultiple,
-    type: FileType.media,
+  // iOS: `current` hands over the original (HEIC/HEVC, EXIF intact) instead
+  // of letting the system transcode, and unordered selection keeps
+  // swipe-to-select in the grid, which picking hundreds of photos needs.
+  const darwin = DarwinOptions(
+    assetRepresentationMode: DarwinAssetRepresentationMode.current,
+    orderedSelection: false,
   );
-  return res?.paths.whereType<String>().toList() ?? const [];
+  try {
+    final files = allowMultiple
+        ? await FilePicker.pickFiles(type: FileType.media, darwinOptions: darwin)
+        : [
+            ?await FilePicker.pickFile(
+              type: FileType.media,
+              darwinOptions: darwin,
+            ),
+          ];
+    return [for (final f in files) ?f.path];
+  } on PlatformException catch (e) {
+    // `load_failed` (photos only in iCloud while offline) and
+    // `multiple_request` (a pick still open) — file_picker 10 answered both
+    // with an empty list, so keep that: nothing was picked.
+    debugPrint('[media] pick failed: ${e.code} ${e.message}');
+    return const [];
+  }
 }

@@ -129,11 +129,14 @@ parts:
       - liblzma-dev
       # Verified on a clean Ubuntu 22.04 build (Azure): these desktop plugins
       # fail `cmake` configure without their dev headers —
-      # flutter_secure_storage_linux needs libsecret + jsoncpp, tray_manager
-      # needs ayatana-appindicator.
+      # flutter_secure_storage_linux needs libsecret + jsoncpp. tray_manager
+      # 0.7+ (nativeapi) needs X11 + Xi headers; it no longer links
+      # ayatana-appindicator, kept only for older checkouts.
       - libsecret-1-dev
       - libjsoncpp-dev
       - libayatana-appindicator3-dev
+      - libx11-dev
+      - libxi-dev
     override-pull: |
       craftctl default
       # Derive the snap version from pubspec.yaml (e.g. "2.4.5+245" -> "2.4.5").
@@ -160,7 +163,7 @@ parts:
       git config --global --add safe.directory "$CRAFT_PART_BUILD/flutter-codegen"
       flutter --version
       flutter pub get
-      cargo install flutter_rust_bridge_codegen --version 2.12.0 --locked
+      cargo install flutter_rust_bridge_codegen --version 2.13.0 --locked
       flutter_rust_bridge_codegen generate
       dart run build_runner build --delete-conflicting-outputs
       craftctl default

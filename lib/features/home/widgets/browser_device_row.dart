@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -29,8 +28,7 @@ class BrowserDeviceRow extends StatelessWidget {
     if (tray.isNotEmpty) {
       files = [for (final f in tray) File(f.path)];
     } else {
-      final res = await FilePicker.platform.pickFiles(allowMultiple: true);
-      final paths = await pickedPaths(res);
+      final paths = await pickFilePaths();
       if (paths.isEmpty) return;
       files = [for (final p in paths) File(p)];
     }

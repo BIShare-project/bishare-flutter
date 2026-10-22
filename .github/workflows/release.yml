@@ -11,7 +11,7 @@ name: release
 # names artifacts after the short SHA instead).
 #
 # Shared gotchas (mirrors ci.yml / windows.yml — keep in sync):
-#  - frb_generated.* are gitignored → regenerate with the pinned codegen 2.12.0
+#  - frb_generated.* are gitignored → regenerate with the pinned codegen 2.13.0
 #  - protocol crate is vendored (rust/bishare-protocol) — single checkout
 #  - windows-2022 pin: windows-latest's preview MSVC hard-errors gal /
 #    permission_handler_windows (/await + <experimental/coroutine>)
@@ -58,7 +58,7 @@ permissions:
   contents: write
 
 env:
-  FRB_VERSION: "2.12.0"
+  FRB_VERSION: "2.13.0"
   VERSION_INPUT: ${{ inputs.version }}
   PLAY_TRACK: ${{ inputs.play_track }}
   BUILD_NUMBER: ${{ inputs.build_number }}
@@ -613,7 +613,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang cmake ninja-build pkg-config \
             libgtk-3-dev liblzma-dev libayatana-appindicator3-dev \
-            libkeybinder-3.0-dev
+            libkeybinder-3.0-dev libx11-dev libxi-dev
       # flutter_zxing compiles zxing-cpp, which uses C++20 ranges that 22.04's
       # clang 14 cannot build against libstdc++ 12 ("no matching function for
       # call to 'construct_at'" in LocalGrid.cpp). Clang 18 from apt.llvm.org

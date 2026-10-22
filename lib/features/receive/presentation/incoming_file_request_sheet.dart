@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uuid/uuid.dart';
@@ -52,8 +51,7 @@ class _RequestContentState extends State<_RequestContent> {
     if (photosOnly) {
       paths = await pickMediaPaths();
     } else {
-      final res = await FilePicker.platform.pickFiles(allowMultiple: true);
-      paths = await pickedPaths(res);
+      paths = await pickFilePaths();
     }
     final files = [
       for (final p in paths) SendableFile.fromPath(p, id: _uuid.v4()),

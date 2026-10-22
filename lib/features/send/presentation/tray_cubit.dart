@@ -52,14 +52,14 @@ class TrayCubit extends Cubit<List<SendableFile>> {
 
   /// Pick any files.
   Future<void> pickFiles() async {
-    final res = await FilePicker.platform.pickFiles(allowMultiple: true);
-    if (res == null) return;
-    _addPaths(await pickedPaths(res));
+    final paths = await pickFilePaths();
+    if (paths.isEmpty) return;
+    _addPaths(paths);
   }
 
   /// Pick a folder → zip it into a single sendable archive.
   Future<void> pickFolder() async {
-    final dir = await FilePicker.platform.getDirectoryPath();
+    final dir = await FilePicker.getDirectoryPath();
     if (dir == null) return;
     _addPaths([await MediaSources.zipDirectory(dir)]);
   }

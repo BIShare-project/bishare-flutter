@@ -17,10 +17,25 @@ import '../domain/discovered_device.dart';
 /// self-reported TXT `ip` over the transport-resolved host — this is the fix that
 /// makes Apple↔Apple discovery reliable (avoids unreachable AWDL IPv6 link-local).
 class DiscoveryService {
-  DiscoveryService(this._identity, {bool advertise = true})
-    : _advertise = advertise;
+  DiscoveryService(
+    this._identity, {
+    bool advertise = true,
+    Future<List<String>> Function()? knownHosts,
+  }) : _advertise = advertise,
+       _knownHosts = knownHosts;
 
   final DeviceIdentity _identity;
+
+  /// Last addresses of peers this device has seen before (the roster), so a
+  /// cold start can greet them; see [_greetKnown].
+  final Future<List<String>> Function()? _knownHosts;
+
+  /// Addresses of the peers on screen when discovery last stopped (app sent
+  /// to the background, rename, network change), greeted on the next start.
+  final Set<String> _lastHosts = {};
+
+  /// When each address last greeted us, so a burst of hellos costs one probe.
+  final Map<String, DateTime> _greetedAt = {};
 
   BonsoirBroadcast? _broadcast;
   BonsoirDiscovery? _discovery;
@@ -127,6 +142,7 @@ class DiscoveryService {
       _sub = sub;
 
       _armTimers();
+      unawaited(_greetKnown());
 
       // mDNS can be blocked (multicast entitlement, VPN, some Wi-Fi APs). If nothing
       // shows up shortly, fall back to a subnet /24 unicast probe.
@@ -150,9 +166,72 @@ class DiscoveryService {
     _retryTimer?.cancel();
     _retryTimer = null;
     await _teardownBonsoir();
+    _lastHosts
+      ..clear()
+      ..addAll(_devices.values.map((d) => d.host));
     _devices.clear();
     _misses.clear();
     _emit();
+  }
+
+  /// Greets the peers this device saw last: `GET /api/v1/info` with
+  /// [BIShareApi.helloHeader], so each one probes us straight back while we
+  /// add it from its answer. Without this a device that left (its `goodbye`
+  /// already removed it from its peers) only reappears on an mDNS re-announce,
+  /// and a browser that missed the matching "lost" — common on iOS — reports
+  /// no "found" for a same-name service, so it could stay hidden for minutes.
+  /// A hidden device still refreshes its own view but asks for no probe back.
+  Future<void> _greetKnown() async {
+    final hosts = <String>{..._lastHosts};
+    try {
+      hosts.addAll(await _knownHosts?.call() ?? const []);
+    } on Object catch (e) {
+      debugPrint('[Discovery] roster read failed: $e');
+    }
+    hosts.removeWhere((h) => !_isUsableIPv4(h) || h == _advertisedIp);
+    if (hosts.isEmpty) return;
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(milliseconds: 1500),
+        receiveTimeout: const Duration(milliseconds: 1500),
+        responseType: ResponseType.json,
+        validateStatus: (_) => true,
+        headers: {
+          if (_advertise) BIShareApi.helloHeader: _identity.fingerprint,
+        },
+      ),
+    );
+    try {
+      await Future.wait(hosts.map((h) => _probeHost(dio, h)));
+    } finally {
+      dio.close(force: true);
+    }
+  }
+
+  /// A peer at [ip] greeted us ([BIShareApi.helloHeader]): probe it back now
+  /// rather than wait for its mDNS announce. The probe itself carries no
+  /// hello, so two devices never greet each other in a loop.
+  Future<void> greetedBy(String ip) async {
+    if (_discovery == null || !_isUsableIPv4(ip)) return;
+    final now = DateTime.now();
+    final last = _greetedAt[ip];
+    if (last != null && now.difference(last) < const Duration(seconds: 3)) {
+      return;
+    }
+    _greetedAt[ip] = now;
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(milliseconds: 1500),
+        receiveTimeout: const Duration(milliseconds: 1500),
+        responseType: ResponseType.json,
+        validateStatus: (_) => true,
+      ),
+    );
+    try {
+      await _probeHost(dio, ip);
+    } finally {
+      dio.close(force: true);
+    }
   }
 
   /// Cancels timers and tears down the bonsoir broadcast/discovery. Nulls fields

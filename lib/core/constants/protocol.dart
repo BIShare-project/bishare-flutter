@@ -71,6 +71,12 @@ class BIShareApi {
   static const String verifyPin = '/api/v1/verify-pin';
   static const String goodbye = '/api/v1/goodbye';
 
+  /// Header on `GET /api/v1/info` from a device that just started or came
+  /// back to the foreground; the value is its fingerprint. A receiver that
+  /// knows it probes the sender right back, so the returning device reappears
+  /// at once — the counterpart of [goodbye]. Older peers ignore it.
+  static const String helloHeader = 'X-BIShare-Hello';
+
   /// Binary-clipboard pull (v2.4, mirrors Rust `ApiPath::CLIPBOARD`) — a
   /// receiver GETs the announced image with `?token=` (one-shot, 60s TTL).
   static const String clipboard = '/api/v1/clipboard';

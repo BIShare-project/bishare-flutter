@@ -240,6 +240,12 @@ class WebrtcRoomService {
         await dc.send(RTCDataChannelMessage.fromBinary(Uint8List.fromList(bytes)));
         offset += bytes.length;
       }
+    } on Object catch (e) {
+      // flutter_webrtc 1.6.2+ throws on a send after close (a teardown that
+      // lands during the read above); before, it reached the platform.
+      debugPrint('[wrtc-room] $sid send stopped: $e');
+      _teardown(sid);
+      return;
     } finally {
       await raf.close();
     }

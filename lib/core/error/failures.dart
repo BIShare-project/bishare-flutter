@@ -6,8 +6,10 @@ sealed class Failure extends Equatable {
   const Failure(this.message);
   final String message;
 
+  // equatable 3 no longer compares runtimeType: without it a NetworkFailure
+  // and a ServerFailure with the same message would be equal.
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [runtimeType, message];
 }
 
 /// The peer could not be reached (connection refused / timeout / offline).

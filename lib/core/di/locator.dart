@@ -13,6 +13,7 @@ import '../review/review_prompter.dart';
 import '../telemetry/telemetry_service.dart';
 
 import '../config/feature_flags.dart';
+import '../io/media_picker.dart';
 import '../l10n/app_locales.dart';
 import '../storage/save_folder_channel.dart';
 import '../storage/android_downloads_channel.dart';
@@ -89,6 +90,7 @@ Future<void> setupLocator() async {
   // Devices list can't grow unbounded. Fire-and-forget: startup never waits on
   // it, and a failure is harmless — the next launch retries.
   unawaited(db.purgeOlderThan(90));
+  unawaited(sweepLegacyPickedImages(db.vaultDao));
   final history = HistoryRepository(db)..attach(server);
   final favorites = FavoritesRepository(db);
   final pinnedKeys = PinnedKeysStore(prefs);
@@ -135,6 +137,7 @@ Future<void> setupLocator() async {
   final discovery = DiscoveryService(
     identity,
     advertise: prefs.getString('visibility') != 'hidden',
+    knownHosts: db.recentKnownIps,
   );
 
   // Universal-clipboard sync (opt-in via Settings). Announced image bytes are

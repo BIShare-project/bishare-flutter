@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:mime/mime.dart';
@@ -12,6 +11,7 @@ import '../../../core/crypto/bse2.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/identity/device_identity.dart';
 import '../../../core/io/media_picker.dart';
+import '../../../core/io/picked_mtime.dart';
 import '../../../core/ui/app_ui.dart';
 import '../data/cloud_config_service.dart';
 import '../data/cloud_transfer_service.dart';
@@ -69,8 +69,7 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
     if (mediaOnly) {
       path = (await pickMediaPaths(allowMultiple: false)).firstOrNull;
     } else {
-      final res = await FilePicker.platform.pickFiles();
-      path = res?.files.single.path;
+      path = (await pickFilePaths(multiple: false)).firstOrNull;
     }
     if (path == null) return;
     _send(File(path));

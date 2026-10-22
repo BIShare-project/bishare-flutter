@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:mime/mime.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -47,8 +46,7 @@ class _WebAccessCloudTabState extends State<WebAccessCloudTab> {
   }
 
   Future<void> _pickAndUpload() async {
-    final res = await FilePicker.platform.pickFiles();
-    final path = (await pickedPaths(res)).firstOrNull;
+    final path = (await pickFilePaths(multiple: false)).firstOrNull;
     if (path == null || !mounted) return;
     final file = File(path);
     final name = file.uri.pathSegments.last;

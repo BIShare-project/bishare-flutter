@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -16,8 +15,7 @@ class AddFilesBar extends StatelessWidget {
     if (mediaOnly) {
       paths = await pickMediaPaths();
     } else {
-      final res = await FilePicker.platform.pickFiles(allowMultiple: true);
-      paths = await pickedPaths(res);
+      paths = await pickFilePaths();
     }
     if (paths.isNotEmpty) onPicked(paths);
   }

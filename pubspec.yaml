@@ -37,11 +37,11 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^2.0.0
   flutter_bloc: ^9.1.1
   bloc_concurrency: ^0.3.0
   freezed_annotation: ^3.1.0
-  equatable: ^2.1.0
+  equatable: ^3.0.0
   get_it: ^9.2.1
   injectable: ^3.0.0
   dio: ^5.10.0
@@ -57,42 +57,48 @@ dependencies:
   drift_flutter: ^0.3.0
   sqlite3_flutter_libs: ^0.6.0+eol
   shared_preferences: ^2.5.5
-  # 2.5.0 (2026-10-17) moved to Pigeon JNI and crashes at start in release
-  # builds after R8 ("no non-static method SharedPreferencesApiRegistrar
-  # .getAll"): stuck on the splash. pubspec.lock is not committed, so CI
-  # would pick it too. Lift once a release build is checked on a phone.
-  shared_preferences_android: ">=2.4.28 <2.5.0"
-  flutter_secure_storage: ^10.3.1
-  file_picker: ^10.0.0
+  # 2.5.0–2.5.1 (Pigeon JNI) crash at start in release builds after R8 ("no
+  # non-static method SharedPreferencesApiRegistrar.getAll"): stuck on the
+  # splash. 2.5.2 ships the consumer R8 keep rules that fix it — never go
+  # below it.
+  shared_preferences_android: ^2.5.2
+  flutter_secure_storage: ^11.2.0
+  file_picker: ^13.1.0
+  # Direct only for FilePickerAndroidOptions / AndroidPlatformFile: the
+  # original content URI (for "Date modified") comes back only through them.
+  android_file_picker: ^2.1.1
   # Folder-sync change detection (FSEvents/inotify/RDCW + polling fallback).
   watcher: ^1.1.4
-  cross_file: ^0.3.5+4
+  cross_file: ^0.3.5+5
   mime: ^2.0.0
   path: ^1.9.1
   path_provider: ^2.1.6
-  permission_handler: ^12.0.3
-  go_router: ^17.3.0
+  permission_handler: ^13.0.2
+  go_router: ^18.1.1
   app_links: ^7.0.0
   uuid: ^4.5.3
   logger: ^2.7.0
   rxdart: ^0.28.0
   collection: ^1.19.1
-  flutter_rust_bridge: 2.12.0
+  flutter_rust_bridge: 2.13.0
   bishare_ffi:
     path: rust_builder
-  shadcn_ui: ^0.55.0
+  shadcn_ui: ^0.57.3
   archive: ^4.0.9
   image: ^4.8.0
-  desktop_drop: ^0.7.1
+  desktop_drop: ^0.8.4
   # Desktop polish (macOS/Windows/Linux): native window, menu-bar/tray, autostart.
-  window_manager: ^0.4.3
-  tray_manager: ^0.3.2
-  launch_at_startup: ^0.5.1
-  package_info_plus: ^8.1.1
-  device_info_plus: ^12.4.0
+  window_manager: ^0.5.2
+  tray_manager: ^0.8.0
+  # Autostart lives in lib/core/desktop/autostart.dart: launch_at_startup's
+  # last release pins win32_registry 2 → win32 5, which blocks every
+  # win32-6 plugin (file_picker 12+, share_plus 13, *_info_plus, …).
+  win32_registry: ^3.0.3
+  package_info_plus: ^10.2.2
+  device_info_plus: ^13.3.0
   record: ^7.1.1
   flutter_contacts: ^2.2.2
-  share_plus: ^12.0.2
+  share_plus: ^13.3.1
   photo_view: ^0.15.0
   # Pinned to 2.3.0 (last version WITHOUT an SPM manifest): 2.3.1+ ships a
   # Package.swift declaring macOS 11.0, which exceeds Flutter's SPM umbrella
@@ -115,7 +121,7 @@ dependencies:
   camera: ^0.12.1
   url_launcher: ^6.3.2
   web_socket_channel: ^3.0.3
-  flutter_webrtc: ^0.14.1
+  flutter_webrtc: ^1.6.2+hotfix.4
   flutter_image_compress: ^2.4.0
   flutter_svg: ^2.3.0
   showcaseview: ^5.1.0
@@ -124,7 +130,7 @@ dependencies:
   image_picker_platform_interface: ^2.11.1
   universal_file_viewer: ^0.1.7
   video_player: ^2.14.0
-  open_file: ^3.5.10
+  open_file: ^3.5.11
   in_app_review: ^2.0.12
   google_sign_in: ^7.2.0
   google_sign_in_platform_interface: ^3.1.0
@@ -136,9 +142,9 @@ dependencies:
   connectivity_plus: ^7.3.1
   workmanager: ^0.10.10
   in_app_purchase: 3.3.1
-  in_app_purchase_storekit: 0.4.13
-  in_app_purchase_android: 0.5.3
-  timezone: 0.11.1
+  in_app_purchase_storekit: ^0.4.15
+  in_app_purchase_android: ^0.5.5
+  timezone: ^0.11.2
 
 dev_dependencies:
   path_provider_platform_interface: ^2.1.3
@@ -154,10 +160,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  build_runner: ^2.15.0
+  build_runner: ^2.16.1
   injectable_generator: ^3.0.2
   retrofit_generator: ^10.2.7
-  freezed: ^3.2.5
+  freezed: ^4.0.1
   json_serializable: ^6.14.0
   drift_dev: ^2.34.0
   bloc_test: ^10.0.0

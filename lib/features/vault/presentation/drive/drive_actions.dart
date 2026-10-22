@@ -14,6 +14,7 @@ import '../../../../core/config/feature_flags.dart';
 import '../../../../core/di/locator.dart';
 import '../../../../core/identity/device_identity.dart';
 import '../../../../core/io/media_picker.dart';
+import '../../../../core/io/picked_mtime.dart';
 import '../../../../core/server/transfer_server.dart';
 import '../../../../core/storage/app_database.dart';
 import '../../../../core/storage/vault_tables.dart';
@@ -83,16 +84,14 @@ class DriveActions {
   // ---- adding ------------------------------------------------------------------------
 
   Future<void> addFiles() async {
-    final res = await FilePicker.platform.pickFiles(allowMultiple: true);
-    final paths = res?.paths.whereType<String>().toList() ?? const [];
-    await _enqueue(paths);
+    await _enqueue(await pickFilePaths());
   }
 
   Future<void> addMedia() async => _enqueue(await pickMediaPaths());
 
   /// Desktop: a whole folder, with its folders.
   Future<void> addFolder() async {
-    final path = await FilePicker.platform.getDirectoryPath();
+    final path = await FilePicker.getDirectoryPath();
     if (path == null) return;
     await _guard(() async {
       final n = await _uploader.enqueueFolder(
@@ -382,7 +381,7 @@ class DriveActions {
   Future<void> download(List<VaultObject> items, {bool choose = false}) async {
     Directory dir = getIt<TransferServer>().saveDirectory;
     if (choose) {
-      final picked = await FilePicker.platform.getDirectoryPath();
+      final picked = await FilePicker.getDirectoryPath();
       if (picked == null) return;
       dir = Directory(picked);
     }

@@ -205,6 +205,24 @@ class AppDatabase extends _$AppDatabase {
     knownDevices,
   )..where((t) => t.fingerprint.equals(fingerprint))).go();
 
+  /// Last addresses of roster peers seen within [within], newest first: who
+  /// discovery greets when it starts (DiscoveryService.knownHosts).
+  Future<List<String>> recentKnownIps({
+    Duration within = const Duration(days: 7),
+    int limit = 16,
+  }) async {
+    final since = DateTime.now().subtract(within);
+    final rows =
+        await (select(knownDevices)
+              ..where(
+                (t) => t.lastSeen.isBiggerOrEqualValue(since) & t.lastIp.isNotNull(),
+              )
+              ..orderBy([(t) => OrderingTerm.desc(t.lastSeen)])
+              ..limit(limit))
+            .get();
+    return [for (final r in rows) ?r.lastIp];
+  }
+
   /// Drops roster entries not seen for [days] days — keeps the Devices list
   /// from accumulating peers that are long gone. Starred (favorite) devices are
   /// never purged: a trusted peer stays on the roster through any absence.

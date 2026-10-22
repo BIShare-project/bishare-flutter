@@ -230,7 +230,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         ),
       );
     try {
-      final path = await FilePicker.platform.saveFile(
+      final path = await FilePicker.saveFile(
         dialogTitle: 'vault.phrase_save'.tr(),
         fileName: 'BIShare Drive recovery phrase.txt',
         bytes: Uint8List.fromList(utf8.encode(sheet.toString())),

@@ -47,7 +47,7 @@ jobs:
       - name: flutter_rust_bridge codegen
         working-directory: bishare-flutter
         run: |
-          cargo install flutter_rust_bridge_codegen --version 2.12.0
+          cargo install flutter_rust_bridge_codegen --version 2.13.0
           flutter_rust_bridge_codegen generate
 
       - name: Codegen (freezed / injectable / drift)

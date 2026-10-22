@@ -7,7 +7,7 @@ import '../../../core/devices/device_registry.dart';
 import '../../../core/ui/app_ui.dart';
 import 'devices_cubit.dart';
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
+import '../../../core/io/picked_mtime.dart';
 import '../../web_nearby/data/web_nearby_service.dart';
 import '../../web_nearby/presentation/web_nearby_cubit.dart';
 import 'widgets/device_sort_bar.dart';
@@ -111,9 +111,7 @@ class _BrowsersNearbySection extends StatelessWidget {
 
   Future<void> _send(BuildContext context, String peerId) async {
     final cubit = context.read<WebNearbyCubit>();
-    final res = await FilePicker.platform.pickFiles(allowMultiple: true);
-    final paths =
-        res?.files.map((f) => f.path).whereType<String>().toList() ?? const [];
+    final paths = await pickFilePaths();
     if (paths.isEmpty) return;
     await cubit.sendFiles(peerId, [for (final p in paths) File(p)]);
   }

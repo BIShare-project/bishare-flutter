@@ -241,6 +241,7 @@ class TransferServer {
   final _progress = StreamController<ReceiveProgress>.broadcast();
   final _received = StreamController<ReceivedFile>.broadcast();
   final _goodbyes = StreamController<String>.broadcast();
+  final _hellos = StreamController<String>.broadcast();
 
   /// Incoming transfers awaiting an accept/reject decision.
   Stream<PendingTransfer> get incoming => _incoming.stream;
@@ -256,6 +257,10 @@ class TransferServer {
 
   /// Fingerprints of peers that announced they are going offline.
   Stream<String> get goodbyes => _goodbyes.stream;
+
+  /// IPv4 addresses of peers that announced they are back: an `/api/v1/info`
+  /// request carrying [BIShareApi.helloHeader].
+  Stream<String> get hellos => _hellos.stream;
 
   bool get isRunning => _server != null;
 
@@ -688,6 +693,10 @@ class TransferServer {
   // GET /api/v1/info
   Future<Response> _handleInfo(Request request) async {
     if (hidden) return _error('Device is hidden', BIShareStatus.forbidden);
+    if (request.headers[BIShareApi.helloHeader] != null) {
+      final ip = _remoteIPv4(request);
+      if (ip != null) _hellos.add(ip);
+    }
     final info = await _identity.makeDeviceInfo();
     return _json(info.toJson());
   }
@@ -1641,6 +1650,20 @@ class TransferServer {
   Response _error(String message, int status) =>
       _json({'message': message}, status: status);
 
+  /// The caller's IPv4 address. The socket is dual-stack, so an IPv4 peer
+  /// arrives as `::ffff:a.b.c.d`; a real IPv6 caller gives null.
+  static String? _remoteIPv4(Request request) {
+    final info = request.context['shelf.io.connection_info'];
+    if (info is! HttpConnectionInfo) return null;
+    final address = info.remoteAddress;
+    if (address.type == InternetAddressType.IPv4) return address.address;
+    const mapped = '::ffff:';
+    final raw = address.address.toLowerCase();
+    return raw.startsWith(mapped) && raw.contains('.')
+        ? raw.substring(mapped.length)
+        : null;
+  }
+
   Middleware _logRequests() =>
       (inner) =>
           (request) async => inner(request);
@@ -1652,6 +1675,7 @@ class TransferServer {
     await _progress.close();
     await _received.close();
     await _goodbyes.close();
+    await _hellos.close();
   }
 }
 

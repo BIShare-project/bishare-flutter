@@ -37,6 +37,8 @@ Future<void> bootstrap() async {
   getIt<TransferServer>().goodbyes.listen(
     getIt<DiscoveryService>().removeByFingerprint,
   );
+  // Inbound hello (a peer that just came back) → probe it back right away.
+  getIt<TransferServer>().hellos.listen(getIt<DiscoveryService>().greetedBy);
 
   // Desktop-only: menu-bar/tray + hide-to-tray + autostart (no-op elsewhere).
   try {

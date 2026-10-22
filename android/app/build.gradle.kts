@@ -18,7 +18,9 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.bishare.app"
-    compileSdk = flutter.compileSdkVersion
+    // 37, above Flutter's default 36: permission_handler_android 14 compiles
+    // against it. targetSdk stays Flutter's.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

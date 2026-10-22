@@ -66,7 +66,7 @@ class SaveFolderChannel {
       }
     }
     if (Platform.isWindows || Platform.isLinux) {
-      return FilePicker.platform.getDirectoryPath(
+      return FilePicker.getDirectoryPath(
         dialogTitle: 'Choose where BIShare saves received files',
       );
     }

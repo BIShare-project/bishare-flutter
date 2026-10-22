@@ -9,7 +9,7 @@ description = "flutter_rust_bridge entrypoint that re-uses the bishare-protocol 
 crate-type = ["cdylib", "staticlib", "lib"]
 
 [dependencies]
-flutter_rust_bridge = "=2.12.0"
+flutter_rust_bridge = "=2.13.0"
 # Re-use the existing, test-vector-covered protocol crate (crypto/binary/utils).
 bishare-protocol = { path = "bishare-protocol" }
 # v2.4 frame payloads cross the FFI as JSON strings (cheap; avoids mirroring the

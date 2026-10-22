@@ -43,11 +43,20 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
       _error = null;
     });
     try {
-      final res = await FilePicker.platform.pickFiles(withData: true);
-      if (res == null || res.files.isEmpty) return;
-      final f = res.files.single;
-      final bytes = f.bytes;
-      if (bytes == null) {
+      final f = await FilePicker.pickFile();
+      if (f == null) return;
+      // Size first: a beam carries a few KB, so never load a big pick whole.
+      final size = f.lengthSync() ?? await f.length();
+      if (size != null && size > _maxBeamBytes) {
+        setState(() => _error = 'qr_beam.err_too_large'.tr(
+              namedArgs: {'max': formatBytes(_maxBeamBytes)},
+            ));
+        return;
+      }
+      final Uint8List bytes;
+      try {
+        bytes = await f.readAsBytes();
+      } on Object {
         setState(() => _error = 'qr_beam.err_read'.tr());
         return;
       }
