@@ -6,7 +6,10 @@
 //   BISHARE_SHOTS_DIR=/tmp/raw BISHARE_SHOTS_LOCALES=ja \
 //     flutter test test/preview/store_screenshots_test.dart
 //
-// Optional: BISHARE_SHOTS_PRESETS=ios_phone,mac. Output:
+// Optional: BISHARE_SHOTS_PRESETS=ios_phone,mac, BISHARE_SHOTS_ONLY=plans
+// (screens whose file name contains one of the words), BISHARE_SHOTS_THEME=light
+// (the stores get dark), and BISHARE_SHOTS_PLAN=drive_250gb_yearly (the plans
+// page as a subscriber sees it; the stores get the free Drive). Output:
 // `<dir>/<preset>/<lang>/<n>_<screen>.png`. The UI is the app's own widgets
 // with fixed state (a cast of peers, a room, default settings), drawn the way
 // the target platform draws it (debugDefaultTargetPlatformOverride). The
@@ -153,6 +156,9 @@ const Map<String, String> _scriptFont = {
 };
 
 final String? _dir = Platform.environment['BISHARE_SHOTS_DIR'];
+final ThemeMode _theme = Platform.environment['BISHARE_SHOTS_THEME'] == 'light'
+    ? ThemeMode.light
+    : ThemeMode.dark;
 List<String> _list(String key) => (Platform.environment[key] ?? '')
     .split(',')
     .where((s) => s.isNotEmpty)
@@ -422,18 +428,25 @@ void _registerDrive(String self, {required bool phone}) {
   when(() => account.load()).thenAnswer((_) async {});
   when(() => account.refreshInfo()).thenAnswer((_) async {});
   when(() => account.usedBytes).thenReturn(1843200000);
-  when(() => account.quotaBytes).thenReturn(5000000000);
+  final plan = Platform.environment['BISHARE_SHOTS_PLAN'];
+  when(
+    () => account.quotaBytes,
+  ).thenReturn(plan == null ? 5000000000 : VaultPurchases.sizeOf(plan));
   when(() => account.keyCopy).thenReturn(copy);
   when(() => account.linkedProviders).thenReturn(['google']);
   when(() => account.infoLoaded).thenReturn(true);
-  when(() => account.plan).thenReturn('free');
+  when(() => account.plan).thenReturn(plan ?? 'free');
   when(() => account.region).thenReturn('weur');
   when(() => account.reservedBytes).thenReturn(0);
-  when(() => account.state).thenReturn('free');
-  when(() => account.planEnds).thenReturn(null);
+  when(() => account.state).thenReturn(plan == null ? 'free' : 'active');
+  when(
+    () => account.planEnds,
+  ).thenReturn(plan == null ? null : DateTime(2026, 11, 22));
   when(() => account.lapseEnds).thenReturn(null);
-  when(() => account.planStore).thenReturn(null);
-  when(() => account.planRenews).thenReturn(null);
+  when(
+    () => account.planStore,
+  ).thenReturn(plan == null ? null : VaultPurchases.storeHere);
+  when(() => account.planRenews).thenReturn(plan == null ? null : true);
   when(() => account.vaultId).thenReturn('gtghb5lzztcv2lnacs3ldy7eni');
   // The plans at US prices, as the store would list them (task 7.1).
   final purchases = _Purchases();
@@ -732,14 +745,20 @@ void main() {
   // draws nothing but black (easy_localization never finishes loading there).
   testWidgets('store screenshots', (tester) async {
     addTearDown(tester.view.reset);
-    for (final MapEntry(key: name, value: preset) in _presets.entries) {
-      if (onlyPresets.isNotEmpty && !onlyPresets.contains(name)) continue;
-      debugDefaultTargetPlatformOverride = preset.platform;
-      try {
-        await _run(tester, dir, name, preset, onlyLocales);
-      } finally {
-        debugDefaultTargetPlatformOverride = null;
+    // Soft shadows as on a device; the test binding draws them solid.
+    debugDisableShadows = false;
+    try {
+      for (final MapEntry(key: name, value: preset) in _presets.entries) {
+        if (onlyPresets.isNotEmpty && !onlyPresets.contains(name)) continue;
+        debugDefaultTargetPlatformOverride = preset.platform;
+        try {
+          await _run(tester, dir, name, preset, onlyLocales);
+        } finally {
+          debugDefaultTargetPlatformOverride = null;
+        }
       }
+    } finally {
+      debugDisableShadows = true;
     }
   });
 }
@@ -793,7 +812,7 @@ Future<void> _run(
   whenListen(
     settings,
     const Stream<Settings>.empty(),
-    initialState: Settings(alias: preset.self, themeMode: ThemeMode.dark),
+    initialState: Settings(alias: preset.self, themeMode: _theme),
   );
   when(() => settings.canPickSaveFolder).thenReturn(preset.type == 'desktop');
   when(() => settings.clipboardImagesSupported).thenReturn(true);
@@ -852,6 +871,8 @@ Future<void> _run(
       for (final (file, tab, page) in _screens) (file, tab, page, null),
       ..._driveScreens,
     ]) {
+      final only = _list('BISHARE_SHOTS_ONLY');
+      if (only.isNotEmpty && !only.any(file.contains)) continue;
       // Drive keeps list or grid in the preferences: the views get the grid
       await tester.runAsync(
         () => getIt<SharedPreferences>().setBool('vault.grid', view != null),
@@ -901,7 +922,7 @@ Future<void> _run(
                   locale: context.locale,
                   theme: AppTheme.light('blue'),
                   darkTheme: AppTheme.dark('blue'),
-                  themeMode: ThemeMode.dark,
+                  themeMode: _theme,
                   materialThemeBuilder: (context, theme) => theme.copyWith(
                     textTheme: theme.textTheme.apply(
                       fontFamily: AppTheme.fontFamily,

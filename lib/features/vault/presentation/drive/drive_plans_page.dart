@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -15,8 +16,9 @@ import '../../data/vault_purchases.dart';
 import 'drive_format.dart';
 
 /// Drive plans (drive-plan.md task 7.1): what the Drive has now, the four
-/// sizes at this country's store prices, monthly or yearly, and what the
-/// stores require next to a subscription: the renewal terms, Terms and
+/// sizes at this country's store prices, monthly or yearly, and one button
+/// for the size picked, with what the stores require next to a subscription:
+/// the price and the renewal by the button, the renewal terms, Terms and
 /// Privacy, and Restore. Windows and Linux only say where a plan is bought.
 class DrivePlansPage extends StatefulWidget {
   const DrivePlansPage({super.key});
@@ -29,8 +31,14 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
   final VaultAccount _account = getIt<VaultAccount>();
   final VaultPurchases _purchases = getIt<VaultPurchases>();
   late bool _yearly = VaultPurchases.isYearly(_account.plan ?? '');
+
+  /// The size picked: the plan in force, else [_recommended].
+  late int _size = _paidSize ?? _recommended;
   String? _plan;
   String? _error;
+
+  /// The size the page suggests, and picks first.
+  static const _recommended = 250 * 1000000000;
 
   @override
   void initState() {
@@ -87,48 +95,313 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
   String _date(DateTime d) =>
       DateFormat.yMMMd(context.locale.toLanguageTag()).format(d);
 
+  Future<void> _restore() async {
+    await _purchases.restore();
+    if (mounted && _purchases.lastError == null) {
+      toast(context, 'vault.plans_restored'.tr());
+    }
+  }
+
+  /// The size of the paid plan in force, when it is one on sale.
+  int? get _paidSize {
+    final plan = _account.plan ?? 'free';
+    if (plan == 'free') return null;
+    final size = VaultPurchases.sizeOf(plan);
+    return VaultPurchases.sizes.contains(size) ? size : null;
+  }
+
+  /// A plan billed by the other store is changed there, never bought twice.
+  bool get _elsewhere {
+    final store = _account.planStore;
+    return (_account.plan ?? 'free') != 'free' &&
+        store != null &&
+        store != VaultPurchases.storeHere &&
+        store != 'test';
+  }
+
+  String get _product => VaultPurchases.productFor(_size, yearly: _yearly);
+
+  /// The button shows once this store has something to sell here.
+  bool get _canBuy =>
+      VaultPurchases.supported && _purchases.products.isNotEmpty && !_elsewhere;
+
+  /// The price as the store bills it: "$5.99 a month", "$59.99 a year".
+  String _billed(ProductDetails p, {required bool yearly}) =>
+      (yearly ? 'vault.plans_per_year' : 'vault.plans_per_month').tr(
+        namedArgs: {'price': p.price},
+      );
+
+  /// A yearly price as a twelfth, in the store's currency; null when the
+  /// store gave no number to work it out from.
+  String? _perMonth(ProductDetails p) {
+    if (p.rawPrice <= 0 || p.currencyCode.isEmpty) return null;
+    try {
+      return NumberFormat.simpleCurrency(
+        locale: context.locale.toLanguageTag(),
+        name: p.currencyCode,
+      ).format(p.rawPrice / 12);
+    } on Object {
+      return null;
+    }
+  }
+
+  /// What a year saves on twelve months, from this country's prices: the
+  /// smallest whole percent across the sizes, so it holds for each of them.
+  int? get _yearlySaving {
+    int? least;
+    for (final size in VaultPurchases.sizes) {
+      final month =
+          _purchases.products[VaultPurchases.productFor(size, yearly: false)];
+      final year =
+          _purchases.products[VaultPurchases.productFor(size, yearly: true)];
+      if (month == null || year == null || month.rawPrice <= 0) continue;
+      if (month.currencyCode != year.currencyCode) continue;
+      final pct = ((1 - year.rawPrice / (month.rawPrice * 12)) * 100).floor();
+      least = least == null ? pct : math.min(least, pct);
+    }
+    return least != null && least > 0 ? least : null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: cs.background,
       body: SafeArea(
+        bottom: false,
         child: AppResponsivePane(
-          maxWidth: 720,
-          child: Column(
-            children: [
-              AppScreenHeader(
-                title: 'vault.plans_title'.tr(),
-                onBack: () => Navigator.of(context).maybePop(),
-              ),
-              Expanded(
-                child: ListenableBuilder(
-                  listenable: Listenable.merge([_account, _purchases]),
-                  builder: (context, _) => ListView(
-                    padding: const EdgeInsets.only(top: 4, bottom: 32),
+          maxWidth: 600,
+          child: ListenableBuilder(
+            listenable: Listenable.merge([_account, _purchases]),
+            builder: (context, _) {
+              final buy = _canBuy;
+              final current = _showCurrent;
+              final inset = MediaQuery.paddingOf(context).bottom;
+              final dark = ShadTheme.of(context).brightness == Brightness.dark;
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // The accent glows behind the top of the page.
+                  Positioned(
+                    top: -150,
+                    left: 0,
+                    right: 0,
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Container(
+                          width: 460,
+                          height: 460,
+                          decoration: BoxDecoration(
+                            gradient: RadialGradient(
+                              colors: [
+                                cs.primary.withValues(
+                                  alpha: dark ? 0.24 : 0.13,
+                                ),
+                                cs.primary.withValues(alpha: 0),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Column(
                     children: [
-                      _current(cs),
-                      const SizedBox(height: 18),
-                      ..._offer(cs),
-                      const SizedBox(height: 18),
-                      _includes(cs),
-                      if (VaultPurchases.supported) _legal(cs),
+                      _topBar(cs),
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            ListView(
+                              padding: EdgeInsets.only(
+                                bottom: buy ? 28 : 32 + inset,
+                              ),
+                              children: [
+                                _hero(cs, usage: !current),
+                                if (current) ...[
+                                  _current(cs),
+                                  const SizedBox(height: 22),
+                                ],
+                                ..._offer(cs),
+                                const SizedBox(height: 26),
+                                _includes(cs),
+                                if (VaultPurchases.supported) _legal(cs),
+                              ],
+                            ),
+                            if (buy)
+                              // The list fades out above the button.
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                height: 28,
+                                child: IgnorePointer(
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          cs.background.withValues(alpha: 0),
+                                          cs.background,
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (buy) _buyBar(cs, inset),
                     ],
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ),
       ),
     );
   }
 
+  Widget _topBar(ShadColorScheme cs) {
+    final restoring = _purchases.restoring;
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(8, 6, 10, 0),
+      child: Row(
+        children: [
+          ShadIconButton.ghost(
+            icon: const AppSvgIcon(AppIcons.chevronLeft, size: 22),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          const Spacer(),
+          if (VaultPurchases.supported)
+            _Link(
+              restoring
+                  ? 'vault.plans_restoring'.tr()
+                  : 'vault.plans_restore'.tr(),
+              restoring ? null : () => unawaited(_restore()),
+              size: 13.5,
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ---- what a plan buys ------------------------------------------------------------------
+
+  /// [usage]: the free Drive's fill, when there is no plan card to show it.
+  Widget _hero(ShadColorScheme cs, {required bool usage}) {
+    final quota = _account.quotaBytes ?? 0;
+    final used = _account.usedBytes;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 4, 28, 24),
+      child: Column(
+        children: [
+          Container(
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              gradient: _brand(cs.primary),
+              borderRadius: BorderRadius.circular(21),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+              boxShadow: [
+                BoxShadow(
+                  color: cs.primary.withValues(alpha: 0.42),
+                  blurRadius: 28,
+                  offset: const Offset(0, 12),
+                  spreadRadius: -10,
+                ),
+              ],
+            ),
+            child: Center(
+              child: AppSvgIcon(
+                AppIcons.cloudDone,
+                size: 34,
+                color: _on(cs.primary),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'vault.plans_hero_title'.tr(),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 27,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.6,
+              height: 1.15,
+              color: cs.foreground,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            // A phone's width of text, wrapped evenly on a wide window too.
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Text(
+              'vault.plans_hero_sub'.tr(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.4,
+                color: cs.mutedForeground,
+              ),
+            ),
+          ),
+          if (usage && quota > 0 && used != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsetsDirectional.fromSTEB(12, 7, 14, 7),
+              decoration: BoxDecoration(
+                color: cs.card,
+                borderRadius: BorderRadius.circular(99),
+                border: Border.all(color: cs.border.withValues(alpha: 0.8)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 44,
+                    child: _UsageBar(share: used / quota, color: cs.primary),
+                  ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      'vault.quota_line'.tr(
+                        namedArgs: {
+                          'used': decimalBytes(used),
+                          'quota': decimalBytes(quota),
+                        },
+                      ),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: cs.foreground.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   // ---- the plan now ------------------------------------------------------------------
+
+  /// A plan, or a Drive whose plan is in trouble, gets its own card; the
+  /// free Drive's fill sits under the title.
+  bool get _showCurrent =>
+      (_account.plan ?? 'free') != 'free' ||
+      _account.state == 'grace' ||
+      _account.state == 'lapsed';
 
   Widget _current(ShadColorScheme cs) {
     final plan = _account.plan ?? 'free';
-    final quota = _account.quotaBytes;
+    final quota = _account.quotaBytes ?? 0;
+    final used = _account.usedBytes;
     final paid = plan != 'free';
     final muted = ShadTheme.of(context).textTheme.muted.copyWith(fontSize: 13);
     final ends = _account.planEnds;
@@ -148,66 +421,98 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
     };
     final warn = _account.state == 'grace' || _account.state == 'lapsed';
     final here = store == VaultPurchases.storeHere;
-    return AppGroup(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: cs.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: warn
+              ? cs.destructive.withValues(alpha: 0.5)
+              : cs.border.withValues(alpha: 0.8),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
                   'vault.plans_now'.tr(),
                   style: muted.copyWith(fontWeight: FontWeight.w600),
                 ),
-                const Spacer(),
-                if (paid)
-                  AppBadge(
-                    (VaultPurchases.isYearly(plan)
-                            ? 'vault.plans_yearly'
-                            : 'vault.plans_monthly')
-                        .tr(),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              paid
-                  ? decimalBytes(VaultPurchases.sizeOf(plan))
-                  : 'vault.plan_free_size'.tr(
-                      namedArgs: {'size': decimalBytes(quota ?? 5000000000)},
-                    ),
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-            ),
-            if (line != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                line,
-                style: muted.copyWith(
-                  color: warn ? cs.destructive : null,
-                  height: 1.35,
-                ),
               ),
-            ],
-            if (paid && store != null && store != 'test') ...[
-              const SizedBox(height: 12),
-              if (here && VaultPurchases.supported)
-                AppButton(
-                  label: 'vault.plans_manage'.tr(),
-                  icon: AppIcons.externalLink,
-                  variant: AppButtonVariant.outline,
-                  size: AppButtonSize.small,
-                  onPressed: () =>
-                      _open(VaultPurchases.manageUri(_account.plan)),
-                )
-              else
-                Text(
-                  'vault.plans_other_store_$store'.tr(),
-                  style: muted.copyWith(height: 1.35),
+              if (paid)
+                AppBadge(
+                  (VaultPurchases.isYearly(plan)
+                          ? 'vault.plans_yearly'
+                          : 'vault.plans_monthly')
+                      .tr(),
                 ),
             ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            paid
+                ? decimalBytes(VaultPurchases.sizeOf(plan))
+                : 'vault.plan_free_size'.tr(
+                    namedArgs: {
+                      'size': decimalBytes(quota > 0 ? quota : 5000000000),
+                    },
+                  ),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+              color: cs.foreground,
+            ),
+          ),
+          if (quota > 0 && used != null) ...[
+            const SizedBox(height: 10),
+            _UsageBar(
+              share: used / quota,
+              color: warn ? cs.destructive : cs.primary,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'vault.quota_line'.tr(
+                namedArgs: {
+                  'used': decimalBytes(used),
+                  'quota': decimalBytes(quota),
+                },
+              ),
+              style: muted.copyWith(fontSize: 12.5),
+            ),
           ],
-        ),
+          if (line != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              line,
+              style: muted.copyWith(
+                color: warn ? cs.destructive : null,
+                height: 1.35,
+              ),
+            ),
+          ],
+          if (paid && store != null && store != 'test') ...[
+            const SizedBox(height: 12),
+            if (here && VaultPurchases.supported)
+              AppButton(
+                label: 'vault.plans_manage'.tr(),
+                icon: AppIcons.externalLink,
+                variant: AppButtonVariant.outline,
+                size: AppButtonSize.small,
+                onPressed: () => _open(VaultPurchases.manageUri(_account.plan)),
+              )
+            else
+              Text(
+                'vault.plans_other_store_$store'.tr(),
+                style: muted.copyWith(height: 1.35),
+              ),
+          ],
+        ],
       ),
     );
   }
@@ -215,112 +520,178 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
   // ---- the four sizes ------------------------------------------------------------------
 
   List<Widget> _offer(ShadColorScheme cs) {
-    final muted = ShadTheme.of(context).textTheme.muted.copyWith(fontSize: 13);
     if (!VaultPurchases.supported) {
       return [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22),
-          child: Text(
-            'vault.plans_desktop'.tr(),
-            style: muted.copyWith(height: 1.4),
+        _Note(icon: AppIcons.smartphone, text: 'vault.plans_desktop'.tr()),
+      ];
+    }
+    if (_purchases.products.isEmpty) {
+      if (_purchases.loading) {
+        return [
+          const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: CircularProgressIndicator.adaptive()),
+          ),
+        ];
+      }
+      return [
+        _Note(
+          icon: AppIcons.circleAlert,
+          text: 'vault.plans_store_down'.tr(),
+          action: AppButton(
+            label: 'vault.plans_retry'.tr(),
+            variant: AppButtonVariant.outline,
+            size: AppButtonSize.small,
+            onPressed: () => unawaited(_purchases.load()),
           ),
         ),
       ];
     }
-    final store = _account.planStore;
-    final paid = (_account.plan ?? 'free') != 'free';
-    // A plan billed by the other store is changed there, never bought twice.
-    final elsewhere =
-        paid &&
-        store != null &&
-        store != VaultPurchases.storeHere &&
-        store != 'test';
-    if (_purchases.products.isEmpty) {
-      return [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22),
-          child: _purchases.loading
-              ? const Center(child: CircularProgressIndicator.adaptive())
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('vault.plans_store_down'.tr(), style: muted),
-                    const SizedBox(height: 10),
-                    AppButton(
-                      label: 'vault.plans_retry'.tr(),
-                      variant: AppButtonVariant.outline,
-                      size: AppButtonSize.small,
-                      onPressed: () => unawaited(_purchases.load()),
-                    ),
-                  ],
-                ),
-        ),
-      ];
-    }
+    final elsewhere = _elsewhere;
+    final saving = _yearlySaving;
     return [
       _PeriodSwitch(
         yearly: _yearly,
+        saving: saving == null
+            ? null
+            : 'vault.plans_save'.tr(namedArgs: {'pct': '$saving'}),
         onChanged: (v) => setState(() => _yearly = v),
       ),
-      const SizedBox(height: 12),
-      for (final size in VaultPurchases.sizes)
-        _PlanCard(
-          size: size,
-          details: _purchases
-              .products[VaultPurchases.productFor(size, yearly: _yearly)],
-          yearly: _yearly,
-          current:
-              _account.plan == VaultPurchases.productFor(size, yearly: _yearly),
-          busy:
-              _purchases.busyProduct ==
-              VaultPurchases.productFor(size, yearly: _yearly),
-          enabled: !elsewhere && _purchases.busyProduct == null,
-          onChoose: () => unawaited(
-            _purchases.buy(VaultPurchases.productFor(size, yearly: _yearly)),
-          ),
-        ),
-      if (paid && !elsewhere)
+      const SizedBox(height: 14),
+      for (final size in VaultPurchases.sizes) _sizeCard(size, elsewhere),
+      if (_paidSize != null && !elsewhere)
         Padding(
-          padding: const EdgeInsets.fromLTRB(22, 4, 22, 0),
+          padding: const EdgeInsets.fromLTRB(22, 2, 22, 0),
           child: Text(
             'vault.plans_change_note'.tr(),
-            style: muted.copyWith(fontSize: 12, height: 1.35),
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.35,
+              color: cs.mutedForeground,
+            ),
           ),
         ),
     ];
   }
 
+  Widget _sizeCard(int size, bool elsewhere) {
+    final id = VaultPurchases.productFor(size, yearly: _yearly);
+    final details = _purchases.products[id];
+    final month = _yearly && details != null ? _perMonth(details) : null;
+    return _PlanCard(
+      size: size,
+      billed: details == null
+          ? 'vault.plans_unavailable'.tr()
+          : _billed(details, yearly: _yearly),
+      perMonth: month == null
+          ? null
+          : 'vault.plans_month_equiv'.tr(namedArgs: {'price': month}),
+      selected: size == _size,
+      current: _account.plan == id,
+      recommended: size == _recommended,
+      onTap: elsewhere ? null : () => setState(() => _size = size),
+    );
+  }
+
+  // ---- the button ------------------------------------------------------------------
+
+  Widget _buyBar(ShadColorScheme cs, double inset) {
+    final id = _product;
+    final details = _purchases.products[id];
+    final current = _account.plan == id;
+    final paid = _paidSize;
+    final label = current
+        ? 'vault.plans_cta_current'.tr()
+        : paid == null
+        ? 'vault.plans_cta_get'.tr(namedArgs: {'size': decimalBytes(_size)})
+        : paid == _size
+        ? (_yearly ? 'vault.plans_cta_yearly' : 'vault.plans_cta_monthly').tr()
+        : 'vault.plans_cta_switch'.tr(namedArgs: {'size': decimalBytes(_size)});
+    return Container(
+      color: cs.background,
+      padding: EdgeInsets.fromLTRB(16, 2, 16, 12 + inset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _BuyButton(
+            label: label,
+            loading: _purchases.busyProduct == id,
+            onPressed:
+                details == null || current || _purchases.busyProduct != null
+                ? null
+                : () => unawaited(_purchases.buy(id)),
+          ),
+          const SizedBox(height: 9),
+          Text(
+            details == null
+                ? 'vault.plans_unavailable'.tr()
+                : 'vault.plans_cta_note'.tr(
+                    namedArgs: {'price': _billed(details, yearly: _yearly)},
+                  ),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.35,
+              color: cs.mutedForeground,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ---- every plan has ------------------------------------------------------------------
 
   Widget _includes(ShadColorScheme cs) {
-    const keys = ['e2e', 'photos', 'devices', 'trash'];
+    const items = [
+      ('e2e', AppIcons.passwordLock),
+      ('photos', AppIcons.image),
+      ('devices', AppIcons.monitor),
+      ('trash', AppIcons.trashDelete),
+    ];
     return AppGroup(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'vault.plans_includes'.tr(),
-              style: const TextStyle(fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: cs.foreground,
+              ),
             ),
-            const SizedBox(height: 8),
-            for (final k in keys)
+            const SizedBox(height: 12),
+            for (final (key, icon) in items)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.only(bottom: 12),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: AppSvgIcon(
-                        AppIcons.check,
-                        size: 15,
-                        color: cs.primary,
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: cs.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: Center(
+                        child: AppSvgIcon(icon, size: 18, color: cs.primary),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(child: Text('vault.plans_inc_$k'.tr())),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'vault.plans_inc_$key'.tr(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.35,
+                          color: cs.foreground,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -333,53 +704,37 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
   // ---- what the stores require next to a subscription ------------------------------------
 
   Widget _legal(ShadColorScheme cs) {
-    final muted = ShadTheme.of(
-      context,
-    ).textTheme.muted.copyWith(fontSize: 12, height: 1.4);
-    final link = TextStyle(
-      fontSize: 12.5,
-      fontWeight: FontWeight.w600,
-      color: cs.primary,
-    );
     return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 18, 22, 0),
+      padding: const EdgeInsets.only(top: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'vault.plans_legal_${VaultPurchases.storeHere}'.tr(),
-            style: muted,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 22),
+            child: Text(
+              'vault.plans_legal_${VaultPurchases.storeHere}'.tr(),
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.45,
+                color: cs.mutedForeground,
+              ),
+            ),
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 18,
-            runSpacing: 8,
-            children: [
-              InkWell(
-                onTap: () => _open(Uri.parse(AppLinks.terms)),
-                child: Text('vault.plans_terms'.tr(), style: link),
-              ),
-              InkWell(
-                onTap: () => _open(Uri.parse(AppLinks.privacy)),
-                child: Text('vault.plans_privacy'.tr(), style: link),
-              ),
-              InkWell(
-                onTap: _purchases.restoring
-                    ? null
-                    : () async {
-                        await _purchases.restore();
-                        if (mounted && _purchases.lastError == null) {
-                          toast(context, 'vault.plans_restored'.tr());
-                        }
-                      },
-                child: Text(
-                  _purchases.restoring
-                      ? 'vault.plans_restoring'.tr()
-                      : 'vault.plans_restore'.tr(),
-                  style: link,
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Wrap(
+              children: [
+                _Link(
+                  'vault.plans_terms'.tr(),
+                  () => _open(Uri.parse(AppLinks.terms)),
                 ),
-              ),
-            ],
+                _Link(
+                  'vault.plans_privacy'.tr(),
+                  () => _open(Uri.parse(AppLinks.privacy)),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -387,59 +742,92 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
   }
 }
 
+/// BIShare blue running into indigo: the paywall's badge, ribbon and button.
+LinearGradient _brand(Color primary) => LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [
+    Color.lerp(primary, Colors.white, 0.1)!,
+    primary,
+    Color.lerp(primary, const Color(0xFF3730A3), 0.45)!,
+  ],
+);
+
+/// Text and icons on [_brand]: white unless the accent is a light one.
+Color _on(Color primary) =>
+    ThemeData.estimateBrightnessForColor(primary) == Brightness.dark
+    ? Colors.white
+    : Colors.black87;
+
 class _PeriodSwitch extends StatelessWidget {
-  const _PeriodSwitch({required this.yearly, required this.onChanged});
+  const _PeriodSwitch({
+    required this.yearly,
+    required this.saving,
+    required this.onChanged,
+  });
 
   final bool yearly;
+
+  /// "Save 16%", when this country's prices show a saving.
+  final String? saving;
   final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
+    final dark = ShadTheme.of(context).brightness == Brightness.dark;
+    final green = dark ? const Color(0xFF30D158) : const Color(0xFF1E8E3E);
     Widget part(bool value, String label, {String? note}) {
       final on = yearly == value;
       return Expanded(
         child: Semantics(
           button: true,
           selected: on,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(10),
-            onTap: () => onChanged(value),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              padding: const EdgeInsets.symmetric(vertical: 9),
-              decoration: BoxDecoration(
-                color: on ? cs.background : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: on
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 6,
-                          offset: const Offset(0, 1),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: on ? cs.foreground : cs.mutedForeground,
-                    ),
-                  ),
-                  if (note != null)
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              if (on) return;
+              tapHaptic();
+              onChanged(value);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 11),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      note,
+                      label,
                       style: TextStyle(
-                        fontSize: 11,
-                        color: cs.primary,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: on ? cs.foreground : cs.mutedForeground,
                       ),
                     ),
-                ],
+                    if (note != null) ...[
+                      const SizedBox(width: 7),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: green.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                        child: Text(
+                          note,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: green,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -448,24 +836,55 @@ class _PeriodSwitch extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: cs.muted,
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            part(false, 'vault.plans_monthly'.tr()),
-            part(
-              true,
-              'vault.plans_yearly'.tr(),
-              note: 'vault.plans_yearly_save'.tr(),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: AnimatedAlign(
+              alignment: yearly
+                  ? AlignmentDirectional.centerEnd
+                  : AlignmentDirectional.centerStart,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              child: FractionallySizedBox(
+                widthFactor: 0.5,
+                heightFactor: 1,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: dark
+                        ? Color.alphaBlend(
+                            Colors.white.withValues(alpha: 0.09),
+                            cs.muted,
+                          )
+                        : cs.background,
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(
+                      color: cs.border.withValues(alpha: dark ? 0.9 : 0.4),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ],
-        ),
+          ),
+          Row(
+            children: [
+              part(false, 'vault.plans_monthly'.tr()),
+              part(true, 'vault.plans_yearly'.tr(), note: saving),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -474,74 +893,382 @@ class _PeriodSwitch extends StatelessWidget {
 class _PlanCard extends StatelessWidget {
   const _PlanCard({
     required this.size,
-    required this.details,
-    required this.yearly,
+    required this.billed,
+    required this.perMonth,
+    required this.selected,
     required this.current,
-    required this.busy,
-    required this.enabled,
-    required this.onChoose,
+    required this.recommended,
+    required this.onTap,
   });
 
   final int size;
-  final ProductDetails? details;
-  final bool yearly;
+
+  /// The price as billed ("$59.99 a year"), or why there is none.
+  final String billed;
+
+  /// A yearly price as a twelfth ("$5.00 a month, billed yearly").
+  final String? perMonth;
+  final bool selected;
   final bool current;
-  final bool busy;
-  final bool enabled;
-  final VoidCallback onChoose;
+  final bool recommended;
+
+  /// Null when the plans are changed in the other store.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
-    final price = details?.price;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-      decoration: BoxDecoration(
-        color: cs.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: current ? cs.primary : cs.border.withValues(alpha: 0.8),
-          width: current ? 1.6 : 1,
+    final on = selected && onTap != null;
+    final radius = BorderRadius.circular(18);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Semantics(
+        button: onTap != null,
+        selected: on,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: radius,
+            onTap: onTap == null
+                ? null
+                : () {
+                    tapHaptic();
+                    onTap!();
+                  },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsetsDirectional.fromSTEB(14, 14, 16, 14),
+              decoration: BoxDecoration(
+                color: on
+                    ? Color.alphaBlend(
+                        cs.primary.withValues(alpha: 0.08),
+                        cs.card,
+                      )
+                    : cs.card,
+                borderRadius: radius,
+                border: Border.all(
+                  color: on ? cs.primary : cs.border.withValues(alpha: 0.8),
+                  width: on ? 2 : 1,
+                ),
+                boxShadow: on
+                    ? [
+                        BoxShadow(
+                          color: cs.primary.withValues(alpha: 0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                          spreadRadius: -8,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  _Radio(on: on),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              decimalBytes(size),
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.4,
+                                color: cs.foreground,
+                              ),
+                            ),
+                            if (current)
+                              AppBadge('vault.plans_current'.tr())
+                            else if (recommended)
+                              _Ribbon('vault.plans_recommended'.tr()),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          billed,
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            color: cs.foreground.withValues(
+                              alpha: on ? 1 : 0.85,
+                            ),
+                          ),
+                        ),
+                        if (perMonth != null) ...[
+                          const SizedBox(height: 1),
+                          Text(
+                            perMonth!,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: cs.mutedForeground,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _Radio extends StatelessWidget {
+  const _Radio({required this.on});
+
+  final bool on;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = ShadTheme.of(context).colorScheme;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: on ? _brand(cs.primary) : null,
+        border: on ? null : Border.all(color: cs.border, width: 2),
+      ),
+      child: on
+          ? Center(
+              child: AppSvgIcon(
+                AppIcons.check,
+                size: 14,
+                color: _on(cs.primary),
+              ),
+            )
+          : null,
+    );
+  }
+}
+
+class _Ribbon extends StatelessWidget {
+  const _Ribbon(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = ShadTheme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        gradient: _brand(primary),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.2,
+          color: _on(primary),
+        ),
+      ),
+    );
+  }
+}
+
+class _UsageBar extends StatelessWidget {
+  const _UsageBar({required this.share, required this.color});
+
+  /// Used over quota; more than 1 when over.
+  final double share;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = ShadTheme.of(context).colorScheme;
+    final fill = share <= 0 ? 0.0 : share.clamp(0.02, 1.0);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(99),
+      child: SizedBox(
+        height: 6,
+        child: Stack(
+          children: [
+            Positioned.fill(child: ColoredBox(color: cs.muted)),
+            FractionallySizedBox(
+              alignment: AlignmentDirectional.centerStart,
+              widthFactor: fill,
+              heightFactor: 1,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [color.withValues(alpha: 0.7), color],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BuyButton extends StatelessWidget {
+  const _BuyButton({
+    required this.label,
+    required this.loading,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool loading;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = ShadTheme.of(context).colorScheme;
+    final enabled = onPressed != null && !loading;
+    // Nothing to buy (the plan in force, or not on sale): a plain grey bar.
+    final idle = onPressed == null && !loading;
+    final radius = BorderRadius.circular(16);
+    final fg = idle ? cs.mutedForeground : _on(cs.primary);
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 54,
+        decoration: BoxDecoration(
+          color: idle ? cs.muted : null,
+          gradient: idle ? null : _brand(cs.primary),
+          borderRadius: radius,
+          boxShadow: enabled
+              ? [
+                  BoxShadow(
+                    color: cs.primary.withValues(alpha: 0.38),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                    spreadRadius: -10,
+                  ),
+                ]
+              : null,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: radius,
+            onTap: enabled
+                ? () {
+                    tapHaptic();
+                    onPressed!();
+                  }
+                : null,
+            child: Center(
+              child: loading
+                  ? SizedBox.square(
+                      dimension: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        color: fg,
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 16.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.1,
+                          color: fg,
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A line of the page in a tinted card: where desktops buy, a store that
+/// did not answer.
+class _Note extends StatelessWidget {
+  const _Note({required this.icon, required this.text, this.action});
+
+  final String icon;
+  final String text;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = ShadTheme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.primary.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: cs.primary.withValues(alpha: 0.25)),
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          AppSvgIcon(icon, size: 20, color: cs.primary),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  decimalBytes(size),
-                  style: const TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w700,
+                  text,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.4,
+                    color: cs.foreground,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  price == null
-                      ? 'vault.plans_unavailable'.tr()
-                      : (yearly
-                                ? 'vault.plans_per_year'
-                                : 'vault.plans_per_month')
-                            .tr(namedArgs: {'price': price}),
-                  style: TextStyle(color: cs.mutedForeground),
-                ),
+                if (action != null) ...[const SizedBox(height: 10), action!],
               ],
             ),
           ),
-          if (current)
-            AppBadge('vault.plans_current'.tr())
-          else
-            AppButton(
-              label: 'vault.plans_choose'.tr(),
-              size: AppButtonSize.small,
-              loading: busy,
-              disabled: !enabled || details == null,
-              onPressed: onChoose,
-            ),
         ],
+      ),
+    );
+  }
+}
+
+class _Link extends StatelessWidget {
+  const _Link(this.label, this.onTap, {this.size = 12.5});
+
+  final String label;
+  final VoidCallback? onTap;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = ShadTheme.of(context).colorScheme;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: size,
+            fontWeight: FontWeight.w600,
+            color: onTap == null ? cs.mutedForeground : cs.primary,
+          ),
+        ),
       ),
     );
   }
