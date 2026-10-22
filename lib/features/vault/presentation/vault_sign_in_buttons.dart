@@ -47,6 +47,11 @@ class _VaultSignInButtonsState extends State<VaultSignInButtons> {
     } on VaultSigninException catch (e) {
       _error = 'vault.error_generic'.tr();
       debugPrint('[vault] provider sign-in failed: $e');
+    } on Object catch (e) {
+      // The keychain or a provider's own error (audit P15): still a message,
+      // not a button that silently stops.
+      _error = 'vault.error_generic'.tr();
+      debugPrint('[vault] sign-in failed: $e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

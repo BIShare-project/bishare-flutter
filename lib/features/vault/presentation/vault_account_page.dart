@@ -98,6 +98,10 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
       _say('vault.error_generic');
     } on FormatException {
       _say('vault.error_not_a_code');
+    } on Object catch (e) {
+      // The keychain, a provider or the store: still a message (audit P15).
+      debugPrint('[vault] $e');
+      _say('vault.error_generic');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

@@ -1,7 +1,8 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/config/feature_flags.dart';
 import '../core/desktop/desktop_service.dart';
 import '../core/di/locator.dart';
 import '../core/platform/tv.dart';
@@ -26,6 +27,10 @@ import 'main_shell.dart';
 
 /// Arguments for the image gallery route (passed via `extra`).
 typedef GalleryArgs = ({List<TransferRecord> images, int startIndex});
+
+/// Drive pages open only while the Drive is shown (audit P15).
+String? _driveGate(BuildContext context, GoRouterState state) =>
+    getIt<FeatureFlags>().vaultVisible ? null : '/';
 
 /// Central app routing. Full-screen pages register here instead of ad-hoc
 /// `Navigator.push(MaterialPageRoute(...))`, so navigation stays controlled and
@@ -121,20 +126,25 @@ final GoRouter appRouter = GoRouter(
         ),
         // BIShare Drive (drive-plan.md phase 3); reachable only from the Drive
         // group in Settings, which shows only while vault_enabled allows it.
+        // A link to one of these pages leads home while it does not.
         GoRoute(
           path: 'drive-transfers',
+          redirect: _driveGate,
           builder: (context, state) => const DriveTransfersPage(),
         ),
         GoRoute(
           path: 'drive-storage',
+          redirect: _driveGate,
           builder: (context, state) => const DriveStoragePage(),
         ),
         GoRoute(
           path: 'drive-plans',
+          redirect: _driveGate,
           builder: (context, state) => const DrivePlansPage(),
         ),
         GoRoute(
           path: 'drive-account',
+          redirect: _driveGate,
           builder: (context, state) => const VaultAccountPage(),
           routes: [
             GoRoute(
