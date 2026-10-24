@@ -66,7 +66,7 @@ if [ "$TAP" = "--tap" ]; then
   git clone -q "https://github.com/$TAPREPO.git" "$TMP/tap"
   mkdir -p "$TMP/tap/Casks"; cp homebrew/bishare.rb "$TMP/tap/Casks/bishare.rb"
   [ -f "$TMP/tap/README.md" ] || printf '# BIShare Homebrew tap\n\n```\nbrew install BIShare-project/tap/bishare\n```\n' > "$TMP/tap/README.md"
-  ( cd "$TMP/tap" && git add -A && git -c user.name=bishare-release -c user.email=support@billiongroup.net \
+  ( cd "$TMP/tap" && git add -A && git -c user.name=bishare-release -c user.email=cakrabudiman@icloud.com \
       commit -q -m "bishare $VER" && git push -q origin HEAD ) && echo "  pushed cask to $TAPREPO"
 fi
 echo "done. Next: see packaging/README.md (winget PR, choco push)."

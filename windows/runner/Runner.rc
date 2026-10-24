@@ -89,7 +89,7 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "Billion Group" "\0"
+            VALUE "CompanyName", "Cakra Budiman" "\0"
             VALUE "FileDescription", "BIShare — file transfer for any device" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "BIShare" "\0"

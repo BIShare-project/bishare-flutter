@@ -3,8 +3,8 @@ import 'dart:io' show Platform;
 /// External BIShare URLs and contact info surfaced in Settings → About.
 ///
 /// The canonical marketing/legal site is https://bishare.app — the Privacy
-/// Policy and Terms of Service live there. Product support is handled by the
-/// Billion Group team at [supportEmail].
+/// Policy and Terms of Service live there. Support goes to the maintainer,
+/// Cakra Budiman, at [supportEmail].
 class AppLinks {
   AppLinks._();
 
@@ -12,7 +12,7 @@ class AppLinks {
   static const String privacy = 'https://bishare.app/privacy';
   static const String terms = 'https://bishare.app/terms';
   static const String help = 'https://bishare.app/how-it-works';
-  static const String supportEmail = 'support@billiongroup.net';
+  static const String supportEmail = 'cakrabudiman@icloud.com';
 
   /// Android application id — used to build the Play Store rating link.
   static const String androidPackage = 'com.bishare.app';

@@ -266,6 +266,12 @@ def push_asc(listing: dict, root: pathlib.Path | None, whats_new: bool, create: 
         if vid is None:
             return 1
         print(f"asc {platform} version {listing['version']}:")
+        # The version's copyright line (a version attribute, not per locale).
+        if listing.get("copyright"):
+            print(f"  copyright: {listing['copyright']}")
+            if not dry and vid != "(new)":
+                st, d = asc("PATCH", f"/v1/appStoreVersions/{vid}", {"data": {"type": "appStoreVersions", "id": vid, "attributes": {"copyright": listing["copyright"]}}})
+                print(f"  copyright: {st} {'' if st == 200 else str(d.get('errors', d))[:160]}")
         have: dict[str, str] = {}
         if vid != "(new)":
             st, locs = asc("GET", f"/v1/appStoreVersions/{vid}/appStoreVersionLocalizations?limit=50")

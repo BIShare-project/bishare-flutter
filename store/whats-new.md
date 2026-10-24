@@ -31,7 +31,7 @@ What's new in BIShare:
 • Steadier nearby list — devices keep their place, so you won't tap the wrong one by accident.
 • Now available in 13 languages.
 
-Questions or feedback? support@billiongroup.net
+Questions or feedback? cakrabudiman@icloud.com
 ```
 
 ---
@@ -62,5 +62,5 @@ Yang baru di BIShare:
 • Daftar perangkat terdekat lebih stabil — perangkat tetap di tempatnya, jadi kamu tak salah ketuk.
 • Kini tersedia dalam 13 bahasa.
 
-Ada pertanyaan atau masukan? support@billiongroup.net
+Ada pertanyaan atau masukan? cakrabudiman@icloud.com
 ```

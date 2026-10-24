@@ -9,7 +9,7 @@ seriously. Thank you for helping keep it safe.
 
 Instead, report privately via one of:
 
-- 📧 Email **support@billiongroup.net** with the subject `SECURITY: <short summary>`
+- 📧 Email **cakrabudiman@icloud.com** with the subject `SECURITY: <short summary>`
 - 🔒 GitHub's [private vulnerability reporting](https://github.com/BIShare-project/bishare-flutter/security/advisories/new)
   (Security → Report a vulnerability)
 

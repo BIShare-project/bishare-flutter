@@ -669,7 +669,7 @@ jobs:
           Package: bishare
           Version: $DEB_VER
           Architecture: amd64
-          Maintainer: BIShare project <support@billiongroup.net>
+          Maintainer: Cakra Budiman <cakrabudiman@icloud.com>
           Section: net
           Priority: optional
           Installed-Size: $SIZE
@@ -754,7 +754,7 @@ jobs:
       - name: Commit manifests to main
         run: |
           git config user.name "bishare-release"
-          git config user.email "support@billiongroup.net"
+          git config user.email "cakrabudiman@icloud.com"
           git add packaging
           git diff --cached --quiet && { echo "manifests already current"; exit 0; }
           git commit -m "packaging: manifests for ${GITHUB_REF_NAME} [skip ci]"
@@ -768,5 +768,5 @@ jobs:
           fi
           gh auth setup-git
           git config --global user.name "bishare-release"
-          git config --global user.email "support@billiongroup.net"
+          git config --global user.email "cakrabudiman@icloud.com"
           packaging/bump.sh "${GITHUB_REF_NAME#v}" --tap
