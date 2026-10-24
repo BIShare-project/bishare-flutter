@@ -9,7 +9,9 @@ transfer_max_file_size_free), and the app's links expire after 24 hours;
 QR Beam needs no network; Rooms join by a 4-character code; sending needs no
 account. Drive (2026-10-22): end-to-end encrypted, 5 GB free (FREE_QUOTA_BYTES),
 plans in the stores, Apple/Google sign-in only to find the Drive.
-Never put a transfer speed or a time on a badge.
+Never put a transfer speed or a time on a badge, nor a price or the word
+"free" anywhere: App Review rejected 2.7.0's screenshots for "Free, no
+account" and "5 GB free" (guideline 2.3.7, 2026-10-23).
 """
 
 # badge pictogram and colour per screen: (first badge), (second badge)
@@ -24,108 +26,108 @@ SCREENS = {
 
 CAPTIONS: dict[str, dict[str, tuple[str, str, str]]] = {
     "en": {
-        "share": ("CROSS-PLATFORM TRANSFER", "Send anything.\nTo any device.", "Instantly, over your own Wi-Fi. Free, no account."),
+        "share": ("CROSS-PLATFORM TRANSFER", "Send anything.\nTo any device.", "Instantly, over your own Wi-Fi. No account."),
         "link": ("SECURE LINK", "Send to anyone.\nNo app needed.", "An encrypted link up to 100 GB, opened in any browser."),
         "qr_beam": ("QR BEAM", "No network?\nScreen to camera.", "No Wi-Fi, hotspot or Bluetooth. Best for text, keys and small files."),
         "rooms": ("ROOMS", "One short code.\nEveryone in.", "Share with a group. Everyone grabs what they need."),
         "settings": ("PRIVATE BY DESIGN", "End-to-end\nencrypted.", "No sign-up to send. No email, no profile."),
-        "drive": ("BISHARE DRIVE", "Your files and photos.\nOnly you hold the key.", "End-to-end encrypted storage. 5 GB free, more with a plan."),
+        "drive": ("BISHARE DRIVE", "Your files and photos.\nOnly you hold the key.", "End-to-end encrypted storage on all your devices."),
     },
     "id": {
-        "share": ("TRANSFER LINTAS PERANGKAT", "Kirim apa saja.\nKe perangkat apa pun.", "Langsung lewat Wi-Fi sendiri. Gratis, tanpa akun."),
+        "share": ("TRANSFER LINTAS PERANGKAT", "Kirim apa saja.\nKe perangkat apa pun.", "Langsung lewat Wi-Fi sendiri. Tanpa akun."),
         "link": ("TAUTAN AMAN", "Kirim ke siapa saja.\nTanpa perlu aplikasi.", "Tautan terenkripsi hingga 100 GB, dibuka di browser apa pun."),
         "qr_beam": ("QR BEAM", "Tanpa jaringan?\nLayar ke kamera.", "Tanpa Wi-Fi, hotspot, atau Bluetooth. Cocok untuk teks, kunci, dan file kecil."),
         "rooms": ("RUANGAN", "Satu kode pendek.\nSemua masuk.", "Berbagi dengan grup. Tiap orang ambil yang dibutuhkan."),
         "settings": ("PRIVAT SEJAK AWAL", "Terenkripsi\nend-to-end.", "Kirim tanpa daftar, tanpa email, tanpa profil."),
-        "drive": ("BISHARE DRIVE", "File dan foto Anda.\nKunci hanya milik Anda.", "Penyimpanan terenkripsi end-to-end. Gratis 5 GB, lebih dengan paket."),
+        "drive": ("BISHARE DRIVE", "File dan foto Anda.\nKunci hanya milik Anda.", "Penyimpanan terenkripsi end-to-end di semua perangkat Anda."),
     },
     "de": {
-        "share": ("PLATTFORMÜBERGREIFEND", "Alles senden.\nAn jedes Gerät.", "Sofort über das eigene WLAN. Kostenlos, ohne Konto."),
+        "share": ("PLATTFORMÜBERGREIFEND", "Alles senden.\nAn jedes Gerät.", "Sofort über das eigene WLAN. Ohne Konto."),
         "link": ("SICHERER LINK", "An alle senden.\nOhne App.", "Ein verschlüsselter Link bis 100 GB, öffnet in jedem Browser."),
         "qr_beam": ("QR BEAM", "Kein Netz?\nBildschirm zu Kamera.", "Ohne WLAN, Hotspot oder Bluetooth. Ideal für Text, Schlüssel und kleine Dateien."),
         "rooms": ("RÄUME", "Ein kurzer Code.\nAlle sind drin.", "Mit einer Gruppe teilen. Jeder holt sich, was er braucht."),
         "settings": ("PRIVAT VON GRUND AUF", "Ende-zu-Ende\nverschlüsselt.", "Senden ohne Anmeldung, E-Mail oder Profil."),
-        "drive": ("BISHARE DRIVE", "Deine Dateien und Fotos.\nNur du hast den Schlüssel.", "Ende-zu-Ende-verschlüsselter Speicher. 5 GB gratis, mehr mit einem Abo."),
+        "drive": ("BISHARE DRIVE", "Deine Dateien und Fotos.\nNur du hast den Schlüssel.", "Ende-zu-Ende-verschlüsselter Speicher auf all deinen Geräten."),
     },
     "fr": {
-        "share": ("TRANSFERT MULTIPLATEFORME", "Envoyez tout.\nÀ tout appareil.", "Instantanément, via votre Wi-Fi. Gratuit, sans compte."),
+        "share": ("TRANSFERT MULTIPLATEFORME", "Envoyez tout.\nÀ tout appareil.", "Instantanément, via votre Wi-Fi. Sans compte."),
         "link": ("LIEN SÉCURISÉ", "Envoyez à tous.\nSans application.", "Un lien chiffré jusqu'à 100\u00a0Go, ouvert dans n'importe quel navigateur."),
         "qr_beam": ("QR BEAM", "Pas de réseau\u00a0?\nDe l'écran à la caméra.", "Ni Wi-Fi, ni partage de connexion, ni Bluetooth. Idéal pour du texte, des clés et de petits fichiers."),
         "rooms": ("SALONS", "Un code court.\nTout le monde entre.", "Partagez en groupe. Chacun prend ce dont il a besoin."),
         "settings": ("PRIVÉ PAR CONCEPTION", "Chiffré de\nbout en bout.", "Envoyez sans inscription, sans e-mail, sans profil."),
-        "drive": ("BISHARE DRIVE", "Vos fichiers et photos.\nVous seul avez la clé.", "Stockage chiffré de bout en bout. 5\u00a0Go gratuits, plus avec une offre."),
+        "drive": ("BISHARE DRIVE", "Vos fichiers et photos.\nVous seul avez la clé.", "Stockage chiffré de bout en bout sur tous vos appareils."),
     },
     "es": {
-        "share": ("TRANSFERENCIA MULTIPLATAFORMA", "Envía lo que sea.\nA cualquier dispositivo.", "Al instante, por tu propio Wi-Fi. Gratis y sin cuenta."),
+        "share": ("TRANSFERENCIA MULTIPLATAFORMA", "Envía lo que sea.\nA cualquier dispositivo.", "Al instante, por tu propio Wi-Fi. Sin cuenta."),
         "link": ("ENLACE SEGURO", "Envía a quien sea.\nSin instalar nada.", "Un enlace cifrado de hasta 100 GB que se abre en cualquier navegador."),
         "qr_beam": ("QR BEAM", "¿Sin red?\nDe pantalla a cámara.", "Sin Wi-Fi, punto de acceso ni Bluetooth. Ideal para texto, claves y archivos pequeños."),
         "rooms": ("SALAS", "Un código corto.\nTodos dentro.", "Comparte con un grupo. Cada uno toma lo que necesita."),
         "settings": ("PRIVADO DESDE EL DISEÑO", "Cifrado de\nextremo a extremo.", "Envía sin registro, sin correo, sin perfil."),
-        "drive": ("BISHARE DRIVE", "Tus archivos y fotos.\nSolo tú tienes la clave.", "Almacenamiento cifrado de extremo a extremo. 5 GB gratis, más con un plan."),
+        "drive": ("BISHARE DRIVE", "Tus archivos y fotos.\nSolo tú tienes la clave.", "Almacenamiento cifrado de extremo a extremo en todos tus dispositivos."),
     },
     "pt-BR": {
-        "share": ("TRANSFERÊNCIA MULTIPLATAFORMA", "Envie qualquer coisa.\nPara qualquer aparelho.", "Na hora, pelo seu próprio Wi-Fi. Grátis e sem conta."),
+        "share": ("TRANSFERÊNCIA MULTIPLATAFORMA", "Envie qualquer coisa.\nPara qualquer aparelho.", "Na hora, pelo seu próprio Wi-Fi. Sem conta."),
         "link": ("LINK SEGURO", "Envie para qualquer um.\nSem precisar de app.", "Um link criptografado de até 100 GB, aberto em qualquer navegador."),
         "qr_beam": ("QR BEAM", "Sem rede?\nDa tela para a câmera.", "Sem Wi-Fi, hotspot ou Bluetooth. Ideal para textos, chaves e arquivos pequenos."),
         "rooms": ("SALAS", "Um código curto.\nTodo mundo dentro.", "Compartilhe com um grupo. Cada um pega o que precisa."),
         "settings": ("PRIVADO DESDE A ORIGEM", "Criptografia de\nponta a ponta.", "Envie sem cadastro, sem e-mail, sem perfil."),
-        "drive": ("BISHARE DRIVE", "Seus arquivos e fotos.\nSó você tem a chave.", "Armazenamento com criptografia de ponta a ponta. 5 GB grátis, mais com um plano."),
+        "drive": ("BISHARE DRIVE", "Seus arquivos e fotos.\nSó você tem a chave.", "Armazenamento com criptografia de ponta a ponta em todos os seus aparelhos."),
     },
     "ru": {
-        "share": ("ПЕРЕДАЧА МЕЖДУ ПЛАТФОРМАМИ", "Отправляйте что угодно.\nНа любое устройство.", "Мгновенно, через ваш Wi-Fi. Бесплатно и без аккаунта."),
+        "share": ("ПЕРЕДАЧА МЕЖДУ ПЛАТФОРМАМИ", "Отправляйте что угодно.\nНа любое устройство.", "Мгновенно, через ваш Wi-Fi. Без аккаунта."),
         "link": ("ЗАЩИЩЁННАЯ ССЫЛКА", "Отправьте кому угодно.\nБез приложения.", "Зашифрованная ссылка до 100 ГБ открывается в любом браузере."),
         "qr_beam": ("QR BEAM", "Нет сети?\nС экрана в камеру.", "Без Wi-Fi, точки доступа и Bluetooth. Для текста, ключей и небольших файлов."),
         "rooms": ("КОМНАТЫ", "Один короткий код.\nВсе внутри.", "Делитесь с группой. Каждый берёт то, что ему нужно."),
         "settings": ("ПРИВАТНОСТЬ ПО УМОЛЧАНИЮ", "Сквозное\nшифрование.", "Отправка без регистрации, почты и профиля."),
-        "drive": ("BISHARE DRIVE", "Ваши файлы и фото.\nКлюч только у вас.", "Хранилище со сквозным шифрованием. 5 ГБ бесплатно, больше — с тарифом."),
+        "drive": ("BISHARE DRIVE", "Ваши файлы и фото.\nКлюч только у вас.", "Хранилище со сквозным шифрованием на всех ваших устройствах."),
     },
     "ja": {
-        "share": ("クロスプラットフォーム転送", "なんでも送れる。\nどのデバイスにも。", "自分のWi-Fiですぐに。無料、アカウント不要。"),
+        "share": ("クロスプラットフォーム転送", "なんでも送れる。\nどのデバイスにも。", "自分のWi-Fiですぐに。アカウント不要。"),
         "link": ("安全なリンク", "誰にでも送れる。\nアプリは不要。", "最大100GBの暗号化リンク。どのブラウザでも開けます。"),
         "qr_beam": ("QR BEAM", "ネットワークなし？\n画面からカメラへ。", "Wi-Fi・テザリング・Bluetoothは不要。テキストや鍵、小さなファイルに。"),
         "rooms": ("ルーム", "短いコードひとつで\nみんな参加。", "グループで共有。必要なものをそれぞれ受け取れます。"),
         "settings": ("プライバシー重視の設計", "エンドツーエンドで\n暗号化。", "送信に登録もメールもプロフィールも不要。"),
-        "drive": ("BISHARE DRIVE", "ファイルも写真も。\n鍵を持つのはあなただけ。", "エンドツーエンド暗号化ストレージ。5GBまで無料、プランで追加。"),
+        "drive": ("BISHARE DRIVE", "ファイルも写真も。\n鍵を持つのはあなただけ。", "エンドツーエンド暗号化ストレージ。すべての端末で使えます。"),
     },
     "ko": {
-        "share": ("크로스 플랫폼 전송", "무엇이든 보내세요.\n어떤 기기로든.", "내 Wi-Fi로 바로. 무료, 계정 없이."),
+        "share": ("크로스 플랫폼 전송", "무엇이든 보내세요.\n어떤 기기로든.", "내 Wi-Fi로 바로. 계정 없이."),
         "link": ("안전한 링크", "누구에게나 보내세요.\n앱은 필요 없어요.", "최대 100GB 암호화 링크, 어떤 브라우저에서도 열립니다."),
         "qr_beam": ("QR BEAM", "네트워크가 없나요?\n화면에서 카메라로.", "Wi-Fi, 핫스팟, 블루투스 없이. 텍스트, 키, 작은 파일에 딱."),
         "rooms": ("룸", "짧은 코드 하나로\n모두 입장.", "그룹과 공유하세요. 각자 필요한 것만 받아요."),
         "settings": ("처음부터 프라이빗", "종단간\n암호화.", "가입도, 이메일도, 프로필도 없이 보내세요."),
-        "drive": ("BISHARE DRIVE", "내 파일과 사진.\n키는 나만 가집니다.", "종단간 암호화 저장 공간. 5GB 무료, 플랜으로 더 늘리기."),
+        "drive": ("BISHARE DRIVE", "내 파일과 사진.\n키는 나만 가집니다.", "종단간 암호화 저장 공간. 내 모든 기기에서."),
     },
     "zh-Hans": {
-        "share": ("跨平台传输", "什么都能发，\n发给任何设备。", "通过你自己的 Wi-Fi 即时传输。免费，无需账号。"),
+        "share": ("跨平台传输", "什么都能发，\n发给任何设备。", "通过你自己的 Wi-Fi 即时传输。无需账号。"),
         "link": ("安全链接", "发给任何人，\n无需安装应用。", "最大 100 GB 的加密链接，任何浏览器都能打开。"),
         "qr_beam": ("QR BEAM", "没有网络？\n屏幕对准摄像头。", "无需 Wi-Fi、热点或蓝牙。适合文本、密钥和小文件。"),
         "rooms": ("房间", "一个短码，\n大家都能进。", "与群组分享，每个人各取所需。"),
         "settings": ("隐私优先", "端到端\n加密。", "发送无需注册、邮箱或个人资料。"),
-        "drive": ("BISHARE DRIVE", "你的文件和照片。\n只有你持有密钥。", "端到端加密存储。免费 5 GB，订阅可获得更多。"),
+        "drive": ("BISHARE DRIVE", "你的文件和照片。\n只有你持有密钥。", "端到端加密存储，你的所有设备都能用。"),
     },
     "zh-Hant": {
-        "share": ("跨平台傳輸", "什麼都能傳，\n傳給任何裝置。", "透過你自己的 Wi-Fi 即時傳輸。免費，不需帳號。"),
+        "share": ("跨平台傳輸", "什麼都能傳，\n傳給任何裝置。", "透過你自己的 Wi-Fi 即時傳輸。不需帳號。"),
         "link": ("安全連結", "傳給任何人，\n不需安裝 App。", "最大 100 GB 的加密連結，任何瀏覽器都能開啟。"),
         "qr_beam": ("QR BEAM", "沒有網路？\n螢幕對準相機。", "不需 Wi-Fi、熱點或藍牙。適合文字、金鑰和小檔案。"),
         "rooms": ("房間", "一組短碼，\n大家都能加入。", "與群組分享，每個人各取所需。"),
         "settings": ("隱私優先", "端對端\n加密。", "傳送不需註冊、電子郵件或個人檔案。"),
-        "drive": ("BISHARE DRIVE", "你的檔案和照片。\n只有你持有金鑰。", "端對端加密儲存空間。免費 5 GB，訂閱可取得更多。"),
+        "drive": ("BISHARE DRIVE", "你的檔案和照片。\n只有你持有金鑰。", "端對端加密儲存空間，你的所有裝置都能用。"),
     },
     "ar": {
-        "share": ("نقل بين جميع المنصات", "أرسل أي شيء.\nإلى أي جهاز.", "فورًا عبر شبكة Wi-Fi الخاصة بك. مجانًا وبلا حساب."),
+        "share": ("نقل بين جميع المنصات", "أرسل أي شيء.\nإلى أي جهاز.", "فورًا عبر شبكة Wi-Fi الخاصة بك. بلا حساب."),
         "link": ("رابط آمن", "أرسل لأي شخص.\nدون الحاجة إلى تطبيق.", "رابط مشفّر حتى 100 غيغابايت، يُفتح في أي متصفح."),
         "qr_beam": ("QR BEAM", "لا توجد شبكة؟\nمن الشاشة إلى الكاميرا.", "بلا Wi-Fi أو نقطة اتصال أو بلوتوث. مثالي للنصوص والمفاتيح والملفات الصغيرة."),
         "rooms": ("الغرف", "رمز قصير واحد.\nالجميع في الداخل.", "شارك مع مجموعة، وليأخذ كلٌّ ما يحتاجه."),
         "settings": ("الخصوصية أولًا", "تشفير تام\nبين الطرفين.", "أرسل بلا تسجيل ولا بريد إلكتروني ولا ملف شخصي."),
-        "drive": ("BISHARE DRIVE", "ملفاتك وصورك.\nوالمفتاح معك وحدك.", "تخزين مشفّر من طرف إلى طرف. 5 غيغابايت مجانًا، وأكثر مع خطة."),
+        "drive": ("BISHARE DRIVE", "ملفاتك وصورك.\nوالمفتاح معك وحدك.", "تخزين مشفّر من طرف إلى طرف على كل أجهزتك."),
     },
     "hi": {
-        "share": ("क्रॉस-प्लैटफ़ॉर्म ट्रांसफ़र", "कुछ भी भेजें।\nकिसी भी डिवाइस पर।", "अपने ही Wi-Fi से, तुरंत। मुफ़्त, बिना अकाउंट।"),
+        "share": ("क्रॉस-प्लैटफ़ॉर्म ट्रांसफ़र", "कुछ भी भेजें।\nकिसी भी डिवाइस पर।", "अपने ही Wi-Fi से, तुरंत। बिना अकाउंट।"),
         "link": ("सुरक्षित लिंक", "किसी को भी भेजें।\nऐप की ज़रूरत नहीं।", "100 GB तक का एन्क्रिप्टेड लिंक, किसी भी ब्राउज़र में खुलता है।"),
         "qr_beam": ("QR BEAM", "नेटवर्क नहीं?\nस्क्रीन से कैमरा।", "Wi-Fi, हॉटस्पॉट या Bluetooth के बिना। टेक्स्ट, की और छोटी फ़ाइलों के लिए बढ़िया।"),
         "rooms": ("रूम", "एक छोटा कोड।\nसब अंदर।", "ग्रुप के साथ शेयर करें। हर कोई अपनी ज़रूरत की चीज़ ले।"),
         "settings": ("शुरू से ही प्राइवेट", "एंड-टू-एंड\nएन्क्रिप्टेड।", "भेजने के लिए न साइन-अप, न ईमेल, न प्रोफ़ाइल।"),
-        "drive": ("BISHARE DRIVE", "आपकी फ़ाइलें और फ़ोटो।\nकुंजी सिर्फ़ आपके पास।", "एंड-टू-एंड एन्क्रिप्टेड स्टोरेज। 5 GB मुफ़्त, प्लान से ज़्यादा।"),
+        "drive": ("BISHARE DRIVE", "आपकी फ़ाइलें और फ़ोटो।\nकुंजी सिर्फ़ आपके पास।", "एंड-टू-एंड एन्क्रिप्टेड स्टोरेज, आपके सभी डिवाइस पर।"),
     },
 }
 
@@ -138,7 +140,7 @@ CHIPS: dict[str, dict] = {
         "settings": [("AES-256-GCM", "End-to-end encrypted"), ("No account", "Send without signing up")],
         "drive": [("End-to-end encrypted", "The key stays on your devices"), ("Photo backup", "On · Wi-Fi only")],
         # the Mac has no camera scan: the phone reads the code the Mac shows
-        "_mac": {"drive": [("End-to-end encrypted", "The key stays on your devices"), ("5 GB free", "More space with a plan")], "qr_beam": [("Show a file", "Stream of QR codes"), ("Your phone scans it", "With the BIShare camera")]},
+        "_mac": {"drive": [("End-to-end encrypted", "The key stays on your devices"), ("drive.bishare.app", "Your Drive in a browser")], "qr_beam": [("Show a file", "Stream of QR codes"), ("Your phone scans it", "With the BIShare camera")]},
     },
     "id": {
         "share": [("{self}", "Terlihat · Siap"), ("Terkirim ke Galaxy S25", "1,2 GB · terenkripsi")],
@@ -147,7 +149,7 @@ CHIPS: dict[str, dict] = {
         "rooms": [("Ruangan JK57", "3 perangkat bergabung"), ("Galaxy menerimanya", "Baru saja")],
         "settings": [("AES-256-GCM", "Terenkripsi end-to-end"), ("Tanpa akun", "Kirim tanpa mendaftar")],
         "drive": [("Terenkripsi end-to-end", "Kunci tetap di perangkat Anda"), ("Cadangan foto", "Aktif · Hanya Wi-Fi")],
-        "_mac": {"drive": [("Terenkripsi end-to-end", "Kunci tetap di perangkat Anda"), ("Gratis 5 GB", "Ruang lebih dengan paket")], "qr_beam": [("Tampilkan file", "Rangkaian kode QR"), ("Ponsel memindainya", "Dengan kamera BIShare")]},
+        "_mac": {"drive": [("Terenkripsi end-to-end", "Kunci tetap di perangkat Anda"), ("drive.bishare.app", "Drive Anda di browser")], "qr_beam": [("Tampilkan file", "Rangkaian kode QR"), ("Ponsel memindainya", "Dengan kamera BIShare")]},
     },
     "de": {
         "share": [("{self}", "Sichtbar · Bereit"), ("An Galaxy S25 gesendet", "1,2 GB · verschlüsselt")],
@@ -156,7 +158,7 @@ CHIPS: dict[str, dict] = {
         "rooms": [("Raum JK57", "3 Geräte beigetreten"), ("Galaxy hat sie", "Gerade eben")],
         "settings": [("AES-256-GCM", "Ende-zu-Ende verschlüsselt"), ("Kein Konto", "Senden ohne Registrierung")],
         "drive": [("Ende-zu-Ende verschlüsselt", "Der Schlüssel bleibt auf deinen Geräten"), ("Foto-Backup", "An · nur im WLAN")],
-        "_mac": {"drive": [("Ende-zu-Ende verschlüsselt", "Der Schlüssel bleibt auf deinen Geräten"), ("5 GB gratis", "Mehr Platz mit einem Abo")], "qr_beam": [("Datei zeigen", "Folge von QR-Codes"), ("Das Handy scannt", "Mit der BIShare-Kamera")]},
+        "_mac": {"drive": [("Ende-zu-Ende verschlüsselt", "Der Schlüssel bleibt auf deinen Geräten"), ("drive.bishare.app", "Dein Drive im Browser")], "qr_beam": [("Datei zeigen", "Folge von QR-Codes"), ("Das Handy scannt", "Mit der BIShare-Kamera")]},
     },
     "fr": {
         "share": [("{self}", "Visible · Prêt"), ("Envoyé à Galaxy S25", "1,2\u00a0Go · chiffré")],
@@ -165,7 +167,7 @@ CHIPS: dict[str, dict] = {
         "rooms": [("Salon JK57", "3 appareils connectés"), ("Galaxy l'a reçu", "À l'instant")],
         "settings": [("AES-256-GCM", "Chiffré de bout en bout"), ("Aucun compte", "Envoi sans inscription")],
         "drive": [("Chiffré de bout en bout", "La clé reste sur vos appareils"), ("Sauvegarde des photos", "Activée · Wi-Fi uniquement")],
-        "_mac": {"drive": [("Chiffré de bout en bout", "La clé reste sur vos appareils"), ("5\u00a0Go gratuits", "Plus d'espace avec une offre")], "qr_beam": [("Afficher un fichier", "Suite de codes QR"), ("Le téléphone le scanne", "Avec la caméra BIShare")]},
+        "_mac": {"drive": [("Chiffré de bout en bout", "La clé reste sur vos appareils"), ("drive.bishare.app", "Votre Drive dans le navigateur")], "qr_beam": [("Afficher un fichier", "Suite de codes QR"), ("Le téléphone le scanne", "Avec la caméra BIShare")]},
     },
     "es": {
         "share": [("{self}", "Visible · Listo"), ("Enviado a Galaxy S25", "1,2 GB · cifrado")],
@@ -174,7 +176,7 @@ CHIPS: dict[str, dict] = {
         "rooms": [("Sala JK57", "3 dispositivos dentro"), ("Galaxy lo recibió", "Ahora mismo")],
         "settings": [("AES-256-GCM", "Cifrado de extremo a extremo"), ("Sin cuenta", "Envía sin registrarte")],
         "drive": [("Cifrado de extremo a extremo", "La clave se queda en tus dispositivos"), ("Copia de fotos", "Activada · solo Wi-Fi")],
-        "_mac": {"drive": [("Cifrado de extremo a extremo", "La clave se queda en tus dispositivos"), ("5 GB gratis", "Más espacio con un plan")], "qr_beam": [("Mostrar un archivo", "Serie de códigos QR"), ("Tu teléfono lo escanea", "Con la cámara de BIShare")]},
+        "_mac": {"drive": [("Cifrado de extremo a extremo", "La clave se queda en tus dispositivos"), ("drive.bishare.app", "Tu Drive en el navegador")], "qr_beam": [("Mostrar un archivo", "Serie de códigos QR"), ("Tu teléfono lo escanea", "Con la cámara de BIShare")]},
     },
     "pt-BR": {
         "share": [("{self}", "Visível · Pronto"), ("Enviado para Galaxy S25", "1,2 GB · criptografado")],
@@ -183,7 +185,7 @@ CHIPS: dict[str, dict] = {
         "rooms": [("Sala JK57", "3 aparelhos conectados"), ("Galaxy recebeu", "Agora mesmo")],
         "settings": [("AES-256-GCM", "Criptografia de ponta a ponta"), ("Sem conta", "Envie sem cadastro")],
         "drive": [("Criptografia de ponta a ponta", "A chave fica nos seus aparelhos"), ("Backup de fotos", "Ativado · só Wi-Fi")],
-        "_mac": {"drive": [("Criptografia de ponta a ponta", "A chave fica nos seus aparelhos"), ("5 GB grátis", "Mais espaço com um plano")], "qr_beam": [("Mostrar um arquivo", "Sequência de códigos QR"), ("O celular escaneia", "Com a câmera do BIShare")]},
+        "_mac": {"drive": [("Criptografia de ponta a ponta", "A chave fica nos seus aparelhos"), ("drive.bishare.app", "Seu Drive no navegador")], "qr_beam": [("Mostrar um arquivo", "Sequência de códigos QR"), ("O celular escaneia", "Com a câmera do BIShare")]},
     },
     "ru": {
         "share": [("{self}", "Виден · Готов"), ("Отправлено на Galaxy S25", "1,2 ГБ · зашифровано")],
@@ -192,7 +194,7 @@ CHIPS: dict[str, dict] = {
         "rooms": [("Комната JK57", "3 устройства в комнате"), ("Galaxy получил", "Только что")],
         "settings": [("AES-256-GCM", "Сквозное шифрование"), ("Без аккаунта", "Отправка без регистрации")],
         "drive": [("Сквозное шифрование", "Ключ остаётся на ваших устройствах"), ("Резервная копия фото", "Вкл. · только Wi-Fi")],
-        "_mac": {"drive": [("Сквозное шифрование", "Ключ остаётся на ваших устройствах"), ("5 ГБ бесплатно", "Больше места с тарифом")], "qr_beam": [("Показать файл", "Поток QR-кодов"), ("Телефон сканирует", "Камерой в BIShare")]},
+        "_mac": {"drive": [("Сквозное шифрование", "Ключ остаётся на ваших устройствах"), ("drive.bishare.app", "Ваш Drive в браузере")], "qr_beam": [("Показать файл", "Поток QR-кодов"), ("Телефон сканирует", "Камерой в BIShare")]},
     },
     "ja": {
         "share": [("{self}", "表示中・準備完了"), ("Galaxy S25に送信済み", "1.2 GB・暗号化")],
@@ -201,7 +203,7 @@ CHIPS: dict[str, dict] = {
         "rooms": [("ルーム JK57", "3台が参加中"), ("Galaxyが受信", "たった今")],
         "settings": [("AES-256-GCM", "エンドツーエンド暗号化"), ("アカウント不要", "登録なしで送信")],
         "drive": [("エンドツーエンド暗号化", "鍵はあなたの端末に"), ("写真のバックアップ", "オン・Wi-Fiのみ")],
-        "_mac": {"drive": [("エンドツーエンド暗号化", "鍵はあなたの端末に"), ("5GBまで無料", "プランで容量を追加")], "qr_beam": [("ファイルを表示", "QRコードを連続表示"), ("スマホで読み取り", "BIShareのカメラで")]},
+        "_mac": {"drive": [("エンドツーエンド暗号化", "鍵はあなたの端末に"), ("drive.bishare.app", "ブラウザでDriveを開く")], "qr_beam": [("ファイルを表示", "QRコードを連続表示"), ("スマホで読み取り", "BIShareのカメラで")]},
     },
     "ko": {
         "share": [("{self}", "표시됨 · 준비 완료"), ("Galaxy S25로 전송됨", "1.2GB · 암호화")],
@@ -210,7 +212,7 @@ CHIPS: dict[str, dict] = {
         "rooms": [("룸 JK57", "3대 참여 중"), ("Galaxy가 받음", "방금")],
         "settings": [("AES-256-GCM", "종단간 암호화"), ("계정 없음", "가입 없이 보내기")],
         "drive": [("종단간 암호화", "키는 내 기기에 남습니다"), ("사진 백업", "켜짐 · Wi-Fi에서만")],
-        "_mac": {"drive": [("종단간 암호화", "키는 내 기기에 남습니다"), ("5GB 무료", "플랜으로 공간 추가")], "qr_beam": [("파일 보여주기", "연속 QR 코드"), ("휴대폰으로 스캔", "BIShare 카메라로")]},
+        "_mac": {"drive": [("종단간 암호화", "키는 내 기기에 남습니다"), ("drive.bishare.app", "브라우저에서 내 Drive")], "qr_beam": [("파일 보여주기", "연속 QR 코드"), ("휴대폰으로 스캔", "BIShare 카메라로")]},
     },
     "zh-Hans": {
         "share": [("{self}", "可见 · 就绪"), ("已发送到 Galaxy S25", "1.2 GB · 已加密")],
@@ -219,7 +221,7 @@ CHIPS: dict[str, dict] = {
         "rooms": [("房间 JK57", "3 台设备已加入"), ("Galaxy 已收到", "刚刚")],
         "settings": [("AES-256-GCM", "端到端加密"), ("无需账号", "无需注册即可发送")],
         "drive": [("端到端加密", "密钥留在你的设备上"), ("照片备份", "已开启 · 仅 Wi-Fi")],
-        "_mac": {"drive": [("端到端加密", "密钥留在你的设备上"), ("免费 5 GB", "订阅获得更多空间")], "qr_beam": [("显示文件", "连续的二维码"), ("用手机扫描", "使用 BIShare 相机")]},
+        "_mac": {"drive": [("端到端加密", "密钥留在你的设备上"), ("drive.bishare.app", "在浏览器中打开 Drive")], "qr_beam": [("显示文件", "连续的二维码"), ("用手机扫描", "使用 BIShare 相机")]},
     },
     "zh-Hant": {
         "share": [("{self}", "可見 · 就緒"), ("已傳送到 Galaxy S25", "1.2 GB · 已加密")],
@@ -228,7 +230,7 @@ CHIPS: dict[str, dict] = {
         "rooms": [("房間 JK57", "3 台裝置已加入"), ("Galaxy 已收到", "剛剛")],
         "settings": [("AES-256-GCM", "端對端加密"), ("不需帳號", "無須註冊即可傳送")],
         "drive": [("端對端加密", "金鑰留在你的裝置上"), ("照片備份", "已開啟 · 僅限 Wi-Fi")],
-        "_mac": {"drive": [("端對端加密", "金鑰留在你的裝置上"), ("免費 5 GB", "訂閱取得更多空間")], "qr_beam": [("顯示檔案", "連續的 QR 碼"), ("用手機掃描", "使用 BIShare 相機")]},
+        "_mac": {"drive": [("端對端加密", "金鑰留在你的裝置上"), ("drive.bishare.app", "在瀏覽器中打開 Drive")], "qr_beam": [("顯示檔案", "連續的 QR 碼"), ("用手機掃描", "使用 BIShare 相機")]},
     },
     "ar": {
         "share": [("{self}", "مرئي · جاهز"), ("أُرسل إلى Galaxy S25", "1.2 غيغابايت · مشفّر")],
@@ -237,7 +239,7 @@ CHIPS: dict[str, dict] = {
         "rooms": [("الغرفة JK57", "انضمت 3 أجهزة"), ("استلمه Galaxy", "الآن")],
         "settings": [("AES-256-GCM", "تشفير تام بين الطرفين"), ("بلا حساب", "أرسل دون تسجيل")],
         "drive": [("مشفّر من طرف إلى طرف", "يبقى المفتاح على أجهزتك"), ("نسخ الصور احتياطيًا", "مفعّل · عبر Wi-Fi فقط")],
-        "_mac": {"drive": [("مشفّر من طرف إلى طرف", "يبقى المفتاح على أجهزتك"), ("5 غيغابايت مجانًا", "مساحة أكبر مع خطة")], "qr_beam": [("اعرض ملفًا", "سلسلة رموز QR"), ("يمسحه هاتفك", "بكاميرا BIShare")]},
+        "_mac": {"drive": [("مشفّر من طرف إلى طرف", "يبقى المفتاح على أجهزتك"), ("drive.bishare.app", "Drive في المتصفح")], "qr_beam": [("اعرض ملفًا", "سلسلة رموز QR"), ("يمسحه هاتفك", "بكاميرا BIShare")]},
     },
     "hi": {
         "share": [("{self}", "दिख रहा है · तैयार"), ("Galaxy S25 को भेजा गया", "1.2 GB · एन्क्रिप्टेड")],
@@ -246,6 +248,6 @@ CHIPS: dict[str, dict] = {
         "rooms": [("रूम JK57", "3 डिवाइस जुड़े"), ("Galaxy को मिल गया", "अभी-अभी")],
         "settings": [("AES-256-GCM", "एंड-टू-एंड एन्क्रिप्टेड"), ("कोई अकाउंट नहीं", "बिना साइन-अप के भेजें")],
         "drive": [("एंड-टू-एंड एन्क्रिप्टेड", "कुंजी आपके डिवाइस पर रहती है"), ("फ़ोटो बैकअप", "चालू · सिर्फ़ Wi-Fi")],
-        "_mac": {"drive": [("एंड-टू-एंड एन्क्रिप्टेड", "कुंजी आपके डिवाइस पर रहती है"), ("5 GB मुफ़्त", "प्लान से ज़्यादा जगह")], "qr_beam": [("फ़ाइल दिखाएँ", "QR कोड की लड़ी"), ("फ़ोन स्कैन करता है", "BIShare कैमरे से")]},
+        "_mac": {"drive": [("एंड-टू-एंड एन्क्रिप्टेड", "कुंजी आपके डिवाइस पर रहती है"), ("drive.bishare.app", "ब्राउज़र में आपका Drive")], "qr_beam": [("फ़ाइल दिखाएँ", "QR कोड की लड़ी"), ("फ़ोन स्कैन करता है", "BIShare कैमरे से")]},
     },
 }
