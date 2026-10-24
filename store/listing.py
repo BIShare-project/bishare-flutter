@@ -28,8 +28,10 @@ macOS) and Google Play. Adapted from the games repo's store_listing.py.
                (play_tablet) screenshots; committed at the end.
 --play-notes T sets what's new on the newest release of track T.
 --play-release T  in the same edit as --play: the internal-track release of
-               this pubspec build goes to track T, fully rolled out, with
-               what's new; one commit, one review for listing and release.
+               this pubspec build (or its draft on track T, when the bundle
+               was uploaded in Play Console) goes to track T, fully rolled
+               out, with what's new; one commit, one review for listing and
+               release.
 --asc-submit   for IOS and MAC_OS: the processed build of this pubspec build
                number is attached to the editable version (export compliance
                "no non-exempt encryption", as every earlier build) and the
@@ -379,7 +381,13 @@ def push_play(listing: dict, root: pathlib.Path | None, dry: bool, release_track
         st, internal = call("GET", f"{base}/edits/{edit}/tracks/internal", token)
         rel = next((r for r in internal.get("releases", []) if code in r.get("versionCodes", [])), None)
         if rel is None:
-            print(f"play: build {code} is not on the internal track yet")
+            # A bundle uploaded by hand in Play Console (the API upload can be
+            # refused until a declaration is answered there) waits as a draft
+            # on the target track.
+            st, target = call("GET", f"{base}/edits/{edit}/tracks/{release_track}", token)
+            rel = next((r for r in target.get("releases", []) if code in r.get("versionCodes", []) and r.get("status") == "draft"), None)
+        if rel is None:
+            print(f"play: build {code} is not on the internal track, nor a draft on {release_track}")
             failed += 1
         else:
             notes = [{"language": lang, "text": l["whatsNew"]} for lang, l in listing["play"].items()]
