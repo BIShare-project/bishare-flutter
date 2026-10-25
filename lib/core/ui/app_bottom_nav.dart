@@ -1,8 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../theme/app_tokens.dart';
+import '../theme/app_type.dart';
 import 'app_format.dart';
 import 'app_svg_icon.dart';
 
@@ -10,14 +9,15 @@ import 'app_svg_icon.dart';
 class AppNavItem {
   const AppNavItem({required this.icon, required this.label, this.badge = 0});
 
-  /// An [AppIcons] name — the destination is drawn with an [AppSvgIcon].
+  /// An [AppIcons] name: the destination is drawn with an [AppSvgIcon].
   final String icon;
   final String label;
   final int badge;
 }
 
-/// A premium frosted-glass tab bar (iOS-style): translucent blurred surface, a
-/// hairline top border, and accent-tinted active items with an optional badge.
+/// The phone tab bar: a solid bar with a hairline on top (no blur, which is
+/// the most expensive effect Flutter draws), the accent and its corner dot on
+/// the active tab only, and an optional count badge.
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
@@ -32,34 +32,27 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-        child: Container(
-          decoration: BoxDecoration(
-            color: cs.background.withValues(alpha: 0.82),
-            border: Border(
-              top: BorderSide(color: cs.border.withValues(alpha: 0.6)),
-            ),
-          ),
-          child: SafeArea(
-            top: false,
-            child: SizedBox(
-              height: 56,
-              child: Row(
-                children: [
-                  for (var i = 0; i < items.length; i++)
-                    Expanded(
-                      child: _NavButton(
-                        item: items[i],
-                        active: i == currentIndex,
-                        onTap: () => onTap(i),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+    final t = context.tokens;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: t.bg,
+        border: Border(top: BorderSide(color: t.line)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 58,
+          child: Row(
+            children: [
+              for (var i = 0; i < items.length; i++)
+                Expanded(
+                  child: _NavButton(
+                    item: items[i],
+                    active: i == currentIndex,
+                    onTap: () => onTap(i),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -80,64 +73,82 @@ class _NavButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    final color = active ? cs.primary : cs.mutedForeground;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        tapHaptic();
-        onTap();
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              AppSvgIcon(item.icon, size: 24, color: color),
-              if (item.badge > 0)
-                Positioned(
-                  right: -7,
-                  top: -4,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 1,
-                    ),
-                    constraints: const BoxConstraints(minWidth: 15),
-                    decoration: BoxDecoration(
-                      color: cs.destructive,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: cs.background, width: 1.5),
-                    ),
-                    child: Text(
-                      '${item.badge}',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 9,
-                        height: 1.25,
-                        fontWeight: FontWeight.w700,
-                        color: cs.destructiveForeground,
-                      ),
-                    ),
+    final t = context.tokens;
+    final color = active ? t.accent : t.text3;
+    return Semantics(
+      button: true,
+      selected: active,
+      label: item.badge > 0 ? '${item.label}, ${item.badge}' : item.label,
+      excludeSemantics: true,
+      child: InkResponse(
+        onTap: () {
+          if (!active) tapHaptic();
+          onTap();
+        },
+        radius: 36,
+        highlightShape: BoxShape.circle,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AppSvgIcon(item.icon, size: 24, color: color, dot: active),
+                if (item.badge > 0)
+                  PositionedDirectional(
+                    end: -9,
+                    top: -5,
+                    child: _Badge(count: item.badge),
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 3),
-          // One line, always: a long label ("Bandeja de entrada") wrapped to
-          // two lines and pushed the bar 3 px past its height.
-          Text(
-            item.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-              color: color,
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            // One line, always: a long label ("Bandeja de entrada") wrapped to
+            // two lines and pushed the bar past its height.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Text(
+                item.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppType.nav.copyWith(
+                  color: color,
+                  fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  const _Badge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4.5),
+      constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
+      decoration: BoxDecoration(
+        color: t.danger,
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: t.bg, width: 1.5),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        count > 99 ? '99+' : '$count',
+        style: AppType.small.copyWith(
+          fontSize: 10.5,
+          height: 1.2,
+          fontWeight: FontWeight.w600,
+          color: t.onDanger,
+        ),
       ),
     );
   }

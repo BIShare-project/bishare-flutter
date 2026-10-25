@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../theme/app_tokens.dart';
+import '../theme/app_type.dart';
 import 'app_bottom_nav.dart' show AppNavItem;
 import 'app_format.dart';
 import 'app_svg_icon.dart';
 
-/// A desktop / tablet-landscape side navigation rail (the wide-layout counterpart
-/// to [AppBottomNav]). Brand wordmark on top, then vertical nav items with an
-/// accent-tinted pill for the active one and an optional count badge.
+/// The side navigation for desktop and tablet landscape (the wide-layout
+/// counterpart to [AppBottomNav]): the wordmark, then the destinations, the
+/// active one on a sunken pill with the accent icon.
 class AppNavRail extends StatelessWidget {
   const AppNavRail({
     super.key,
     required this.items,
     required this.currentIndex,
     required this.onTap,
-    this.width = 236,
+    this.width = 216,
+    this.footer,
   });
 
   final List<AppNavItem> items;
@@ -22,16 +24,17 @@ class AppNavRail extends StatelessWidget {
   final ValueChanged<int> onTap;
   final double width;
 
+  /// Shown at the bottom of the rail (this device and its visibility).
+  final Widget? footer;
+
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Container(
       width: width,
       decoration: BoxDecoration(
-        color: cs.card,
-        border: Border(
-          right: BorderSide(color: cs.border.withValues(alpha: 0.7)),
-        ),
+        color: t.surface,
+        border: BorderDirectional(end: BorderSide(color: t.line)),
       ),
       child: SafeArea(
         right: false,
@@ -39,40 +42,13 @@ class AppNavRail extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(22, 22, 20, 18),
-              child: Row(
-                children: [
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          cs.primary,
-                          Color.lerp(cs.primary, Colors.black, 0.24)!,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: const AppSvgIcon(
-                      AppIcons.send,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'BIShare',
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
-                      color: cs.foreground,
-                    ),
-                  ),
-                ],
+              padding: const EdgeInsetsDirectional.fromSTEB(22, 22, 20, 14),
+              child: Text(
+                'BIShare',
+                style: AppType.pageTitle.copyWith(
+                  color: t.text,
+                  letterSpacing: -0.2,
+                ),
               ),
             ),
             for (var i = 0; i < items.length; i++)
@@ -82,6 +58,7 @@ class AppNavRail extends StatelessWidget {
                 onTap: () => onTap(i),
               ),
             const Spacer(),
+            ?footer,
           ],
         ),
       ),
@@ -102,60 +79,72 @@ class _RailItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    final color = active ? cs.primary : cs.mutedForeground;
+    final t = context.tokens;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            tapHaptic();
-            onTap();
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            decoration: BoxDecoration(
-              color: active ? cs.primary.withValues(alpha: 0.12) : null,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                AppSvgIcon(item.icon, size: 22, color: color),
-                const SizedBox(width: 12),
-                Text(
-                  item.label,
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                    color: active ? cs.foreground : cs.mutedForeground,
-                  ),
-                ),
-                const Spacer(),
-                if (item.badge > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 1,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
+      child: Semantics(
+        button: true,
+        selected: active,
+        child: Material(
+          color: active ? t.sunken : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            onTap: () {
+              if (!active) tapHaptic();
+              onTap();
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 42),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Row(
+                  children: [
+                    AppSvgIcon(
+                      item.icon,
+                      size: 21,
+                      color: active ? t.accent : t.text2,
+                      dot: active,
                     ),
-                    constraints: const BoxConstraints(minWidth: 18),
-                    decoration: BoxDecoration(
-                      color: cs.primary,
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Text(
-                      '${item.badge}',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.3,
-                        fontWeight: FontWeight.w700,
-                        color: cs.primaryForeground,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        item.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppType.row.copyWith(
+                          fontSize: 14.5,
+                          fontWeight: active
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          color: active ? t.text : t.text2,
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                    if (item.badge > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        constraints: const BoxConstraints(
+                          minWidth: 20,
+                          minHeight: 20,
+                        ),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: t.accentStrong,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          item.badge > 99 ? '99+' : '${item.badge}',
+                          style: AppType.small.copyWith(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: t.onAccent,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

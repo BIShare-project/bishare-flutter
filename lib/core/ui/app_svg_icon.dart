@@ -103,15 +103,14 @@ class AppIcons {
   static const zap = 'zap';
 }
 
-/// Remaps the SVGs' authored brand accent (indigo `#6366F1`) to a runtime
-/// [accent] so the duotone accent follows the active shadcn theme instead of a
-/// hardcoded color.
+/// Remaps the SVGs' authored duotone colour (indigo `#6366F1`) to a runtime
+/// [accent].
 class _AccentColorMapper extends ColorMapper {
   const _AccentColorMapper(this.accent);
 
   final Color accent;
 
-  /// The indigo baked into every glyph in `assets/icon/svg/`.
+  /// The indigo baked into the duotone fills of `assets/icon/svg/`.
   static const int _brandAccent = 0xFF6366F1;
 
   @override
@@ -132,17 +131,31 @@ class _AccentColorMapper extends ColorMapper {
 
 /// Renders a BIShare SVG icon by its [AppIcons] name.
 ///
-/// The stroke work is tinted with [color] (mapped to the SVG's `currentColor`),
-/// while the duotone brand accent follows the active theme's primary color. When
-/// [color] is null the ambient [IconTheme] / text color is used, matching how a
-/// Material [Icon] inherits its color.
+/// The stroke work and the soft duotone fill both follow [color] (mapped to
+/// the SVG's `currentColor`), so an icon reads as one colour. [dot] adds the
+/// set's small accent dot at the top-right corner: the redesign keeps it for
+/// the active tab only (redesign-plan.md "Components"). When [color] is null
+/// the ambient [IconTheme] / text colour is used, as a Material [Icon] does.
 class AppSvgIcon extends StatelessWidget {
-  const AppSvgIcon(this.name, {super.key, this.size = 24, this.color});
+  const AppSvgIcon(
+    this.name, {
+    super.key,
+    this.size = 24,
+    this.color,
+    this.accent,
+    this.dot = false,
+  });
 
   /// One of the [AppIcons] constants (the file name without extension).
   final String name;
   final double size;
   final Color? color;
+
+  /// The duotone fill; defaults to [color].
+  final Color? accent;
+
+  /// Draw the accent dot at the top-right corner (the active tab).
+  final bool dot;
 
   /// Our glyphs fill the 24-unit viewBox nearly edge-to-edge, whereas Material /
   /// Lucide icons carry built-in optical padding. We render the artwork slightly
@@ -155,22 +168,48 @@ class AppSvgIcon extends StatelessWidget {
     // Inherit color the way a Material [Icon] does: explicit color first, then
     // the ambient IconTheme (set by ShadIconButton, list tiles, etc.), then the
     // default text color.
-    final tint = color ??
+    final tint =
+        color ??
         IconTheme.of(context).color ??
         DefaultTextStyle.of(context).style.color ??
         const Color(0xFF000000);
-    final accent = ShadTheme.of(context).colorScheme.primary;
+    final glyph = size * _glyphScale;
+    final picture = SvgPicture.asset(
+      'assets/icon/svg/$name.svg',
+      width: glyph,
+      height: glyph,
+      theme: SvgTheme(currentColor: tint),
+      colorMapper: _AccentColorMapper(accent ?? tint),
+    );
     return SizedBox(
       width: size,
       height: size,
       child: Center(
-        child: SvgPicture.asset(
-          'assets/icon/svg/$name.svg',
-          width: size * _glyphScale,
-          height: size * _glyphScale,
-          theme: SvgTheme(currentColor: tint),
-          colorMapper: _AccentColorMapper(accent),
-        ),
+        child: dot
+            ? SizedBox(
+                width: glyph,
+                height: glyph,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    picture,
+                    // Where the artwork drew its dot: (20.5, 3.5) of 24.
+                    Positioned(
+                      left: glyph * (20.5 - 1.5) / 24,
+                      top: glyph * (3.5 - 1.5) / 24,
+                      child: Container(
+                        width: glyph * 3 / 24,
+                        height: glyph * 3 / 24,
+                        decoration: BoxDecoration(
+                          color: ShadTheme.of(context).colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : picture,
       ),
     );
   }
