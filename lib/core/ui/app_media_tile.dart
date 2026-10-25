@@ -5,7 +5,7 @@ import '../theme/app_type.dart';
 import 'app_format.dart';
 import 'app_svg_icon.dart';
 
-/// One square in a photo or video grid, the same in Kirim, Kotak Masuk and
+/// One square in a photo or video grid, the same in Send, Inbox and
 /// Drive. Selected, the picture shrinks into an accent frame and carries its
 /// send order. The picture is scaled with a transform, so selecting repaints
 /// this tile only and never relayouts the grid.

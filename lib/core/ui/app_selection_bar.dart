@@ -21,7 +21,7 @@ class AppBarAction {
 }
 
 /// The floating bar that appears while something is selected, the same on
-/// every screen (Kirim, Kotak Masuk, Drive): clear on the leading side, the
+/// every screen (Send, Inbox, Drive): clear on the leading side, the
 /// [summary] in the middle, then either [actions] or one [primary] button.
 /// It carries the BIShare gradient ("sending") and slides in with a
 /// transform, so showing it never relayouts the screen.
@@ -44,7 +44,7 @@ class AppSelectionBar extends StatelessWidget {
   final VoidCallback? onSummaryTap;
   final List<AppBarAction> actions;
 
-  /// One white button at the end ("Kirim"). Wins over [actions].
+  /// One white button at the end ("Send"). Wins over [actions].
   final (String label, VoidCallback onTap)? primary;
 
   @override

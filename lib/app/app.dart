@@ -22,6 +22,7 @@ import 'router.dart';
 import '../features/receive/presentation/receive_cubit.dart';
 import '../features/send/data/transfer_client.dart';
 import '../features/send/presentation/send_cubit.dart';
+import '../features/send/presentation/send_selection_cubit.dart';
 import '../features/send/presentation/tray_cubit.dart';
 import '../features/settings/domain/settings.dart';
 import '../features/settings/presentation/settings_cubit.dart';
@@ -84,6 +85,9 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
           create: (_) => SendCubit(getIt(), getIt(), getIt(), review: getIt()),
         ),
         BlocProvider(create: (_) => TrayCubit(getIt())),
+        BlocProvider(
+          create: (context) => SendSelectionCubit(context.read<TrayCubit>()),
+        ),
         BlocProvider(create: (_) => FavoritesCubit(getIt())),
         BlocProvider(create: (_) => DevicesCubit(getIt(), getIt(), getIt())),
         BlocProvider(create: (_) => ClipboardCubit(getIt(), getIt())),

@@ -32,9 +32,16 @@ class TrayCubit extends Cubit<List<SendableFile>> {
   Future<void> pickMedia() async {
     final picked = await pickMediaPaths();
     if (picked.isEmpty) return;
+    await stageMedia(picked);
+  }
+
+  /// Stage photos and videos already on disk (the Kirim gallery exports them
+  /// when sending), compressing images to the current [MediaQuality]. Returns
+  /// the staged files in the order given.
+  Future<List<SendableFile>> stageMedia(List<String> paths) async {
     final q = _quality.params;
     final resolved = <String>[];
-    for (final path in picked) {
+    for (final path in paths) {
       if (_isImage(path)) {
         resolved.add(
           await MediaSources.compressImage(
@@ -47,7 +54,22 @@ class TrayCubit extends Cubit<List<SendableFile>> {
         resolved.add(path);
       }
     }
-    _addPaths(resolved);
+    return _addPaths(resolved);
+  }
+
+  /// Stage files as they are (documents received earlier).
+  List<SendableFile> addPaths(List<String> paths) => _addPaths(paths);
+
+  /// Put the tray in the order of [ids] (the order the user picked in);
+  /// files not named keep their place after them.
+  void reorder(List<String> ids) {
+    final byId = {for (final f in state) f.id: f};
+    final ordered = [
+      for (final id in ids)
+        if (byId.containsKey(id)) byId.remove(id)!,
+      ...state.where((f) => byId.containsKey(f.id)),
+    ];
+    emit(ordered);
   }
 
   /// Pick any files.
@@ -68,7 +90,7 @@ class TrayCubit extends Cubit<List<SendableFile>> {
   /// holding base + splits for an App Bundle install. Each is copied
   /// out of `/data/app` first: that path vanishes if the app updates or
   /// uninstalls mid-transfer, and the copy carries a receiver-friendly name.
-  Future<void> stageApks(List<InstalledApp> apps) async {
+  Future<List<SendableFile>> stageApks(List<InstalledApp> apps) async {
     final resolved = <String>[];
     for (final app in apps) {
       try {
@@ -84,7 +106,7 @@ class TrayCubit extends Cubit<List<SendableFile>> {
         // App uninstalled/updated between listing and staging — skip it.
       }
     }
-    _addPaths(resolved);
+    return _addPaths(resolved);
   }
 
   /// Stage a typed note as a `.txt`.
@@ -146,13 +168,25 @@ class TrayCubit extends Cubit<List<SendableFile>> {
     _addPaths(resolved);
   }
 
-  void _addPaths(Iterable<String> paths) {
-    final added = paths
-        .where((path) => state.every((f) => f.path != path)) // de-dup
-        .map((path) => SendableFile.fromPath(path, id: _uuid.v4()))
-        .toList();
-    if (added.isEmpty) return;
-    emit([...state, ...added]);
+  /// Adds [paths] not already staged; returns the staged file for every path
+  /// (an already-staged path returns the existing entry), in order.
+  List<SendableFile> _addPaths(Iterable<String> paths) {
+    final out = <SendableFile>[];
+    final added = <SendableFile>[];
+    for (final path in paths) {
+      final existing =
+          state.where((f) => f.path == path).firstOrNull ??
+          added.where((f) => f.path == path).firstOrNull;
+      if (existing != null) {
+        out.add(existing);
+        continue;
+      }
+      final f = SendableFile.fromPath(path, id: _uuid.v4());
+      added.add(f);
+      out.add(f);
+    }
+    if (added.isNotEmpty) emit([...state, ...added]);
+    return out;
   }
 
   bool _isImage(String path) =>

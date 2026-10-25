@@ -67,6 +67,15 @@ String fileIcon(String mime) {
   if (mime.startsWith('video/')) return AppIcons.fileVideo;
   if (mime.startsWith('audio/')) return AppIcons.fileAudio;
   if (mime.contains('pdf')) return AppIcons.filePdf;
+  if (mime.contains('spreadsheet') ||
+      mime.contains('excel') ||
+      mime.contains('csv')) {
+    return AppIcons.fileSpreadsheet;
+  }
+  if (mime.contains('presentation') || mime.contains('powerpoint')) {
+    return AppIcons.fileImage;
+  }
+  if (mime.contains('android.package')) return AppIcons.gridView;
   if (mime.startsWith('text/')) return AppIcons.fileDocument;
   if (mime.contains('zip') || mime.contains('archive')) {
     return AppIcons.fileArchive;

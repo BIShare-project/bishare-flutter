@@ -7,7 +7,7 @@ import 'package:flutter/painting.dart';
 abstract final class AppType {
   static const _tabular = [FontFeature.tabularFigures()];
 
-  /// Tab titles ("Kotak Masuk", "Drive").
+  /// Tab titles ("Inbox", "Drive").
   static const title = TextStyle(
     fontSize: 27,
     fontWeight: FontWeight.w600,
@@ -15,7 +15,7 @@ abstract final class AppType {
     height: 1.15,
   );
 
-  /// The device name in the Kirim header.
+  /// The device name in the Send header.
   static const deviceName = TextStyle(
     fontSize: 21,
     fontWeight: FontWeight.w600,

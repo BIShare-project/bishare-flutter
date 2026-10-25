@@ -16,7 +16,10 @@ import 'device_row.dart';
 import 'invite_device_sheet.dart';
 
 class DeviceSection extends StatelessWidget {
-  const DeviceSection({super.key});
+  const DeviceSection({super.key, this.list = false});
+
+  /// Always rows, never the wide grid (a side pane, a sheet).
+  final bool list;
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +57,7 @@ class DeviceSection extends StatelessWidget {
                   const _OtherWays(),
                 ] else ...[
                   if (devices.isNotEmpty)
-                    if (context.isWideLayout)
+                    if (context.isWideLayout && !list)
                       DeviceGrid(devices: devices)
                     else
                       AppGroup(

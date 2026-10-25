@@ -39,13 +39,24 @@ class FeatureFlags extends ChangeNotifier {
   /// The one-time question about a paid storage product (the card in
   /// `features/home/widgets/drive_interest_card.dart`). Off unless an admin
   /// turns `drive_interest_enabled` on.
-  bool get driveInterestEnabled => _boolFlag('drive_interest_enabled', orElse: false);
+  bool get driveInterestEnabled =>
+      _boolFlag('drive_interest_enabled', orElse: false);
 
   /// The app↔web Nearby bridge (app appears in the browser Nearby tab on the
   /// same network, and vice versa). ON by default in code — the remote flag is
   /// purely a kill-switch (set `app_web_nearby_enabled=false` in admin Flags
   /// to disable remotely); no flag row is required for the feature to work.
-  bool get webNearbyEnabled => _boolFlag('app_web_nearby_enabled', orElse: true);
+  bool get webNearbyEnabled =>
+      _boolFlag('app_web_nearby_enabled', orElse: true);
+
+  /// The in-app photo and video grid of the Send tab on Android
+  /// (redesign-plan.md D3). Google approved READ_MEDIA_IMAGES/VIDEO for Drive
+  /// backup, and the declaration says sending uses the system picker, so a
+  /// store build keeps the picker until the updated declaration is approved
+  /// and an admin turns `send_gallery_android` on. Debug and profile builds
+  /// show the grid, for testing.
+  bool get sendGalleryAndroid =>
+      !kReleaseMode || _boolFlag('send_gallery_android', orElse: false);
 
   /// BIShare Drive (code name "vault"). The server flag `vault_enabled` is
   /// `true` (open to everyone), `"internal"` (testers on the server's

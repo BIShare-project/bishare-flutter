@@ -7,7 +7,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/ui/app_ui.dart';
 import '../../../core/io/picked_mtime.dart';
-import '../../send/presentation/tray_cubit.dart';
+import '../../send/presentation/send_selection_cubit.dart';
 import '../../web_nearby/data/web_nearby_service.dart';
 import '../../web_nearby/presentation/web_nearby_cubit.dart';
 
@@ -16,17 +16,23 @@ import '../../web_nearby/presentation/web_nearby_cubit.dart';
 /// tray; with an empty tray it opens the file picker. Bytes go browser-ward
 /// over WebRTC; results surface as the main-shell toasts.
 class BrowserDeviceRow extends StatelessWidget {
-  const BrowserDeviceRow({super.key, required this.peer, required this.sending});
+  const BrowserDeviceRow({
+    super.key,
+    required this.peer,
+    required this.sending,
+  });
 
   final WebNearbyPeer peer;
   final bool sending;
 
   Future<void> _send(BuildContext context) async {
     final cubit = context.read<WebNearbyCubit>();
-    final tray = context.read<TrayCubit>().state;
+    final selection = context.read<SendSelectionCubit>();
     List<File> files;
-    if (tray.isNotEmpty) {
-      files = [for (final f in tray) File(f.path)];
+    if (selection.state.isNotEmpty) {
+      final batch = await selection.materialize();
+      files = [for (final f in batch) File(f.path)];
+      selection.clear();
     } else {
       final paths = await pickFilePaths();
       if (paths.isEmpty) return;

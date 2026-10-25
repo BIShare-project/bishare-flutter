@@ -32,11 +32,8 @@ import '../core/constants/app_links.dart';
 import '../core/review/review_prompter.dart';
 import '../core/ui/shell_tab.dart';
 
-/// The tabs of the app, in bar order (redesign-plan.md 2.1).
-enum ShellTabId { send, inbox, drive, rooms, settings }
-
-/// The root tab shell: Kirim, Kotak Masuk, Drive (while the vault flag shows
-/// it), Ruangan, Pengaturan. Tabs are kept alive in an [IndexedStack] so
+/// The root tab shell: Send, Inbox, Drive (while the vault flag shows it),
+/// Rooms, Settings. Tabs are kept alive in an [IndexedStack] so
 /// discovery and the receiver never restart on a tab switch; tabs are named,
 /// not numbered, so Drive appearing or leaving never shifts the others.
 class MainShell extends StatefulWidget {
@@ -79,6 +76,7 @@ class _MainShellState extends State<MainShell> {
       (_) => _maybeTour(ShellTabId.send),
     );
     _flags.addListener(_flagsChanged);
+    shellTabRequest.addListener(_tabRequested);
     // Subscribe BEFORE start() so the cold-start launch link is delivered.
     final links = getIt<DeepLinkService>();
     _linkSub = links.actions.listen((action) {
@@ -201,7 +199,7 @@ class _MainShellState extends State<MainShell> {
     final paths = shared.where((p) => p.isNotEmpty).toList();
     if (!mounted || paths.isEmpty) return;
     context.read<TrayCubit>().addDropped(paths);
-    _select(ShellTabId.send); // jump to the Kirim tab
+    _select(ShellTabId.send); // jump to the Send tab
     toast(context, 'nav.added_files_to_send'.plural(paths.length));
   }
 
@@ -209,6 +207,7 @@ class _MainShellState extends State<MainShell> {
   void dispose() {
     getIt<ReviewPrompter>().onWindowsAsk = null;
     _flags.removeListener(_flagsChanged);
+    shellTabRequest.removeListener(_tabRequested);
     _showcase.unregister();
     _linkSub?.cancel();
     _webNearbySub?.cancel();
@@ -332,7 +331,7 @@ class _MainShellState extends State<MainShell> {
             },
           );
         case RescanSharedLink():
-          _select(ShellTabId.send); // jump to the Kirim tab
+          _select(ShellTabId.send); // jump to the Send tab
       }
     } catch (e) {
       // Log error but don't crash the app
@@ -402,7 +401,14 @@ class _MainShellState extends State<MainShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeTour(tab));
   }
 
-  /// Drive left the bar while it was open: fall back to Kotak Masuk.
+  void _tabRequested() {
+    final t = shellTabRequest.value;
+    if (t == null || !mounted) return;
+    shellTabRequest.value = null;
+    if (_tabs.contains(t)) _select(t);
+  }
+
+  /// Drive left the bar while it was open: fall back to the Inbox.
   void _flagsChanged() {
     if (!mounted) return;
     setState(() {

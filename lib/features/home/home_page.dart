@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -5,35 +7,34 @@ import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../core/di/locator.dart';
-import '../../core/identity/device_identity.dart';
+import '../../core/desktop/desktop_service.dart';
 import '../../core/ui/app_showcase.dart';
 import '../../core/ui/shell_tab.dart';
 import '../../core/ui/app_ui.dart';
 import '../receive/presentation/incoming_file_request_sheet.dart';
 import '../receive/presentation/incoming_transfer_sheet.dart';
 import '../receive/presentation/receive_cubit.dart';
+import '../send/data/send_media_library.dart';
 import '../send/presentation/send_cubit.dart';
+import '../send/presentation/send_selection_cubit.dart';
 import '../send/presentation/tray_cubit.dart';
-import '../settings/domain/settings.dart' show Settings;
-import '../settings/presentation/settings_cubit.dart';
-import 'widgets/compose_tray.dart';
-import 'widgets/device_section.dart';
-import 'widgets/drive_interest_card.dart';
 import 'widgets/floating_transfers.dart';
-import 'widgets/header.dart';
-import 'widgets/my_device_card.dart';
+import 'widgets/send_desktop_pane.dart';
+import 'widgets/send_header.dart';
+import 'widgets/send_list_tabs.dart';
+import 'widgets/send_media_tab.dart';
+import 'widgets/send_selection_bar.dart';
 
-/// The home screen: your device, a staging tray, nearby devices (tap to send),
-/// incoming accept prompts, and live send/receive progress. Prompts are premium
-/// frosted-glass modal sheets — no Material dialogs. Reusable pieces live in the
-/// design kit (`core/ui/app_ui.dart`) so this file stays about layout.
+/// The Send tab (redesign-plan.md phase 3). On phones and tablets: the
+/// header, the library tabs (Photos, Videos, Audio, Apps on Android,
+/// Documents, More), the selection bar and the send sheet. On computers: a
+/// drop zone with the destinations beside it. It also carries the incoming
+/// prompts and the live transfer cards, whatever screen is on.
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final identity = getIt<DeviceIdentity>();
     final cs = ShadTheme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: cs.background,
@@ -95,51 +96,15 @@ class HomePage extends StatelessWidget {
             ],
             child: Stack(
               children: [
-                AppResponsivePane(
-                  maxWidth: 960,
-                  child: Column(
-                    children: [
-                      const Header(),
-                      Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.only(bottom: 28),
-                          children: [
-                            AppShowcase(
-                              showcaseKey: ShowcaseKeys.homeDevice,
-                              title: 'showcase.home_device_title'.tr(),
-                              description: 'showcase.home_device_body'.tr(),
-                              targetRadius: 22,
-                              child: BlocBuilder<SettingsCubit, Settings>(
-                                builder: (context, settings) => MyDeviceCard(
-                                  alias: settings.alias,
-                                  deviceType: identity.deviceType,
-                                  hidden: settings.visibility.name == 'hidden',
-                                ),
-                              ),
-                            ),
-                            AppShowcase(
-                              showcaseKey: ShowcaseKeys.homeTray,
-                              title: 'showcase.home_tray_title'.tr(),
-                              description: 'showcase.home_tray_body'.tr(),
-                              targetRadius: 22,
-                              child: const ComposeTray(),
-                            ),
-                            AppShowcase(
-                              showcaseKey: ShowcaseKeys.homeNearby,
-                              title: 'showcase.home_nearby_title'.tr(),
-                              description: 'showcase.home_nearby_body'.tr(),
-                              targetRadius: 22,
-                              child: const DeviceSection(),
-                            ),
-                            const DriveInterestCard(),
-                          ],
-                        ),
-                      ),
-                    ],
+                if (isDesktop) const SendDesktopPane() else const _SendTabs(),
+                // The selection bar, and live transfers floating above it.
+                if (!isDesktop)
+                  const Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: SendSelectionBar(),
                   ),
-                ),
-                // Live transfers float above the content as glass cards, pinned
-                // to the bottom of the screen.
                 const Positioned(
                   left: 0,
                   right: 0,
@@ -226,5 +191,59 @@ class HomePage extends StatelessWidget {
     } else {
       cubit.reset();
     }
+  }
+}
+
+/// The library tabs of the Send tab.
+class _SendTabs extends StatelessWidget {
+  const _SendTabs();
+
+  @override
+  Widget build(BuildContext context) {
+    final android = Platform.isAndroid;
+    final tabs = <(String, SendKind?, Widget)>[
+      (
+        'home.photos'.tr(),
+        SendKind.photo,
+        const SendMediaTab(kind: SendMediaKind.photo),
+      ),
+      (
+        'compose.tab_video'.tr(),
+        SendKind.video,
+        const SendMediaTab(kind: SendMediaKind.video),
+      ),
+      ('compose.tab_audio'.tr(), SendKind.audio, const SendAudioTab()),
+      if (android) ('home.apps'.tr(), SendKind.app, const SendAppsTab()),
+      ('compose.tab_documents'.tr(), SendKind.doc, const SendDocsTab()),
+      ('compose.tab_more'.tr(), SendKind.more, const SendMoreTab()),
+    ];
+    return DefaultTabController(
+      length: tabs.length,
+      child: Column(
+        children: [
+          const SendHeader(),
+          AppShowcase(
+            showcaseKey: ShowcaseKeys.homeTray,
+            title: 'showcase.home_tray_title'.tr(),
+            description: 'showcase.home_tray_body'.tr(),
+            targetRadius: 0,
+            child: BlocBuilder<SendSelectionCubit, SendSelection>(
+              buildWhen: (a, b) => a.length != b.length,
+              builder: (context, s) => AppTabBar(
+                tabs: [
+                  for (final (label, kind, _) in tabs)
+                    AppTab(label, count: kind == null ? 0 : s.countOf(kind)),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [for (final (_, _, page) in tabs) page],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

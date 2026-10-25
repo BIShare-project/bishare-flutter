@@ -6,9 +6,8 @@ import '../../../core/storage/app_database.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../discovery/domain/discovered_device.dart';
 import '../../favorites/presentation/favorites_cubit.dart';
-import '../../send/domain/sendable_file.dart';
 import '../../send/presentation/send_cubit.dart';
-import '../../send/presentation/tray_cubit.dart';
+import '../../send/presentation/send_selection_cubit.dart';
 
 class DeviceRow extends StatelessWidget {
   const DeviceRow({super.key, required this.device});
@@ -37,7 +36,11 @@ class DeviceRow extends StatelessWidget {
               ),
               if (fav != null) ...[
                 const SizedBox(width: 6),
-                const AppSvgIcon(AppIcons.starFavorite, size: 13, color: kAmber),
+                const AppSvgIcon(
+                  AppIcons.starFavorite,
+                  size: 13,
+                  color: kAmber,
+                ),
               ],
             ],
           ),
@@ -92,16 +95,18 @@ class DeviceRow extends StatelessWidget {
   }
 
   Future<void> _send(BuildContext context) async {
-    final tray = context.read<TrayCubit>();
-    final files = tray.state;
-    if (files.isEmpty) {
+    final selection = context.read<SendSelectionCubit>();
+    if (selection.state.isEmpty) {
       toast(context, 'home.add_files_first'.tr());
       return;
     }
-    // Empty the compose tray as the transfer starts — the files are now in
-    // flight (SendCubit keeps its own copy for progress + retry).
-    final batch = List<SendableFile>.of(files);
-    tray.clear();
+    // Gallery photos and apps become files only now (nothing is copied while
+    // selecting).
+    final batch = await selection.materialize();
+    if (!context.mounted || batch.isEmpty) return;
+    // Empty the selection as the transfer starts: the files are in flight
+    // (SendCubit keeps its own copy for progress + retry).
+    selection.clear();
     await context.read<SendCubit>().sendFiles(batch, device);
   }
 
@@ -152,9 +157,7 @@ class DeviceRow extends StatelessWidget {
       toast(
         context,
         accepted
-            ? 'home.device_sending_files'.tr(
-                namedArgs: {'alias': device.alias},
-              )
+            ? 'home.device_sending_files'.tr(namedArgs: {'alias': device.alias})
             : 'home.device_declined'.tr(namedArgs: {'alias': device.alias}),
         type: accepted ? ToastType.success : ToastType.error,
       );

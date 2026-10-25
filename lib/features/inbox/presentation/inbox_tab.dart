@@ -5,7 +5,7 @@ import '../../../core/ui/app_ui.dart';
 import '../../history/presentation/history_page.dart';
 import 'inbox_page.dart';
 
-/// The Kotak Masuk tab (redesign-plan.md 2.2): what arrived, and the history
+/// The Inbox tab (redesign-plan.md 2.2): what arrived, and the history
 /// of every transfer, as two segments under one title. Drive left this tab
 /// for a tab of its own.
 class InboxTab extends StatefulWidget {

@@ -15,7 +15,7 @@ import 'widgets/stats_row.dart';
 class HistoryPage extends StatelessWidget {
   const HistoryPage({super.key, this.segment});
 
-  /// The Kotak Masuk segment switch: when given, this page is the Riwayat
+  /// The Inbox segment switch: when given, this page is the History
   /// segment of that tab and carries its title.
   final Widget? segment;
 
