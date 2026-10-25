@@ -51,6 +51,10 @@ class _SendMediaTabState extends State<SendMediaTab>
   final _lib = SendMediaLibrary.instance;
 
   SendMediaAccess _access = SendMediaAccess.unknown;
+
+  /// Asked once and refused: the button now opens the system settings
+  /// instead of asking again.
+  bool _refused = false;
   List<SendAlbum> _albums = const [];
   SendAlbum? _album;
   final List<AssetEntity> _assets = [];
@@ -58,6 +62,9 @@ class _SendMediaTabState extends State<SendMediaTab>
   bool _loading = false;
   bool _end = false;
   StreamSubscription<void>? _changes;
+
+  /// Access can change in the system settings while the app is away.
+  AppLifecycleListener? _life;
 
   // drag-to-select
   bool? _dragOn;
@@ -79,11 +86,17 @@ class _SendMediaTabState extends State<SendMediaTab>
     super.initState();
     if (SendMediaLibrary.available && _gridAllowed) {
       unawaited(_check(ask: false));
+      _life = AppLifecycleListener(
+        onResume: () {
+          if (_access != SendMediaAccess.full) unawaited(_check(ask: false));
+        },
+      );
     }
   }
 
   @override
   void dispose() {
+    _life?.dispose();
     _changes?.cancel();
     super.dispose();
   }
@@ -470,10 +483,18 @@ class _SendMediaTabState extends State<SendMediaTab>
         action: Column(
           children: [
             AppButton(
-              label: 'compose.allow'.tr(),
+              label: _refused
+                  ? 'compose.open_settings'.tr()
+                  : 'compose.allow'.tr(),
               onPressed: () async {
+                if (_refused) {
+                  await _lib.openSettings();
+                  return;
+                }
                 await _check(ask: true);
-                if (_access == SendMediaAccess.none) await _lib.openSettings();
+                if (mounted && _access == SendMediaAccess.none) {
+                  setState(() => _refused = true);
+                }
               },
             ),
             const SizedBox(height: 6),

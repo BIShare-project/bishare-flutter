@@ -129,6 +129,7 @@ class _SendAudioTabState extends State<SendAudioTab>
   final _lib = SendMediaLibrary.instance;
   SendMediaAccess _access = SendMediaAccess.unknown;
   List<AssetEntity> _audio = const [];
+  AppLifecycleListener? _life;
 
   @override
   bool get wantKeepAlive => true;
@@ -136,7 +137,20 @@ class _SendAudioTabState extends State<SendAudioTab>
   @override
   void initState() {
     super.initState();
-    if (Platform.isAndroid) unawaited(_check(false));
+    if (Platform.isAndroid) {
+      unawaited(_check(false));
+      _life = AppLifecycleListener(
+        onResume: () {
+          if (_access != SendMediaAccess.full) unawaited(_check(false));
+        },
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _life?.dispose();
+    super.dispose();
   }
 
   Future<void> _check(bool ask) async {
@@ -226,7 +240,8 @@ class _SendAudioTabState extends State<SendAudioTab>
   }
 }
 
-/// Two side-by-side actions at the top of a list tab.
+/// Two actions at the top of a list tab, as full-width rows so a long label
+/// never truncates in any language.
 class _Picks extends StatelessWidget {
   const _Picks({required this.first, required this.second});
 
@@ -235,17 +250,16 @@ class _Picks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget one((String, String, VoidCallback) p) => Expanded(
-      child: AppButton(
-        label: p.$1,
-        icon: p.$2,
-        variant: AppButtonVariant.secondary,
-        onPressed: p.$3,
-      ),
-    );
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
-      child: Row(children: [one(first), const SizedBox(width: 8), one(second)]),
+      padding: const EdgeInsets.only(top: 6),
+      child: Column(
+        children: [
+          AppValueRow(icon: first.$2, title: first.$1, onTap: first.$3),
+          const AppRowDivider(indent: 52),
+          AppValueRow(icon: second.$2, title: second.$1, onTap: second.$3),
+          const AppRowDivider(indent: 0),
+        ],
+      ),
     );
   }
 }

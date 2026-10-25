@@ -85,8 +85,11 @@ class _Count extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
+    // A fixed height: inside a Tab the row is as tall as the tab, and an
+    // aligned Container would stretch to it.
     return Container(
-      constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+      height: 18,
+      constraints: const BoxConstraints(minWidth: 18),
       padding: const EdgeInsets.symmetric(horizontal: 5),
       alignment: Alignment.center,
       decoration: BoxDecoration(
