@@ -118,12 +118,21 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
             localizationsDelegates: context.localizationDelegates,
             supportedLocales: context.supportedLocales,
             locale: context.locale,
-            theme: AppTheme.light(settings.accent),
-            darkTheme: AppTheme.dark(settings.accent),
+            theme: AppTheme.light(
+              settings.accent,
+              receive: settings.receiveAccent,
+            ),
+            darkTheme: AppTheme.dark(
+              settings.accent,
+              receive: settings.receiveAccent,
+            ),
             themeMode: settings.themeMode,
-            // Apply IBM Plex Sans to raw Material text too (not just shadcn).
-            materialThemeBuilder: (context, theme) => theme.copyWith(
-              textTheme: theme.textTheme.apply(fontFamily: AppTheme.fontFamily),
+            // IBM Plex Sans, the design tokens and the background for raw
+            // Material widgets too (not just shadcn).
+            materialThemeBuilder: (context, theme) => AppTheme.material(
+              theme,
+              accent: settings.accent,
+              receive: settings.receiveAccent,
             ),
             routerConfig: appRouter,
             // Status-bar icons follow the app theme (dark icons on the light

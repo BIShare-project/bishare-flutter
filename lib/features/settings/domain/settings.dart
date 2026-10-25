@@ -1,9 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/server/transfer_types.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Whether the device advertises itself for discovery.
 enum Visibility { everyone, hidden }
@@ -207,9 +207,9 @@ class Settings extends Equatable {
   ];
 }
 
-/// The selectable accents are shadcn_ui color-scheme NAMES
-/// (`ShadColorScheme.fromName`). Every swatch / tint is derived straight from the
-/// scheme's own `primary` — no hardcoded colors.
+/// The selectable accents, by the shadcn scheme names the settings have
+/// always stored. The colours come from AppPalette, where each one is
+/// checked for contrast in both themes.
 class AccentColors {
   AccentColors._();
 
@@ -229,8 +229,10 @@ class AccentColors {
     'stone',
   ];
 
-  /// The scheme's primary color for [brightness] — used for the picker swatch
-  /// and for accent-tinted UI (e.g. the receive banner).
-  static Color of(String name, Brightness brightness) =>
-      ShadColorScheme.fromName(name, brightness: brightness).primary;
+  /// The accent's colour for [brightness] (AppPalette, contrast-checked): the
+  /// picker swatch and accent-tinted UI such as the receive banner.
+  static Color of(String name, Brightness brightness) {
+    final a = AppPalette.accent(name);
+    return brightness == Brightness.dark ? a.darkText : a.light;
+  }
 }
