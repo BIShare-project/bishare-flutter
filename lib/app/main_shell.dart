@@ -372,57 +372,64 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final cs = ShadTheme.of(context).colorScheme;
     final wide = context.isWideLayout;
+    // Every tab stays alive (discovery and the receiver never restart on a
+    // switch), but only the visible one may tick: a hidden tab's spinners,
+    // pulses and progress stop drawing frames (redesign-plan.md 1.4).
     final content = IndexedStack(
       index: _index,
       children: [
         for (var i = 0; i < _pages.length; i++)
-          ShellTab(active: i == _index, child: _pages[i]),
+          TickerMode(
+            enabled: i == _index,
+            child: ShellTab(active: i == _index, child: _pages[i]),
+          ),
       ],
     );
 
-    // Wide (desktop / tablet-landscape): a side rail + content pane. Narrow
-    // (phone): a bottom tab bar. Mirrors native iOS (sidebar vs TabView).
-    return BlocBuilder<InboxCubit, List<TransferRecord>>(
-      builder: (context, items) {
-        // The nav showcase key is shared by the two variants — only one is
-        // ever mounted (wide XOR narrow).
-        if (wide) {
-          return Scaffold(
-            backgroundColor: cs.background,
-            body: Row(
-              children: [
-                AppShowcase(
-                  showcaseKey: ShowcaseKeys.homeNav,
-                  title: 'showcase.home_nav_title'.tr(),
-                  description: 'showcase.home_nav_body'.tr(),
-                  targetRadius: 0,
-                  child: AppNavRail(
-                    items: _items(items.length),
-                    currentIndex: _index,
-                    onTap: _select,
-                  ),
-                ),
-                Expanded(child: content),
-              ],
-            ),
-          );
-        }
-        return Scaffold(
-          backgroundColor: cs.background,
-          body: content,
-          bottomNavigationBar: AppShowcase(
+    // Only the bar reads the inbox count, so a new file rebuilds the bar and
+    // not the whole shell.
+    Widget nav(Widget Function(List<AppNavItem> items) build) =>
+        BlocSelector<InboxCubit, List<TransferRecord>, int>(
+          selector: (items) => items.length,
+          builder: (context, count) => AppShowcase(
             showcaseKey: ShowcaseKeys.homeNav,
             title: 'showcase.home_nav_title'.tr(),
             description: 'showcase.home_nav_body'.tr(),
             targetRadius: 0,
-            child: AppBottomNav(
-              items: _items(items.length),
-              currentIndex: _index,
-              onTap: _select,
-            ),
+            child: build(_items(count)),
           ),
         );
-      },
+
+    // Wide (desktop / tablet-landscape): a side rail + content pane. Narrow
+    // (phone): a bottom tab bar. The nav showcase key is shared by the two
+    // variants; only one is ever mounted (wide XOR narrow).
+    if (wide) {
+      return Scaffold(
+        backgroundColor: cs.background,
+        body: Row(
+          children: [
+            nav(
+              (items) => AppNavRail(
+                items: items,
+                currentIndex: _index,
+                onTap: _select,
+              ),
+            ),
+            Expanded(child: content),
+          ],
+        ),
+      );
+    }
+    return Scaffold(
+      backgroundColor: cs.background,
+      body: content,
+      bottomNavigationBar: nav(
+        (items) => AppBottomNav(
+          items: items,
+          currentIndex: _index,
+          onTap: _select,
+        ),
+      ),
     );
   }
 }

@@ -6,10 +6,11 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../../domain/nearby_peer.dart';
 
-/// A premium sonar radar: a glowing gradient core (this device), continuously
-/// expanding pulse ripples, a rotating sweep with a light trail, and discovered
-/// peers as glass nodes on an orbit — each linked to the core by an animated
-/// beam while connecting/transferring. Peers glide into place and fade in.
+/// The nearby radar: this device in the centre, static orbit rings, slow
+/// pulse ripples while it looks, and discovered peers on an orbit, each linked
+/// to the centre by a beam while connecting or transferring. Peers glide into
+/// place and fade in. One animation controller and one painter only: no sweep,
+/// no animated shadows (redesign-plan.md "Performance budget").
 class NearbyRadar extends StatefulWidget {
   const NearbyRadar({super.key, required this.peers, required this.onTapPeer});
 
@@ -24,17 +25,12 @@ class _NearbyRadarState extends State<NearbyRadar>
     with TickerProviderStateMixin {
   late final AnimationController _pulse = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 3600),
-  )..repeat();
-  late final AnimationController _sweep = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 4600),
+    duration: const Duration(milliseconds: 4000),
   )..repeat();
 
   @override
   void dispose() {
     _pulse.dispose();
-    _sweep.dispose();
     super.dispose();
   }
 
@@ -62,14 +58,13 @@ class _NearbyRadarState extends State<NearbyRadar>
             // Rings + ripples + sweep + connection beams.
             RepaintBoundary(
               child: AnimatedBuilder(
-                animation: Listenable.merge([_pulse, _sweep]),
+                animation: _pulse,
                 builder: (context, _) => CustomPaint(
                   size: Size(w, h),
                   painter: _RadarPainter(
                     center: center,
                     maxR: maxR,
                     pulse: _pulse.value,
-                    sweep: _sweep.value,
                     accent: accent,
                     ring: cs.mutedForeground.withValues(alpha: isDark ? 0.22 : 0.18),
                     isDark: isDark,
@@ -84,44 +79,16 @@ class _NearbyRadarState extends State<NearbyRadar>
               ),
             ),
 
-            // The core (this device) — a pulsing gradient orb.
-            AnimatedBuilder(
-              animation: _pulse,
-              builder: (context, _) {
-                final t = math.sin(_pulse.value * 2 * math.pi);
-                final scale = 1 + 0.05 * t;
-                return Transform.scale(
-                  scale: scale,
-                  child: Container(
-                    width: 62,
-                    height: 62,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color.lerp(accent, Colors.white, 0.22)!,
-                          accent,
-                          Color.lerp(accent, Colors.black, 0.18)!,
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: accent.withValues(alpha: 0.55 + 0.15 * t),
-                          blurRadius: 26 + 6 * t,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: const AppSvgIcon(
-                      AppIcons.smartphone,
-                      size: 28,
-                      color: Colors.white,
-                    ),
-                  ),
-                );
-              },
+            // The core (this device): a plain accent disc, no animated glow.
+            Container(
+              width: 62,
+              height: 62,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: accent),
+              child: AppSvgIcon(
+                AppIcons.smartphone,
+                size: 28,
+                color: cs.primaryForeground,
+              ),
             ),
 
             // Peer nodes — glide + fade into orbit.
@@ -202,14 +169,6 @@ class _PeerNode extends StatelessWidget {
                   color: live ? accent : cs.border,
                   width: live ? 2 : 1,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: live
-                        ? accent.withValues(alpha: 0.45)
-                        : Colors.black.withValues(alpha: 0.18),
-                    blurRadius: live ? 16 : 8,
-                  ),
-                ],
               ),
               child: busy
                   ? Padding(
@@ -248,7 +207,6 @@ class _RadarPainter extends CustomPainter {
     required this.center,
     required this.maxR,
     required this.pulse,
-    required this.sweep,
     required this.accent,
     required this.ring,
     required this.isDark,
@@ -258,7 +216,6 @@ class _RadarPainter extends CustomPainter {
   final Offset center;
   final double maxR;
   final double pulse; // 0..1
-  final double sweep; // 0..1
   final Color accent;
   final Color ring;
   final bool isDark;
@@ -266,19 +223,6 @@ class _RadarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Ambient core glow.
-    canvas.drawCircle(
-      center,
-      maxR,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [
-            accent.withValues(alpha: isDark ? 0.16 : 0.10),
-            accent.withValues(alpha: 0),
-          ],
-        ).createShader(Rect.fromCircle(center: center, radius: maxR)),
-    );
-
     // Static orbit rings.
     final ringPaint = Paint()
       ..style = PaintingStyle.stroke
@@ -289,7 +233,7 @@ class _RadarPainter extends CustomPainter {
     }
 
     // Expanding pulse ripples (staggered).
-    const count = 3;
+    const count = 2;
     for (var i = 0; i < count; i++) {
       final phase = (pulse + i / count) % 1.0;
       final r = phase * maxR;
@@ -303,30 +247,6 @@ class _RadarPainter extends CustomPainter {
           ..color = accent.withValues(alpha: alpha),
       );
     }
-
-    // Rotating sweep cone + leading edge.
-    final angle = sweep * 2 * math.pi;
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(angle);
-    final cone = Paint()
-      ..shader = SweepGradient(
-        startAngle: 0,
-        endAngle: math.pi / 2.4,
-        colors: [
-          accent.withValues(alpha: isDark ? 0.30 : 0.22),
-          accent.withValues(alpha: 0),
-        ],
-      ).createShader(Rect.fromCircle(center: Offset.zero, radius: maxR));
-    canvas.drawCircle(Offset.zero, maxR, cone);
-    canvas.drawLine(
-      Offset.zero,
-      Offset(maxR, 0),
-      Paint()
-        ..strokeWidth = 1.6
-        ..color = accent.withValues(alpha: 0.6),
-    );
-    canvas.restore();
 
     // Beams to live peers, with a travelling packet.
     for (final p in beams) {
@@ -353,7 +273,6 @@ class _RadarPainter extends CustomPainter {
   @override
   bool shouldRepaint(_RadarPainter old) =>
       old.pulse != pulse ||
-      old.sweep != sweep ||
       old.beams.length != beams.length ||
       old.maxR != maxR;
 }

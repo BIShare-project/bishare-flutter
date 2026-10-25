@@ -174,38 +174,15 @@ class _LiveDot extends StatefulWidget {
   State<_LiveDot> createState() => _LiveDotState();
 }
 
-class _LiveDotState extends State<_LiveDot> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1200),
-  )..repeat(reverse: true);
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
+class _LiveDotState extends State<_LiveDot> {
+  // A steady dot: the old one breathed with an animated blur shadow forever.
   @override
   Widget build(BuildContext context) {
     final accent = ShadTheme.of(context).colorScheme.primary;
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (context, _) => Container(
-        width: 8,
-        height: 8,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: accent,
-          boxShadow: [
-            BoxShadow(
-              color: accent.withValues(alpha: 0.3 + 0.5 * _c.value),
-              blurRadius: 3 + 5 * _c.value,
-              spreadRadius: _c.value,
-            ),
-          ],
-        ),
-      ),
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: accent),
     );
   }
 }
