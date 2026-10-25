@@ -1,28 +1,40 @@
-/// BIShare design system — a small kit of reusable widgets so feature pages stay
-/// short and consistent. Import this one file to get them all.
+/// BIShare design system: one shared kit, so feature pages stay short and
+/// look the same everywhere (redesign-plan.md "Components"). Import this one
+/// file to get the tokens, the type scale and every widget below.
 ///
-/// - [AppCard]         rounded card surface (accent / gradient variants)
-/// - [AppListTile]     list row (leading / title / subtitle / trailing)
-/// - [AppGroup]        inset rounded container that groups rows
-/// - [AppRowDivider]   hairline divider between grouped rows
-/// - [AppSectionHeader] uppercase grouped-list section label
-/// - [AppAvatar]       squircle device avatar with accent gradient + online dot
-/// - [AppBadge]        small tinted tag (e.g. "TCP")
-/// - [AppStatusPill]   dot + label pill (e.g. "Online")
-/// - [AppIconButton]   ghost icon button with an optional count badge
-/// - [AppButton]       premium button with variants (primary/secondary/outline/ghost/destructive)
-/// - [AppIconOnlyButton] icon-only button with consistent sizing
-/// - [AppEmptyState]   centered icon + title + message
-/// - [showAppSheet] / [AppSheetAction]  frosted-glass modal sheet (no dialogs)
+/// - [AppTokens] via `context.tokens`, [AppType], [AppMotion]
+/// - [AppCard]          the one emphasised block of a screen
+/// - [AppListTile]      list row (leading / title / subtitle / trailing)
+/// - [AppGroup]         groups rows (flat, or `card: true`)
+/// - [AppRowDivider]    hairline between rows
+/// - [AppSectionHeader] sentence-case section label
+/// - [AppGlyph], [AppSwitchRow], [AppValueRow]  settings-style rows
+/// - [AppTabBar], [AppSegmented], [AppChips]    tabs, segments, filters
+/// - [AppSelectionBar], [AppSelectionSummary]   the floating selection bar
+/// - [AppMediaTile], [AppRowCheck]              selectable photo tile / row check
+/// - [AppDeviceAvatar]  device circle with progress ring
+/// - [AppCodeBoxes]     code input (room, transfer, Drive browser)
+/// - [AppAvatar], [AppBadge], [AppStatusPill], [AppIconButton]
+/// - [AppButton], [AppIconOnlyButton]
+/// - [AppEmptyState]    glyph + title + message + optional action
+/// - [showAppSheet] / [AppSheetAction]  sheet on phones, dialog on wide
 library;
 
+export '../theme/app_tokens.dart';
+export '../theme/app_type.dart';
 export 'app_avatar.dart';
 export 'app_badge.dart';
 export 'app_bottom_nav.dart';
 export 'app_button.dart';
 export 'app_card.dart';
+export 'app_code_boxes.dart';
+export 'app_device_avatar.dart';
 export 'app_empty_state.dart';
 export 'app_format.dart';
+export 'app_media_tile.dart';
+export 'app_rows.dart';
+export 'app_selection_bar.dart';
+export 'app_tabs.dart';
 export 'bishare_qr.dart';
 export 'file_open.dart';
 export 'file_preview.dart';

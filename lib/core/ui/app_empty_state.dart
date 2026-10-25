@@ -1,57 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../theme/app_tokens.dart';
+import '../theme/app_type.dart';
 import 'app_svg_icon.dart';
 
-/// A centered empty/placeholder state: a rounded icon tile, a title, and a
-/// supporting message.
+/// A centered empty state: a plain glyph (no tile), a title, a message, and
+/// an optional [action] (a button that does the obvious next thing).
 class AppEmptyState extends StatelessWidget {
   const AppEmptyState({
     super.key,
     required this.icon,
     required this.title,
     required this.message,
+    this.action,
   });
 
   final String icon;
   final String title;
   final String message;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 48, 32, 24),
+      padding: const EdgeInsets.fromLTRB(32, 52, 32, 24),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 84,
-            height: 84,
-            decoration: BoxDecoration(
-              color: cs.muted,
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: AppSvgIcon(icon, size: 38, color: cs.mutedForeground),
-          ),
-          const SizedBox(height: 20),
+          AppSvgIcon(icon, size: 34, color: t.text3),
+          const SizedBox(height: 14),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: cs.foreground,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13.5,
-              height: 1.4,
-              color: cs.mutedForeground,
+            style: AppType.sheetTitle.copyWith(fontSize: 17, color: t.text),
+          ),
+          const SizedBox(height: 6),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 320),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppType.body.copyWith(fontSize: 14, color: t.text2),
             ),
           ),
+          if (action != null) ...[const SizedBox(height: 20), action!],
         ],
       ),
     );

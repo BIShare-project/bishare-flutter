@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../theme/app_tokens.dart';
+import '../theme/app_type.dart';
 import 'app_format.dart';
 
-/// The app-wide list row: optional [leading], a [title] (+ optional [subtitle]),
-/// optional [trailing], and tap / long-press. Typography follows the app scale,
-/// so call sites pass plain [Text]/[Widget]s. Replaces Material [ListTile].
+/// The app-wide list row: optional [leading], a [title] (+ optional
+/// [subtitle]), optional [trailing], and tap / long-press. Flat, at least 56
+/// tall, the title in the row style and the subtitle in the secondary style;
+/// call sites pass plain [Text]/[Widget]s. Replaces Material [ListTile].
 class AppListTile extends StatelessWidget {
   const AppListTile({
     super.key,
@@ -15,7 +17,7 @@ class AppListTile extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.onLongPress,
-    this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
   });
 
   final Widget? leading;
@@ -28,60 +30,71 @@ class AppListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     // ShadApp provides no Material ancestor, so a bare InkWell throws
-    // `Material.of` on mouse hover (desktop). A transparent Material gives it the
-    // ancestor it needs without changing the visuals.
+    // `Material.of` on mouse hover (desktop). A transparent Material gives it
+    // the ancestor it needs without changing the visuals.
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
-      onTap: onTap == null
-          ? null
-          : () {
-              tapHaptic();
-              onTap!();
-            },
-      onLongPress: onLongPress == null
-          ? null
-          : () {
-              tapHaptic();
-              onLongPress!();
-            },
-      child: Padding(
-        padding: padding,
-        child: Row(
-          children: [
-            if (leading != null) ...[leading!, const SizedBox(width: 14)],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DefaultTextStyle.merge(
-                    style: TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w600,
-                      color: cs.foreground,
-                    ),
-                    child: title,
+        onTap: onTap == null
+            ? null
+            : () {
+                tapHaptic();
+                onTap!();
+              },
+        onLongPress: onLongPress == null
+            ? null
+            : () {
+                tapHaptic();
+                onLongPress!();
+              },
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
+          child: Padding(
+            padding: padding,
+            child: Row(
+              children: [
+                if (leading != null) ...[
+                  IconTheme.merge(
+                    data: IconThemeData(color: t.text2),
+                    child: leading!,
                   ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    DefaultTextStyle.merge(
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: cs.mutedForeground,
-                      ),
-                      child: subtitle!,
-                    ),
-                  ],
+                  const SizedBox(width: 14),
                 ],
-              ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DefaultTextStyle.merge(
+                        style: AppType.row.copyWith(color: t.text),
+                        child: title,
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        DefaultTextStyle.merge(
+                          style: AppType.secondary.copyWith(
+                            fontSize: 13,
+                            color: t.text2,
+                          ),
+                          child: subtitle!,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(width: 10),
+                  IconTheme.merge(
+                    data: IconThemeData(color: t.text3),
+                    child: trailing!,
+                  ),
+                ],
+              ],
             ),
-            ?trailing,
-          ],
+          ),
         ),
-      ),
       ),
     );
   }

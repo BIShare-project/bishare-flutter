@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../theme/app_tokens.dart';
 import 'app_format.dart';
 
-/// The app-wide card surface: rounded, hairline-bordered, optionally tappable,
-/// with an [accent] border tint or a subtle [gradient] hero fill. Replaces raw
-/// Material [Card]/[Container] use across the app.
+/// The app-wide card surface: the one emphasised block of a screen (the
+/// profile, the Drive backup, the storage, the room code). Flat surface with
+/// a hairline, optionally tappable. Lists are not cards: use [AppGroup] rows.
+///
+/// [accent] tints the border; [gradient] is kept for old call sites and now
+/// draws the soft accent backing instead of a gradient.
 class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
@@ -16,7 +19,7 @@ class AppCard extends StatelessWidget {
     this.onLongPress,
     this.accent,
     this.gradient = false,
-    this.radius = 20,
+    this.radius = 16,
   });
 
   final Widget child;
@@ -28,39 +31,30 @@ class AppCard extends StatelessWidget {
   /// Tints the border (and, with [gradient], the fill).
   final Color? accent;
 
-  /// A subtle accent gradient fill for hero cards.
+  /// A soft accent backing for the screen's hero card.
   final bool gradient;
   final double radius;
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    final tint = accent ?? cs.primary;
+    final t = context.tokens;
     final br = BorderRadius.circular(radius);
+    final fill = gradient
+        ? Color.alphaBlend(
+            (accent ?? t.accent).withValues(alpha: 0.08),
+            t.surface,
+          )
+        : t.surface;
     return Padding(
       padding: margin,
       child: Material(
-        color: Colors.transparent,
+        type: MaterialType.transparency,
         child: Ink(
           decoration: BoxDecoration(
-            color: gradient ? null : cs.card,
-            gradient: gradient
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      tint.withValues(alpha: 0.14),
-                      tint.withValues(alpha: 0.04),
-                    ],
-                  )
-                : null,
+            color: fill,
             borderRadius: br,
             border: Border.all(
-              color: gradient
-                  ? tint.withValues(alpha: 0.22)
-                  : accent != null
-                  ? tint.withValues(alpha: 0.35)
-                  : cs.border.withValues(alpha: 0.8),
+              color: accent != null ? accent!.withValues(alpha: 0.4) : t.line,
             ),
           ),
           child: InkWell(

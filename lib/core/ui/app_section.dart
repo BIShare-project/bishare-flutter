@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
-/// An uppercase, tracked-out grouped-list section label (iOS Settings style).
+import '../theme/app_tokens.dart';
+import '../theme/app_type.dart';
+
+/// A section label in sentence case, above a group of rows.
 class AppSectionHeader extends StatelessWidget {
   const AppSectionHeader(this.label, {super.key, this.trailing});
 
@@ -10,27 +12,22 @@ class AppSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 16, 22, 8),
+      padding: const EdgeInsetsDirectional.fromSTEB(18, 22, 18, 6),
       child: Row(
         children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.7,
-              color: cs.mutedForeground,
+          Expanded(
+            child: Semantics(
+              header: true,
+              child: Text(label, style: AppType.label.copyWith(color: t.text2)),
             ),
           ),
-          const Spacer(),
           if (trailing != null)
             DefaultTextStyle.merge(
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-                color: cs.mutedForeground,
+              style: AppType.label.copyWith(
+                fontWeight: FontWeight.w500,
+                color: t.text2,
               ),
               child: trailing!,
             ),
@@ -40,23 +37,34 @@ class AppSectionHeader extends StatelessWidget {
   }
 }
 
-/// A rounded, hairline-bordered container that groups list rows (iOS inset
-/// card). Children are clipped to the corner radius.
+/// Groups rows. Flat by default: the rows sit on the screen background and
+/// [AppRowDivider] hairlines separate them (redesign-plan.md "Space, shape,
+/// depth"). [card] draws the old inset card for the one block a screen
+/// emphasises.
 class AppGroup extends StatelessWidget {
-  const AppGroup({super.key, required this.child, this.margin});
+  const AppGroup({
+    super.key,
+    required this.child,
+    this.margin,
+    this.card = false,
+  });
 
   final Widget child;
   final EdgeInsetsGeometry? margin;
+  final bool card;
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    if (!card) {
+      return Padding(padding: margin ?? EdgeInsets.zero, child: child);
+    }
+    final t = context.tokens;
     return Container(
       margin: margin ?? const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: cs.card,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: cs.border.withValues(alpha: 0.8)),
+        color: t.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: t.line),
       ),
       clipBehavior: Clip.antiAlias,
       child: child,
@@ -64,7 +72,7 @@ class AppGroup extends StatelessWidget {
   }
 }
 
-/// A hairline divider between [AppGroup] rows, inset to clear a leading avatar.
+/// A hairline between [AppGroup] rows, inset to clear a leading glyph.
 class AppRowDivider extends StatelessWidget {
   const AppRowDivider({super.key, this.indent = 74});
 
@@ -72,14 +80,9 @@ class AppRowDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
     return Padding(
-      padding: EdgeInsets.only(left: indent),
-      child: Divider(
-        height: 1,
-        thickness: 1,
-        color: cs.border.withValues(alpha: 0.6),
-      ),
+      padding: EdgeInsetsDirectional.only(start: indent),
+      child: Divider(height: 1, thickness: 1, color: context.tokens.line),
     );
   }
 }

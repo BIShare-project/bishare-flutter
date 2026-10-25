@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../theme/app_tokens.dart';
+import '../theme/app_type.dart';
 import 'app_format.dart';
 import 'app_svg_icon.dart';
 
-/// A ghost icon button with an optional count badge (e.g. the inbox action).
+/// A plain icon button (44 by 44 target) with an optional count badge.
 class AppIconButton extends StatelessWidget {
   const AppIconButton({
     super.key,
     required this.icon,
     required this.onPressed,
     this.badge = 0,
-    this.size = 20,
+    this.size = 22,
     this.tooltip,
+    this.color,
   });
 
   /// An [AppIcons] name, rendered with [AppSvgIcon].
@@ -25,52 +27,65 @@ class AppIconButton extends StatelessWidget {
   /// readers. Icon-only buttons should always pass one.
   final String? tooltip;
 
+  /// The glyph colour; the primary text colour by default.
+  final Color? color;
+
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        _withTooltip(
-          ShadIconButton.ghost(
-            icon: AppSvgIcon(icon, size: size),
-            onPressed: () {
+    final t = context.tokens;
+    Widget button = Semantics(
+      button: true,
+      label: tooltip,
+      excludeSemantics: tooltip != null,
+      child: SizedBox.square(
+        dimension: 44,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkResponse(
+            onTap: () {
               tapHaptic();
               onPressed();
             },
+            radius: 22,
+            child: Center(
+              child: AppSvgIcon(icon, size: size, color: color ?? t.text),
+            ),
           ),
         ),
+      ),
+    );
+    if (tooltip != null && tooltip!.isNotEmpty) {
+      button = Tooltip(message: tooltip!, child: button);
+    }
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        button,
         if (badge > 0)
-          Positioned(
-            right: 4,
-            top: 2,
+          PositionedDirectional(
+            end: 4,
+            top: 4,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              constraints: const BoxConstraints(minWidth: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 4.5),
+              constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: cs.primary,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: cs.background, width: 1.5),
+                color: t.accentStrong,
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: t.bg, width: 1.5),
               ),
               child: Text(
-                '$badge',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 10,
+                badge > 99 ? '99+' : '$badge',
+                style: AppType.small.copyWith(
+                  fontSize: 10.5,
                   height: 1.2,
-                  fontWeight: FontWeight.w700,
-                  color: cs.primaryForeground,
+                  fontWeight: FontWeight.w600,
+                  color: t.onAccent,
                 ),
               ),
             ),
           ),
       ],
     );
-  }
-
-  Widget _withTooltip(Widget button) {
-    final label = tooltip;
-    if (label == null || label.isEmpty) return button;
-    return Tooltip(message: label, child: button);
   }
 }

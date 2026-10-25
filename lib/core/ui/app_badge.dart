@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
-/// A small tinted tag (e.g. a transport label like "TCP"). Defaults to the
-/// theme primary; pass [color] to override.
+import '../theme/app_tokens.dart';
+import '../theme/app_type.dart';
+
+/// A small tag for a real label (a transport such as "TCP", "Penyedia").
+/// Neutral by default; pass [color] for a status tint.
 class AppBadge extends StatelessWidget {
   const AppBadge(this.label, {super.key, this.color});
 
@@ -11,64 +13,51 @@ class AppBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? ShadTheme.of(context).colorScheme.primary;
+    final t = context.tokens;
+    final c = color;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: c.withValues(alpha: 0.14),
+        color: c == null ? t.sunken : c.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.3,
-          color: c,
+        style: AppType.small.copyWith(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: c ?? t.text2,
         ),
       ),
     );
   }
 }
 
-/// A pill with a leading status dot (e.g. "Online"). Defaults to iOS green.
+/// A status dot with its label (e.g. "Online"). The ok colour by default.
 class AppStatusPill extends StatelessWidget {
-  const AppStatusPill(
-    this.label, {
-    super.key,
-    this.color = const Color(0xFF34C759),
-  });
+  const AppStatusPill(this.label, {super.key, this.color});
 
   final String label;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
+    final t = context.tokens;
+    final c = color ?? t.ok;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: AppType.small.copyWith(fontSize: 13, color: t.text2),
+        ),
+      ],
     );
   }
 }

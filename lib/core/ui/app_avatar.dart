@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
+import '../theme/app_tokens.dart';
 
 import 'app_svg_icon.dart';
 
@@ -22,7 +22,7 @@ class AppAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final dot = size * 0.24;
     return SizedBox(
       width: size,
@@ -32,7 +32,9 @@ class AppAvatar extends StatelessWidget {
         children: [
           // No background tile — the glyph is shown as-is (its own duotone),
           // optionally tinted by [accent].
-          Center(child: AppSvgIcon(icon, size: size * 0.82, color: accent)),
+          Center(
+            child: AppSvgIcon(icon, size: size * 0.82, color: accent),
+          ),
           if (online)
             Positioned(
               right: 0,
@@ -41,9 +43,9 @@ class AppAvatar extends StatelessWidget {
                 width: dot,
                 height: dot,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF34C759), // iOS system green
+                  color: t.ok,
                   shape: BoxShape.circle,
-                  border: Border.all(color: cs.background, width: 2),
+                  border: Border.all(color: t.bg, width: 2),
                 ),
               ),
             ),

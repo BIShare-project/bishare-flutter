@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../../../core/ui/app_ui.dart';
-import 'glyph.dart';
+import '../../../../core/ui/app_rows.dart';
 
+/// A settings switch row: the shared [AppSwitchRow].
 class SwitchRow extends StatelessWidget {
-  const SwitchRow({super.key, 
+  const SwitchRow({
+    super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -20,12 +20,11 @@ class SwitchRow extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return AppListTile(
-      leading: Glyph(icon),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: ShadSwitch(value: value, onChanged: onChanged),
-    );
-  }
+  Widget build(BuildContext context) => AppSwitchRow(
+    icon: icon,
+    title: title,
+    subtitle: subtitle,
+    value: value,
+    onChanged: onChanged,
+  );
 }

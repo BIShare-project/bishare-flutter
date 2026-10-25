@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../../core/theme/app_tokens.dart';
 import '../../../core/ui/app_ui.dart';
 
 /// A transfer card: progress ring + percent, title/file, transport badge, live
