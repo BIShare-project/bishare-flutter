@@ -10,7 +10,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 class AppIcons {
   AppIcons._();
 
-  static const bookmark = 'bookmark';
   static const cloudDone = 'cloud-done';
   static const cloudOff = 'cloud-off';
   static const cloudSync = 'cloud-sync';
@@ -23,14 +22,12 @@ class AppIcons {
   static const eyePreview = 'eye-preview';
   static const fileArchive = 'file-archive';
   static const fileAudio = 'file-audio';
-  static const fileCode = 'file-code';
   static const fileDocument = 'file-document';
   static const fileImage = 'file-image';
   static const filePdf = 'file-pdf';
   static const fileSpreadsheet = 'file-spreadsheet';
   static const fileVideo = 'file-video';
   static const filter = 'filter';
-  static const folderShared = 'folder-shared';
   static const globePublic = 'globe-public';
   static const gridView = 'grid-view';
   static const history = 'history';
@@ -44,7 +41,6 @@ class AppIcons {
   static const notification = 'notification';
   static const passwordLock = 'password-lock';
   static const permissionShield = 'permission-shield';
-  static const print = 'print';
   static const qrShare = 'qr-share';
   static const refreshSync = 'refresh-sync';
   static const renameEdit = 'rename-edit';
