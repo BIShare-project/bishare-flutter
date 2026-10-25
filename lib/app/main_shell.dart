@@ -9,6 +9,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../core/config/feature_flags.dart';
 import '../core/deeplink/deep_link.dart';
 import '../core/deeplink/deep_link_service.dart';
 import '../core/di/locator.dart';
@@ -16,7 +17,6 @@ import '../core/share/share_intent_service.dart';
 import '../core/storage/app_database.dart';
 import '../core/ui/app_showcase.dart';
 import '../core/ui/app_ui.dart';
-import '../features/history/presentation/history_page.dart';
 import '../features/home/home_page.dart';
 import '../features/inbox/presentation/inbox_cubit.dart';
 import '../features/inbox/presentation/inbox_tab.dart';
@@ -26,14 +26,19 @@ import '../features/remote/presentation/remote_download.dart';
 import '../features/room/presentation/room_page.dart';
 import '../features/send/presentation/tray_cubit.dart';
 import '../features/settings/presentation/settings_page.dart';
+import '../features/vault/presentation/drive/drive_page.dart';
 import '../features/web_nearby/data/web_nearby_service.dart';
 import '../core/constants/app_links.dart';
 import '../core/review/review_prompter.dart';
 import '../core/ui/shell_tab.dart';
 
-/// The root tab shell (mirrors native iOS: Share · Inbox · Settings). Tabs are
-/// kept alive in an [IndexedStack] so discovery and the receiver never restart
-/// on a tab switch. Rooms + Stats tabs arrive with those P2 features.
+/// The tabs of the app, in bar order (redesign-plan.md 2.1).
+enum ShellTabId { send, inbox, drive, rooms, settings }
+
+/// The root tab shell: Kirim, Kotak Masuk, Drive (while the vault flag shows
+/// it), Ruangan, Pengaturan. Tabs are kept alive in an [IndexedStack] so
+/// discovery and the receiver never restart on a tab switch; tabs are named,
+/// not numbered, so Drive appearing or leaving never shifts the others.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
@@ -42,19 +47,26 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _index = 0;
+  ShellTabId _tab = ShellTabId.send;
+  final FeatureFlags _flags = getIt<FeatureFlags>();
   StreamSubscription<DeepLinkAction>? _linkSub;
   StreamSubscription<WebNearbyEvent>? _webNearbySub;
   StreamSubscription<List<String>>? _shareSub;
   ShareIntentService? _share;
   late final ShowcaseView _showcase;
 
-  static const _pages = [
-    HomePage(),
-    InboxTab(),
-    RoomPage(),
-    HistoryPage(),
-    SettingsPage(),
+  static const Map<ShellTabId, Widget> _pages = {
+    ShellTabId.send: HomePage(),
+    ShellTabId.inbox: InboxTab(),
+    ShellTabId.drive: DrivePage(),
+    ShellTabId.rooms: RoomPage(),
+    ShellTabId.settings: SettingsPage(),
+  };
+
+  /// The tabs on the bar now: Drive only while the flag shows it.
+  List<ShellTabId> get _tabs => [
+    for (final t in ShellTabId.values)
+      if (t != ShellTabId.drive || _flags.vaultVisible) t,
   ];
 
   @override
@@ -63,7 +75,10 @@ class _MainShellState extends State<MainShell> {
     // Register the showcase scope before the first build mounts any target;
     // kick off the Home tour (first run only) after the first frame.
     _showcase = registerAppShowcase();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeTour(0));
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _maybeTour(ShellTabId.send),
+    );
+    _flags.addListener(_flagsChanged);
     // Subscribe BEFORE start() so the cold-start launch link is delivered.
     final links = getIt<DeepLinkService>();
     _linkSub = links.actions.listen((action) {
@@ -186,13 +201,14 @@ class _MainShellState extends State<MainShell> {
     final paths = shared.where((p) => p.isNotEmpty).toList();
     if (!mounted || paths.isEmpty) return;
     context.read<TrayCubit>().addDropped(paths);
-    _select(0); // jump to the Share tab
+    _select(ShellTabId.send); // jump to the Kirim tab
     toast(context, 'nav.added_files_to_send'.plural(paths.length));
   }
 
   @override
   void dispose() {
     getIt<ReviewPrompter>().onWindowsAsk = null;
+    _flags.removeListener(_flagsChanged);
     _showcase.unregister();
     _linkSub?.cancel();
     _webNearbySub?.cancel();
@@ -204,10 +220,10 @@ class _MainShellState extends State<MainShell> {
   /// One-time coach-mark tours: Home right after first launch, Inbox/Rooms on
   /// their first visit. [maybeStartShowcase] owns the seen-flags and skips
   /// anything not on screen.
-  void _maybeTour(int index) {
+  void _maybeTour(ShellTabId tab) {
     if (!mounted) return;
-    switch (index) {
-      case 0:
+    switch (tab) {
+      case ShellTabId.send:
         maybeStartShowcase(
           id: ShowcaseIds.home,
           keys: [
@@ -218,16 +234,19 @@ class _MainShellState extends State<MainShell> {
             ShowcaseKeys.homeNav,
           ],
         );
-      case 1:
+      case ShellTabId.inbox:
         maybeStartShowcase(
           id: ShowcaseIds.inbox,
           keys: [ShowcaseKeys.inboxFiles, ShowcaseKeys.inboxWeb],
         );
-      case 2:
+      case ShellTabId.rooms:
         maybeStartShowcase(
           id: ShowcaseIds.rooms,
           keys: [ShowcaseKeys.roomCreate, ShowcaseKeys.roomJoin],
         );
+      case ShellTabId.drive:
+      case ShellTabId.settings:
+        break;
     }
   }
 
@@ -313,7 +332,7 @@ class _MainShellState extends State<MainShell> {
             },
           );
         case RescanSharedLink():
-          _select(0); // jump to the Share tab
+          _select(ShellTabId.send); // jump to the Kirim tab
       }
     } catch (e) {
       // Log error but don't crash the app
@@ -352,20 +371,43 @@ class _MainShellState extends State<MainShell> {
   static bool _isMissingTransfer(Object e) => e is TransferNotFoundException;
 
   List<AppNavItem> _items(int inboxCount) => [
-    AppNavItem(icon: AppIcons.shareLink, label: 'nav.tab_share'.tr()),
-    AppNavItem(
-      icon: AppIcons.notification,
-      label: 'nav.tab_inbox'.tr(),
-      badge: inboxCount,
-    ),
-    AppNavItem(icon: AppIcons.teamGroup, label: 'nav.tab_rooms'.tr()),
-    AppNavItem(icon: AppIcons.history, label: 'nav.tab_history'.tr()),
-    AppNavItem(icon: AppIcons.settings, label: 'nav.tab_settings'.tr()),
+    for (final t in _tabs)
+      switch (t) {
+        ShellTabId.send => AppNavItem(
+          icon: AppIcons.send,
+          label: 'nav.tab_share'.tr(),
+        ),
+        ShellTabId.inbox => AppNavItem(
+          icon: AppIcons.notification,
+          label: 'nav.tab_inbox'.tr(),
+          badge: inboxCount,
+        ),
+        ShellTabId.drive => AppNavItem(
+          icon: AppIcons.cloudSync,
+          label: 'vault.title'.tr(),
+        ),
+        ShellTabId.rooms => AppNavItem(
+          icon: AppIcons.teamGroup,
+          label: 'nav.tab_rooms'.tr(),
+        ),
+        ShellTabId.settings => AppNavItem(
+          icon: AppIcons.settings,
+          label: 'nav.tab_settings'.tr(),
+        ),
+      },
   ];
 
-  void _select(int i) {
-    setState(() => _index = i);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeTour(i));
+  void _select(ShellTabId tab) {
+    setState(() => _tab = tab);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeTour(tab));
+  }
+
+  /// Drive left the bar while it was open: fall back to Kotak Masuk.
+  void _flagsChanged() {
+    if (!mounted) return;
+    setState(() {
+      if (!_tabs.contains(_tab)) _tab = ShellTabId.inbox;
+    });
   }
 
   @override
@@ -375,13 +417,18 @@ class _MainShellState extends State<MainShell> {
     // Every tab stays alive (discovery and the receiver never restart on a
     // switch), but only the visible one may tick: a hidden tab's spinners,
     // pulses and progress stop drawing frames (redesign-plan.md 1.4).
+    final tabs = _tabs;
+    final index = tabs.indexOf(_tab).clamp(0, tabs.length - 1);
     final content = IndexedStack(
-      index: _index,
+      index: index,
       children: [
-        for (var i = 0; i < _pages.length; i++)
-          TickerMode(
-            enabled: i == _index,
-            child: ShellTab(active: i == _index, child: _pages[i]),
+        for (final t in tabs)
+          KeyedSubtree(
+            key: ValueKey(t),
+            child: TickerMode(
+              enabled: t == _tab,
+              child: ShellTab(active: t == _tab, child: _pages[t]!),
+            ),
           ),
       ],
     );
@@ -411,8 +458,8 @@ class _MainShellState extends State<MainShell> {
             nav(
               (items) => AppNavRail(
                 items: items,
-                currentIndex: _index,
-                onTap: _select,
+                currentIndex: index,
+                onTap: (i) => _select(tabs[i]),
               ),
             ),
             Expanded(child: content),
@@ -426,8 +473,8 @@ class _MainShellState extends State<MainShell> {
       bottomNavigationBar: nav(
         (items) => AppBottomNav(
           items: items,
-          currentIndex: _index,
-          onTap: _select,
+          currentIndex: index,
+          onTap: (i) => _select(tabs[i]),
         ),
       ),
     );

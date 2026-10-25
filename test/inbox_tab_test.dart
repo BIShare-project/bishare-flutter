@@ -5,6 +5,8 @@ import 'package:bishare/core/di/locator.dart';
 import 'package:bishare/core/storage/app_database.dart';
 import 'package:bishare/core/ui/app_showcase.dart';
 import 'package:bishare/features/history/data/history_repository.dart';
+import 'package:bishare/features/history/presentation/history_cubit.dart';
+import 'package:bishare/features/history/presentation/history_page.dart';
 import 'package:bishare/features/inbox/presentation/inbox_cubit.dart';
 import 'package:bishare/features/inbox/presentation/inbox_page.dart';
 import 'package:bishare/features/inbox/presentation/inbox_tab.dart';
@@ -21,11 +23,14 @@ class _History extends HistoryRepository {
 
   @override
   Stream<List<TransferRecord>> watchReceived() => Stream.value(const []);
+
+  @override
+  Stream<List<TransferRecord>> watchAll() => Stream.value(const []);
 }
 
-/// Drive lives in the Inbox tab as a second segment (drive-plan.md "Product
-/// shape"), and only while the vault_enabled flag allows it: with the flag
-/// off the tab must be the Inbox exactly as before.
+/// Kotak Masuk (redesign-plan.md 2.2): the received files and the transfer
+/// history are two segments of one tab; Drive is a tab of its own, so the
+/// switch never offers it, whatever the vault flag says.
 void main() {
   setUpAll(() => driftRuntimeOptions.dontWarnAboutMultipleDatabases = true);
 
@@ -42,8 +47,11 @@ void main() {
     addTearDown(showcase.unregister);
     await tester.pumpWidget(
       ShadApp(
-        home: BlocProvider(
-          create: (_) => InboxCubit(_History()),
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => InboxCubit(_History())),
+            BlocProvider(create: (_) => HistoryCubit(_History())),
+          ],
           child: const InboxTab(),
         ),
       ),
@@ -51,23 +59,20 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('flag off: the Inbox as it always was, no switch', (tester) async {
-    await pump(tester, null);
-    final page = tester.widget<InboxPage>(find.byType(InboxPage));
-    expect(page.segment, isNull);
-    expect(find.text('inbox.segment_drive'), findsNothing);
-  });
-
-  testWidgets('flag on: the switch under the title, Inbox first', (tester) async {
-    await pump(tester, {'vault_enabled': true});
-    final page = tester.widget<InboxPage>(find.byType(InboxPage));
-    expect(page.segment, isNotNull);
-    expect(find.text('inbox.segment_device'), findsOneWidget);
-    expect(find.text('inbox.segment_drive'), findsOneWidget);
-  });
-
-  testWidgets('"internal" without the tester switch: hidden', (tester) async {
-    await pump(tester, {'vault_enabled': 'internal'});
-    expect(tester.widget<InboxPage>(find.byType(InboxPage)).segment, isNull);
-  });
+  for (final flags in <Map<String, Object?>?>[
+    null,
+    {'vault_enabled': true},
+  ]) {
+    testWidgets('received first, history second, no Drive (flags $flags)', (
+      tester,
+    ) async {
+      await pump(tester, flags);
+      final page = tester.widget<InboxPage>(find.byType(InboxPage));
+      expect(page.segment, isNotNull);
+      expect(find.text('history.received'), findsOneWidget);
+      expect(find.text('history.title'), findsOneWidget);
+      expect(find.text('inbox.segment_drive'), findsNothing);
+      expect(find.byType(HistoryPage), findsNothing);
+    });
+  }
 }

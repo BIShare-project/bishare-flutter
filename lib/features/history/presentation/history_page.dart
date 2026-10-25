@@ -13,7 +13,11 @@ import 'widgets/stats_row.dart';
 /// History tab: the full transfer log (sent + received) with filter, search,
 /// per-row open/share/delete, CSV export, and clear-all.
 class HistoryPage extends StatelessWidget {
-  const HistoryPage({super.key});
+  const HistoryPage({super.key, this.segment});
+
+  /// The Kotak Masuk segment switch: when given, this page is the Riwayat
+  /// segment of that tab and carries its title.
+  final Widget? segment;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +34,9 @@ class HistoryPage extends StatelessWidget {
               child: Column(
                 children: [
                   AppScreenHeader(
-                    title: 'history.title'.tr(),
+                    title: segment != null
+                        ? 'inbox.title'.tr()
+                        : 'history.title'.tr(),
                     subtitle: 'history.transfers_count'.plural(state.total),
                     actions: [
                       AppIconButton(
@@ -41,6 +47,7 @@ class HistoryPage extends StatelessWidget {
                       ),
                     ],
                   ),
+                  ?segment,
                   StatsRow(
                     total: state.total,
                     sent: state.sentCount,
