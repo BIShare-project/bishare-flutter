@@ -126,15 +126,33 @@
     "requesting_files": "{alias} is requesting files",
     "send_files": "Send files",
     "send_n_files": {
-      "one": "Send {} File",
-      "other": "Send {} Files"
+      "one": "Send {} file",
+      "other": "Send {} files"
     },
     "sending_n_files": {
       "one": "Sending {} file…",
       "other": "Sending {} files…"
     },
     "wants_to_send": "wants to send",
-    "key_changed_warning": "This device’s security key changed since you last trusted it — it may be a new device, or an impostor. Only accept if you’re expecting this transfer."
+    "key_changed_warning": "This device’s security key changed since you last trusted it. It may be a new device, or an impostor. Only accept if you’re expecting this transfer.",
+    "offer_title": "{alias} wants to send",
+    "auto_accept_from": "Auto-accept from {alias}",
+    "auto_accept_hint": "Next time, accept without asking",
+    "files_of": "{done} of {total} files",
+    "view": "View",
+    "done_title": {
+      "one": "{} file received",
+      "other": "{} files received"
+    },
+    "done_from": "From {alias} · {size}",
+    "stopped_title": "Transfer stopped",
+    "saved_of": "{saved} of {total} files saved",
+    "request_hint": "Choose what to send, or decline.",
+    "or_code": "or type a code",
+    "code_short": "A code has 6 letters or digits.",
+    "paste_nothing": "No code or BIShare link to paste.",
+    "by_qr_beam": "Receive by QR Beam",
+    "by_qr_beam_hint": "A small file, screen to camera, no network"
   },
   "invite": {
     "title": "Invite a device",
@@ -512,7 +530,9 @@
     "no_app_open": "No app can open this file",
     "open": "Open",
     "share": "Share",
-    "try_again": "Try again"
+    "try_again": "Try again",
+    "eta_seconds": "{s}s left",
+    "eta_minutes": "{m}m {s}s left"
   },
   "files": {
     "cannot_open": "Cannot open: {message}",

@@ -18,7 +18,6 @@ import '../send/data/send_media_library.dart';
 import '../send/presentation/send_cubit.dart';
 import '../send/presentation/send_selection_cubit.dart';
 import '../send/presentation/tray_cubit.dart';
-import 'widgets/floating_transfers.dart';
 import 'widgets/send_desktop_pane.dart';
 import 'widgets/send_header.dart';
 import 'widgets/send_list_tabs.dart';
@@ -29,7 +28,7 @@ import 'widgets/send_selection_bar.dart';
 /// header, the library tabs (Photos, Videos, Audio, Apps on Android,
 /// Documents, More), the selection bar and the send sheet. On computers: a
 /// drop zone with the destinations beside it. It also carries the incoming
-/// prompts and the live transfer cards, whatever screen is on.
+/// prompts, whatever screen is on.
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -50,7 +49,8 @@ class HomePage extends StatelessWidget {
           child: MultiBlocListener(
             listeners: [
               BlocListener<ReceiveCubit, ReceiveState>(
-                listenWhen: (p, c) => p.pending == null && c.pending != null,
+                listenWhen: (p, c) =>
+                    c.pending != null && p.pending?.id != c.pending?.id,
                 listener: _showIncomingSheet,
               ),
               BlocListener<ReceiveCubit, ReceiveState>(
@@ -59,20 +59,12 @@ class HomePage extends StatelessWidget {
                     p.pendingRequest?.id != c.pendingRequest?.id,
                 listener: _showFileRequestSheet,
               ),
+              // The floating card says what arrived (4.2); a file only taps.
               BlocListener<ReceiveCubit, ReceiveState>(
                 listenWhen: (p, c) =>
                     p.lastReceived?.savedPath != c.lastReceived?.savedPath &&
                     c.lastReceived != null,
-                listener: (context, s) {
-                  HapticFeedback.lightImpact();
-                  toast(
-                    context,
-                    'home.received_file'.tr(
-                      namedArgs: {'file': s.lastReceived!.fileName},
-                    ),
-                    type: ToastType.success,
-                  );
-                },
+                listener: (context, s) => HapticFeedback.lightImpact(),
               ),
               BlocListener<SendCubit, SendState>(
                 listenWhen: (p, c) => p.status != c.status,
@@ -97,7 +89,7 @@ class HomePage extends StatelessWidget {
             child: Stack(
               children: [
                 if (isDesktop) const SendDesktopPane() else const _SendTabs(),
-                // The selection bar, and live transfers floating above it.
+                // The selection bar; the shell floats live transfers above it.
                 if (!isDesktop)
                   const Positioned(
                     left: 0,
@@ -105,12 +97,6 @@ class HomePage extends StatelessWidget {
                     bottom: 0,
                     child: SendSelectionBar(),
                   ),
-                const Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: FloatingTransfers(),
-                ),
               ],
             ),
           ),
@@ -128,7 +114,7 @@ class HomePage extends StatelessWidget {
     HapticFeedback.mediumImpact();
     final cubit = context.read<ReceiveCubit>();
     final accepted = await showIncomingTransfer(context, pending);
-    accepted ? cubit.accept() : cubit.reject();
+    accepted ? cubit.accept(pending) : cubit.reject(pending);
   }
 
   Future<void> _showFileRequestSheet(

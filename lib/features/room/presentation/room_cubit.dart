@@ -9,7 +9,7 @@ import '../../remote/data/cloud_transfer_service.dart' show CloudDownloadExcepti
 import '../data/local_room_service.dart';
 import '../data/room_e2e.dart' show RoomE2E;
 import '../data/room_service.dart';
-import '../data/room_thumbnail.dart';
+import '../../../core/io/file_thumbnail.dart';
 import '../data/webrtc_room_service.dart';
 import '../domain/room_models.dart';
 import '../../../core/review/review_prompter.dart';
@@ -359,7 +359,7 @@ class RoomCubit extends Cubit<RoomState> {
   }) async {
     final code = state.session?.code;
     if (code == null) return;
-    final thumb = await generateRoomThumbnail(file.path, mime);
+    final thumb = await generateThumbnail(file.path, mime);
     try {
       if (_isLocal) {
         await _local.addFile(file, name: name, mime: mime, thumbnailBase64: thumb);

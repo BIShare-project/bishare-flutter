@@ -13,6 +13,7 @@ class AppCodeBoxes extends StatefulWidget {
     super.key,
     required this.controller,
     required this.length,
+    this.maxLength,
     this.onComplete,
     this.onSubmitted,
     this.autofocus = true,
@@ -21,6 +22,11 @@ class AppCodeBoxes extends StatefulWidget {
 
   final TextEditingController controller;
   final int length;
+
+  /// A longer code that is still accepted (a live-transfer code falls back
+  /// to 8 when 6 collide): the extra boxes appear once typing passes
+  /// [length]. [onComplete] then never fires; submit with a button.
+  final int? maxLength;
 
   /// Called once the last box is filled.
   final ValueChanged<String>? onComplete;
@@ -67,7 +73,9 @@ class _AppCodeBoxesState extends State<AppCodeBoxes> {
     final t = context.tokens;
     final code = widget.controller.text;
     final focused = _focus.hasFocus;
-    final box = widget.length > 6 ? 36.0 : 46.0;
+    final max = widget.maxLength ?? widget.length;
+    final count = code.length > widget.length ? max : widget.length;
+    final box = count > 6 ? 36.0 : 46.0;
     return Directionality(
       textDirection: TextDirection.ltr,
       child: GestureDetector(
@@ -77,10 +85,9 @@ class _AppCodeBoxesState extends State<AppCodeBoxes> {
           children: [
             Row(
               mainAxisSize: MainAxisSize.min,
-              children: List.generate(widget.length, (i) {
+              children: List.generate(count, (i) {
                 final filled = i < code.length;
-                final active =
-                    focused && i == code.length.clamp(0, widget.length - 1);
+                final active = focused && i == code.length.clamp(0, count - 1);
                 final border = widget.error
                     ? t.danger
                     : active
@@ -91,9 +98,7 @@ class _AppCodeBoxesState extends State<AppCodeBoxes> {
                 return Container(
                   width: box,
                   height: box + 8,
-                  margin: EdgeInsets.symmetric(
-                    horizontal: widget.length > 6 ? 3 : 4,
-                  ),
+                  margin: EdgeInsets.symmetric(horizontal: count > 6 ? 3 : 4),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: t.surface,
@@ -103,7 +108,7 @@ class _AppCodeBoxesState extends State<AppCodeBoxes> {
                   child: Text(
                     filled ? code[i] : '•',
                     style: AppType.sheetTitle.copyWith(
-                      fontSize: widget.length > 6 ? 18 : 21,
+                      fontSize: count > 6 ? 18 : 21,
                       color: filled ? t.text : t.text3.withValues(alpha: 0.6),
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
@@ -118,7 +123,7 @@ class _AppCodeBoxesState extends State<AppCodeBoxes> {
                 child: TextField(
                   controller: widget.controller,
                   focusNode: _focus,
-                  maxLength: widget.length,
+                  maxLength: max,
                   showCursor: false,
                   enableInteractiveSelection: false,
                   autocorrect: false,
@@ -135,7 +140,9 @@ class _AppCodeBoxesState extends State<AppCodeBoxes> {
                     border: InputBorder.none,
                   ),
                   onChanged: (v) {
-                    if (v.length == widget.length) widget.onComplete?.call(v);
+                    if (widget.maxLength == null && v.length == widget.length) {
+                      widget.onComplete?.call(v);
+                    }
                   },
                   onSubmitted: widget.onSubmitted,
                 ),

@@ -134,7 +134,25 @@
       "other": "{} Dateien werden gesendet…"
     },
     "wants_to_send": "möchte senden",
-    "key_changed_warning": "Der Sicherheitsschlüssel dieses Geräts hat sich seit dem letzten Mal geändert — evtl. ein neues Gerät oder ein Betrüger. Nur annehmen, wenn du diese Übertragung erwartest."
+    "key_changed_warning": "Der Sicherheitsschlüssel dieses Geräts hat sich seit dem letzten Mal geändert. Vielleicht ist es ein neues Gerät oder ein Betrüger. Nur annehmen, wenn du diese Übertragung erwartest.",
+    "offer_title": "{alias} möchte dir etwas senden",
+    "auto_accept_from": "Von {alias} automatisch annehmen",
+    "auto_accept_hint": "Nächstes Mal ohne Nachfrage annehmen",
+    "files_of": "{done} von {total} Dateien",
+    "view": "Ansehen",
+    "done_title": {
+      "one": "{} Datei empfangen",
+      "other": "{} Dateien empfangen"
+    },
+    "done_from": "Von {alias} · {size}",
+    "stopped_title": "Übertragung abgebrochen",
+    "saved_of": "{saved} von {total} Dateien gespeichert",
+    "request_hint": "Wähle aus, was du senden willst, oder lehne ab.",
+    "or_code": "oder Code eingeben",
+    "code_short": "Ein Code hat 6 Buchstaben oder Ziffern.",
+    "paste_nothing": "Kein Code oder BIShare-Link zum Einfügen.",
+    "by_qr_beam": "Per QR Beam empfangen",
+    "by_qr_beam_hint": "Eine kleine Datei, vom Bildschirm zur Kamera, ohne Netzwerk"
   },
   "invite": {
     "title": "Gerät einladen",
@@ -512,7 +530,9 @@
     "no_app_open": "Keine App kann diese Datei öffnen",
     "open": "Öffnen",
     "share": "Teilen",
-    "try_again": "Erneut versuchen"
+    "try_again": "Erneut versuchen",
+    "eta_seconds": "noch {s} s",
+    "eta_minutes": "noch {m} Min. {s} s"
   },
   "files": {
     "cannot_open": "Kann nicht geöffnet werden: {message}",

@@ -144,6 +144,36 @@ class AppTokens extends ThemeExtension<AppTokens> {
   @override
   AppTokens copyWith() => this;
 
+  /// The same tokens with the receive accent in the accent's place, so
+  /// buttons, switches and focus rings inside a receiving surface (the offer
+  /// sheet, the Terima code) take the receive colour with no extra params.
+  AppTokens get receiving => AppTokens(
+    brightness: brightness,
+    bg: bg,
+    surface: surface,
+    raised: raised,
+    sunken: sunken,
+    line: line,
+    text: text,
+    text2: text2,
+    text3: text3,
+    accent: receive,
+    accentStrong: receiveStrong,
+    onAccent: onReceive,
+    accentSoft: receiveSoft,
+    receive: receive,
+    receiveStrong: receiveStrong,
+    onReceive: onReceive,
+    receiveSoft: receiveSoft,
+    ok: ok,
+    danger: danger,
+    onDanger: onDanger,
+    warn: warn,
+    scrim: scrim,
+    brandSurface: brandSurface,
+    brandLine: brandLine,
+  );
+
   @override
   AppTokens lerp(covariant AppTokens? other, double t) {
     if (other == null) return this;
@@ -204,6 +234,30 @@ class AppTokens extends ThemeExtension<AppTokens> {
     ring: accent,
     selection: accentSoft,
   );
+}
+
+/// Puts [AppTokens.receiving] over [child]: the receive accent becomes the
+/// accent below it.
+class ReceiveTone extends StatelessWidget {
+  const ReceiveTone({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final t = context.tokens;
+    return Theme(
+      data: theme.copyWith(
+        extensions: [
+          ...theme.extensions.values.where((e) => e is! AppTokens),
+          t.receiving,
+        ],
+        colorScheme: theme.colorScheme.copyWith(primary: t.receive),
+      ),
+      child: child,
+    );
+  }
 }
 
 extension AppTokensContext on BuildContext {

@@ -13,6 +13,7 @@ import '../../settings/domain/settings.dart' show TransportMode;
 import '../../../core/constants/protocol.dart';
 import '../../../core/error/exceptions.dart';
 import '../../../core/identity/device_identity.dart';
+import '../../../core/io/file_thumbnail.dart';
 import '../../../core/protocol/device_info.dart';
 import '../../../core/protocol/file_metadata.dart';
 import '../../../core/protocol/file_request.dart';
@@ -169,6 +170,28 @@ class TransferClient {
     final dio = _dioFor(device.host, device.port);
     final info = await _identity.makeDeviceInfo();
 
+    // The first few photos and videos travel with a small thumbnail, so the
+    // receiver sees what is coming before accepting. Not for a folder sync,
+    // which never prompts.
+    final previews = <String, String>{};
+    if (syncPairId == null) {
+      final shown = files
+          .where(
+            (f) =>
+                f.mimeType.startsWith('image/') ||
+                f.mimeType.startsWith('video/'),
+          )
+          .take(_previewCount)
+          .toList();
+      final thumbs = await Future.wait([
+        for (final f in shown) generateThumbnail(f.path, f.mimeType),
+      ]);
+      for (var i = 0; i < shown.length; i++) {
+        final t = thumbs[i];
+        if (t != null) previews[shown[i].id] = t;
+      }
+    }
+
     // Build file metadata (streaming SHA-256, no whole-file buffering).
     final metas = <String, FileMetadata>{};
     for (final f in files) {
@@ -181,6 +204,7 @@ class TransferClient {
         // instant and the file is read once (not twice). Encrypted transfers
         // keep integrity via per-chunk AES-GCM auth; small files still verify.
         sha256: f.size <= _hashSizeLimit ? await _sha256(f) : null,
+        preview: previews[f.id],
         relPath: syncRelPaths?[f.id],
         mtimeMs: f.mtimeMs,
       );
@@ -400,9 +424,7 @@ class TransferClient {
           }
         }
 
-        await Future.wait([
-          for (var k = 0; k < concurrency; k++) worker(),
-        ]);
+        await Future.wait([for (var k = 0; k < concurrency; k++) worker()]);
         tcpQueue.sort(); // keep the TCP pass in the user's file order
       } else {
         tcpQueue.addAll([for (var i = 0; i < files.length; i++) i]);
@@ -504,6 +526,9 @@ class TransferClient {
   /// Files at or below this size are hashed upfront (SHA-256 in prepare, cheap +
   /// verified); larger files skip it to keep "Preparing" instant.
   static const int _hashSizeLimit = 64 * 1024 * 1024; // 64 MB
+
+  /// How many photos and videos carry a thumbnail in the offer.
+  static const int _previewCount = 3;
 
   Future<void> _backoff(int attempt) =>
       Future<void>.delayed(Duration(milliseconds: 300 * attempt));

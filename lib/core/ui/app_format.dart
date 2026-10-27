@@ -1,4 +1,5 @@
 import 'package:compact_toast/compact_toast.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 
@@ -47,11 +48,14 @@ String fmtSpeed(double bytesPerSec) {
   return '${(bytesPerSec / 1024).toStringAsFixed(0)} KB/s';
 }
 
+/// Time left, in the app's language ("6s left", "6 dtk lagi").
 String fmtEta(double secs) {
-  if (secs < 60) return '${secs.toInt()}s left';
-  final m = secs ~/ 60;
-  final s = (secs % 60).toInt();
-  return '${m}m ${s}s left';
+  if (secs < 60) {
+    return 'common.eta_seconds'.tr(namedArgs: {'s': '${secs.toInt()}'});
+  }
+  return 'common.eta_minutes'.tr(
+    namedArgs: {'m': '${secs ~/ 60}', 's': '${(secs % 60).toInt()}'},
+  );
 }
 
 /// The [AppIcons] name for a device type (used by [AppAvatar]).

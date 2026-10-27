@@ -134,7 +134,25 @@
       "other": "Envoi de {} fichiers…"
     },
     "wants_to_send": "veut envoyer",
-    "key_changed_warning": "La clé de sécurité de cet appareil a changé depuis la dernière fois — nouvel appareil, ou usurpateur. N’acceptez que si vous attendiez ce transfert."
+    "key_changed_warning": "La clé de sécurité de cet appareil a changé depuis la dernière fois. Il peut s’agir d’un nouvel appareil ou d’un usurpateur. N’acceptez que si vous attendiez ce transfert.",
+    "offer_title": "{alias} souhaite vous envoyer",
+    "auto_accept_from": "Toujours accepter de {alias}",
+    "auto_accept_hint": "La prochaine fois, accepté sans demander",
+    "files_of": "{done} sur {total} fichiers",
+    "view": "Voir",
+    "done_title": {
+      "one": "{} fichier reçu",
+      "other": "{} fichiers reçus"
+    },
+    "done_from": "De {alias} · {size}",
+    "stopped_title": "Transfert interrompu",
+    "saved_of": "{saved} sur {total} fichiers enregistrés",
+    "request_hint": "Choisissez quoi envoyer, ou refusez.",
+    "or_code": "ou saisissez un code",
+    "code_short": "Un code contient 6 lettres ou chiffres.",
+    "paste_nothing": "Aucun code ni lien BIShare à coller.",
+    "by_qr_beam": "Recevoir par QR Beam",
+    "by_qr_beam_hint": "Un petit fichier, de l’écran à la caméra, sans réseau"
   },
   "invite": {
     "title": "Inviter un appareil",
@@ -512,7 +530,9 @@
     "no_app_open": "Aucune app ne peut ouvrir ce fichier",
     "open": "Ouvrir",
     "share": "Partager",
-    "try_again": "Réessayer"
+    "try_again": "Réessayer",
+    "eta_seconds": "{s} s restantes",
+    "eta_minutes": "{m} min {s} s restantes"
   },
   "files": {
     "cannot_open": "Impossible d’ouvrir : {message}",

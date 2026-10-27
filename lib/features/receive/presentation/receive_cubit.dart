@@ -8,6 +8,28 @@ import '../../../core/server/transfer_types.dart';
 import '../../../core/telemetry/telemetry_service.dart';
 import '../../../core/review/review_prompter.dart';
 
+/// How a receive ended, for the card that stays a few seconds after it: all
+/// files saved, or stopped part way (the sender cancelled, or vanished).
+class ReceiveOutcome {
+  const ReceiveOutcome({
+    required this.sessionId,
+    required this.senderAlias,
+    required this.saved,
+    required this.total,
+    required this.bytes,
+  });
+
+  final String sessionId;
+  final String senderAlias;
+  final int saved;
+  final int total;
+
+  /// The size of the whole offer.
+  final int bytes;
+
+  bool get complete => saved >= total;
+}
+
 /// UI state for the receiver: a possible pending accept/reject prompt, a pending
 /// file-request (reverse flow), and live receive progress.
 class ReceiveState extends Equatable {
@@ -16,6 +38,7 @@ class ReceiveState extends Equatable {
     this.pendingRequest,
     this.progress,
     this.lastReceived,
+    this.outcome,
     this.speed = 0,
   });
 
@@ -23,6 +46,9 @@ class ReceiveState extends Equatable {
   final PendingFileRequest? pendingRequest;
   final ReceiveProgress? progress;
   final ReceivedFile? lastReceived;
+
+  /// The last receive that ended (null until one does).
+  final ReceiveOutcome? outcome;
 
   /// Live receive throughput in bytes/sec (0 until measurable). Mirrors the
   /// sender's live speed so the receive card shows the same "speed · ETA" line.
@@ -40,6 +66,7 @@ class ReceiveState extends Equatable {
     PendingFileRequest? pendingRequest,
     ReceiveProgress? progress,
     ReceivedFile? lastReceived,
+    ReceiveOutcome? outcome,
     double? speed,
     bool clearPending = false,
     bool clearRequest = false,
@@ -51,6 +78,7 @@ class ReceiveState extends Equatable {
         : (pendingRequest ?? this.pendingRequest),
     progress: clearProgress ? null : (progress ?? this.progress),
     lastReceived: lastReceived ?? this.lastReceived,
+    outcome: outcome ?? this.outcome,
     speed: speed ?? this.speed,
   );
 
@@ -61,6 +89,7 @@ class ReceiveState extends Equatable {
     progress?.bytesReceived,
     progress?.isComplete,
     lastReceived?.savedPath,
+    outcome?.sessionId,
     speed,
   ];
 }
@@ -73,12 +102,21 @@ class ReceiveCubit extends Cubit<ReceiveState> {
       super(const ReceiveState()) {
     _incoming = _server.incoming.listen((p) {
       emit(state.copyWith(pending: p));
+      // The server settles an unanswered offer after 30 s. Clear it then, or
+      // the stale offer would hide every later one from the prompt.
+      p.decision.future.then((_) {
+        if (!isClosed && state.pending?.id == p.id) {
+          emit(state.copyWith(clearPending: true));
+        }
+      });
     });
     _incomingReq = _server.incomingRequests.listen((r) {
       emit(state.copyWith(pendingRequest: r));
     });
     _prog = _server.progress.listen((pr) {
       if (pr.isComplete) {
+        final firstEnd = !_endedSessions.contains(pr.sessionId);
+        final shown = state.progress?.sessionId == pr.sessionId;
         // Record every session that reaches a terminal state — even one whose
         // clear is skipped just below — so ANY later straggler for it (terminal
         // OR live) is recognised as belonging to a finished transfer.
@@ -93,7 +131,20 @@ class ReceiveCubit extends Cubit<ReceiveState> {
           ..stop()
           ..reset();
         _swSession = null;
-        emit(state.copyWith(clearProgress: true, speed: 0));
+        // Only the first end of a session that was on screen leaves a card.
+        // An orphan terminal (QUIC, session already gone) has no sender and
+        // no files: it only clears the card.
+        final ended =
+            !firstEnd || !shown || pr.senderAlias.isEmpty || pr.totalBytes == 0
+            ? null
+            : ReceiveOutcome(
+                sessionId: pr.sessionId,
+                senderAlias: pr.senderAlias,
+                saved: pr.completedFiles,
+                total: pr.totalFiles,
+                bytes: pr.totalBytes,
+              );
+        emit(state.copyWith(clearProgress: true, speed: 0, outcome: ended));
         return;
       }
       // Safety net: a LIVE (non-terminal) progress event for a session that has
@@ -155,14 +206,17 @@ class ReceiveCubit extends Cubit<ReceiveState> {
   late final StreamSubscription<ReceiveProgress> _prog;
   late final StreamSubscription<ReceivedFile> _recv;
 
-  void accept() {
-    state.pending?.accept();
-    emit(state.copyWith(clearPending: true));
-  }
+  /// Accepts [offer] (the one on screen; the current one when omitted). A
+  /// newer offer that arrived meanwhile stays pending.
+  void accept([PendingTransfer? offer]) => _settle(offer, true);
 
-  void reject() {
-    state.pending?.reject();
-    emit(state.copyWith(clearPending: true));
+  void reject([PendingTransfer? offer]) => _settle(offer, false);
+
+  void _settle(PendingTransfer? offer, bool yes) {
+    final o = offer ?? state.pending;
+    if (o == null) return;
+    yes ? o.accept() : o.reject();
+    if (state.pending?.id == o.id) emit(state.copyWith(clearPending: true));
   }
 
   /// Clear the surfaced file-request once its sheet has taken ownership.

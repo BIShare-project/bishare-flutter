@@ -134,7 +134,25 @@
       "other": "Mengirim {} file…"
     },
     "wants_to_send": "ingin mengirim",
-    "key_changed_warning": "Kunci keamanan device ini berubah sejak terakhir kamu percaya — bisa jadi device baru, atau penyamar. Terima hanya jika kamu memang menunggu transfer ini."
+    "key_changed_warning": "Kunci keamanan perangkat ini berubah sejak terakhir kamu percaya. Bisa jadi perangkat baru, atau penyamar. Terima hanya jika kamu memang menunggu transfer ini.",
+    "offer_title": "{alias} ingin mengirim",
+    "auto_accept_from": "Terima otomatis dari {alias}",
+    "auto_accept_hint": "Lain kali langsung diterima tanpa ditanya",
+    "files_of": "{done} dari {total} file",
+    "view": "Lihat",
+    "done_title": {
+      "one": "{} file diterima",
+      "other": "{} file diterima"
+    },
+    "done_from": "Dari {alias} · {size}",
+    "stopped_title": "Kiriman terhenti",
+    "saved_of": "{saved} dari {total} file tersimpan",
+    "request_hint": "Pilih yang mau dikirim, atau tolak.",
+    "or_code": "atau ketik kode",
+    "code_short": "Kode berisi 6 huruf atau angka.",
+    "paste_nothing": "Tidak ada kode atau tautan BIShare untuk ditempel.",
+    "by_qr_beam": "Terima lewat QR Beam",
+    "by_qr_beam_hint": "File kecil, layar ke kamera, tanpa jaringan"
   },
   "invite": {
     "title": "Undang perangkat",
@@ -512,7 +530,9 @@
     "no_app_open": "Tidak ada aplikasi yang dapat membuka file ini",
     "open": "Buka",
     "share": "Bagikan",
-    "try_again": "Coba lagi"
+    "try_again": "Coba lagi",
+    "eta_seconds": "{s} dtk lagi",
+    "eta_minutes": "{m} mnt {s} dtk lagi"
   },
   "files": {
     "cannot_open": "Tidak dapat membuka: {message}",

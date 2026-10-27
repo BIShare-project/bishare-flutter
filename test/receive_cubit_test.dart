@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bishare/core/protocol/device_info.dart';
 import 'package:bishare/core/server/transfer_server.dart';
 import 'package:bishare/core/server/transfer_types.dart';
 import 'package:bishare/core/telemetry/telemetry_service.dart';
@@ -82,30 +83,31 @@ void main() {
 
     server.progressCtrl.add(_p('S1', bytes: 100, complete: true)); // done
     await _tick();
-    expect(cubit.state.progress, isNull, reason: 'terminal must clear the card');
+    expect(
+      cubit.state.progress,
+      isNull,
+      reason: 'terminal must clear the card',
+    );
   });
 
-  test(
-    'a late non-terminal straggler cannot resurrect a finished card '
-    '(the stuck receive-card bug)',
-    () async {
-      server.progressCtrl.add(_p('S1', bytes: 0));
-      await _tick();
-      server.progressCtrl.add(_p('S1', bytes: 100, complete: true));
-      await _tick();
-      expect(cubit.state.progress, isNull);
+  test('a late non-terminal straggler cannot resurrect a finished card '
+      '(the stuck receive-card bug)', () async {
+    server.progressCtrl.add(_p('S1', bytes: 0));
+    await _tick();
+    server.progressCtrl.add(_p('S1', bytes: 100, complete: true));
+    await _tick();
+    expect(cubit.state.progress, isNull);
 
-      // Server dropped S1 on completion; a delayed live-progress straggler for
-      // it must be ignored (no terminal would ever follow → would hang forever).
-      server.progressCtrl.add(_p('S1', bytes: 40));
-      await _tick();
-      expect(
-        cubit.state.progress,
-        isNull,
-        reason: 'a finished session must not re-show the card',
-      );
-    },
-  );
+    // Server dropped S1 on completion; a delayed live-progress straggler for
+    // it must be ignored (no terminal would ever follow → would hang forever).
+    server.progressCtrl.add(_p('S1', bytes: 40));
+    await _tick();
+    expect(
+      cubit.state.progress,
+      isNull,
+      reason: 'a finished session must not re-show the card',
+    );
+  });
 
   test('a terminal for the shown session always clears it', () async {
     server.progressCtrl.add(_p('S1', bytes: 0));
@@ -141,4 +143,88 @@ void main() {
     await _tick();
     expect(cubit.state.progress, isNull);
   });
+
+  group('the card left after a receive ends (redesign 4.2)', () {
+    test('a full receive leaves a complete outcome', () async {
+      server.progressCtrl.add(_p('S1', bytes: 60));
+      await _tick();
+      server.progressCtrl.add(_p('S1', bytes: 100, complete: true));
+      await _tick();
+      final o = cubit.state.outcome;
+      expect(o, isNotNull);
+      expect(o!.complete, isTrue);
+      expect(o.senderAlias, 'iPhone');
+      expect(o.bytes, 100);
+    });
+
+    test('a receive that stops part way says how many were saved', () async {
+      server.progressCtrl.add(_p('S1', bytes: 30));
+      await _tick();
+      // The sender cancelled: terminal with no completed files.
+      server.progressCtrl.add(_p('S1', bytes: 0, complete: false).copyAsEnd());
+      await _tick();
+      final o = cubit.state.outcome!;
+      expect(o.complete, isFalse);
+      expect(o.saved, 0);
+      expect(o.total, 1);
+    });
+
+    test('an end never shown, or a repeated end, leaves no new card', () async {
+      // A terminal for a session that never showed progress.
+      server.progressCtrl.add(_p('GHOST', bytes: 0, complete: true));
+      await _tick();
+      expect(cubit.state.outcome, isNull);
+
+      server.progressCtrl.add(_p('S1', bytes: 50));
+      await _tick();
+      server.progressCtrl.add(_p('S1', bytes: 100, complete: true));
+      await _tick();
+      final first = cubit.state.outcome;
+      // A QUIC straggler terminal for the same session.
+      server.progressCtrl.add(_p('S1', bytes: 0).copyAsEnd());
+      await _tick();
+      expect(identical(cubit.state.outcome, first), isTrue);
+    });
+  });
+
+  test(
+    'an offer nobody answered is cleared when the server settles it',
+    () async {
+      final session = TransferSession(
+        sessionId: 'S9',
+        sender: const DeviceInfo(
+          alias: 'Mac',
+          version: '2.4',
+          fingerprint: 'fp',
+          port: 58317,
+          protocol: 'http',
+          download: false,
+        ),
+        files: const {},
+        tokens: const {},
+        createdAt: DateTime(2026),
+      );
+      final offer = PendingTransfer(session: session);
+      server.incomingCtrl.add(offer);
+      await _tick();
+      expect(cubit.state.pending?.id, 'S9');
+      offer.reject(); // the 30 s timeout
+      await _tick();
+      expect(cubit.state.pending, isNull);
+    },
+  );
+}
+
+extension on ReceiveProgress {
+  /// The same session ended without finishing (a cancel or a stall).
+  ReceiveProgress copyAsEnd() => ReceiveProgress(
+    sessionId: sessionId,
+    senderAlias: senderAlias,
+    totalFiles: totalFiles,
+    completedFiles: 0,
+    currentFileName: '',
+    bytesReceived: 0,
+    totalBytes: totalBytes,
+    isComplete: true,
+  );
 }

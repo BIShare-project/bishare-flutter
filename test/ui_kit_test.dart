@@ -2,6 +2,7 @@
 // overflow in both themes, at 200% text and right to left.
 import 'package:bishare/core/theme/app_theme.dart';
 import 'package:bishare/core/ui/app_ui.dart';
+import 'package:bishare/features/home/widgets/transfer_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -31,6 +32,22 @@ final _kit = Column(
   children: [
     const AppScreenHeader(title: 'Kotak Masuk', subtitle: '14 file diterima'),
     const AppSectionHeader('Menerima'),
+    TransferCard(
+      icon: AppIcons.downloadFile,
+      title: 'Menerima dari MacBook Pro milik Cakra',
+      subtitle: '2 dari 5 file · 42% · 38,1 MB/s · 12 dtk',
+      badge: 'QUIC',
+      fraction: 0.42,
+      onClose: () {},
+    ),
+    TransferCard(
+      icon: AppIcons.check,
+      filled: true,
+      title: '5 file diterima',
+      subtitle: 'Dari MacBook Pro · 41,2 MB',
+      action: ('Lihat', () {}),
+      onClose: () {},
+    ),
     AppGroup(
       card: true,
       child: Column(

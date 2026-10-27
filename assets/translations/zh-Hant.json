@@ -134,7 +134,25 @@
       "other": "正在傳送 {} 個檔案…"
     },
     "wants_to_send": "想要傳送",
-    "key_changed_warning": "此裝置的安全金鑰自上次信任以來已變更——可能是新裝置，也可能是冒充者。僅在你確實預期此傳輸時才接受。"
+    "key_changed_warning": "此裝置的安全金鑰自上次信任以來已變更，可能是新裝置，也可能是冒充者。僅在你確實預期此傳輸時才接受。",
+    "offer_title": "{alias} 想傳送檔案",
+    "auto_accept_from": "自動接收來自 {alias} 的檔案",
+    "auto_accept_hint": "下次不必詢問，直接接收",
+    "files_of": "{done}/{total} 個檔案",
+    "view": "查看",
+    "done_title": {
+      "one": "已接收 {} 個檔案",
+      "other": "已接收 {} 個檔案"
+    },
+    "done_from": "來自 {alias} · {size}",
+    "stopped_title": "傳輸已中斷",
+    "saved_of": "已儲存 {saved}/{total} 個檔案",
+    "request_hint": "選擇要傳送的內容，或拒絕。",
+    "or_code": "或輸入代碼",
+    "code_short": "代碼由 6 個字母或數字組成。",
+    "paste_nothing": "沒有可貼上的代碼或 BIShare 連結。",
+    "by_qr_beam": "透過 QR Beam 接收",
+    "by_qr_beam_hint": "小檔案，螢幕對相機，不需網路"
   },
   "invite": {
     "title": "邀請裝置",
@@ -512,7 +530,9 @@
     "no_app_open": "沒有 App 可以開啟這個檔案",
     "open": "開啟",
     "share": "分享",
-    "try_again": "再試一次"
+    "try_again": "再試一次",
+    "eta_seconds": "剩餘 {s} 秒",
+    "eta_minutes": "剩餘 {m} 分 {s} 秒"
   },
   "files": {
     "cannot_open": "無法開啟：{message}",

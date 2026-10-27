@@ -134,7 +134,25 @@
       "other": "正在发送 {} 个文件…"
     },
     "wants_to_send": "想要发送",
-    "key_changed_warning": "此设备的安全密钥自上次信任以来已更改——可能是新设备，也可能是冒充者。仅在你确实预期此传输时才接受。"
+    "key_changed_warning": "此设备的安全密钥自上次信任以来已更改，可能是新设备，也可能是冒充者。仅在你确实预期此传输时才接受。",
+    "offer_title": "{alias} 想发送文件",
+    "auto_accept_from": "自动接收来自 {alias} 的文件",
+    "auto_accept_hint": "下次无需询问，直接接收",
+    "files_of": "{done}/{total} 个文件",
+    "view": "查看",
+    "done_title": {
+      "one": "已接收 {} 个文件",
+      "other": "已接收 {} 个文件"
+    },
+    "done_from": "来自 {alias} · {size}",
+    "stopped_title": "传输已中断",
+    "saved_of": "已保存 {saved}/{total} 个文件",
+    "request_hint": "选择要发送的内容，或拒绝。",
+    "or_code": "或输入代码",
+    "code_short": "代码由 6 个字母或数字组成。",
+    "paste_nothing": "没有可粘贴的代码或 BIShare 链接。",
+    "by_qr_beam": "通过 QR Beam 接收",
+    "by_qr_beam_hint": "小文件，屏幕对摄像头，无需网络"
   },
   "invite": {
     "title": "邀请设备",
@@ -512,7 +530,9 @@
     "no_app_open": "没有应用可以打开此文件",
     "open": "打开",
     "share": "分享",
-    "try_again": "重试"
+    "try_again": "重试",
+    "eta_seconds": "剩余 {s} 秒",
+    "eta_minutes": "剩余 {m} 分 {s} 秒"
   },
   "files": {
     "cannot_open": "无法打开：{message}",

@@ -134,7 +134,25 @@
       "other": "Enviando {} arquivos…"
     },
     "wants_to_send": "quer enviar",
-    "key_changed_warning": "A chave de segurança deste dispositivo mudou desde a última vez — pode ser um novo dispositivo ou um impostor. Aceite apenas se estiver esperando esta transferência."
+    "key_changed_warning": "A chave de segurança deste dispositivo mudou desde a última vez. Pode ser um novo dispositivo ou um impostor. Aceite apenas se estiver esperando esta transferência.",
+    "offer_title": "{alias} quer enviar",
+    "auto_accept_from": "Aceitar sempre de {alias}",
+    "auto_accept_hint": "Da próxima vez, aceita sem perguntar",
+    "files_of": "{done} de {total} arquivos",
+    "view": "Ver",
+    "done_title": {
+      "one": "{} arquivo recebido",
+      "other": "{} arquivos recebidos"
+    },
+    "done_from": "De {alias} · {size}",
+    "stopped_title": "Transferência interrompida",
+    "saved_of": "{saved} de {total} arquivos salvos",
+    "request_hint": "Escolha o que enviar ou recuse.",
+    "or_code": "ou digite um código",
+    "code_short": "O código tem 6 letras ou números.",
+    "paste_nothing": "Nenhum código ou link do BIShare para colar.",
+    "by_qr_beam": "Receber por QR Beam",
+    "by_qr_beam_hint": "Um arquivo pequeno, da tela para a câmera, sem rede"
   },
   "invite": {
     "title": "Convidar um dispositivo",
@@ -512,7 +530,9 @@
     "no_app_open": "Nenhum app consegue abrir este arquivo",
     "open": "Abrir",
     "share": "Compartilhar",
-    "try_again": "Tentar novamente"
+    "try_again": "Tentar novamente",
+    "eta_seconds": "faltam {s} s",
+    "eta_minutes": "faltam {m} min {s} s"
   },
   "files": {
     "cannot_open": "Não foi possível abrir: {message}",

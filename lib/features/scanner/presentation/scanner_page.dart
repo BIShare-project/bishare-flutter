@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/deeplink/deep_link.dart';
 import '../../../core/deeplink/deep_link_service.dart';
@@ -10,11 +9,10 @@ import '../../../core/di/locator.dart';
 import '../../../core/ui/app_ui.dart';
 import 'qr_camera.dart';
 
-/// Full-screen QR scanner — a faithful port of the native iOS `QRScannerView`:
-/// live camera, an accent scan frame with corner brackets, a torch + close bar,
-/// and a glass status card that lists what can be scanned plus manual code
-/// entry. A recognised BIShare payload closes the scanner and is dispatched
-/// through [DeepLinkService].
+/// Receiving by code (redesign-plan.md 4.4): the live camera with a scan
+/// frame, a torch and close bar, and a panel to type a 6-letter code, paste a
+/// link, or receive by QR Beam. A recognised BIShare payload closes the
+/// scanner and is dispatched through [DeepLinkService].
 class ScannerPage extends StatefulWidget {
   const ScannerPage({super.key});
 
@@ -24,14 +22,22 @@ class ScannerPage extends StatefulWidget {
 
 class _ScannerPageState extends State<ScannerPage> {
   final QrCameraController _controller = QrCameraController();
-  final TextEditingController _manual = TextEditingController();
+  final TextEditingController _code = TextEditingController();
   bool _handled = false;
-  bool _showManual = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _code.addListener(() {
+      if (_error != null) setState(() => _error = null);
+    });
+  }
 
   @override
   void dispose() {
     _controller.dispose();
-    _manual.dispose();
+    _code.dispose();
     super.dispose();
   }
 
@@ -48,22 +54,44 @@ class _ScannerPageState extends State<ScannerPage> {
     getIt<DeepLinkService>().submit(payload);
   }
 
-  void _submitManual() {
-    final raw = _manual.text.trim();
-    if (raw.length < 4 || _handled) return;
-    // Test the raw text (case preserved) so a pasted full link resolves to its
-    // exact action — its path segments are case-sensitive. A bare code is
-    // ambiguous (stored cloud transfer OR live stream), so dispatch it and let
-    // the receiver try both instead of guessing one and failing "not found";
-    // submitCode() normalizes it.
-    if (DeepLink.looksLikeBiShare(raw)) {
-      _accept(raw);
-    } else {
-      _handled = true;
-      tapHaptic();
-      context.pop();
-      getIt<DeepLinkService>().submitCode(raw);
+  /// A typed code is ambiguous (a stored transfer or a live stream), so it is
+  /// dispatched as a code and the receiver tries both.
+  void _submitCode() {
+    final code = _code.text;
+    if (_handled) return;
+    if (code.length < 6) {
+      setState(() => _error = 'receive.code_short'.tr());
+      return;
     }
+    _handled = true;
+    tapHaptic();
+    context.pop();
+    getIt<DeepLinkService>().submitCode(code);
+  }
+
+  /// A pasted full link keeps its case (its path segments are case
+  /// sensitive) and resolves to its exact action; a pasted code fills the
+  /// boxes and goes.
+  Future<void> _paste() async {
+    final raw = (await Clipboard.getData(Clipboard.kTextPlain))?.text?.trim();
+    if (!mounted || raw == null || raw.isEmpty) {
+      setState(() => _error = 'receive.paste_nothing'.tr());
+      return;
+    }
+    if (DeepLink.looksLikeBiShare(raw)) return _accept(raw);
+    final code = raw.replaceAll(RegExp(r'[-/\s]'), '').toUpperCase();
+    if (RegExp(r'^[A-Z0-9]{6,8}$').hasMatch(code)) {
+      _code.text = code;
+      _submitCode();
+    } else {
+      setState(() => _error = 'receive.paste_nothing'.tr());
+    }
+  }
+
+  void _qrBeam() {
+    if (_handled) return;
+    _handled = true;
+    context.pushReplacement('/qr-beam/receive');
   }
 
   @override
@@ -84,18 +112,21 @@ class _ScannerPageState extends State<ScannerPage> {
             const DecoratedBox(
               decoration: BoxDecoration(color: Colors.black26),
             ),
-            const Center(child: _ScanFrame()),
             SafeArea(
+              bottom: false,
               child: Column(
                 children: [
                   _TopBar(controller: _controller),
-                  const Spacer(),
-                  _StatusCard(
-                    showManual: _showManual,
-                    manual: _manual,
-                    onToggleManual: () =>
-                        setState(() => _showManual = !_showManual),
-                    onSubmit: _submitManual,
+                  // The frame centres on the camera area above the panel.
+                  const Expanded(child: Center(child: _ScanFrame())),
+                  ReceiveTone(
+                    child: _Panel(
+                      code: _code,
+                      error: _error,
+                      onSubmit: _submitCode,
+                      onPaste: _paste,
+                      onQrBeam: _qrBeam,
+                    ),
                   ),
                 ],
               ),
@@ -192,11 +223,18 @@ class _ScanFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = ShadTheme.of(context).colorScheme.primary;
-    return SizedBox(
-      width: 250,
-      height: 250,
-      child: CustomPaint(painter: _FramePainter(accent)),
+    // White reads on any camera image; the frame shrinks on a short screen.
+    return LayoutBuilder(
+      builder: (context, c) {
+        final side = (c.maxHeight - 24).clamp(120.0, 230.0);
+        return RepaintBoundary(
+          child: SizedBox(
+            width: side,
+            height: side,
+            child: CustomPaint(painter: _FramePainter(Colors.white)),
+          ),
+        );
+      },
     );
   }
 }
@@ -248,112 +286,111 @@ class _FramePainter extends CustomPainter {
   bool shouldRepaint(_FramePainter old) => old.color != color;
 }
 
-class _StatusCard extends StatelessWidget {
-  const _StatusCard({
-    required this.showManual,
-    required this.manual,
-    required this.onToggleManual,
+/// The code panel under the camera.
+class _Panel extends StatelessWidget {
+  const _Panel({
+    required this.code,
+    required this.error,
     required this.onSubmit,
+    required this.onPaste,
+    required this.onQrBeam,
   });
 
-  final bool showManual;
-  final TextEditingController manual;
-  final VoidCallback onToggleManual;
+  final TextEditingController code;
+  final String? error;
   final VoidCallback onSubmit;
+  final VoidCallback onPaste;
+  final VoidCallback onQrBeam;
 
   @override
   Widget build(BuildContext context) {
-    final accent = ShadTheme.of(context).colorScheme.primary;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.all(16),
+    final t = context.tokens;
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+        color: t.raised,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'scanner.hint_title'.tr(),
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 18, 20, 8 + bottom),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'scanner.hint_title'.tr(),
+              style: AppType.pageTitle.copyWith(color: t.text),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'scanner.hint_body'.tr(),
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.65),
-              fontSize: 12.5,
+            const SizedBox(height: 2),
+            Text(
+              'scanner.hint_body'.tr(),
+              style: AppType.secondary.copyWith(color: t.text2),
             ),
-          ),
-          const SizedBox(height: 14),
-          if (showManual)
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(child: Divider(color: t.line, height: 1)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Text(
+                    'receive.or_code'.tr(),
+                    style: AppType.small.copyWith(color: t.text3),
+                  ),
+                ),
+                Expanded(child: Divider(color: t.line, height: 1)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: AppCodeBoxes(
+                controller: code,
+                length: 6,
+                maxLength: 8,
+                autofocus: false,
+                error: error != null,
+                onSubmitted: (_) => onSubmit(),
+              ),
+            ),
+            if (error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  error!,
+                  textAlign: TextAlign.center,
+                  style: AppType.small.copyWith(color: t.danger),
+                ),
+              ),
+            const SizedBox(height: 14),
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: manual,
-                    autofocus: true,
-                    textCapitalization: TextCapitalization.characters,
-                    style: const TextStyle(color: Colors.white),
-                    onSubmitted: (_) => onSubmit(),
-                    decoration: InputDecoration(
-                      hintText: 'ABC123',
-                      hintStyle: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.4),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.1),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
+                  child: AppButton(
+                    label: 'home.paste'.tr(),
+                    icon: AppIcons.clipboardPaste,
+                    variant: AppButtonVariant.secondary,
+                    size: AppButtonSize.large,
+                    onPressed: onPaste,
                   ),
                 ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: onSubmit,
-                  child: AppSvgIcon(
-                    AppIcons.arrowRightCircle,
-                    color: accent,
-                    size: 34,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: AppButton(
+                    label: 'common.download'.tr(),
+                    size: AppButtonSize.large,
+                    onPressed: onSubmit,
                   ),
                 ),
               ],
-            )
-          else
-            GestureDetector(
-              onTap: onToggleManual,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AppSvgIcon(
-                    AppIcons.keyboard,
-                    size: 16,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'scanner.enter_code'.tr(),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      fontSize: 13.5,
-                    ),
-                  ),
-                ],
-              ),
             ),
-        ],
+            const SizedBox(height: 6),
+            AppValueRow(
+              icon: AppIcons.qrShare,
+              title: 'receive.by_qr_beam'.tr(),
+              subtitle: 'receive.by_qr_beam_hint'.tr(),
+              onTap: onQrBeam,
+            ),
+          ],
+        ),
       ),
     );
   }

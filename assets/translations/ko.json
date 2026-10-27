@@ -134,7 +134,25 @@
       "other": "{}개 파일 보내는 중…"
     },
     "wants_to_send": "보내기를 원함",
-    "key_changed_warning": "이 기기의 보안 키가 지난번과 달라졌습니다. 새 기기이거나 사칭일 수 있습니다. 예상한 전송일 때만 수락하세요."
+    "key_changed_warning": "이 기기의 보안 키가 지난번과 달라졌습니다. 새 기기이거나 사칭일 수 있습니다. 예상한 전송일 때만 수락하세요.",
+    "offer_title": "{alias}이(가) 파일을 보내려고 합니다",
+    "auto_accept_from": "{alias}에서 자동으로 받기",
+    "auto_accept_hint": "다음부터 묻지 않고 바로 받습니다",
+    "files_of": "{total}개 중 {done}개",
+    "view": "보기",
+    "done_title": {
+      "one": "파일 {}개를 받았습니다",
+      "other": "파일 {}개를 받았습니다"
+    },
+    "done_from": "{alias}에서 · {size}",
+    "stopped_title": "전송이 중단되었습니다",
+    "saved_of": "{total}개 중 {saved}개 저장됨",
+    "request_hint": "보낼 항목을 고르거나 거절하세요.",
+    "or_code": "또는 코드 입력",
+    "code_short": "코드는 영문자나 숫자 6자입니다.",
+    "paste_nothing": "붙여 넣을 코드나 BIShare 링크가 없습니다.",
+    "by_qr_beam": "QR Beam으로 받기",
+    "by_qr_beam_hint": "작은 파일을 화면에서 카메라로, 네트워크 없이"
   },
   "invite": {
     "title": "기기 초대",
@@ -512,7 +530,9 @@
     "no_app_open": "이 파일을 열 수 있는 앱이 없습니다",
     "open": "열기",
     "share": "공유",
-    "try_again": "다시 시도"
+    "try_again": "다시 시도",
+    "eta_seconds": "{s}초 남음",
+    "eta_minutes": "{m}분 {s}초 남음"
   },
   "files": {
     "cannot_open": "열 수 없음: {message}",

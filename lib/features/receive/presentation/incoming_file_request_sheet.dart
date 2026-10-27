@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/di/locator.dart';
@@ -102,271 +101,230 @@ class _RequestContentState extends State<_RequestContent> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _header(cs),
-          const SizedBox(height: 18),
-          if (_done)
-            _status(
-              cs,
-              AppIcons.successSent,
-              kOnlineGreen,
-              'receive.files_sent'.tr(),
-            )
-          else if (_sending)
-            _status(
-              cs,
-              null,
-              cs.primary,
-              'receive.sending_n_files'.plural(_selected.length),
-            )
-          else
-            _picker(cs),
-        ],
-      ),
-    );
-  }
-
-  // ---- Header ----
-
-  Widget _header(ShadColorScheme cs) {
+    final t = context.tokens;
     final r = widget.pending.request;
     return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            color: cs.primary.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-          ),
-          child: AppSvgIcon(AppIcons.uploadFile, size: 32, color: cs.primary),
-        ),
-        const SizedBox(height: 14),
-        Text(
-          'receive.requesting_files'.tr(namedArgs: {'alias': r.requesterAlias}),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: cs.foreground,
-          ),
-        ),
-        if (r.message?.isNotEmpty == true) ...[
-          const SizedBox(height: 6),
-          Text(
-            '"${r.message}"',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              fontStyle: FontStyle.italic,
-              color: cs.mutedForeground,
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(end: 6),
+            child: AppIconButton(
+              icon: AppIcons.close,
+              color: t.text2,
+              tooltip: 'receive.decline'.tr(),
+              onPressed: _decline,
             ),
           ),
-        ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 72,
+                  height: 72,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: t.accentSoft,
+                  ),
+                  child: AppSvgIcon(
+                    AppIcons.uploadFile,
+                    size: 32,
+                    color: t.accent,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Semantics(
+                header: true,
+                child: Text(
+                  'receive.requesting_files'.tr(
+                    namedArgs: {'alias': r.requesterAlias},
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppType.sheetTitle.copyWith(color: t.text),
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                r.message?.isNotEmpty == true
+                    ? '"${r.message}"'
+                    : 'receive.request_hint'.tr(),
+                textAlign: TextAlign.center,
+                style: AppType.body.copyWith(color: t.text2),
+              ),
+              const SizedBox(height: 18),
+              if (_done)
+                _status(
+                  t,
+                  AppIcons.successSent,
+                  t.ok,
+                  'receive.files_sent'.tr(),
+                )
+              else if (_sending)
+                _status(
+                  t,
+                  null,
+                  t.accent,
+                  'receive.sending_n_files'.plural(_selected.length),
+                )
+              else
+                _picker(t),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  // ---- Picker + selected + actions ----
-
-  Widget _picker(ShadColorScheme cs) {
+  Widget _picker(AppTokens t) {
+    final shown = _selected.take(5).toList();
+    final more = _selected.length - shown.length;
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _optionRow(
-          cs,
-          icon: AppIcons.image,
-          label: 'receive.choose_photos'.tr(),
-          tint: cs.primary,
-          onTap: () => _pick(photosOnly: true),
-        ),
-        const SizedBox(height: 10),
-        _optionRow(
-          cs,
-          icon: AppIcons.folder,
-          label: 'receive.choose_files'.tr(),
-          tint: Colors.orange,
-          onTap: () => _pick(photosOnly: false),
-        ),
-        if (_selected.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          _selectedCard(cs),
-        ],
-        const SizedBox(height: 18),
         Row(
           children: [
             Expanded(
-              child: ShadButton.outline(
-                size: ShadButtonSize.lg,
-                onPressed: _decline,
-                child: Text('receive.decline'.tr()),
+              child: AppButton(
+                label: 'receive.choose_photos'.tr(),
+                icon: AppIcons.image,
+                variant: AppButtonVariant.secondary,
+                size: AppButtonSize.large,
+                onPressed: () => _pick(photosOnly: true),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
-              child: ShadButton(
-                size: ShadButtonSize.lg,
-                enabled: _selected.isNotEmpty,
-                onPressed: _send,
-                leading: const AppSvgIcon(AppIcons.send, size: 18),
-                child: Text(
-                  _selected.isEmpty
-                      ? 'receive.send_files'.tr()
-                      : 'receive.send_n_files'.plural(_selected.length),
-                ),
+              child: AppButton(
+                label: 'receive.choose_files'.tr(),
+                icon: AppIcons.fileDocument,
+                variant: AppButtonVariant.secondary,
+                size: AppButtonSize.large,
+                onPressed: () => _pick(photosOnly: false),
               ),
             ),
           ],
         ),
-      ],
-    );
-  }
-
-  Widget _optionRow(
-    ShadColorScheme cs, {
-    required String icon,
-    required String label,
-    required Color tint,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        decoration: BoxDecoration(
-          color: cs.muted,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cs.border.withValues(alpha: 0.7)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: tint.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: AppSvgIcon(icon, size: 18, color: tint),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: cs.foreground,
-                ),
-              ),
-            ),
-            AppSvgIcon(
-              AppIcons.chevronRight,
-              size: 18,
-              color: cs.mutedForeground.withValues(alpha: 0.6),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _selectedCard(ShadColorScheme cs) {
-    final shown = _selected.take(5).toList();
-    final more = _selected.length - shown.length;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cs.muted,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.border.withValues(alpha: 0.7)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'receive.n_files_selected'.plural(_selected.length),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: cs.mutedForeground,
-            ),
-          ),
-          const SizedBox(height: 8),
-          for (final f in shown)
+        if (_selected.isNotEmpty) ...[
+          AppSectionHeader('receive.n_files_selected'.plural(_selected.length)),
+          for (var i = 0; i < shown.length; i++) ...[
+            if (i > 0) const AppRowDivider(indent: 52),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 children: [
-                  AppSvgIcon(fileIcon(f.mimeType), size: 15, color: cs.primary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      f.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: cs.foreground),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: t.sunken,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: AppSvgIcon(
+                      fileIcon(shown[i].mimeType),
+                      size: 20,
+                      color: t.text2,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      shown[i].name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppType.row.copyWith(color: t.text),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
                   Text(
-                    formatBytes(f.size),
-                    style: TextStyle(fontSize: 11.5, color: cs.mutedForeground),
+                    formatBytes(shown[i].size),
+                    style: AppType.secondary.copyWith(color: t.text2),
                   ),
                 ],
               ),
             ),
+          ],
           if (more > 0)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 'receive.more_count'.tr(namedArgs: {'count': '$more'}),
-                style: TextStyle(fontSize: 12.5, color: cs.mutedForeground),
+                style: AppType.secondary.copyWith(color: t.text2),
               ),
             ),
         ],
-      ),
+        const SizedBox(height: 16),
+        if (_selected.isEmpty)
+          AppButton(
+            label: 'receive.decline'.tr(),
+            variant: AppButtonVariant.ghost,
+            size: AppButtonSize.large,
+            fullWidth: true,
+            onPressed: _decline,
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: 'receive.decline'.tr(),
+                  variant: AppButtonVariant.secondary,
+                  size: AppButtonSize.large,
+                  onPressed: _decline,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: AppButton(
+                  label: 'receive.send_n_files'.plural(_selected.length),
+                  size: AppButtonSize.large,
+                  onPressed: _send,
+                ),
+              ),
+            ],
+          ),
+      ],
     );
   }
 
-  Widget _status(ShadColorScheme cs, String? icon, Color tint, String title) {
+  Widget _status(AppTokens t, String? icon, Color tint, String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       child: Column(
         children: [
           SizedBox(
-            width: 64,
-            height: 64,
+            width: 56,
+            height: 56,
             child: icon == null
                 ? Center(
                     child: SizedBox(
-                      width: 34,
-                      height: 34,
+                      width: 30,
+                      height: 30,
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
                         color: tint,
                       ),
                     ),
                   )
-                : AppSvgIcon(icon, size: 60, color: tint),
+                : AppSvgIcon(icon, size: 52, color: tint),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: cs.foreground,
-            ),
+            textAlign: TextAlign.center,
+            style: AppType.pageTitle.copyWith(color: t.text),
           ),
         ],
       ),

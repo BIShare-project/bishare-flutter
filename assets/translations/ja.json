@@ -134,7 +134,25 @@
       "other": "{} ファイルを送信中…"
     },
     "wants_to_send": "送信したい",
-    "key_changed_warning": "この端末のセキュリティキーが前回から変わりました。新しい端末か、なりすましの可能性があります。心当たりがある場合のみ受け入れてください。"
+    "key_changed_warning": "この端末のセキュリティキーが前回から変わりました。新しい端末か、なりすましの可能性があります。心当たりがある場合のみ受け入れてください。",
+    "offer_title": "{alias} がファイルを送ろうとしています",
+    "auto_accept_from": "{alias} から自動で受け取る",
+    "auto_accept_hint": "次回から確認なしで受け取ります",
+    "files_of": "{total} 件中 {done} 件",
+    "view": "表示",
+    "done_title": {
+      "one": "{} 件のファイルを受信しました",
+      "other": "{} 件のファイルを受信しました"
+    },
+    "done_from": "{alias} から · {size}",
+    "stopped_title": "転送が止まりました",
+    "saved_of": "{total} 件中 {saved} 件を保存しました",
+    "request_hint": "送るものを選ぶか、断ってください。",
+    "or_code": "またはコードを入力",
+    "code_short": "コードは英数字 6 文字です。",
+    "paste_nothing": "貼り付けられるコードや BIShare のリンクがありません。",
+    "by_qr_beam": "QR Beam で受け取る",
+    "by_qr_beam_hint": "小さなファイルを画面からカメラへ。ネットワーク不要"
   },
   "invite": {
     "title": "デバイスを招待",
@@ -512,7 +530,9 @@
     "no_app_open": "このファイルを開けるアプリがありません",
     "open": "開く",
     "share": "共有",
-    "try_again": "再試行"
+    "try_again": "再試行",
+    "eta_seconds": "残り {s} 秒",
+    "eta_minutes": "残り {m} 分 {s} 秒"
   },
   "files": {
     "cannot_open": "開けません: {message}",

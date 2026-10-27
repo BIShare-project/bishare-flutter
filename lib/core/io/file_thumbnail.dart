@@ -6,10 +6,11 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image/image.dart' as img;
 import 'package:video_thumbnail/video_thumbnail.dart';
 
-/// Generates a small base64 JPEG thumbnail (max ~120px) for an image or video,
-/// matching the native room thumbnail so peers see previews in the file list.
-/// Returns null for unsupported types or on any failure (best-effort).
-Future<String?> generateRoomThumbnail(String path, String mime) async {
+/// Generates a small base64 JPEG thumbnail (max ~120px) for an image or video:
+/// the preview a room member sees in the file list, and the one a nearby
+/// device sees in the offer before accepting. Returns null for unsupported
+/// types or on any failure (best-effort).
+Future<String?> generateThumbnail(String path, String mime) async {
   try {
     if (mime.startsWith('image/')) {
       Uint8List? jpg;

@@ -18,8 +18,10 @@ import '../core/storage/app_database.dart';
 import '../core/ui/app_showcase.dart';
 import '../core/ui/app_ui.dart';
 import '../features/home/home_page.dart';
+import '../features/home/widgets/floating_transfers.dart';
 import '../features/inbox/presentation/inbox_cubit.dart';
 import '../features/inbox/presentation/inbox_tab.dart';
+import '../features/receive/presentation/incoming_transfer_sheet.dart';
 import '../features/remote/data/cloud_transfer_service.dart';
 import '../features/remote/data/stream_relay_service.dart';
 import '../features/remote/presentation/remote_download.dart';
@@ -129,59 +131,25 @@ class _MainShellState extends State<MainShell> {
     });
   }
 
-  void _showWebNearbyOffer(WebNearbyIncomingRequest request) {
-    showAppSheet<void>(
+  /// A browser on this network offers a file: the same sheet as a nearby
+  /// device (4.5). Closing it declines, so the browser is not left waiting.
+  Future<void> _showWebNearbyOffer(WebNearbyIncomingRequest request) async {
+    final ok = await showOffer(
       context,
-      title: 'web_nearby.incoming_title'.tr(),
-      subtitle: 'web_nearby.incoming_from'.tr(
-        namedArgs: {'alias': request.fromAlias},
-      ),
-      builder: (sheetContext) => Padding(
-        padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              request.name,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              formatBytes(request.size),
-              style: TextStyle(
-                fontSize: 13,
-                color: ShadTheme.of(sheetContext).colorScheme.mutedForeground,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: ShadButton.outline(
-                    onPressed: () {
-                      request.decline();
-                      Navigator.of(sheetContext).pop();
-                    },
-                    child: Text('web_nearby.decline'.tr()),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ShadButton(
-                    onPressed: () {
-                      request.accept();
-                      Navigator.of(sheetContext).pop();
-                    },
-                    child: Text('web_nearby.accept'.tr()),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+      IncomingOffer(
+        alias: request.fromAlias,
+        icon: AppIcons.globePublic,
+        files: [
+          (
+            name: request.name,
+            size: request.size,
+            type: request.mime,
+            thumb: null,
+          ),
+        ],
       ),
     );
+    ok ? request.accept() : request.decline();
   }
 
   /// Files shared into BIShare from another app's share sheet (mobile only) land
@@ -425,17 +393,29 @@ class _MainShellState extends State<MainShell> {
     // pulses and progress stop drawing frames (redesign-plan.md 1.4).
     final tabs = _tabs;
     final index = tabs.indexOf(_tab).clamp(0, tabs.length - 1);
-    final content = IndexedStack(
-      index: index,
+    final content = Stack(
+      fit: StackFit.expand,
       children: [
-        for (final t in tabs)
-          KeyedSubtree(
-            key: ValueKey(t),
-            child: TickerMode(
-              enabled: t == _tab,
-              child: ShellTab(active: t == _tab, child: _pages[t]!),
-            ),
-          ),
+        IndexedStack(
+          index: index,
+          children: [
+            for (final t in tabs)
+              KeyedSubtree(
+                key: ValueKey(t),
+                child: TickerMode(
+                  enabled: t == _tab,
+                  child: ShellTab(active: t == _tab, child: _pages[t]!),
+                ),
+              ),
+          ],
+        ),
+        // Live transfers float above every tab, not only Send (4.2).
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: FloatingTransfers(onSendTab: _tab == ShellTabId.send),
+        ),
       ],
     );
 

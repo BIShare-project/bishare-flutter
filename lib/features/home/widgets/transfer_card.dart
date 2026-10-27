@@ -1,155 +1,185 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../../core/theme/app_palette.dart';
 import '../../../core/ui/app_ui.dart';
 
-/// A transfer card: progress ring + percent, title/file, transport badge, live
-/// speed + ETA, and cancel / retry affordances. Built on [AppCard].
+/// The floating card of a live or just-finished transfer (redesign-plan.md
+/// 4.2), one look for sending and receiving: a round glyph, what is moving and
+/// how far, an optional text action ("View", "Retry") and a close or cancel
+/// button. While bytes move, a thin line shows the progress. A solid card: no
+/// blur, no saveLayer, no looping animation.
 class TransferCard extends StatelessWidget {
   const TransferCard({
     super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.fraction,
-    this.speed = 0,
-    this.etaSeconds,
-    this.onCancel,
-    this.onRetry,
-    this.isError = false,
-    this.accentColor,
-    this.transport = 'TCP',
+    this.fraction,
+    this.tone,
+    this.filled = false,
+    this.badge,
+    this.action,
+    this.onClose,
+    this.closeTooltip,
   });
 
   final String icon;
   final String title;
   final String subtitle;
-  final double fraction;
-  final double speed;
-  final double? etaSeconds;
-  final VoidCallback? onCancel;
-  final VoidCallback? onRetry;
-  final bool isError;
-  final Color? accentColor;
-  final String transport;
+
+  /// 0 to 1 while bytes move; null when there is nothing to show (done, error).
+  final double? fraction;
+
+  /// The glyph and progress colour; the send accent by default.
+  final Color? tone;
+
+  /// Draws the glyph on a solid [tone] disc (done) instead of a soft one.
+  final bool filled;
+
+  /// A small label after the subtitle (the transport: TCP, QUIC).
+  final String? badge;
+  final (String label, VoidCallback onTap)? action;
+  final VoidCallback? onClose;
+  final String? closeTooltip;
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    final pct = (fraction * 100).clamp(0, 100).toInt();
-    final accent = isError ? cs.destructive : (accentColor ?? cs.primary);
     final t = context.tokens;
-    // A solid floating card: no blur, no saveLayer (redesign-plan.md 1.3).
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: DecoratedBox(
+    final c = tone ?? t.accent;
+    final f = fraction;
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      child: Container(
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 6, 12),
         decoration: BoxDecoration(
+          color: t.raised,
           borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: t.line),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: t.isDark ? 0.55 : 0.16),
-              blurRadius: 30,
-              offset: const Offset(0, 12),
+              color: Colors.black.withValues(alpha: t.isDark ? 0.5 : 0.14),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: t.raised,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: isError ? accent : t.line),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 46,
-                height: 46,
-                child: isError
-                    ? AppSvgIcon(icon, color: accent, size: 30)
-                    : Stack(
-                        alignment: Alignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: filled
+                        ? c
+                        : c.withValues(alpha: t.isDark ? 0.18 : 0.12),
+                  ),
+                  child: AppSvgIcon(
+                    icon,
+                    size: 21,
+                    color: filled ? AppPalette.onColor(c) : c,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppType.rowStrong.copyWith(color: t.text),
+                      ),
+                      const SizedBox(height: 1),
+                      Row(
                         children: [
-                          SizedBox(
-                            width: 46,
-                            height: 46,
-                            child: CircularProgressIndicator(
-                              value: fraction == 0 ? null : fraction,
-                              strokeWidth: 4,
-                              backgroundColor: cs.muted,
-                              valueColor: AlwaysStoppedAnimation(accent),
+                          Flexible(
+                            child: Text(
+                              subtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppType.small.copyWith(color: t.text2),
                             ),
                           ),
-                          Text(
-                            '$pct%',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: cs.foreground,
-                            ),
-                          ),
+                          if (badge != null) ...[
+                            const SizedBox(width: 6),
+                            AppBadge(badge!),
+                          ],
                         ],
                       ),
+                    ],
+                  ),
+                ),
+                if (action != null)
+                  AppButton(
+                    label: action!.$1,
+                    variant: AppButtonVariant.ghost,
+                    size: AppButtonSize.small,
+                    onPressed: action!.$2,
+                  ),
+                if (onClose != null)
+                  AppIconButton(
+                    icon: AppIcons.close,
+                    color: t.text2,
+                    tooltip:
+                        closeTooltip ??
+                        MaterialLocalizations.of(context).closeButtonTooltip,
+                    onPressed: onClose!,
+                  ),
+                if (action == null && onClose == null) const SizedBox(width: 6),
+              ],
+            ),
+            if (f != null) ...[
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsetsDirectional.only(start: 2, end: 6),
+                child: _Line(fraction: f, color: c, track: t.line),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14.5,
-                        color: cs.foreground,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: cs.mutedForeground,
-                        fontSize: 12.5,
-                      ),
-                    ),
-                    const SizedBox(height: 7),
-                    Row(
-                      children: [
-                        AppBadge(transport),
-                        if (!isError && speed > 0) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            '${fmtSpeed(speed)}'
-                            '${etaSeconds != null ? ' · ${fmtEta(etaSeconds!)}' : ''}',
-                            style: TextStyle(
-                              color: cs.mutedForeground,
-                              fontSize: 11.5,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (onRetry != null)
-                ShadButton.ghost(
-                  onPressed: onRetry,
-                  leading: const AppSvgIcon(AppIcons.refreshSync, size: 16),
-                  child: Text('home.retry'.tr()),
-                ),
-              if (onCancel != null)
-                ShadIconButton.ghost(
-                  icon: const AppSvgIcon(AppIcons.close, size: 18),
-                  onPressed: onCancel,
-                ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A 3 px progress line. Only its fill width changes, so a tick repaints one
+/// small box.
+class _Line extends StatelessWidget {
+  const _Line({
+    required this.fraction,
+    required this.color,
+    required this.track,
+  });
+
+  final double fraction;
+  final Color color;
+  final Color track;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(2),
+      child: SizedBox(
+        height: 3,
+        child: ColoredBox(
+          color: track,
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: FractionallySizedBox(
+              widthFactor: fraction.clamp(0.0, 1.0),
+              heightFactor: 1,
+              child: ColoredBox(color: color),
+            ),
           ),
         ),
       ),
