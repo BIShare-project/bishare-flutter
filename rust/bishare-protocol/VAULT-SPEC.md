@@ -271,7 +271,7 @@ their names or keys.
 link id         16 random bytes made by the device, b64u (22 characters)
 link key        32 random bytes made by the device; it travels only in the link,
                 after `#`, so browsers never send it:
-                https://get.bishare.app/d/<link id>#<b64u(link key)>
+                https://dl.bishareusercontent.com/d/<link id>#<b64u(link key)>
 K_link          HKDF(link key, "bishare-vault-link-v1", 32)
 manifest        b64u(box(K_link, utf8(JSON), aad = utf8("bishare-vault-link-v1|" ‖ link id)))
 enc_link_key    b64u(box(K_meta, link key, aad = utf8("bishare-vault-linkkey-v1|" ‖ vault id ‖ "|" ‖ link id)))

@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/constants/cloud.dart';
 import '../../../core/rust/rust_facade.dart';
 import '../../../core/storage/app_database.dart';
 import '../../../core/storage/vault_tables.dart';
@@ -74,7 +75,8 @@ class VaultLinks {
   final VaultDao _dao;
   final SharedPreferences _prefs;
 
-  static const host = 'https://get.bishare.app/d/';
+  /// Links made before 2.8.0 named get.bishare.app/d/, which redirects here.
+  static const host = 'https://${CloudConfig.receiveHost}/d/';
 
   /// Files one link may list (the server takes the folder and 1999 files).
   static const maxFiles = 1999;

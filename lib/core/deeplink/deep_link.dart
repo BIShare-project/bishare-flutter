@@ -73,14 +73,17 @@ class DeepLink {
 
     // Scheme-less web payloads from a QR (e.g. "bishare.app/transfer/AB2C3D").
     // Split any fragment off first so it can't leak into the code segment.
-    final hostIdx = input.indexOf('${CloudConfig.webHost}/');
-    if (hostIdx >= 0 && !input.contains('://')) {
-      final rest = input.substring(hostIdx + CloudConfig.webHost.length);
-      final hash = rest.indexOf('#');
-      return _fromWebPath(
-        hash < 0 ? rest : rest.substring(0, hash),
-        fragment: hash < 0 ? '' : rest.substring(hash + 1),
-      );
+    if (!input.contains('://')) {
+      for (final host in const [CloudConfig.webHost, CloudConfig.receiveHost]) {
+        final hostIdx = input.indexOf('$host/');
+        if (hostIdx < 0) continue;
+        final rest = input.substring(hostIdx + host.length);
+        final hash = rest.indexOf('#');
+        return _fromWebPath(
+          hash < 0 ? rest : rest.substring(0, hash),
+          fragment: hash < 0 ? '' : rest.substring(hash + 1),
+        );
+      }
     }
 
     final uri = Uri.tryParse(input);
@@ -134,8 +137,12 @@ class DeepLink {
     return null;
   }
 
+  /// The site and its subdomains, and the receive host: a link copied from
+  /// the browser on a receive page names that one.
   static bool _isWebHost(String host) =>
-      host == CloudConfig.webHost || host.endsWith('.${CloudConfig.webHost}');
+      host == CloudConfig.webHost ||
+      host.endsWith('.${CloudConfig.webHost}') ||
+      host == CloudConfig.receiveHost;
 
   /// Normalise a code: strip dashes/slashes, uppercase.
   static String _code(String s) =>

@@ -27,6 +27,13 @@ class CloudConfig {
   /// Universal-link host (no scheme) for app-links association + parsing.
   static const String webHost = 'bishare.app';
 
+  /// Where receive pages and Drive links are served (since 2026-10-28; was
+  /// get.bishare.app, which now redirects). A domain of its own, so a bad
+  /// file someone shares gets this host flagged by Safe Browsing, never the
+  /// site. Shared transfer links still name [webHost]: app links and
+  /// universal links only cover that one.
+  static const String receiveHost = 'dl.bishareusercontent.com';
+
   // Custom URL schemes registered on the app (see Info.plist / AndroidManifest).
   /// Local transfers + share intents (`bishare://share`, `bishare://download`).
   static const String scheme = 'bishare';
