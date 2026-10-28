@@ -16,6 +16,10 @@ import 'history_cubit.dart';
 /// sent and received, searchable, filtered by direction, grouped by day with
 /// the total of what is shown. A row opens its detail; the menu exports CSV
 /// or clears the history.
+/// Whether History shows its search field. The magnifier sits in the Inbox
+/// tab's header, so the header and the page share it.
+final historySearchOpen = ValueNotifier<bool>(false);
+
 class HistoryPage extends StatelessWidget {
   const HistoryPage({super.key});
 
@@ -29,12 +33,29 @@ class HistoryPage extends StatelessWidget {
           builder: (context, state) {
             final cubit = context.read<HistoryCubit>();
             final rows = state.filtered;
+            final total = rows.fold<int>(0, (s, r) => s + r.fileSize);
             return AppResponsivePane(
               maxWidth: 760,
               child: Column(
                 children: [
-                  if (state.total > 0)
-                    _Toolbar(filter: state.filter, cubit: cubit),
+                  if (state.total > 0) ...[
+                    ValueListenableBuilder<bool>(
+                      valueListenable: historySearchOpen,
+                      builder: (context, open, _) => open
+                          ? _SearchRow(cubit: cubit)
+                          : const SizedBox.shrink(),
+                    ),
+                    _Toolbar(
+                      text: [
+                        'history.transfers_count'.plural(rows.length),
+                        'history.total_size'.tr(
+                          namedArgs: {'size': formatBytes(total)},
+                        ),
+                      ].join(' · '),
+                      filter: state.filter,
+                      cubit: cubit,
+                    ),
+                  ],
                   Expanded(
                     child: state.total == 0
                         ? AppEmptyState(
@@ -65,11 +86,76 @@ class HistoryPage extends StatelessWidget {
   }
 }
 
-/// Search and the direction filter on one row, the same shape as Drive's
-/// search and sort row.
-class _Toolbar extends StatelessWidget {
-  const _Toolbar({required this.filter, required this.cubit});
+/// The search field, open from the header's magnifier. Closing it clears
+/// the search.
+class _SearchRow extends StatefulWidget {
+  const _SearchRow({required this.cubit});
 
+  final HistoryCubit cubit;
+
+  @override
+  State<_SearchRow> createState() => _SearchRowState();
+}
+
+class _SearchRowState extends State<_SearchRow> {
+  late final TextEditingController _text = TextEditingController(
+    text: widget.cubit.state.query,
+  );
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focus.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _text.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(0, 2, 6, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: AppSearchField(
+              hint: 'history.search_placeholder'.tr(),
+              controller: _text,
+              focusNode: _focus,
+              onChanged: widget.cubit.setQuery,
+              margin: const EdgeInsetsDirectional.fromSTEB(14, 4, 4, 4),
+            ),
+          ),
+          AppIconButton(
+            icon: AppIcons.close,
+            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+            onPressed: () {
+              widget.cubit.setQuery('');
+              historySearchOpen.value = false;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// What is shown (count and size) and the direction filter, one row.
+class _Toolbar extends StatelessWidget {
+  const _Toolbar({
+    required this.text,
+    required this.filter,
+    required this.cubit,
+  });
+
+  final String text;
   final HistoryFilter filter;
   final HistoryCubit cubit;
 
@@ -98,14 +184,18 @@ class _Toolbar extends StatelessWidget {
     final t = context.tokens;
     final on = filter != HistoryFilter.all;
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(0, 2, 6, 2),
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 6, 0),
       child: Row(
         children: [
           Expanded(
-            child: AppSearchField(
-              hint: 'history.search_placeholder'.tr(),
-              onChanged: cubit.setQuery,
-              margin: const EdgeInsetsDirectional.fromSTEB(14, 4, 4, 4),
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppType.secondary.copyWith(
+                color: t.text2,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
           Material(
@@ -177,23 +267,8 @@ class _List extends StatelessWidget {
       day = d;
       lines.add(_Item(r, first: first));
     }
-    final total = rows.fold<int>(0, (s, r) => s + r.fileSize);
     return CustomScrollView(
       slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
-            child: Text(
-              [
-                'history.transfers_count'.plural(rows.length),
-                'history.total_size'.tr(
-                  namedArgs: {'size': formatBytes(total)},
-                ),
-              ].join(' · '),
-              style: AppType.secondary.copyWith(color: t.text3),
-            ),
-          ),
-        ),
         SliverPadding(
           padding: const EdgeInsets.only(bottom: 120),
           sliver: SliverList.builder(
@@ -241,14 +316,12 @@ class _Row extends StatelessWidget {
         Material(
           type: MaterialType.transparency,
           child: InkWell(
-            onTap: () => _detail(context, r),
+            onTap: () => _open(context, r),
+            onLongPress: () => _detail(context, r),
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 64),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
+                padding: const EdgeInsetsDirectional.fromSTEB(14, 8, 4, 8),
                 child: Row(
                   children: [
                     _DirectionGlyph(record: r, sent: sent),
@@ -277,6 +350,11 @@ class _Row extends StatelessWidget {
                         ],
                       ),
                     ),
+                    AppIconButton(
+                      icon: AppIcons.moreMenu,
+                      tooltip: 'inbox.more'.tr(),
+                      onPressed: () => _detail(context, r),
+                    ),
                   ],
                 ),
               ),
@@ -284,6 +362,26 @@ class _Row extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  /// Like a Drive row: a tap opens the file while it is still on this
+  /// device, otherwise its details; the ⋯ always shows the details.
+  void _open(BuildContext context, TransferRecord r) {
+    final path = r.savedPath;
+    if (path == null || !File(path).existsSync()) {
+      _detail(context, r);
+      return;
+    }
+    showFilePreview(
+      context,
+      path: path,
+      name: r.fileName,
+      mimeType:
+          r.fileType ??
+          lookupMimeType(r.fileName) ??
+          'application/octet-stream',
+      size: r.fileSize,
     );
   }
 

@@ -47,6 +47,13 @@ class _InboxTabState extends State<InboxTab>
             AppScreenHeader(
               title: 'inbox.title'.tr(),
               actions: [
+                if (_tabs.index == 1)
+                  AppIconButton(
+                    icon: AppIcons.search,
+                    tooltip: 'history.search_placeholder'.tr(),
+                    onPressed: () =>
+                        historySearchOpen.value = !historySearchOpen.value,
+                  ),
                 AppShowcase(
                   showcaseKey: ShowcaseKeys.inboxFiles,
                   title: 'showcase.inbox_files_title'.tr(),
