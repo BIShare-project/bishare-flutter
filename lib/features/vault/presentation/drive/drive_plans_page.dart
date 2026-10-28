@@ -1098,7 +1098,6 @@ class _UsageBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
     final fill = share <= 0 ? 0.0 : share.clamp(0.02, 1.0);
     return ClipRRect(
       borderRadius: BorderRadius.circular(99),
@@ -1106,7 +1105,7 @@ class _UsageBar extends StatelessWidget {
         height: 6,
         child: Stack(
           children: [
-            Positioned.fill(child: ColoredBox(color: cs.muted)),
+            Positioned.fill(child: ColoredBox(color: context.tokens.line)),
             FractionallySizedBox(
               alignment: AlignmentDirectional.centerStart,
               widthFactor: fill,
