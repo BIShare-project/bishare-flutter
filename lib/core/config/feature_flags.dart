@@ -50,13 +50,12 @@ class FeatureFlags extends ChangeNotifier {
       _boolFlag('app_web_nearby_enabled', orElse: true);
 
   /// The in-app photo and video grid of the Send tab on Android
-  /// (redesign-plan.md D3). Google approved READ_MEDIA_IMAGES/VIDEO for Drive
-  /// backup, and the declaration says sending uses the system picker, so a
-  /// store build keeps the picker until the updated declaration is approved
-  /// and an admin turns `send_gallery_android` on. Debug and profile builds
-  /// show the grid, for testing.
+  /// (redesign-plan.md D3). On by default (owner 2026-10-28): READ_MEDIA_*
+  /// is already granted for Drive backup, and the Play declaration gains
+  /// sending as a second use before the release. An admin can still turn
+  /// `send_gallery_android` off, which brings back the system picker.
   bool get sendGalleryAndroid =>
-      !kReleaseMode || _boolFlag('send_gallery_android', orElse: false);
+      _boolFlag('send_gallery_android', orElse: true);
 
   /// BIShare Drive (code name "vault"). The server flag `vault_enabled` is
   /// `true` (open to everyone), `"internal"` (testers on the server's

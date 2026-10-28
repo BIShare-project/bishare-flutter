@@ -9,7 +9,7 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/apps/installed_apps_channel.dart';
-import '../../../core/storage/doc_folder_channel.dart';
+import '../../../core/storage/all_files_access.dart';
 import '../../../core/storage/app_database.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../inbox/domain/inbox_groups.dart';
@@ -205,7 +205,7 @@ class _SendAudioTabState extends State<SendAudioTab>
             AppEmptyState(
               icon: AppIcons.fileAudio,
               title: 'compose.access_title'.tr(),
-              message: 'compose.access_body_audio'.tr(),
+              message: 'compose.access_body_all'.tr(),
               action: AppButton(
                 label: 'compose.allow'.tr(),
                 onPressed: () => _check(true),
@@ -379,8 +379,7 @@ DocKind? docKindOf(String name) {
 
 /// The Documents tab (redesign-plan.md 3.6): choose from Files, send a folder
 /// (zipped), the documents already received in BIShare by kind, and on
-/// Android and iOS the documents of one folder the person granted (SAF tree
-/// or a folder bookmark, never all-files access).
+/// Android every document on the phone (all files access).
 class SendDocsTab extends StatefulWidget {
   const SendDocsTab({super.key});
 
@@ -392,15 +391,10 @@ class _SendDocsTabState extends State<SendDocsTab>
     with AutomaticKeepAliveClientMixin {
   DocKind _kind = DocKind.all;
 
-  /// The granted folder's name; null when none is granted.
-  String? _folder;
-  List<FolderDoc>? _folderDocs;
-
-  /// Folder documents already copied for sending, by [FolderDoc.id].
-  final Map<String, String> _copied = {};
-
-  /// The document being copied right now.
-  String? _copying;
+  /// Documents on this phone (Android, with all files access); null while
+  /// the list loads or before access is known.
+  List<DeviceDoc>? _deviceDocs;
+  bool? _allFiles;
   AppLifecycleListener? _life;
 
   @override
@@ -409,14 +403,11 @@ class _SendDocsTabState extends State<SendDocsTab>
   @override
   void initState() {
     super.initState();
-    if (!DocFolderChannel.isSupported) return;
-    unawaited(_restore());
-    // Files may change in the folder while BIShare is away.
-    _life = AppLifecycleListener(
-      onResume: () {
-        if (_folder != null) unawaited(_list());
-      },
-    );
+    if (!AllFilesAccess.applies) return;
+    unawaited(_load());
+    // Access is given in system settings; the answer counts on return, and
+    // files may have changed while BIShare was away.
+    _life = AppLifecycleListener(onResume: () => unawaited(_load()));
   }
 
   @override
@@ -425,64 +416,15 @@ class _SendDocsTabState extends State<SendDocsTab>
     super.dispose();
   }
 
-  Future<void> _restore() async {
-    final name = await DocFolderChannel.restore();
+  Future<void> _load({bool ask = false}) async {
+    final ok = ask
+        ? await AllFilesAccess.request()
+        : await AllFilesAccess.granted();
     if (!mounted) return;
-    setState(() => _folder = name);
-    if (name != null) await _list();
-  }
-
-  Future<void> _list() async {
-    final docs = await DocFolderChannel.list();
-    if (!mounted) return;
-    setState(
-      () => _folderDocs = [
-        for (final d in docs)
-          if (docKindOf(d.name) != null) d,
-      ]..sort((a, b) => b.modified.compareTo(a.modified)),
-    );
-  }
-
-  Future<void> _grant() async {
-    final name = await DocFolderChannel.pick();
-    if (name == null || !mounted) return;
-    setState(() {
-      _folder = name;
-      _folderDocs = null;
-      _copied.clear();
-    });
-    await _list();
-  }
-
-  Future<void> _forget() async {
-    await DocFolderChannel.clear();
-    if (!mounted) return;
-    setState(() {
-      _folder = null;
-      _folderDocs = null;
-    });
-  }
-
-  /// Selects or unselects a folder document; it is copied to a local path
-  /// the first time, because the sender reads paths.
-  Future<void> _toggleFolderDoc(FolderDoc d) async {
-    final selection = context.read<SendSelectionCubit>();
-    var path = _copied[d.id];
-    if (path == null || !File(path).existsSync()) {
-      if (_copying != null) return;
-      setState(() => _copying = d.id);
-      path = await DocFolderChannel.copy(d);
-      if (!mounted) return;
-      setState(() {
-        _copying = null;
-        if (path != null) _copied[d.id] = path;
-      });
-      if (path == null) {
-        toast(context, 'compose.docs_folder_copy_failed'.tr());
-        return;
-      }
-    }
-    selection.toggleFile(path, SendKind.doc);
+    setState(() => _allFiles = ok);
+    if (!ok) return;
+    final docs = await AllFilesAccess.documents((n) => docKindOf(n) != null);
+    if (mounted) setState(() => _deviceDocs = docs);
   }
 
   @override
@@ -511,7 +453,7 @@ class _SendDocsTabState extends State<SendDocsTab>
           (e) =>
               e.kind == SendKind.doc &&
               !docs.any((r) => r.savedPath == e.file.path) &&
-              !_copied.containsValue(e.file.path),
+              !(_deviceDocs?.any((d) => d.path == e.file.path) ?? false),
         )
         .toList();
     return ListView(
@@ -562,17 +504,19 @@ class _SendDocsTabState extends State<SendDocsTab>
           )
         else
           ..._receivedRows(context, docs, SendKind.doc),
-        if (DocFolderChannel.isSupported) ..._folderSection(context),
+        if (AllFilesAccess.applies)
+          ..._deviceSection(context, {for (final r in docs) r.savedPath}),
       ],
     );
   }
 
-  List<Widget> _folderSection(BuildContext context) {
+  /// [shown]: the paths already listed under "In BIShare", not repeated.
+  List<Widget> _deviceSection(BuildContext context, Set<String?> shown) {
     final t = context.tokens;
-    final folder = _folder;
-    if (folder == null) {
+    if (_allFiles == null) return const [];
+    if (!_allFiles!) {
       return [
-        AppSectionHeader('compose.docs_folder_title'.tr()),
+        AppSectionHeader('compose.docs_on_device'.tr()),
         Container(
           margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
           padding: const EdgeInsetsDirectional.fromSTEB(12, 6, 4, 6),
@@ -586,46 +530,31 @@ class _SendDocsTabState extends State<SendDocsTab>
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'compose.docs_folder_hint'.tr(),
+                  'compose.access_body_all'.tr(),
                   style: AppType.secondary.copyWith(color: t.text2),
                 ),
               ),
               AppButton(
-                label: 'compose.docs_folder_choose'.tr(),
+                label: 'compose.allow'.tr(),
                 variant: AppButtonVariant.ghost,
                 size: AppButtonSize.small,
-                onPressed: _grant,
+                onPressed: () => _load(ask: true),
               ),
             ],
           ),
         ),
       ];
     }
-    final docs = (_folderDocs ?? const <FolderDoc>[])
-        .where((d) => _kind == DocKind.all || docKindOf(d.name) == _kind)
+    final docs = (_deviceDocs ?? const <DeviceDoc>[])
+        .where(
+          (d) =>
+              !shown.contains(d.path) &&
+              (_kind == DocKind.all || docKindOf(d.name) == _kind),
+        )
         .toList();
     return [
-      AppSectionHeader(
-        folder,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppButton(
-              label: 'compose.docs_folder_forget'.tr(),
-              variant: AppButtonVariant.ghost,
-              size: AppButtonSize.small,
-              onPressed: _forget,
-            ),
-            AppButton(
-              label: 'compose.docs_folder_change'.tr(),
-              variant: AppButtonVariant.ghost,
-              size: AppButtonSize.small,
-              onPressed: _grant,
-            ),
-          ],
-        ),
-      ),
-      if (_folderDocs == null)
+      AppSectionHeader('compose.docs_on_device'.tr()),
+      if (_deviceDocs == null)
         const Padding(
           padding: EdgeInsets.all(16),
           child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
@@ -634,27 +563,21 @@ class _SendDocsTabState extends State<SendDocsTab>
         Padding(
           padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
           child: Text(
-            'compose.docs_folder_empty'.tr(),
+            'compose.docs_device_empty'.tr(),
             style: AppType.secondary.copyWith(color: t.text2),
           ),
         )
       else
         for (final d in docs)
           _PickRow(
-            selKey: 'path:${_copied[d.id] ?? 'folder:${d.id}'}',
-            leading: _FileArt(fileIcon(d.mime ?? _mime(d.name))),
+            selKey: 'path:${d.path}',
+            leading: _FileArt(fileIcon(_mime(d.name))),
             title: d.name,
             meta: '${_when(context, d.modified)} · ${formatBytes(d.size)}',
-            trailingNote: _copying == d.id
-                ? const Padding(
-                    padding: EdgeInsetsDirectional.only(end: 10),
-                    child: SizedBox.square(
-                      dimension: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  )
-                : null,
-            onTap: () => _toggleFolderDoc(d),
+            onTap: () => context.read<SendSelectionCubit>().toggleFile(
+              d.path,
+              SendKind.doc,
+            ),
           ),
     ];
   }

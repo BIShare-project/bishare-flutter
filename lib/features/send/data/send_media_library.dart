@@ -7,6 +7,8 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart' show MethodCall;
 import 'package:photo_manager/photo_manager.dart';
 
+import '../../../core/storage/all_files_access.dart';
+
 /// Which part of the library a Send tab shows.
 enum SendMediaKind { photo, video, audio }
 
@@ -59,6 +61,19 @@ class SendMediaLibrary {
   /// called at launch: only when a tab asks, or the user taps "Allow".
   Future<SendMediaAccess> access(SendMediaKind kind, {bool ask = false}) async {
     if (!available) return SendMediaAccess.none;
+    // Android: the one "All files access" permission covers the library too
+    // (AllFilesAccess). photo_manager checks only READ_MEDIA_*, so its own
+    // check is skipped once all files are readable.
+    if (AllFilesAccess.applies) {
+      final all = ask
+          ? await AllFilesAccess.request()
+          : await AllFilesAccess.granted();
+      if (all) {
+        await PhotoManager.setIgnorePermissionCheck(true);
+        return SendMediaAccess.full;
+      }
+      if (ask) return SendMediaAccess.none;
+    }
     final option = PermissionRequestOption(
       androidPermission: AndroidPermission(
         type: _type(kind),

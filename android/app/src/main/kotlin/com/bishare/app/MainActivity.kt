@@ -45,14 +45,11 @@ class MainActivity : FlutterActivity() {
     private val clipboardChannelName = "app.bishare/clipboard"
     private val appsChannelName = "app.bishare/apps"
     private val deviceChannelName = "app.bishare/device"
-    private val folderChannelName = "app.bishare/folder"
     private var shareChannel: MethodChannel? = null
     private var downloadsChannel: MethodChannel? = null
     private var clipboardChannel: MethodChannel? = null
     private var appsChannel: MethodChannel? = null
     private var deviceChannel: MethodChannel? = null
-    private var folderChannel: MethodChannel? = null
-    private val docFolder by lazy { DocFolder(this) }
 
     /// Cheap clipboard generation counter for the Dart poll loop (mirrors
     /// NSPasteboard.changeCount). Bumped by the primary-clip listener; note
@@ -185,11 +182,6 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
-        // The Send tab's Documents folder (SAF grant), see DocFolder.
-        folderChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, folderChannelName)
-        folderChannel!!.setMethodCallHandler { call, result ->
-            if (!docFolder.handle(call, result)) result.notImplemented()
-        }
         // The intent that launched us (cold start) may be a share.
         handleShareIntent(intent, initial = true)
     }
@@ -222,7 +214,6 @@ class MainActivity : FlutterActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
-        if (docFolder.onActivityResult(requestCode, resultCode, data)) return
         if (requestCode == lockRequest) {
             pendingLock?.success(if (resultCode == Activity.RESULT_OK) "ok" else "cancelled")
             pendingLock = null

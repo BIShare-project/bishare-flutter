@@ -73,8 +73,8 @@ class _SendMediaTabState extends State<SendMediaTab>
   bool get _photos => widget.kind == SendMediaKind.photo;
   SendKind get _sendKind => _photos ? SendKind.photo : SendKind.video;
 
-  /// Android store builds keep the system picker until Play approves the
-  /// updated declaration (redesign-plan.md D3).
+  /// The system picker comes back on Android only if an admin turns the
+  /// grid off (redesign-plan.md D3).
   bool get _gridAllowed =>
       !Platform.isAndroid || getIt<FeatureFlags>().sendGalleryAndroid;
 
@@ -464,7 +464,11 @@ class _SendMediaTabState extends State<SendMediaTab>
       AppEmptyState(
         icon: _photos ? AppIcons.image : AppIcons.fileVideo,
         title: 'compose.access_title'.tr(),
-        message: _photos
+        // Android asks for all files access, which also covers the other
+        // tabs; iOS asks for the photo library.
+        message: Platform.isAndroid
+            ? 'compose.access_body_all'.tr()
+            : _photos
             ? 'compose.access_body_photo'.tr()
             : 'compose.access_body_video'.tr(),
         action: Column(
@@ -479,7 +483,11 @@ class _SendMediaTabState extends State<SendMediaTab>
                   return;
                 }
                 await _check(ask: true);
-                if (mounted && _access == SendMediaAccess.none) {
+                // The all files page can be opened again any time, so on
+                // Android "Allow" stays and never turns into Settings.
+                if (mounted &&
+                    _access == SendMediaAccess.none &&
+                    !Platform.isAndroid) {
                   setState(() => _refused = true);
                 }
               },
