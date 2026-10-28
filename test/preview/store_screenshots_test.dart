@@ -1162,15 +1162,21 @@ Future<void> _run(
                 BlocProvider<SendCubit>.value(value: send),
                 BlocProvider<TrayCubit>.value(value: tray),
                 BlocProvider<SendSelectionCubit>(
-                  // Three photos chosen, so the Send bar shows.
-                  create: (_) => SendSelectionCubit(tray)
-                    ..setAssets(
-                      (SendMediaLibrary.instance as _FakeLibrary).assets
-                          .take(3)
-                          .toList(),
-                      SendKind.photo,
-                      true,
-                    ),
+                  // Three photos chosen on a phone, so the Send bar shows;
+                  // computers have no library to choose from.
+                  create: (_) {
+                    final c = SendSelectionCubit(tray);
+                    if (SendMediaLibrary.available) {
+                      c.setAssets(
+                        (SendMediaLibrary.instance as _FakeLibrary).assets
+                            .take(3)
+                            .toList(),
+                        SendKind.photo,
+                        true,
+                      );
+                    }
+                    return c;
+                  },
                 ),
                 BlocProvider<FavoritesCubit>.value(value: favorites),
                 BlocProvider<RoomCubit>.value(value: room),

@@ -78,22 +78,20 @@ def build(src, head, sub, out, scale=1.28, trim=False):
     im.save(path, "PNG")
     print(f"  {out}  {im.size[0]}x{im.size[1]}  {os.path.getsize(path)//1024} KB")
 
-build("J-fix-verified.png", "Send anything, to anyone",
-      "An encrypted link or QR — up to 100 GB, no account, expires in 24 hours",
-      "01-secure-link.png", trim=True)
-build("K-sheet-mid.png", "Encrypted before it leaves your PC",
-      "The key travels inside the link. The relay only ever stores what it cannot read.",
-      "02-encryption.png")
-build("B-rooms.png", "Rooms: one code, several devices",
-      "Over your own Wi-Fi, or across the country",
-      "03-rooms.png", trim=True)
-build("I-devices.png", "Windows, iPhone, Android, Mac and Linux",
-      "One app on every device you own — and none needed on theirs",
-      "04-devices.png", trim=True)
-build("C-settings.png", "Yours to set up",
-      "Name, theme, accent colours and 13 languages",
-      "05-settings.png")
-# test/preview/store_screenshots_test.dart, preset "windows", en/6_drive.png
-build("L-drive.png", "BIShare Drive: only you hold the key",
-      "End-to-end encrypted storage for your files. 5 GB free, more with a plan",
-      "06-drive.png", trim=True)
+# Raw captures: test/preview/store_screenshots_test.dart, preset
+# "windows_store", BISHARE_SHOTS_ONLY=1_share,2_inbox,3_link,4_drive,5_settings
+build("W1_share.png", "Send anything. To any device.",
+      "Drop files on BIShare and pick a phone, tablet or computer on your Wi-Fi",
+      "01-send.png", trim=True)
+build("W2_inbox.png", "Every photo in original quality",
+      "No compression and no size limit on your own network",
+      "02-inbox.png", trim=True)
+build("W3_link.png", "Send to anyone with a link",
+      "An encrypted link up to 100 GB, opened in any browser. No account.",
+      "03-secure-link.png", trim=True)
+build("W4_drive.png", "BIShare Drive: only you hold the key",
+      "End-to-end encrypted storage for your files and photos",
+      "04-drive.png", trim=True)
+build("W5_settings.png", "End-to-end encrypted",
+      "No sign-up to send. No email, no profile.",
+      "05-settings.png", trim=True)

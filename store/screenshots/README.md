@@ -7,14 +7,18 @@ set from `raw/`.
 
 | File | Caption |
 |---|---|
-| `01-secure-link.png` | Send anything, to anyone |
-| `02-encryption.png` | Encrypted before it leaves your PC |
-| `03-rooms.png` | Rooms: one code, several devices |
-| `04-devices.png` | Windows, iPhone, Android, Mac and Linux |
-| `05-settings.png` | Yours to set up |
-| `06-drive.png` | BIShare Drive: only you hold the key (raw `L-drive.png` from the store screenshot test, preset `windows_store`) |
+| `01-send.png` | Send anything. To any device. |
+| `02-inbox.png` | Every photo in original quality |
+| `03-secure-link.png` | Send to anyone with a link |
+| `04-drive.png` | BIShare Drive: only you hold the key |
+| `05-settings.png` | End-to-end encrypted |
 | `store-logo-2160.png` | Product logo, transparent background, from `logo.svg` |
 | `promo-16x9-2400x1350.png` | Promotional image |
+
+The raw `W*.png` come from `test/preview/store_screenshots_test.dart`, preset
+`windows_store`, with
+`BISHARE_SHOTS_ONLY=1_share,2_inbox,3_link,4_drive,5_settings` (2.8.0
+redesign). Sample photos: `store/screens/photos` (Unsplash License).
 
 ## Why the app is composed onto a background
 

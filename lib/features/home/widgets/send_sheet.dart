@@ -546,7 +546,12 @@ class SendWays extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final apple = !kIsWeb && (Platform.isIOS || Platform.isMacOS);
+    // By the target platform (the same in the app), so the store
+    // screenshots of other platforms leave it out too.
+    final apple =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.macOS);
     final rows = <(String, String, String, VoidCallback)>[
       (
         AppIcons.linkCopy,
