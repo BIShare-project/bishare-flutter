@@ -166,6 +166,7 @@ class _Toolbar extends StatelessWidget {
       icon: AppIcons.filter,
       title: 'history.filter_title'.tr(),
       builder: (ctx) => AppSheetGroup(
+        first: true,
         children: [
           for (final f in HistoryFilter.values)
             AppSheetAction(
@@ -405,18 +406,18 @@ class _Row extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (has)
-            AppSheetQuickRow(
-              actions: [
-                AppSheetQuick(
+            AppSheetGroup(
+              first: true,
+              children: [
+                AppSheetAction(
                   icon: AppIcons.eyePreview,
                   label: 'history.open'.tr(),
-                  primary: true,
                   onTap: () {
                     Navigator.pop(ctx);
                     _open(context, r);
                   },
                 ),
-                AppSheetQuick(
+                AppSheetAction(
                   icon: AppIcons.shareLink,
                   label: 'history.share'.tr(),
                   onTap: () => SharePlus.instance.share(
@@ -426,6 +427,7 @@ class _Row extends StatelessWidget {
               ],
             ),
           AppSheetGroup(
+            first: !has,
             children: [
               AppSheetInfo('history.csv_device'.tr(), r.deviceAlias),
               if (shownName(r) != r.fileName)
@@ -565,6 +567,7 @@ Future<void> showHistoryMenu(BuildContext context) {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AppSheetGroup(
+          first: true,
           children: [
             AppSheetAction(
               icon: AppIcons.downloadFile,

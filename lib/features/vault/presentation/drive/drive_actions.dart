@@ -146,6 +146,7 @@ class DriveActions {
       icon: AppIcons.uploadFile,
       title: 'vault.add_title'.tr(),
       builder: (ctx) => AppSheetGroup(
+        first: true,
         children: [
           if (_phone)
             AppSheetAction(

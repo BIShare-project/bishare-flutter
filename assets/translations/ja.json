@@ -234,8 +234,7 @@
     "via_qr": "QR で",
     "select_all": "すべて選択",
     "select_none": "選択を解除",
-    "detail_saved_as": "保存名",
-    "qr_short": "QRコード"
+    "detail_saved_as": "保存名"
   },
   "history": {
     "all": "すべて",

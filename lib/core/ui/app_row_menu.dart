@@ -111,6 +111,7 @@ Future<void> showActionSheet(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppSheetGroup(
+            first: true,
             children: [
               for (final a in actions)
                 if (!a.destructive) row(a),

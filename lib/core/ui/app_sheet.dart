@@ -73,9 +73,9 @@ Future<T?> showGlassModal<T>(
   );
 }
 
-/// A tappable row for use inside [showAppSheet] content: the glyph on a
-/// small tile, the label and an optional [subtitle]; [destructive] turns it
-/// red. Inside an [AppSheetGroup] the rows sit on one card.
+/// A tappable row for use inside [showAppSheet] content, flat like the Send
+/// sheet's rows: the glyph, the label and an optional [subtitle];
+/// [destructive] turns it red, [selected] marks the option in force.
 class AppSheetAction extends StatelessWidget {
   const AppSheetAction({
     super.key,
@@ -93,23 +93,18 @@ class AppSheetAction extends StatelessWidget {
   final VoidCallback onTap;
   final bool destructive;
 
-  /// The option in force (a sort, a filter): an accent tile and a check.
+  /// The option in force (a sort, a filter): accent glyph and a check.
   final bool selected;
 
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
     final color = destructive ? t.danger : t.text;
-    final tile = destructive
-        ? t.danger.withValues(alpha: 0.14)
-        : selected
-        ? t.accentSoft
-        : t.sunken;
     final glyph = destructive
         ? t.danger
         : selected
         ? t.accent
-        : t.text;
+        : t.text2;
     // Transparent Material so the InkWell has a Material ancestor under ShadApp
     // (a bare InkWell throws Material.of on desktop hover).
     return Material(
@@ -119,24 +114,15 @@ class AppSheetAction extends StatelessWidget {
           tapHaptic();
           onTap();
         },
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 52),
           child: Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(12, 9, 14, 9),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
             child: Row(
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: tile,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: AppSvgIcon(icon, size: 18, color: glyph),
-                ),
-                const SizedBox(width: 12),
+                AppSvgIcon(icon, size: 22, color: glyph),
+                const SizedBox(width: 14),
                 // A long label (a Drive link's name and lifetime) wraps instead
                 // of running off the sheet.
                 Expanded(
@@ -146,11 +132,11 @@ class AppSheetAction extends StatelessWidget {
                     children: [
                       Text(label, style: AppType.row.copyWith(color: color)),
                       if (subtitle != null) ...[
-                        const SizedBox(height: 1),
+                        const SizedBox(height: 2),
                         Text(
                           subtitle!,
                           style: AppType.secondary.copyWith(
-                            fontSize: 12.5,
+                            fontSize: 13,
                             color: t.text2,
                           ),
                         ),
@@ -160,7 +146,7 @@ class AppSheetAction extends StatelessWidget {
                 ),
                 if (selected) ...[
                   const SizedBox(width: 8),
-                  AppSvgIcon(AppIcons.check, size: 18, color: t.accent),
+                  AppSvgIcon(AppIcons.check, size: 20, color: t.accent),
                 ],
               ],
             ),
@@ -171,50 +157,43 @@ class AppSheetAction extends StatelessWidget {
   }
 }
 
-/// Rows of a sheet on one rounded card, hairlines between them. A sheet
-/// stacks a few: what to do, what it is, and apart from them, delete.
+/// Rows of a sheet with hairlines between them, flat on the sheet. A sheet
+/// stacks a few, a hairline apart: what to do, what it is, then delete.
 class AppSheetGroup extends StatelessWidget {
-  const AppSheetGroup({
-    super.key,
-    required this.children,
-    this.margin = const EdgeInsets.only(bottom: 10),
-  });
+  const AppSheetGroup({super.key, required this.children, this.first = false});
 
   final List<Widget> children;
-  final EdgeInsetsGeometry margin;
+
+  /// The top group: no hairline above it.
+  final bool first;
 
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
-    final rows = children;
-    if (rows.isEmpty) return const SizedBox.shrink();
-    return Container(
-      margin: margin,
-      decoration: BoxDecoration(
-        color: t.sheetCard,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < rows.length; i++) ...[
-            if (i > 0)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(start: 56),
-                child: Divider(height: 1, thickness: 1, color: t.line),
-              ),
-            rows[i],
-          ],
+    if (children.isEmpty) return const SizedBox.shrink();
+    Widget line(double indent) => Padding(
+      padding: EdgeInsetsDirectional.only(start: indent),
+      child: Divider(height: 1, thickness: 1, color: t.line),
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!first) ...[
+          const SizedBox(height: 6),
+          line(0),
+          const SizedBox(height: 6),
         ],
-      ),
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) line(40),
+          children[i],
+        ],
+      ],
     );
   }
 }
 
-/// One fact in a sheet's [AppSheetGroup]: the name, then the value on the
-/// end side.
+/// One fact in a sheet: the name, then the value on the end side.
 class AppSheetInfo extends StatelessWidget {
   const AppSheetInfo(this.label, this.value, {super.key, this.lines = 1});
 
@@ -226,7 +205,7 @@ class AppSheetInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tokens;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 9),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -245,91 +224,6 @@ class AppSheetInfo extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// A file sheet's main actions as a row of big buttons under the header
-/// (open, share, save...). The first can be [AppSheetQuick.primary].
-class AppSheetQuickRow extends StatelessWidget {
-  const AppSheetQuickRow({super.key, required this.actions});
-
-  final List<AppSheetQuick> actions;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (var i = 0; i < actions.length; i++) ...[
-            if (i > 0) const SizedBox(width: 8),
-            Expanded(child: actions[i]),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class AppSheetQuick extends StatelessWidget {
-  const AppSheetQuick({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.primary = false,
-  });
-
-  final String icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool primary;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tokens;
-    return Semantics(
-      button: true,
-      label: label,
-      excludeSemantics: true,
-      child: Material(
-        color: primary ? t.accent : t.sheetCard,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () {
-            tapHaptic();
-            onTap();
-          },
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(4, 12, 4, 10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AppSvgIcon(
-                  icon,
-                  size: 22,
-                  color: primary ? t.onAccent : t.text,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: AppType.secondary.copyWith(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                    color: primary ? t.onAccent : t.text,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -457,7 +351,7 @@ class _Sheet extends StatelessWidget {
       ),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: t.sheetBg,
+          color: t.raised,
           borderRadius: radius,
           border: t.isDark ? Border(top: BorderSide(color: t.line)) : null,
           boxShadow: [
@@ -523,7 +417,7 @@ class _Dialog extends StatelessWidget {
           ),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: t.sheetBg,
+              color: t.raised,
               borderRadius: radius,
               border: Border.all(color: t.line),
               boxShadow: [

@@ -101,12 +101,12 @@ Future<void> showReceivedDetail(BuildContext context, TransferRecord r) {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (has)
-            AppSheetQuickRow(
-              actions: [
-                AppSheetQuick(
+            AppSheetGroup(
+              first: true,
+              children: [
+                AppSheetAction(
                   icon: AppIcons.eyePreview,
                   label: 'inbox.open'.tr(),
-                  primary: true,
                   onTap: () {
                     close();
                     showFilePreview(
@@ -118,14 +118,14 @@ Future<void> showReceivedDetail(BuildContext context, TransferRecord r) {
                     );
                   },
                 ),
-                AppSheetQuick(
+                AppSheetAction(
                   icon: AppIcons.shareLink,
                   label: 'inbox.share'.tr(),
                   onTap: () => shareReceived([r]),
                 ),
-                AppSheetQuick(
+                AppSheetAction(
                   icon: AppIcons.qrShare,
-                  label: 'inbox.qr_short'.tr(),
+                  label: 'inbox.share_via_qr'.tr(),
                   onTap: () {
                     close();
                     showInstantShare(
@@ -162,6 +162,7 @@ Future<void> showReceivedDetail(BuildContext context, TransferRecord r) {
               ],
             ),
           AppSheetGroup(
+            first: !has,
             children: [
               AppSheetInfo('inbox.detail_from'.tr(), r.deviceAlias),
               if (shownName(r) != r.fileName)

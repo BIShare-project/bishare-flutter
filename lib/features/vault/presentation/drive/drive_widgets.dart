@@ -548,6 +548,7 @@ class DriveToolbar extends StatelessWidget {
       icon: AppIcons.sort,
       title: 'vault.sort_by'.tr(),
       builder: (ctx) => AppSheetGroup(
+        first: true,
         children: [
           for (final s in DriveSort.values)
             AppSheetAction(

@@ -234,8 +234,7 @@
     "via_qr": "通过 QR",
     "select_all": "全选",
     "select_none": "取消全选",
-    "detail_saved_as": "保存为",
-    "qr_short": "二维码"
+    "detail_saved_as": "保存为"
   },
   "history": {
     "all": "全部",

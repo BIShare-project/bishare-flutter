@@ -701,6 +701,7 @@ Future<void> showInboxMenu(BuildContext context) {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppSheetGroup(
+            first: true,
             children: [
               AppSheetAction(
                 icon: AppIcons.folder,

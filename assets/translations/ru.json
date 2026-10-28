@@ -240,8 +240,7 @@
     "via_qr": "Через QR",
     "select_all": "Выбрать все",
     "select_none": "Снять выбор",
-    "detail_saved_as": "Сохранено как",
-    "qr_short": "QR-код"
+    "detail_saved_as": "Сохранено как"
   },
   "history": {
     "all": "Все",

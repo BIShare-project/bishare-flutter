@@ -246,8 +246,7 @@
     "via_qr": "عبر QR",
     "select_all": "تحديد الكل",
     "select_none": "إلغاء التحديد",
-    "detail_saved_as": "حُفظ باسم",
-    "qr_short": "رمز QR"
+    "detail_saved_as": "حُفظ باسم"
   },
   "history": {
     "all": "الكل",

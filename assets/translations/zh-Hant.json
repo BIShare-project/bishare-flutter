@@ -234,8 +234,7 @@
     "via_qr": "透過 QR",
     "select_all": "全選",
     "select_none": "取消全選",
-    "detail_saved_as": "儲存為",
-    "qr_short": "QR 碼"
+    "detail_saved_as": "儲存為"
   },
   "history": {
     "all": "全部",
