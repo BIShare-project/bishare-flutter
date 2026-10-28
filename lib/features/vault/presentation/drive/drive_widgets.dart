@@ -8,7 +8,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../../core/di/locator.dart';
 import '../../../../core/storage/app_database.dart';
 import '../../../../core/ui/app_ui.dart';
-import '../../../settings/presentation/widgets/glyph.dart';
 import '../../data/vault_thumbs.dart';
 import 'drive_controller.dart';
 import 'drive_format.dart';
@@ -65,10 +64,21 @@ class _DriveThumbState extends State<DriveThumb> {
   Widget build(BuildContext context) {
     final o = widget.object;
     if (o.kind == 'dir') {
-      return SizedBox(
+      // The same square as a file's, so rows line up.
+      final t = context.tokens;
+      return Container(
         width: widget.size,
         height: widget.size,
-        child: FittedBox(child: const Glyph(AppIcons.folder)),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: t.sunken,
+          borderRadius: BorderRadius.circular(widget.radius),
+        ),
+        child: AppSvgIcon(
+          AppIcons.folder,
+          size: widget.size * 0.5,
+          color: t.accent,
+        ),
       );
     }
     final jpeg = _jpeg;
@@ -172,7 +182,7 @@ class DriveListRow extends StatelessWidget {
             padding: const EdgeInsetsDirectional.fromSTEB(14, 8, 4, 8),
             child: Row(
               children: [
-                DriveThumb(object: o, size: 44),
+                DriveThumb(object: o, size: 44, radius: 11),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(

@@ -417,17 +417,6 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
         label: 'vault.refresh'.tr(),
         onTap: _refresh,
       ),
-      // While searching, the screen shows only the matches: emptying the
-      // trash is offered on the whole trash only.
-      if (_ctrl.view == DriveView.trash &&
-          !_ctrl.searching &&
-          _visible.isNotEmpty)
-        AppMenuAction(
-          icon: AppIcons.trashDelete,
-          label: 'vault.empty_trash'.tr(),
-          destructive: true,
-          onTap: () => _act.deleteForGood(_visible, all: true),
-        ),
       AppMenuAction(
         icon: AppIcons.linkCopy,
         label: 'vault.links_title'.tr(),
@@ -917,9 +906,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
     return StreamBuilder<List<VaultObject>>(
       stream: _itemsStream(),
       builder: (context, snap) {
-        if (!snap.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        if (!snap.hasData) return const _RowsLoading();
         final items = snap.data!;
         _visible = items;
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -933,9 +920,18 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
           builder: (context, counts) {
             final c = counts.data ?? const <String?, int>{};
             unawaited(_loadFolderNames(c));
-            return RefreshIndicator(
+            final body = RefreshIndicator(
               onRefresh: _refresh,
               child: _ctrl.grid ? _grid(items, c) : _list(items, c),
+            );
+            if (_ctrl.view != DriveView.trash || _ctrl.searching) return body;
+            // The whole trash: how long it keeps things, and emptying it
+            // (moved here from the page menu).
+            return Column(
+              children: [
+                _TrashNote(onEmpty: () => _act.deleteForGood(items, all: true)),
+                Expanded(child: body),
+              ],
             );
           },
         );
@@ -1370,4 +1366,73 @@ class _WaitingForKey extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Over the trash: things go for good after 30 days; empty it now.
+class _TrashNote extends StatelessWidget {
+  const _TrashNote({required this.onEmpty});
+
+  final VoidCallback onEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 2, 6, 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'vault.trash_subtitle'.tr(),
+              style: AppType.secondary.copyWith(color: t.text2),
+            ),
+          ),
+          TextButton(
+            onPressed: onEmpty,
+            style: TextButton.styleFrom(foregroundColor: t.danger),
+            child: Text('vault.empty_trash'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Rows on their way, under a shimmer.
+class _RowsLoading extends StatelessWidget {
+  const _RowsLoading();
+
+  @override
+  Widget build(BuildContext context) => AppShimmer(
+    child: Column(
+      children: [
+        for (var i = 0; i < 6; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                const AppSkeletonBox(width: 44, height: 44, radius: 11),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FractionallySizedBox(
+                        widthFactor: i.isEven ? 0.6 : 0.45,
+                        child: const AppSkeletonBox(height: 14, radius: 7),
+                      ),
+                      const SizedBox(height: 8),
+                      const FractionallySizedBox(
+                        widthFactor: 0.3,
+                        child: AppSkeletonBox(height: 11, radius: 6),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    ),
+  );
 }
