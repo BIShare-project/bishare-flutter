@@ -1301,7 +1301,8 @@
     "backup_strip_off_sub": "صور هذا الهاتف ليست محفوظة في Drive بعد.",
     "backup_strip_done": "كل الصور محفوظة في Drive",
     "backup_turn_on": "تشغيل",
-    "backup_explain": "تذهب صور وفيديوهات هذا الهاتف إلى مجلد «{folder}» في Drive، بعد تشفيرها على الهاتف أولًا."
+    "backup_explain": "تذهب صور وفيديوهات هذا الهاتف إلى مجلد «{folder}» في Drive، بعد تشفيرها على الهاتف أولًا.",
+    "clear_finished": "مسح المكتمل"
   },
   "compose": {
     "visible": "ظاهر",

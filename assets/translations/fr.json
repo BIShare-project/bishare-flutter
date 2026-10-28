@@ -1256,7 +1256,8 @@
     "backup_strip_off_sub": "Les photos de ce téléphone ne sont pas encore à l’abri dans Drive.",
     "backup_strip_done": "Toutes les photos sont à l’abri dans Drive",
     "backup_turn_on": "Activer",
-    "backup_explain": "Les photos et vidéos de ce téléphone vont dans le dossier « {folder} » de votre Drive, chiffrées d’abord sur le téléphone."
+    "backup_explain": "Les photos et vidéos de ce téléphone vont dans le dossier « {folder} » de votre Drive, chiffrées d’abord sur le téléphone.",
+    "clear_finished": "Effacer les terminés"
   },
   "compose": {
     "visible": "Visible",

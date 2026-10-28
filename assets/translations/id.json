@@ -1256,7 +1256,8 @@
     "backup_strip_off_sub": "Foto di ponsel ini belum aman di Drive.",
     "backup_strip_done": "Semua foto aman di Drive",
     "backup_turn_on": "Nyalakan",
-    "backup_explain": "Foto dan video dari ponsel ini masuk ke folder “{folder}” di Drive Anda, dienkripsi di ponsel dulu."
+    "backup_explain": "Foto dan video dari ponsel ini masuk ke folder “{folder}” di Drive Anda, dienkripsi di ponsel dulu.",
+    "clear_finished": "Hapus yang selesai"
   },
   "compose": {
     "visible": "Terlihat",

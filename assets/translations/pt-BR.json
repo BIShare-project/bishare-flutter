@@ -1256,7 +1256,8 @@
     "backup_strip_off_sub": "As fotos deste celular ainda não estão seguras no Drive.",
     "backup_strip_done": "Todas as fotos estão seguras no Drive",
     "backup_turn_on": "Ligar",
-    "backup_explain": "Fotos e vídeos deste celular vão para a pasta “{folder}” do seu Drive, criptografados primeiro no celular."
+    "backup_explain": "Fotos e vídeos deste celular vão para a pasta “{folder}” do seu Drive, criptografados primeiro no celular.",
+    "clear_finished": "Limpar concluídas"
   },
   "compose": {
     "visible": "Visível",

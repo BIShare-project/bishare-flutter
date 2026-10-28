@@ -34,18 +34,29 @@ class _DriveTransfersPageState extends State<DriveTransfersPage> {
           maxWidth: 720,
           child: Column(
             children: [
-              AppScreenHeader(
-                title: 'vault.transfers'.tr(),
-                onBack: () => Navigator.of(context).maybePop(),
-                actions: [
-                  AppIconButton(
-                    icon: AppIcons.trashDelete,
-                    onPressed: () async {
-                      await dao.clearFinishedTransfers();
-                      downloads.clearFinished();
-                    },
+              // Clearing the finished ones is offered only when there is
+              // something on the list.
+              StreamBuilder<List<VaultTransfer>>(
+                stream: _transfers,
+                builder: (context, snap) => ListenableBuilder(
+                  listenable: downloads,
+                  builder: (context, _) => AppScreenHeader(
+                    title: 'vault.transfers'.tr(),
+                    onBack: () => Navigator.of(context).maybePop(),
+                    actions: [
+                      if ((snap.data?.isNotEmpty ?? false) ||
+                          downloads.jobs.isNotEmpty)
+                        AppIconButton(
+                          icon: AppIcons.trashDelete,
+                          tooltip: 'vault.clear_finished'.tr(),
+                          onPressed: () async {
+                            await dao.clearFinishedTransfers();
+                            downloads.clearFinished();
+                          },
+                        ),
+                    ],
                   ),
-                ],
+                ),
               ),
               Expanded(
                 child: StreamBuilder<List<VaultTransfer>>(

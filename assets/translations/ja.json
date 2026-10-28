@@ -1256,7 +1256,8 @@
     "backup_strip_off_sub": "このスマートフォンの写真はまだDriveに保存されていません。",
     "backup_strip_done": "すべての写真がDriveに保存されています",
     "backup_turn_on": "オンにする",
-    "backup_explain": "このスマートフォンの写真とビデオは、スマートフォン上で暗号化されてからDriveの「{folder}」フォルダに保存されます。"
+    "backup_explain": "このスマートフォンの写真とビデオは、スマートフォン上で暗号化されてからDriveの「{folder}」フォルダに保存されます。",
+    "clear_finished": "完了したものを消去"
   },
   "compose": {
     "visible": "表示中",

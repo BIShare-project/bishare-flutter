@@ -1256,7 +1256,8 @@
     "backup_strip_off_sub": "Las fotos de este teléfono aún no están a salvo en Drive.",
     "backup_strip_done": "Todas las fotos están a salvo en Drive",
     "backup_turn_on": "Activar",
-    "backup_explain": "Las fotos y vídeos de este teléfono van a la carpeta “{folder}” de tu Drive, cifrados primero en el teléfono."
+    "backup_explain": "Las fotos y vídeos de este teléfono van a la carpeta “{folder}” de tu Drive, cifrados primero en el teléfono.",
+    "clear_finished": "Borrar terminadas"
   },
   "compose": {
     "visible": "Visible",

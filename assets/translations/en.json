@@ -1256,7 +1256,8 @@
     "backup_strip_off_sub": "Photos on this phone are not safe in Drive yet.",
     "backup_strip_done": "Every photo is safe in Drive",
     "backup_turn_on": "Turn on",
-    "backup_explain": "Photos and videos from this phone go to the “{folder}” folder in your Drive, encrypted on the phone first."
+    "backup_explain": "Photos and videos from this phone go to the “{folder}” folder in your Drive, encrypted on the phone first.",
+    "clear_finished": "Clear finished"
   },
   "compose": {
     "visible": "Visible",

@@ -1256,7 +1256,8 @@
     "backup_strip_off_sub": "这部手机上的照片还没有安全存入 Drive。",
     "backup_strip_done": "所有照片都已安全存入 Drive",
     "backup_turn_on": "开启",
-    "backup_explain": "这部手机上的照片和视频会先在手机上加密，再存入你 Drive 中的“{folder}”文件夹。"
+    "backup_explain": "这部手机上的照片和视频会先在手机上加密，再存入你 Drive 中的“{folder}”文件夹。",
+    "clear_finished": "清除已完成"
   },
   "compose": {
     "visible": "可被发现",

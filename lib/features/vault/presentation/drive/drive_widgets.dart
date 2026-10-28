@@ -914,7 +914,6 @@ class DriveStorageBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
     final colors = DriveStorageCard.colors;
     final q = quota ?? 0;
     final u = used ?? byKind.values.fold<int>(0, (a, b) => a + b);
@@ -940,7 +939,8 @@ class DriveStorageBar extends StatelessWidget {
             final fit = sum > c.maxWidth ? c.maxWidth / sum : 1.0;
             return Stack(
               children: [
-                Container(color: cs.muted),
+                // The line colour: muted vanishes on a dark card.
+                Container(color: context.tokens.line),
                 Row(
                   children: [
                     for (final e in widths.entries)
