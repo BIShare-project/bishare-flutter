@@ -719,7 +719,12 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
             child: _queueAndContent(),
           ),
         ),
-        if (_ctrl.selecting) DriveSelectionBar(actions: _selectionActions()),
+        if (_ctrl.selecting)
+          DriveSelectionBar(
+            count: _ctrl.selected.length,
+            onClear: _ctrl.clearSelection,
+            actions: _selectionActions(),
+          ),
       ],
     );
   }
@@ -826,7 +831,11 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
                     ],
                     Expanded(child: _queueAndContent()),
                     if (_ctrl.selecting)
-                      DriveSelectionBar(actions: _selectionActions()),
+                      DriveSelectionBar(
+                        count: _ctrl.selected.length,
+                        onClear: _ctrl.clearSelection,
+                        actions: _selectionActions(),
+                      ),
                   ],
                 ),
               ),

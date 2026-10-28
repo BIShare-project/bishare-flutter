@@ -956,63 +956,36 @@ class DriveStorageBar extends StatelessWidget {
   }
 }
 
-/// The actions for what is selected, at the bottom.
+/// The actions for what is selected: the app's one selection bar (the
+/// same as in Send and the Inbox), with the count and a way out.
 class DriveSelectionBar extends StatelessWidget {
-  const DriveSelectionBar({super.key, required this.actions});
+  const DriveSelectionBar({
+    super.key,
+    required this.count,
+    required this.onClear,
+    required this.actions,
+  });
 
-  /// (icon, label, action, destructive)
+  final int count;
+  final VoidCallback onClear;
+
+  /// (icon, label, action, destructive). Destructive actions ask first in
+  /// DriveActions; on the bar they read like the others.
   final List<(String, String, VoidCallback, bool)> actions;
 
   @override
-  Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.card,
-        border: Border(top: BorderSide(color: cs.border)),
+  Widget build(BuildContext context) => SafeArea(
+    top: false,
+    child: AppSelectionBar(
+      visible: true,
+      onClear: onClear,
+      summary: AppSelectionSummary(
+        title: 'vault.n_selected'.tr(namedArgs: {'count': '$count'}),
       ),
-      padding: const EdgeInsets.fromLTRB(6, 6, 6, 8),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            for (final (icon, label, onTap, destructive) in actions)
-              Expanded(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () {
-                    tapHaptic();
-                    onTap();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AppSvgIcon(
-                          icon,
-                          size: 20,
-                          color: destructive ? cs.destructive : cs.foreground,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                            color: destructive ? cs.destructive : cs.foreground,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+      actions: [
+        for (final (icon, label, onTap, _) in actions)
+          AppBarAction(icon: icon, label: label, onTap: onTap),
+      ],
+    ),
+  );
 }

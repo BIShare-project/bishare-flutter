@@ -289,17 +289,13 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
                   Expanded(child: _body(items, ids, uploads)),
                   if (_selected.isNotEmpty)
                     DriveSelectionBar(
+                      count: _selected.length,
+                      onClear: () => setState(_selected.clear),
                       actions: [
                         (
                           AppIcons.cloudSync,
                           'vault.backup_now'.tr(),
                           () => unawaited(_backUpChosen(ids)),
-                          false,
-                        ),
-                        (
-                          AppIcons.close,
-                          'vault.cancel'.tr(),
-                          () => setState(_selected.clear),
                           false,
                         ),
                       ],
