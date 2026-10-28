@@ -30,6 +30,7 @@ class _PickRow extends StatelessWidget {
     required this.meta,
     required this.onTap,
     this.trailingNote,
+    this.previewPath,
   });
 
   final String selKey;
@@ -38,6 +39,21 @@ class _PickRow extends StatelessWidget {
   final String meta;
   final VoidCallback onTap;
   final Widget? trailingNote;
+
+  /// Hold the row to open this file in the preview (it never selects).
+  final Future<String?> Function()? previewPath;
+
+  Future<void> _preview(BuildContext context) async {
+    final path = await previewPath!();
+    if (path == null || !context.mounted) return;
+    tapHaptic();
+    await showFilePreview(
+      context,
+      path: path,
+      name: title,
+      mimeType: _mime(title),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,11 +77,53 @@ class _PickRow extends StatelessWidget {
               ],
             ),
             onTap: onTap,
+            onLongPress: previewPath == null ? null : () => _preview(context),
           ),
         ),
       ),
     );
   }
+}
+
+/// Rows on their way: the row's shape under a shimmer.
+class _RowsSkeleton extends StatelessWidget {
+  const _RowsSkeleton({this.count = 6});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) => AppShimmer(
+    child: Column(
+      children: [
+        for (var i = 0; i < count; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                const AppSkeletonBox(width: 44, height: 44, radius: 11),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FractionallySizedBox(
+                        widthFactor: i.isEven ? 0.7 : 0.55,
+                        child: const AppSkeletonBox(height: 14, radius: 7),
+                      ),
+                      const SizedBox(height: 8),
+                      const FractionallySizedBox(
+                        widthFactor: 0.35,
+                        child: AppSkeletonBox(height: 11, radius: 6),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    ),
+  );
 }
 
 /// A file-type tile for list rows.
@@ -112,6 +170,7 @@ List<Widget> _receivedRows(
           '${'inbox.from'.tr(namedArgs: {'alias': r.deviceAlias})} · ${_when(context, r.timestamp)} · ${formatBytes(r.fileSize)}',
       onTap: () =>
           context.read<SendSelectionCubit>().toggleFile(r.savedPath!, kind),
+      previewPath: () async => r.savedPath,
     ),
 ];
 
@@ -130,7 +189,9 @@ class _SendAudioTabState extends State<SendAudioTab>
     with AutomaticKeepAliveClientMixin {
   final _lib = SendMediaLibrary.instance;
   SendMediaAccess _access = SendMediaAccess.unknown;
-  List<AssetEntity> _audio = const [];
+
+  /// The device's audio; null until the first list is in.
+  List<AssetEntity>? _audio;
   AppLifecycleListener? _life;
 
   @override
@@ -201,7 +262,9 @@ class _SendAudioTabState extends State<SendAudioTab>
           ),
         ),
         if (Platform.isAndroid) ...[
-          if (_access == SendMediaAccess.none)
+          if (_access == SendMediaAccess.unknown)
+            const _RowsSkeleton(count: 4)
+          else if (_access == SendMediaAccess.none)
             AppEmptyState(
               icon: AppIcons.fileAudio,
               title: 'compose.access_title'.tr(),
@@ -213,7 +276,19 @@ class _SendAudioTabState extends State<SendAudioTab>
             )
           else ...[
             AppSectionHeader('compose.all_audio'.tr()),
-            for (final a in _audio)
+            if (_audio == null)
+              const _RowsSkeleton(count: 4)
+            else if (_audio!.isEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                child: Text(
+                  'compose.library_empty'.tr(),
+                  style: AppType.secondary.copyWith(
+                    color: context.tokens.text2,
+                  ),
+                ),
+              ),
+            for (final a in _audio ?? const <AssetEntity>[])
               _PickRow(
                 selKey: 'a:${a.id}',
                 leading: const _FileArt(AppIcons.fileAudio),
@@ -223,6 +298,7 @@ class _SendAudioTabState extends State<SendAudioTab>
                   a,
                   SendKind.audio,
                 ),
+                previewPath: () async => (await a.file)?.path,
               ),
           ],
         ],
@@ -296,7 +372,7 @@ class _SendAppsTabState extends State<SendAppsTab>
     super.build(context);
     final apps = _apps;
     if (apps == null) {
-      return const Center(child: CircularProgressIndicator(strokeWidth: 2.4));
+      return const SingleChildScrollView(child: _RowsSkeleton(count: 10));
     }
     final q = _q.trim().toLowerCase();
     final shown = q.isEmpty
@@ -555,10 +631,7 @@ class _SendDocsTabState extends State<SendDocsTab>
     return [
       AppSectionHeader('compose.docs_on_device'.tr()),
       if (_deviceDocs == null)
-        const Padding(
-          padding: EdgeInsets.all(16),
-          child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
-        )
+        const _RowsSkeleton(count: 4)
       else if (docs.isEmpty)
         Padding(
           padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
@@ -578,6 +651,7 @@ class _SendDocsTabState extends State<SendDocsTab>
               d.path,
               SendKind.doc,
             ),
+            previewPath: () async => d.path,
           ),
     ];
   }

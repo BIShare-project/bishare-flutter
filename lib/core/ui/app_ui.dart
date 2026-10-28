@@ -17,6 +17,7 @@
 /// - [AppAvatar], [AppBadge], [AppStatusPill], [AppIconButton]
 /// - [AppButton], [AppIconOnlyButton]
 /// - [AppEmptyState]    glyph + title + message + optional action
+/// - [AppShimmer], [AppSkeletonBox]  loading skeletons
 /// - [showAppSheet] / [AppSheetAction]  sheet on phones, dialog on wide
 library;
 
@@ -48,5 +49,6 @@ export 'app_screen_header.dart';
 export 'app_section.dart';
 export 'app_search_field.dart';
 export 'app_sheet.dart';
+export 'app_shimmer.dart';
 export 'app_source_pill.dart';
 export 'app_svg_icon.dart';

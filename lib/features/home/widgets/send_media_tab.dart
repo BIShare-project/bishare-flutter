@@ -13,6 +13,7 @@ import '../../../core/ui/app_ui.dart';
 import '../../send/data/send_media_library.dart';
 import '../../send/presentation/send_selection_cubit.dart';
 import '../../send/presentation/tray_cubit.dart';
+import 'asset_peek.dart';
 
 /// The Photos and Videos tabs of the Send tab (redesign-plan.md 3.3): the library as a
 /// lazy grid, grouped by day for photos, with an album sheet, the permission
@@ -56,6 +57,10 @@ class _SendMediaTabState extends State<SendMediaTab>
   /// instead of asking again.
   bool _refused = false;
   List<SendAlbum> _albums = const [];
+
+  /// The first page of the current album is in: until then the skeleton
+  /// shows, never the empty state.
+  bool _ready = false;
   SendAlbum? _album;
   final List<AssetEntity> _assets = [];
   int _page = 0;
@@ -68,6 +73,15 @@ class _SendMediaTabState extends State<SendMediaTab>
 
   // drag-to-select
   bool? _dragOn;
+
+  /// Hold still on a tile: a bigger look at it (AssetPeek). Moving the
+  /// finger closes it and starts choosing by drag instead.
+  AssetPeek? _peek;
+  AssetEntity? _held;
+  Offset _heldAt = Offset.zero;
+
+  /// The grid's thumbnail size, for the peek's first frame.
+  int _thumbPx = 240;
   final _gridKey = GlobalKey();
 
   bool get _photos => widget.kind == SendMediaKind.photo;
@@ -96,6 +110,7 @@ class _SendMediaTabState extends State<SendMediaTab>
 
   @override
   void dispose() {
+    _peek?.close();
     _life?.dispose();
     _changes?.cancel();
     super.dispose();
@@ -132,6 +147,12 @@ class _SendMediaTabState extends State<SendMediaTab>
     _assets.clear();
     _page = 0;
     _end = false;
+    if (_album == null) {
+      // No album at all: the library is empty.
+      if (mounted) setState(() => _ready = true);
+      return;
+    }
+    if (mounted) setState(() => _ready = false);
     await _more();
   }
 
@@ -146,6 +167,7 @@ class _SendMediaTabState extends State<SendMediaTab>
       _page++;
       _assets.addAll(got);
       if (got.length < _pageSize) _end = true;
+      _ready = true;
     });
   }
 
@@ -198,13 +220,23 @@ class _SendMediaTabState extends State<SendMediaTab>
   void _dragStart(LongPressStartDetails d) {
     final a = _assetAt(d.globalPosition);
     if (a == null) return;
-    final sel = context.read<SendSelectionCubit>();
-    _dragOn = !sel.state.contains('a:${a.id}');
-    sel.setAssets([a], _sendKind, _dragOn!);
+    _held = a;
+    _heldAt = d.globalPosition;
+    _peek = AssetPeek.show(context, a, _thumbPx);
     tapHaptic();
   }
 
   void _dragMove(LongPressMoveUpdateDetails d) {
+    final held = _held;
+    if (held != null) {
+      // Still a look, until the finger really moves.
+      if ((d.globalPosition - _heldAt).distance < 14) return;
+      _closePeek();
+      final sel = context.read<SendSelectionCubit>();
+      _dragOn = !sel.state.contains('a:${held.id}');
+      sel.setAssets([held], _sendKind, _dragOn!);
+      tapHaptic();
+    }
     final on = _dragOn;
     if (on == null) return;
     final a = _assetAt(d.globalPosition);
@@ -214,6 +246,17 @@ class _SendMediaTabState extends State<SendMediaTab>
       sel.setAssets([a], _sendKind, on);
       tapHaptic();
     }
+  }
+
+  void _dragEnd() {
+    _closePeek();
+    _dragOn = null;
+  }
+
+  void _closePeek() {
+    _peek?.close();
+    _peek = null;
+    _held = null;
   }
 
   // ---- UI -------------------------------------------------------------------
@@ -232,7 +275,8 @@ class _SendMediaTabState extends State<SendMediaTab>
       case SendMediaAccess.full:
         break;
     }
-    if (_album == null && _albums.isEmpty) {
+    if (!_ready) return _skeleton();
+    if (_assets.isEmpty && (_albums.isEmpty || _end)) {
       return ListView(
         children: [
           AppEmptyState(
@@ -252,6 +296,7 @@ class _SendMediaTabState extends State<SendMediaTab>
         final px = (tile * MediaQuery.devicePixelRatioOf(context))
             .round()
             .clamp(120, 360);
+        _thumbPx = px;
         final rows = _rows(columns);
         return NotificationListener<ScrollNotification>(
           onNotification: (n) {
@@ -261,7 +306,8 @@ class _SendMediaTabState extends State<SendMediaTab>
           child: GestureDetector(
             onLongPressStart: _dragStart,
             onLongPressMoveUpdate: _dragMove,
-            onLongPressEnd: (_) => _dragOn = null,
+            onLongPressEnd: (_) => _dragEnd(),
+            onLongPressCancel: _dragEnd,
             child: CustomScrollView(
               key: _gridKey,
               scrollCacheExtent: const ScrollCacheExtent.pixels(800),
@@ -442,21 +488,52 @@ class _SendMediaTabState extends State<SendMediaTab>
     await _reset();
   }
 
-  Widget _skeleton() => LayoutBuilder(
-    builder: (context, box) {
-      final columns = _photos ? 4 : 3;
-      return GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(top: 48),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columns,
-          mainAxisSpacing: 2,
-          crossAxisSpacing: 2,
-        ),
-        itemCount: columns * 6,
-        itemBuilder: (context, i) => ColoredBox(color: context.tokens.sunken),
-      );
-    },
+  /// Loading: the grid's shape under a shimmer (a day line on Photos).
+  Widget _skeleton() => AppShimmer(
+    child: LayoutBuilder(
+      builder: (context, box) {
+        final columns = _photos
+            ? (box.maxWidth / 104).floor().clamp(4, 10)
+            : (box.maxWidth / 138).floor().clamp(3, 8);
+        final tile = (box.maxWidth - (columns - 1) * 2) / columns;
+        Widget grid(int rows) => Wrap(
+          spacing: 2,
+          runSpacing: 2,
+          children: [
+            for (var i = 0; i < columns * rows; i++)
+              AppSkeletonBox(width: tile, height: tile),
+          ],
+        );
+        Widget dayLine() => const Padding(
+          padding: EdgeInsets.fromLTRB(16, 18, 16, 10),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: AppSkeletonBox(width: 96, height: 14, radius: 7),
+          ),
+        );
+        return ListView(
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 14, 16, 4),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: AppSkeletonBox(width: 120, height: 18, radius: 9),
+              ),
+            ),
+            if (_photos) ...[
+              dayLine(),
+              grid(2),
+              dayLine(),
+              grid(4),
+            ] else ...[
+              const SizedBox(height: 12),
+              grid(6),
+            ],
+          ],
+        );
+      },
+    ),
   );
 
   Widget _askAccess() => ListView(
