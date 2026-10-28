@@ -1,10 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/ui/app_sheet.dart';
+import '../../../core/ui/app_ui.dart';
 import 'room_cubit.dart';
 import 'widgets/connecting_view.dart';
 import 'widgets/in_room.dart';
@@ -18,9 +17,8 @@ class RoomPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: context.tokens.bg,
       body: SafeArea(
         child: BlocConsumer<RoomCubit, RoomState>(
           // The code is a browser-hosted (WebRTC) room the app can't join
@@ -34,28 +32,29 @@ class RoomPage extends StatelessWidget {
               subtitle: 'room.web_room_body'.tr(),
               builder: (ctx) => Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ShadButton(
-                      onPressed: () {
-                        final code = state.webRoomCode ?? '';
-                        launchUrl(
-                          Uri.parse('https://bishare.app/rooms?code=$code&mode=local'),
-                          mode: LaunchMode.externalApplication,
-                        );
-                        Navigator.pop(ctx);
-                      },
-                      child: Text('room.web_room_open'.tr()),
-                    ),
+                  AppButton(
+                    label: 'room.web_room_open'.tr(),
+                    icon: AppIcons.externalLink,
+                    size: AppButtonSize.large,
+                    onPressed: () {
+                      final code = state.webRoomCode ?? '';
+                      launchUrl(
+                        Uri.parse(
+                          'https://bishare.app/rooms?code=$code&mode=local',
+                        ),
+                        mode: LaunchMode.externalApplication,
+                      );
+                      Navigator.pop(ctx);
+                    },
                   ),
                   const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ShadButton.outline(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: Text('room.web_room_ok'.tr()),
-                    ),
+                  AppButton(
+                    label: 'room.web_room_ok'.tr(),
+                    variant: AppButtonVariant.secondary,
+                    size: AppButtonSize.large,
+                    onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
               ),

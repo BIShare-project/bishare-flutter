@@ -477,7 +477,8 @@
     "e2e_waiting": "En attente qu'un membre partage la clé du salon…",
     "e2e_off": "Non chiffré de bout en bout (créé avec une ancienne app)",
     "encrypted_file": "Fichier chiffré",
-    "error_update_required": "Ce salon est chiffré de bout en bout. Mettez BIShare à jour pour le rejoindre."
+    "error_update_required": "Ce salon est chiffré de bout en bout. Mettez BIShare à jour pour le rejoindre.",
+    "start_room": "Créer un salon"
   },
   "settings": {
     "about": "À propos",

@@ -477,7 +477,8 @@
     "e2e_waiting": "メンバーがルームの鍵を共有するのを待っています…",
     "e2e_off": "エンドツーエンド暗号化なし（旧バージョンのアプリで作成）",
     "encrypted_file": "暗号化されたファイル",
-    "error_update_required": "このルームはエンドツーエンド暗号化されています。参加するには BIShare をアップデートしてください。"
+    "error_update_required": "このルームはエンドツーエンド暗号化されています。参加するには BIShare をアップデートしてください。",
+    "start_room": "ルームを作成"
   },
   "settings": {
     "about": "情報",

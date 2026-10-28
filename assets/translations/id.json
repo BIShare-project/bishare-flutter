@@ -477,7 +477,8 @@
     "e2e_waiting": "Menunggu anggota membagikan kunci room…",
     "e2e_off": "Tidak terenkripsi end-to-end (dibuat dengan app versi lama)",
     "encrypted_file": "File terenkripsi",
-    "error_update_required": "Room ini terenkripsi end-to-end. Perbarui BIShare untuk bergabung."
+    "error_update_required": "Room ini terenkripsi end-to-end. Perbarui BIShare untuk bergabung.",
+    "start_room": "Buat ruangan"
   },
   "settings": {
     "about": "Tentang",

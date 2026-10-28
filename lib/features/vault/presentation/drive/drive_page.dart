@@ -23,7 +23,9 @@ import '../../data/vault_upload_batch.dart';
 import '../../data/vault_uploader.dart';
 import '../vault_sign_in_buttons.dart';
 import 'drive_actions.dart';
+import '../vault_account_page.dart';
 import 'drive_controller.dart';
+import 'drive_transfers_page.dart';
 import 'drive_format.dart';
 import 'drive_gallery_view.dart';
 import 'drive_plans_page.dart';
@@ -74,6 +76,13 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
   Map<String, String> _folderNames = const {};
   VaultStatus? _started;
   bool _dragging = false;
+
+  /// On a computer: Transfers ('transfers') or Account ('account') in the
+  /// content pane next to Drive's sidebar; null shows the files.
+  String? _pane;
+
+  /// The last build was the wide layout (sidebar shown).
+  bool _wideNow = false;
 
   /// The Inbox tab is on screen (with Drive chosen, or this page would not
   /// exist): drops, "back" and the shortcuts are only this page's then.
@@ -423,7 +432,9 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
       AppMenuAction(
         icon: AppIcons.transferP2p,
         label: 'vault.transfers'.tr(),
-        onTap: () => context.push('/drive-transfers'),
+        onTap: () => _wideNow
+            ? setState(() => _pane = 'transfers')
+            : context.push('/drive-transfers'),
       ),
       AppMenuAction(
         icon: AppIcons.storageUsage,
@@ -433,7 +444,9 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
       AppMenuAction(
         icon: AppIcons.settings,
         label: 'vault.account_title'.tr(),
-        onTap: () => context.push('/drive-account'),
+        onTap: () => _wideNow
+            ? setState(() => _pane = 'account')
+            : context.push('/drive-account'),
       ),
     ],
   );
@@ -554,6 +567,8 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
   }
 
   Widget _page(bool ready, {required bool wide}) {
+    _wideNow = ready && wide;
+    if (!_wideNow) _pane = null;
     Widget body;
     if (!ready) {
       body = Column(
@@ -787,59 +802,69 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
                   ctrl: _ctrl,
                   storage: _storageCard(),
                   transfersBusy: _downloads.busy,
-                  onTransfers: () => context.push('/drive-transfers'),
-                  onAccount: () => context.push('/drive-account'),
+                  showing: _pane,
+                  onView: (v) {
+                    setState(() => _pane = null);
+                    _ctrl.setView(v);
+                  },
+                  onTransfers: () => setState(() => _pane = 'transfers'),
+                  onAccount: () => setState(() => _pane = 'account'),
                 ),
               ),
               VerticalDivider(width: 1, color: context.tokens.line),
               Expanded(
-                child: Column(
-                  children: [
-                    AppScreenHeader(
-                      title: _title,
-                      subtitle: _subtitle,
-                      actions: [
-                        if (_ctrl.canAdd && !_ctrl.selecting) ...[
-                          AppButton(
-                            label: 'vault.new_folder'.tr(),
-                            icon: AppIcons.newFolder,
-                            variant: AppButtonVariant.secondary,
-                            size: AppButtonSize.small,
-                            onPressed: () => _act.newFolder(),
-                          ),
-                          const SizedBox(width: 8),
-                          AppButton(
-                            label: 'vault.upload'.tr(),
-                            icon: AppIcons.uploadFile,
-                            size: AppButtonSize.small,
-                            onPressed: () => _act.addMenu(),
-                          ),
-                          const SizedBox(width: 4),
-                        ],
-                        ..._headerActions(wide: true),
-                      ],
-                    ),
-                    if (!_phoneGallery) ...[
-                      DriveBreadcrumb(ctrl: _ctrl),
-                      DriveToolbar(
-                        ctrl: _ctrl,
-                        search: _search,
-                        searchFocus: _searchFocus,
-                      ),
-                    ],
-                    Expanded(child: _queueAndContent()),
-                    if (_ctrl.selecting)
-                      DriveSelectionBar(
-                        count: _ctrl.selected.length,
-                        onClear: _ctrl.clearSelection,
-                        actions: _selectionActions(),
-                      ),
-                  ],
-                ),
+                child: switch (_pane) {
+                  'transfers' => const DriveTransfersPage(embedded: true),
+                  'account' => const VaultAccountPage(embedded: true),
+                  _ => _wideFiles(),
+                },
               ),
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  /// The files side of the wide layout (header, breadcrumb, toolbar, list).
+  Widget _wideFiles() {
+    return Column(
+      children: [
+        AppScreenHeader(
+          title: _title,
+          subtitle: _subtitle,
+          actions: [
+            if (_ctrl.canAdd && !_ctrl.selecting) ...[
+              AppButton(
+                label: 'vault.new_folder'.tr(),
+                icon: AppIcons.newFolder,
+                variant: AppButtonVariant.secondary,
+                size: AppButtonSize.small,
+                onPressed: () => _act.newFolder(),
+              ),
+              const SizedBox(width: 8),
+              AppButton(
+                label: 'vault.upload'.tr(),
+                icon: AppIcons.uploadFile,
+                size: AppButtonSize.small,
+                onPressed: () => _act.addMenu(),
+              ),
+              const SizedBox(width: 4),
+            ],
+            ..._headerActions(wide: true),
+          ],
+        ),
+        if (!_phoneGallery) ...[
+          DriveBreadcrumb(ctrl: _ctrl),
+          DriveToolbar(ctrl: _ctrl, search: _search, searchFocus: _searchFocus),
+        ],
+        Expanded(child: _queueAndContent()),
+        if (_ctrl.selecting)
+          DriveSelectionBar(
+            count: _ctrl.selected.length,
+            onClear: _ctrl.clearSelection,
+            actions: _selectionActions(),
+          ),
       ],
     );
   }

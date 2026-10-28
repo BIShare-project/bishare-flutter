@@ -30,7 +30,11 @@ import 'vault_account_overview.dart';
 /// where the key is, the ways back in, the key for a new device by QR code
 /// or phrase, sign-out and deleting the account.
 class VaultAccountPage extends StatefulWidget {
-  const VaultAccountPage({super.key});
+  const VaultAccountPage({super.key, this.embedded = false});
+
+  /// Shown inside Drive's content pane on a computer (next to its sidebar)
+  /// rather than pushed: no back arrow, the app's own background.
+  final bool embedded;
 
   @override
   State<VaultAccountPage> createState() => _VaultAccountPageState();
@@ -926,7 +930,9 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
             children: [
               AppScreenHeader(
                 title: 'vault.account_title'.tr(),
-                onBack: () => Navigator.of(context).maybePop(),
+                onBack: widget.embedded
+                    ? null
+                    : () => Navigator.of(context).maybePop(),
               ),
               Expanded(
                 child: ListenableBuilder(

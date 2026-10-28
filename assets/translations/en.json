@@ -477,7 +477,8 @@
     "e2e_waiting": "Waiting for a member to share the room key…",
     "e2e_off": "Not end-to-end encrypted (made with an older app)",
     "encrypted_file": "Encrypted file",
-    "error_update_required": "This room is end-to-end encrypted. Update BIShare to join it."
+    "error_update_required": "This room is end-to-end encrypted. Update BIShare to join it.",
+    "start_room": "Start a room"
   },
   "settings": {
     "about": "About",

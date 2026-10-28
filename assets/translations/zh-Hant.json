@@ -477,7 +477,8 @@
     "e2e_waiting": "正在等待成員分享房間金鑰…",
     "e2e_off": "未端對端加密（由舊版 App 建立）",
     "encrypted_file": "加密檔案",
-    "error_update_required": "此房間已端對端加密。請更新 BIShare 後加入。"
+    "error_update_required": "此房間已端對端加密。請更新 BIShare 後加入。",
+    "start_room": "建立房間"
   },
   "settings": {
     "about": "關於",

@@ -477,7 +477,8 @@
     "e2e_waiting": "Aguardando um membro compartilhar a chave da sala…",
     "e2e_off": "Sem criptografia de ponta a ponta (criada com um app antigo)",
     "encrypted_file": "Arquivo criptografado",
-    "error_update_required": "Esta sala tem criptografia de ponta a ponta. Atualize o BIShare para entrar."
+    "error_update_required": "Esta sala tem criptografia de ponta a ponta. Atualize o BIShare para entrar.",
+    "start_room": "Criar uma sala"
   },
   "settings": {
     "about": "Sobre",

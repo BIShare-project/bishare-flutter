@@ -12,7 +12,11 @@ import 'drive_format.dart';
 
 /// Uploads and downloads of the Drive, with progress, retry and cancel.
 class DriveTransfersPage extends StatefulWidget {
-  const DriveTransfersPage({super.key});
+  const DriveTransfersPage({super.key, this.embedded = false});
+
+  /// Shown inside Drive's content pane on a computer (next to its sidebar)
+  /// rather than pushed: no back arrow, the app's own background.
+  final bool embedded;
 
   @override
   State<DriveTransfersPage> createState() => _DriveTransfersPageState();
@@ -42,7 +46,9 @@ class _DriveTransfersPageState extends State<DriveTransfersPage> {
                   listenable: downloads,
                   builder: (context, _) => AppScreenHeader(
                     title: 'vault.transfers'.tr(),
-                    onBack: () => Navigator.of(context).maybePop(),
+                    onBack: widget.embedded
+                    ? null
+                    : () => Navigator.of(context).maybePop(),
                     actions: [
                       if ((snap.data?.isNotEmpty ?? false) ||
                           downloads.jobs.isNotEmpty)

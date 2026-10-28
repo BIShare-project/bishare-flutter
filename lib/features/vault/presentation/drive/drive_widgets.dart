@@ -732,7 +732,16 @@ class DriveSidebar extends StatelessWidget {
     required this.onTransfers,
     required this.onAccount,
     required this.transfersBusy,
+    this.onView,
+    this.showing,
   });
+
+  /// A view was chosen (the page also closes Transfers or Account then).
+  final ValueChanged<DriveView>? onView;
+
+  /// 'transfers' or 'account' while that is in the content pane: it is the
+  /// selected item then, not the view.
+  final String? showing;
 
   final DriveController ctrl;
   final Widget storage;
@@ -797,8 +806,8 @@ class DriveSidebar extends StatelessWidget {
             item(
               driveViewLabel(v),
               driveViewIcon(v),
-              ctrl.view == v && !ctrl.searching,
-              () => ctrl.setView(v),
+              showing == null && ctrl.view == v && !ctrl.searching,
+              () => onView != null ? onView!(v) : ctrl.setView(v),
             ),
           const SizedBox(height: 10),
           const AppRowDivider(indent: 18),
@@ -806,7 +815,7 @@ class DriveSidebar extends StatelessWidget {
           item(
             'vault.transfers'.tr(),
             AppIcons.transferP2p,
-            false,
+            showing == 'transfers',
             onTransfers,
             trailing: transfersBusy
                 ? const SizedBox(
@@ -816,7 +825,12 @@ class DriveSidebar extends StatelessWidget {
                   )
                 : null,
           ),
-          item('vault.account_title'.tr(), AppIcons.settings, false, onAccount),
+          item(
+            'vault.account_title'.tr(),
+            AppIcons.settings,
+            showing == 'account',
+            onAccount,
+          ),
           const Spacer(),
           storage,
         ],

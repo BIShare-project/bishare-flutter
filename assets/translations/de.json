@@ -477,7 +477,8 @@
     "e2e_waiting": "Warte darauf, dass ein Mitglied den Raumschlüssel teilt…",
     "e2e_off": "Nicht Ende-zu-Ende verschlüsselt (mit einer älteren App erstellt)",
     "encrypted_file": "Verschlüsselte Datei",
-    "error_update_required": "Dieser Raum ist Ende-zu-Ende verschlüsselt. Aktualisiere BIShare, um beizutreten."
+    "error_update_required": "Dieser Raum ist Ende-zu-Ende verschlüsselt. Aktualisiere BIShare, um beizutreten.",
+    "start_room": "Raum erstellen"
   },
   "settings": {
     "about": "Über",
