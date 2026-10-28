@@ -56,52 +56,61 @@ class _AppSearchFieldState extends State<AppSearchField> {
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
+    // iOS-sized: a 36 pt pill, no focus ring, a small round clear button.
     return Padding(
       padding: widget.margin,
       child: Container(
-        constraints: const BoxConstraints(minHeight: 44),
-        padding: const EdgeInsetsDirectional.only(start: 12, end: 4),
+        height: 36,
+        padding: const EdgeInsetsDirectional.only(start: 10, end: 6),
         decoration: BoxDecoration(
           color: t.sunken,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: _focus.hasFocus ? t.accent : Colors.transparent,
-            width: 1.5,
-          ),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
-            AppSvgIcon(AppIcons.search, size: 19, color: t.text2),
-            const SizedBox(width: 8),
+            AppSvgIcon(AppIcons.search, size: 16, color: t.text3),
+            const SizedBox(width: 6),
             Expanded(
               child: TextField(
                 controller: _text,
                 focusNode: _focus,
                 onChanged: widget.onChanged,
                 textInputAction: TextInputAction.search,
-                style: AppType.row.copyWith(
-                  color: t.text,
-                  fontWeight: FontWeight.w400,
-                ),
+                cursorHeight: 18,
+                style: AppType.body.copyWith(color: t.text, height: 1.2),
                 decoration: InputDecoration(
                   isDense: true,
+                  contentPadding: EdgeInsets.zero,
                   border: InputBorder.none,
                   hintText: widget.hint,
-                  hintStyle: AppType.row.copyWith(
-                    color: t.text3,
-                    fontWeight: FontWeight.w400,
-                  ),
+                  hintStyle: AppType.body.copyWith(color: t.text3, height: 1.2),
                 ),
               ),
             ),
             if (_text.text.isNotEmpty)
-              IconButton(
-                tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
-                icon: AppSvgIcon(AppIcons.close, size: 16, color: t.text2),
-                onPressed: () {
-                  _text.clear();
-                  widget.onChanged('');
-                },
+              Semantics(
+                button: true,
+                label: MaterialLocalizations.of(context).deleteButtonTooltip,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    _text.clear();
+                    widget.onChanged('');
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: t.text3,
+                        shape: BoxShape.circle,
+                      ),
+                      child: AppSvgIcon(AppIcons.close, size: 11, color: t.bg),
+                    ),
+                  ),
+                ),
               ),
           ],
         ),

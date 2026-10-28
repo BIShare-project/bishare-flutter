@@ -121,7 +121,7 @@ class _SearchRowState extends State<_SearchRow> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(0, 2, 6, 0),
+      padding: const EdgeInsetsDirectional.fromSTEB(0, 6, 4, 2),
       child: Row(
         children: [
           Expanded(
@@ -130,12 +130,13 @@ class _SearchRowState extends State<_SearchRow> {
               controller: _text,
               focusNode: _focus,
               onChanged: widget.cubit.setQuery,
-              margin: const EdgeInsetsDirectional.fromSTEB(14, 4, 4, 4),
+              margin: const EdgeInsetsDirectional.fromSTEB(16, 0, 2, 0),
             ),
           ),
-          AppIconButton(
-            icon: AppIcons.close,
-            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+          AppButton(
+            label: 'common.cancel'.tr(),
+            variant: AppButtonVariant.ghost,
+            size: AppButtonSize.small,
             onPressed: () {
               widget.cubit.setQuery('');
               historySearchOpen.value = false;
