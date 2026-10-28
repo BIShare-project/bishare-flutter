@@ -25,7 +25,7 @@ class AppTabBar extends StatelessWidget implements PreferredSizeWidget {
   final ValueChanged<int>? onTap;
 
   @override
-  Size get preferredSize => const Size.fromHeight(46);
+  Size get preferredSize => const Size.fromHeight(42);
 
   @override
   Widget build(BuildContext context) {
@@ -39,14 +39,17 @@ class AppTabBar extends StatelessWidget implements PreferredSizeWidget {
         isScrollable: true,
         tabAlignment: TabAlignment.start,
         padding: const EdgeInsetsDirectional.only(start: 8, end: 8),
-        labelPadding: const EdgeInsets.symmetric(horizontal: 10),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 8),
         dividerHeight: 0,
         overlayColor: WidgetStatePropertyAll(t.accent.withValues(alpha: 0.06)),
         splashBorderRadius: BorderRadius.circular(10),
         indicatorSize: TabBarIndicatorSize.label,
+        // The line sits just under the word, not on the bar's hairline
+        // (owner 2026-10-28: it read as too far from the label).
         indicator: UnderlineTabIndicator(
           borderSide: BorderSide(color: t.accent, width: 2),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
+          borderRadius: BorderRadius.circular(2),
+          insets: const EdgeInsets.only(bottom: 4),
         ),
         labelColor: t.text,
         unselectedLabelColor: t.text2,
@@ -59,7 +62,7 @@ class AppTabBar extends StatelessWidget implements PreferredSizeWidget {
         tabs: [
           for (final tab in tabs)
             Tab(
-              height: 46,
+              height: 42,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
