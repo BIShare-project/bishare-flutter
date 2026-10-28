@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import UniformTypeIdentifiers
 import UserNotifications
 import workmanager_apple
 
@@ -30,6 +31,8 @@ import workmanager_apple
   /// The time iOS gives an app that leaves the screen while a Drive file is
   /// going up (VaultBackground.extraTime in Dart).
   private var uploadTime: UIBackgroundTaskIdentifier = .invalid
+
+  private let docFolder = DocFolder()
 
   private func beginUploadTime() {
     guard uploadTime == .invalid else { return }
@@ -77,6 +80,14 @@ import workmanager_apple
         default:
           result(FlutterMethodNotImplemented)
         }
+      }
+    }
+    // The Send tab's Documents folder (DocFolder below).
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "BIShareDocFolder") {
+      let channel = FlutterMethodChannel(
+        name: "app.bishare/folder", binaryMessenger: registrar.messenger())
+      channel.setMethodCallHandler { [weak self] call, result in
+        self?.docFolder.handle(call, result: result)
       }
     }
     // Offline "Nearby" over MultipeerConnectivity. Add BIShareNearbyPlugin.swift
@@ -127,5 +138,182 @@ import workmanager_apple
         }
       }
     }
+  }
+}
+
+/// The folder the Send tab's Documents list reads (redesign-plan.md 3.6b).
+///
+/// The person picks one folder in Files (UIDocumentPickerViewController in
+/// folder mode); a security-scoped bookmark keeps the grant across launches,
+/// as the macOS save folder does. Listing and copying open the scope only
+/// for as long as they run. A file is copied to tmp only when it is chosen,
+/// because the sender needs a real path.
+///
+/// Methods on `app.bishare/folder`: docsRestore, docsPick, docsList, docsCopy,
+/// docsClear (the same names as Android's DocFolder.kt).
+final class DocFolder: NSObject, UIDocumentPickerDelegate {
+  private let bookmarkKey = "bishare.docFolderBookmark"
+  private let maxDepth = 4
+  private let maxFiles = 3000
+  private var pendingPick: FlutterResult?
+
+  func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    switch call.method {
+    case "docsRestore":
+      result(resolve().map(describe))
+    case "docsPick":
+      pick(result)
+    case "docsList":
+      background(result) { self.list() }
+    case "docsCopy":
+      guard let id = (call.arguments as? [String: Any])?["id"] as? String else {
+        result(nil)
+        return
+      }
+      background(result) { self.copy(path: id) }
+    case "docsClear":
+      UserDefaults.standard.removeObject(forKey: bookmarkKey)
+      result(nil)
+    default:
+      result(FlutterMethodNotImplemented)
+    }
+  }
+
+  private func pick(_ result: @escaping FlutterResult) {
+    pendingPick?(nil)
+    pendingPick = result
+    let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.folder])
+    picker.delegate = self
+    picker.allowsMultipleSelection = false
+    guard let top = Self.topController() else {
+      pendingPick = nil
+      result(nil)
+      return
+    }
+    top.present(picker, animated: true)
+  }
+
+  func documentPicker(
+    _ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]
+  ) {
+    guard let result = pendingPick else { return }
+    pendingPick = nil
+    guard let url = urls.first, url.startAccessingSecurityScopedResource() else {
+      result(nil)
+      return
+    }
+    defer { url.stopAccessingSecurityScopedResource() }
+    guard let data = try? url.bookmarkData() else {
+      result(nil)
+      return
+    }
+    UserDefaults.standard.set(data, forKey: bookmarkKey)
+    result(describe(url))
+  }
+
+  func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+    pendingPick?(nil)
+    pendingPick = nil
+  }
+
+  /// The granted folder, refreshing a stale bookmark; nil when none or gone.
+  private func resolve() -> URL? {
+    guard let data = UserDefaults.standard.data(forKey: bookmarkKey) else { return nil }
+    var stale = false
+    guard let url = try? URL(resolvingBookmarkData: data, bookmarkDataIsStale: &stale) else {
+      UserDefaults.standard.removeObject(forKey: bookmarkKey)
+      return nil
+    }
+    if stale, url.startAccessingSecurityScopedResource() {
+      if let fresh = try? url.bookmarkData() {
+        UserDefaults.standard.set(fresh, forKey: bookmarkKey)
+      }
+      url.stopAccessingSecurityScopedResource()
+    }
+    return url
+  }
+
+  private func describe(_ url: URL) -> [String: Any] {
+    ["id": url.path, "name": url.lastPathComponent]
+  }
+
+  /// Every file under the folder, a few levels deep and capped; hidden files
+  /// and packages are skipped.
+  private func list() -> [[String: Any]] {
+    guard let root = resolve(), root.startAccessingSecurityScopedResource() else { return [] }
+    defer { root.stopAccessingSecurityScopedResource() }
+    let keys: [URLResourceKey] = [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey]
+    guard let walk = FileManager.default.enumerator(
+      at: root, includingPropertiesForKeys: keys,
+      options: [.skipsHiddenFiles, .skipsPackageDescendants])
+    else { return [] }
+    var out: [[String: Any]] = []
+    for case let url as URL in walk {
+      if out.count >= maxFiles { break }
+      let values = try? url.resourceValues(forKeys: Set(keys))
+      if values?.isDirectory == true {
+        if walk.level > maxDepth { walk.skipDescendants() }
+        continue
+      }
+      let modified = values?.contentModificationDate?.timeIntervalSince1970 ?? 0
+      out.append([
+        "id": url.path,
+        "name": url.lastPathComponent,
+        "mime": UTType(filenameExtension: url.pathExtension)?.preferredMIMEType ?? "",
+        "size": values?.fileSize ?? 0,
+        "modified": Int(modified * 1000),
+      ])
+    }
+    return out
+  }
+
+  /// Copies one file of the folder into tmp; the path, or nil. The file
+  /// coordinator downloads an iCloud file that is not on the device yet.
+  private func copy(path: String) -> String? {
+    guard let root = resolve(), path.hasPrefix(root.path),
+      root.startAccessingSecurityScopedResource()
+    else { return nil }
+    defer { root.stopAccessingSecurityScopedResource() }
+    let source = URL(fileURLWithPath: path)
+    let dir = FileManager.default.temporaryDirectory
+      .appendingPathComponent("doc_folder/\(UInt(bitPattern: path.hashValue))", isDirectory: true)
+    let target = dir.appendingPathComponent(source.lastPathComponent)
+    var copied: String?
+    var error: NSError?
+    NSFileCoordinator().coordinate(readingItemAt: source, options: [], error: &error) { url in
+      do {
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try? FileManager.default.removeItem(at: target)
+        try FileManager.default.copyItem(at: url, to: target)
+        // The receiver keeps "Date modified" (project_mtime_preservation).
+        if let date = try? url.resourceValues(forKeys: [.contentModificationDateKey])
+          .contentModificationDate
+        {
+          try? FileManager.default.setAttributes(
+            [.modificationDate: date], ofItemAtPath: target.path)
+        }
+        copied = target.path
+      } catch {
+        copied = nil
+      }
+    }
+    return copied
+  }
+
+  private func background(_ result: @escaping FlutterResult, _ work: @escaping () -> Any?) {
+    DispatchQueue.global(qos: .userInitiated).async {
+      let value = work()
+      DispatchQueue.main.async { result(value) }
+    }
+  }
+
+  private static func topController() -> UIViewController? {
+    let window = UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }
+      .flatMap { $0.windows }
+      .first { $0.isKeyWindow }
+    var top = window?.rootViewController
+    while let next = top?.presentedViewController { top = next }
+    return top
   }
 }
