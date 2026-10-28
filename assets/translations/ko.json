@@ -722,7 +722,13 @@
     "n_files": {
       "one": "파일 {}개",
       "other": "파일 {}개"
-    }
+    },
+    "nearby": "이 네트워크",
+    "nobody_nearby": "아직 다른 기기가 없습니다",
+    "browser_title": "앱이 없나요? 브라우저로 보내기",
+    "browser_body": "휴대폰 카메라로 스캔한 뒤 보낼 사진을 고르세요.",
+    "slideshow": "슬라이드쇼",
+    "from_when": "{sender}에서 · {when}"
   },
   "qr_beam": {
     "title": "QR Beam",

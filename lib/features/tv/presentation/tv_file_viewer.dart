@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -16,10 +17,14 @@ class TvFileViewer extends StatefulWidget {
     super.key,
     required this.items,
     required this.startIndex,
+    this.slideshow = false,
   });
 
   final List<TransferRecord> items;
   final int startIndex;
+
+  /// Moves on by itself every few seconds and loops; the arrows still work.
+  final bool slideshow;
 
   @override
   State<TvFileViewer> createState() => _TvFileViewerState();
@@ -30,6 +35,22 @@ class _TvFileViewerState extends State<TvFileViewer> {
     initialPage: widget.startIndex,
   );
   late int _index = widget.startIndex;
+  Timer? _auto;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.slideshow && widget.items.length > 1) {
+      _auto = Timer.periodic(const Duration(seconds: 5), (_) {
+        if (!mounted) return;
+        if (_index == widget.items.length - 1) {
+          _controller.jumpToPage(0);
+        } else {
+          _go(1);
+        }
+      });
+    }
+  }
 
   void _go(int delta) {
     final next = _index + delta;
@@ -62,6 +83,7 @@ class _TvFileViewerState extends State<TvFileViewer> {
 
   @override
   void dispose() {
+    _auto?.cancel();
     _controller.dispose();
     super.dispose();
   }

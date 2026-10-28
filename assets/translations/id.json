@@ -722,7 +722,13 @@
     "n_files": {
       "one": "{} file",
       "other": "{} file"
-    }
+    },
+    "nearby": "Di jaringan ini",
+    "nobody_nearby": "Belum ada perangkat lain",
+    "browser_title": "Tanpa app? Kirim lewat browser",
+    "browser_body": "Pindai dengan kamera HP, lalu pilih foto untuk dikirim ke sini.",
+    "slideshow": "Slideshow",
+    "from_when": "Dari {sender} · {when}"
   },
   "qr_beam": {
     "title": "QR Beam",

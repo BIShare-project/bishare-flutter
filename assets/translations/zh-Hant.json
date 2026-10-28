@@ -722,7 +722,13 @@
     "n_files": {
       "one": "{} 個檔案",
       "other": "{} 個檔案"
-    }
+    },
+    "nearby": "此網路上",
+    "nobody_nearby": "尚無其他裝置",
+    "browser_title": "沒有 App？用瀏覽器傳送",
+    "browser_body": "用手機相機掃描，然後選擇要傳送到這裡的照片。",
+    "slideshow": "投影片",
+    "from_when": "來自 {sender} · {when}"
   },
   "qr_beam": {
     "title": "QR Beam",

@@ -722,7 +722,13 @@
     "n_files": {
       "one": "{} 個のファイル",
       "other": "{} 個のファイル"
-    }
+    },
+    "nearby": "このネットワーク上",
+    "nobody_nearby": "まだ他のデバイスはありません",
+    "browser_title": "アプリがない場合はブラウザから送信",
+    "browser_body": "スマホのカメラでスキャンし、送る写真を選んでください。",
+    "slideshow": "スライドショー",
+    "from_when": "{sender} から · {when}"
   },
   "qr_beam": {
     "title": "QR Beam",

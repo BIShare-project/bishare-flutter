@@ -722,7 +722,13 @@
     "n_files": {
       "one": "{} 个文件",
       "other": "{} 个文件"
-    }
+    },
+    "nearby": "此网络上",
+    "nobody_nearby": "暂无其他设备",
+    "browser_title": "没有应用？用浏览器发送",
+    "browser_body": "用手机相机扫描，然后选择要发送到这里的照片。",
+    "slideshow": "幻灯片",
+    "from_when": "来自 {sender} · {when}"
   },
   "qr_beam": {
     "title": "QR Beam",

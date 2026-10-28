@@ -722,7 +722,13 @@
     "n_files": {
       "one": "{} Datei",
       "other": "{} Dateien"
-    }
+    },
+    "nearby": "In diesem Netzwerk",
+    "nobody_nearby": "Noch keine anderen Geräte",
+    "browser_title": "Keine App? Per Browser senden",
+    "browser_body": "Mit der Handykamera scannen und Fotos zum Senden auswählen.",
+    "slideshow": "Diashow",
+    "from_when": "Von {sender} · {when}"
   },
   "qr_beam": {
     "title": "QR Beam",

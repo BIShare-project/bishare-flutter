@@ -7,7 +7,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/identity/device_identity.dart';
 import '../../../core/storage/app_database.dart';
+import '../../../core/constants/protocol.dart';
+import '../../../core/network/local_ip.dart';
 import '../../../core/ui/app_ui.dart';
+import '../../discovery/data/discovery_service.dart';
+import '../../discovery/domain/discovered_device.dart';
+import '../../settings/presentation/settings_cubit.dart';
 import '../../inbox/presentation/inbox_cubit.dart';
 import '../../receive/presentation/receive_cubit.dart';
 import 'tv_file_viewer.dart';
@@ -33,11 +38,11 @@ class TvShell extends StatelessWidget {
           // Generous overscan-safe padding for TV bezels.
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(56, 36, 56, 28),
+              padding: const EdgeInsets.fromLTRB(56, 32, 56, 24),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(width: 380, child: _ReadyPanel(name: name)),
+                  SizedBox(width: 400, child: _ReadyPanel(name: name)),
                   const SizedBox(width: 56),
                   const Expanded(child: _ReceivedPanel()),
                 ],
@@ -51,7 +56,7 @@ class TvShell extends StatelessWidget {
   }
 }
 
-/* ── Ready: the name, how to send, the QR for people without the app ───── */
+/* ── Ready: the name, how to send, who is around, the QR ─────────────── */
 
 class _ReadyPanel extends StatelessWidget {
   const _ReadyPanel({required this.name});
@@ -67,11 +72,6 @@ class _ReadyPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'BIShare',
-            style: AppType.title.copyWith(fontSize: 22, color: t.text2),
-          ),
-          const SizedBox(height: 16),
-          Text(
             name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -81,7 +81,7 @@ class _ReadyPanel extends StatelessWidget {
               color: t.text,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Row(
             children: [
               Container(
@@ -98,41 +98,154 @@ class _ReadyPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           Text(
             'tv.how_to_send'.tr(namedArgs: {'name': name}),
             style: AppType.body.copyWith(
-              fontSize: 18,
-              height: 1.45,
+              fontSize: 16,
+              height: 1.4,
               color: t.text2,
             ),
           ),
-          const SizedBox(height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // BiShareQr draws its own white frame.
-              const BiShareQr(data: 'https://bishare.app', size: 96),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Text(
-                  'tv.no_app_scan'.tr(),
-                  style: AppType.body.copyWith(
-                    fontSize: 18,
-                    height: 1.4,
-                    color: t.text2,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          const SizedBox(height: 20),
+          const _Nearby(),
+          const SizedBox(height: 20),
+          const _ScanToSend(),
         ],
       ),
     );
   }
 }
 
-/* ── Received: a big D-pad grid, the newest first ─────────────────────── */
+/// The devices on this network that can send here, as avatars with names.
+class _Nearby extends StatelessWidget {
+  const _Nearby();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    final discovery = getIt<DiscoveryService>();
+    return StreamBuilder<List<DiscoveredDevice>>(
+      stream: discovery.devices,
+      initialData: discovery.current,
+      builder: (context, snap) {
+        final devices = snap.data ?? const [];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'tv.nearby'.tr(),
+              style: AppType.label.copyWith(fontSize: 16, color: t.text2),
+            ),
+            const SizedBox(height: 12),
+            if (devices.isEmpty)
+              Text(
+                'tv.nobody_nearby'.tr(),
+                style: AppType.body.copyWith(fontSize: 18, color: t.text3),
+              )
+            else
+              Wrap(
+                spacing: 18,
+                runSpacing: 12,
+                children: [
+                  for (final d in devices.take(6))
+                    SizedBox(
+                      width: 84,
+                      child: Column(
+                        children: [
+                          AppAvatar(
+                            icon: iconForDevice(d.deviceType),
+                            size: 44,
+                            online: true,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            d.alias,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: AppType.secondary.copyWith(
+                              fontSize: 15,
+                              color: t.text,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// A QR for a guest without the app: this TV's own web page when browser
+/// uploads are on (they pick photos in the phone's browser and they land
+/// here), else the install page.
+class _ScanToSend extends StatelessWidget {
+  const _ScanToSend();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    final browser = context.select<SettingsCubit, bool>(
+      (c) => c.state.browserUpload,
+    );
+    return FutureBuilder<String>(
+      future: browser ? LocalIp.resolve() : Future.value(''),
+      builder: (context, snap) {
+        final ip = snap.data ?? '';
+        final lan = browser && ip.isNotEmpty && ip != '127.0.0.1';
+        final url = lan
+            ? 'http://$ip:${BISharePort.main}'
+            : 'https://bishare.app';
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // BiShareQr draws its own white frame.
+            BiShareQr(data: url, size: 84),
+            const SizedBox(width: 18),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    lan ? 'tv.browser_title'.tr() : 'tv.no_app_scan'.tr(),
+                    style: AppType.row.copyWith(fontSize: 18, color: t.text),
+                  ),
+                  if (lan) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'tv.browser_body'.tr(),
+                      style: AppType.body.copyWith(
+                        fontSize: 16,
+                        height: 1.4,
+                        color: t.text2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      url,
+                      style: AppType.secondary.copyWith(
+                        fontSize: 15,
+                        color: t.text3,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/* ── Received: the latest large, a slideshow, then the rest ───────────── */
 
 class _ReceivedPanel extends StatelessWidget {
   const _ReceivedPanel();
@@ -140,54 +253,84 @@ class _ReceivedPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'tv.received'.tr(),
-          style: AppType.title.copyWith(fontSize: 26, color: t.text),
-        ),
-        const SizedBox(height: 20),
-        Expanded(
-          child: BlocBuilder<InboxCubit, List<TransferRecord>>(
-            builder: (context, items) {
-              final received = items
-                  .where((r) => r.savedPath != null)
-                  .toList(growable: false);
-              if (received.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AppSvgIcon(
-                        AppIcons.downloadFile,
-                        size: 56,
-                        color: t.text3,
+    return BlocBuilder<InboxCubit, List<TransferRecord>>(
+      builder: (context, items) {
+        final received = items
+            .where((r) => r.savedPath != null)
+            .toList(growable: false);
+        final photos = received.where(isImageRecord).toList(growable: false);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 56,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'tv.received'.tr(),
+                      style: AppType.title.copyWith(
+                        fontSize: 26,
+                        color: t.text,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'tv.empty_received'.tr(),
-                        textAlign: TextAlign.center,
-                        style: AppType.body.copyWith(
-                          fontSize: 20,
-                          color: t.text2,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                );
-              }
-              return _ReceivedGrid(items: received);
-            },
-          ),
-        ),
-      ],
+                  if (photos.length > 1)
+                    _TvChip(
+                      icon: AppIcons.play,
+                      label: 'tv.slideshow'.tr(),
+                      onSelect: () => _open(context, photos, 0, true),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Expanded(
+              child: received.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AppSvgIcon(
+                            AppIcons.downloadFile,
+                            size: 56,
+                            color: t.text3,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'tv.empty_received'.tr(),
+                            textAlign: TextAlign.center,
+                            style: AppType.body.copyWith(
+                              fontSize: 20,
+                              color: t.text2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _ReceivedGrid(items: received),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-/// Arrow keys move the highlight; OK opens the full-screen viewer, which
-/// pages left and right with the remote.
+void _open(
+  BuildContext context,
+  List<TransferRecord> items,
+  int index, [
+  bool slideshow = false,
+]) => Navigator.of(context).push(
+  MaterialPageRoute<void>(
+    builder: (_) =>
+        TvFileViewer(items: items, startIndex: index, slideshow: slideshow),
+  ),
+);
+
+/// The newest file across the top, two rows tall, then the rest four to a
+/// row. Arrow keys move the highlight; OK opens the viewer.
 class _ReceivedGrid extends StatelessWidget {
   const _ReceivedGrid({required this.items});
 
@@ -195,24 +338,87 @@ class _ReceivedGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      // Room for the focused tile to grow without clipping.
-      padding: const EdgeInsets.all(6),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        mainAxisSpacing: 18,
-        crossAxisSpacing: 18,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, i) => TvFocusable(
-        autofocus: i == 0,
-        onSelect: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => TvFileViewer(items: items, startIndex: i),
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          // Room for the focused tile to grow without clipping.
+          padding: const EdgeInsets.all(6),
+          sliver: SliverToBoxAdapter(
+            child: AspectRatio(
+              aspectRatio: 2.4,
+              child: TvFocusable(
+                autofocus: true,
+                onSelect: () => _open(context, items, 0),
+                builder: (context, focused) =>
+                    _Tile(record: items[0], focused: focused, latest: true),
+              ),
+            ),
           ),
         ),
-        builder: (context, focused) =>
-            _Tile(record: items[i], focused: focused),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(6, 12, 6, 6),
+          sliver: SliverGrid.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              mainAxisSpacing: 18,
+              crossAxisSpacing: 18,
+            ),
+            itemCount: items.length - 1,
+            itemBuilder: (context, i) => TvFocusable(
+              onSelect: () => _open(context, items, i + 1),
+              builder: (context, focused) =>
+                  _Tile(record: items[i + 1], focused: focused),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A small remote button in the panel header (Slideshow).
+class _TvChip extends StatelessWidget {
+  const _TvChip({
+    required this.icon,
+    required this.label,
+    required this.onSelect,
+  });
+
+  final String icon;
+  final String label;
+  final VoidCallback onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return TvFocusable(
+      onSelect: onSelect,
+      builder: (context, focused) => AnimatedScale(
+        scale: focused ? 1.05 : 1.0,
+        duration: AppMotion.select,
+        curve: AppMotion.standard,
+        child: Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: focused ? t.receive : t.sunken,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppSvgIcon(icon, size: 20, color: focused ? t.onReceive : t.text),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: AppType.row.copyWith(
+                  fontSize: 18,
+                  color: focused ? t.onReceive : t.text,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -230,24 +436,31 @@ String tvFileIcon(TransferRecord r) {
 }
 
 /// A received file: the picture edge to edge, or its glyph and name. The
-/// focused tile grows a little and takes a receive-coloured ring.
+/// focused tile grows a little and takes a receive-coloured ring. The
+/// [latest] tile also says who sent it and when.
 class _Tile extends StatelessWidget {
-  const _Tile({required this.record, required this.focused});
+  const _Tile({
+    required this.record,
+    required this.focused,
+    this.latest = false,
+  });
 
   final TransferRecord record;
   final bool focused;
+  final bool latest;
 
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
     final isVideo = record.fileType?.startsWith('video/') ?? false;
+    final locale = context.locale.toLanguageTag();
     return AnimatedScale(
-      scale: focused ? 1.05 : 1.0,
+      scale: focused ? (latest ? 1.02 : 1.05) : 1.0,
       duration: AppMotion.select,
       curve: AppMotion.standard,
       child: Container(
         foregroundDecoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: focused ? t.receive : t.line,
             width: focused ? 3 : 1,
@@ -255,39 +468,81 @@ class _Tile extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: t.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
         ),
         clipBehavior: Clip.antiAlias,
-        child: isImageRecord(record)
-            ? Image.file(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (isImageRecord(record))
+              Image.file(
                 File(record.savedPath!),
                 fit: BoxFit.cover,
-                cacheWidth: 480,
+                cacheWidth: latest ? 1280 : 480,
                 errorBuilder: (context, error, stack) =>
                     _FileFace(record: record),
               )
-            : Stack(
-                fit: StackFit.expand,
-                children: [
-                  _FileFace(record: record),
-                  if (isVideo)
-                    Center(
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: t.scrim,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const AppSvgIcon(
-                          AppIcons.play,
-                          size: 22,
-                          color: Colors.white,
+            else
+              _FileFace(record: record),
+            if (isVideo)
+              Center(
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: t.scrim,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const AppSvgIcon(
+                    AppIcons.play,
+                    size: 24,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            if (latest)
+              // A dark band so the caption reads on any photo.
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+                  color: Colors.black.withValues(alpha: 0.55),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          record.fileName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppType.row.copyWith(
+                            fontSize: 19,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                      const SizedBox(width: 16),
+                      Text(
+                        'tv.from_when'.tr(
+                          namedArgs: {
+                            'sender': record.deviceAlias,
+                            'when':
+                                '${dayLabel(record.timestamp, locale)} '
+                                '${timeLabel(record.timestamp, locale)}',
+                          },
+                        ),
+                        style: AppType.body.copyWith(
+                          fontSize: 16,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
+          ],
+        ),
       ),
     );
   }
