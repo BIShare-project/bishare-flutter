@@ -277,7 +277,8 @@
     "remove": "Hapus",
     "remove_title": "Hapus dari riwayat?",
     "remove_body": "Transfer ini hilang dari riwayat.",
-    "remove_body_file": "Transfer ini hilang dari riwayat dan filenya dihapus dari perangkat ini."
+    "remove_body_file": "Transfer ini hilang dari riwayat dan filenya dihapus dari perangkat ini.",
+    "filter_title": "Tampilkan"
   },
   "devices": {
     "add_favorite": "Tambah ke favorit",

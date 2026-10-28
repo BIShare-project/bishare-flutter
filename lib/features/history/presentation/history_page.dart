@@ -17,11 +17,7 @@ import 'history_cubit.dart';
 /// the total of what is shown. A row opens its detail; the menu exports CSV
 /// or clears the history.
 class HistoryPage extends StatelessWidget {
-  const HistoryPage({super.key, this.segment});
-
-  /// The Received | History switch of the Inbox tab; with it, this page
-  /// carries the Inbox title.
-  final Widget? segment;
+  const HistoryPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -37,34 +33,8 @@ class HistoryPage extends StatelessWidget {
               maxWidth: 760,
               child: Column(
                 children: [
-                  AppScreenHeader(
-                    title: segment != null
-                        ? 'inbox.title'.tr()
-                        : 'history.title'.tr(),
-                    subtitle: 'history.transfers_count'.plural(state.total),
-                    actions: [
-                      if (state.total > 0)
-                        AppIconButton(
-                          icon: AppIcons.moreMenu,
-                          tooltip: 'inbox.more'.tr(),
-                          onPressed: () => _menu(context, cubit),
-                        ),
-                    ],
-                  ),
-                  ?segment,
-                  if (state.total > 0) ...[
-                    AppSearchField(
-                      hint: 'history.search_placeholder'.tr(),
-                      onChanged: cubit.setQuery,
-                    ),
-                    AppChips<HistoryFilter>(
-                      value: state.filter,
-                      options: [
-                        for (final f in HistoryFilter.values) (f, f.label),
-                      ],
-                      onChanged: cubit.setFilter,
-                    ),
-                  ],
+                  if (state.total > 0)
+                    _Toolbar(filter: state.filter, cubit: cubit),
                   Expanded(
                     child: state.total == 0
                         ? AppEmptyState(
@@ -93,39 +63,81 @@ class HistoryPage extends StatelessWidget {
       ),
     );
   }
+}
 
-  Future<void> _menu(BuildContext context, HistoryCubit cubit) {
-    return showAppSheet<void>(
+/// Search and the direction filter on one row, the same shape as Drive's
+/// search and sort row.
+class _Toolbar extends StatelessWidget {
+  const _Toolbar({required this.filter, required this.cubit});
+
+  final HistoryFilter filter;
+  final HistoryCubit cubit;
+
+  Future<void> _filterMenu(BuildContext context) async {
+    final pick = await showAppSheet<HistoryFilter>(
       context,
-      title: 'history.title'.tr(),
+      icon: AppIcons.filter,
+      title: 'history.filter_title'.tr(),
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppValueRow(
-            icon: AppIcons.downloadFile,
-            title: 'history.export_csv'.tr(),
-            chevron: false,
-            onTap: () async {
-              Navigator.pop(ctx);
-              final path = await cubit.exportCsv();
-              await SharePlus.instance.share(ShareParams(files: [XFile(path)]));
-            },
+          for (final f in HistoryFilter.values)
+            AppSheetAction(
+              icon: f == filter ? AppIcons.check : AppIcons.circle,
+              label: f.label,
+              onTap: () => Navigator.pop(ctx, f),
+            ),
+        ],
+      ),
+    );
+    if (pick != null) cubit.setFilter(pick);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    final on = filter != HistoryFilter.all;
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(0, 2, 6, 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: AppSearchField(
+              hint: 'history.search_placeholder'.tr(),
+              onChanged: cubit.setQuery,
+              margin: const EdgeInsetsDirectional.fromSTEB(14, 4, 4, 4),
+            ),
           ),
-          AppValueRow(
-            icon: AppIcons.trashDelete,
-            title: 'history.clear_history'.tr(),
-            destructive: true,
-            chevron: false,
-            onTap: () async {
-              Navigator.pop(ctx);
-              final yes = await showAppConfirm(
-                context,
-                title: 'history.clear_title'.tr(),
-                message: 'history.clear_body'.tr(),
-                confirmLabel: 'inbox.clear'.tr(),
-              );
-              if (yes) await cubit.clearAll();
-            },
+          Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => _filterMenu(context),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 44),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppSvgIcon(
+                        AppIcons.filter,
+                        size: 18,
+                        color: on ? t.accent : t.text,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        filter.label,
+                        style: AppType.secondary.copyWith(
+                          color: on ? t.accent : t.text,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -188,10 +200,10 @@ class _List extends StatelessWidget {
             itemCount: lines.length,
             itemBuilder: (context, i) => switch (lines[i]) {
               _Day(:final label) => Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 8),
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 4),
                 child: Text(
                   label,
-                  style: AppType.label.copyWith(fontSize: 14, color: t.text),
+                  style: AppType.label.copyWith(color: t.text2),
                 ),
               ),
               _Item(:final record, :final first) => _Row(
@@ -465,4 +477,45 @@ class _DirectionGlyph extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The History menu (the ⋯ of the Inbox tab on History): export as CSV,
+/// clear the history.
+Future<void> showHistoryMenu(BuildContext context) {
+  final cubit = context.read<HistoryCubit>();
+  return showAppSheet<void>(
+    context,
+    title: 'history.title'.tr(),
+    builder: (ctx) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppValueRow(
+          icon: AppIcons.downloadFile,
+          title: 'history.export_csv'.tr(),
+          chevron: false,
+          onTap: () async {
+            Navigator.pop(ctx);
+            final path = await cubit.exportCsv();
+            await SharePlus.instance.share(ShareParams(files: [XFile(path)]));
+          },
+        ),
+        AppValueRow(
+          icon: AppIcons.trashDelete,
+          title: 'history.clear_history'.tr(),
+          destructive: true,
+          chevron: false,
+          onTap: () async {
+            Navigator.pop(ctx);
+            final yes = await showAppConfirm(
+              context,
+              title: 'history.clear_title'.tr(),
+              message: 'history.clear_body'.tr(),
+              confirmLabel: 'inbox.clear'.tr(),
+            );
+            if (yes) await cubit.clearAll();
+          },
+        ),
+      ],
+    ),
+  );
 }

@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/desktop/desktop_service.dart';
 import '../../../core/storage/app_database.dart';
-import '../../../core/ui/app_showcase.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../../core/ui/shell_tab.dart';
 import '../../settings/domain/settings.dart' as s;
@@ -23,10 +22,7 @@ import 'widgets/received_actions.dart';
 /// as rows, a dot on groups that arrived since the last visit. Long press or
 /// Select starts choosing; the action bar saves, shares or deletes.
 class InboxPage extends StatefulWidget {
-  const InboxPage({super.key, this.segment});
-
-  /// The Received | History switch of the Inbox tab.
-  final Widget? segment;
+  const InboxPage({super.key});
 
   @override
   State<InboxPage> createState() => _InboxPageState();
@@ -152,43 +148,19 @@ class _InboxPageState extends State<InboxPage> {
                   maxWidth: 760,
                   child: Column(
                     children: [
-                      AppScreenHeader(
-                        title: 'inbox.title'.tr(),
-                        subtitle: items.isEmpty
-                            ? 'inbox.no_files_yet'.tr()
-                            : [
-                                'inbox.n_files_received'.plural(items.length),
-                                formatBytes(bytes),
-                              ].join(' · '),
-                        actions: [
-                          if (items.isNotEmpty)
-                            AppButton(
-                              label: _selecting
-                                  ? 'inbox.done'.tr()
-                                  : 'compose.select'.tr(),
-                              variant: AppButtonVariant.ghost,
-                              size: AppButtonSize.small,
-                              onPressed: _selecting
-                                  ? _stopSelecting
-                                  : () => setState(() => _selecting = true),
-                            ),
-                          // The menu is for the whole Inbox, not the
-                          // selection; Done brings it back.
-                          if (!_selecting)
-                            AppShowcase(
-                              showcaseKey: ShowcaseKeys.inboxFiles,
-                              title: 'showcase.inbox_files_title'.tr(),
-                              description: 'showcase.inbox_files_body'.tr(),
-                              targetRadius: 22,
-                              child: AppIconButton(
-                                icon: AppIcons.moreMenu,
-                                tooltip: 'inbox.more'.tr(),
-                                onPressed: () => _menu(context, items),
-                              ),
-                            ),
-                        ],
-                      ),
-                      ?widget.segment,
+                      if (items.isNotEmpty)
+                        _Summary(
+                          text: [
+                            'inbox.n_files_received'.plural(items.length),
+                            formatBytes(bytes),
+                          ].join(' · '),
+                          action: _selecting
+                              ? 'inbox.done'.tr()
+                              : 'compose.select'.tr(),
+                          onAction: _selecting
+                              ? _stopSelecting
+                              : () => setState(() => _selecting = true),
+                        ),
                       Expanded(
                         child: items.isEmpty
                             ? const _Ready()
@@ -300,67 +272,6 @@ class _InboxPageState extends State<InboxPage> {
           ),
         ),
       ],
-    );
-  }
-
-  Future<void> _menu(BuildContext context, List<TransferRecord> items) {
-    final cubit = context.read<InboxCubit>();
-    return showAppSheet<void>(
-      context,
-      title: 'inbox.title'.tr(),
-      builder: (ctx) {
-        void close() => Navigator.of(ctx).pop();
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppValueRow(
-              icon: AppIcons.folder,
-              title: 'inbox.browse_files'.tr(),
-              subtitle: 'inbox.browse_files_hint'.tr(),
-              onTap: () {
-                close();
-                context.push('/files');
-              },
-            ),
-            AppValueRow(
-              icon: AppIcons.globePublic,
-              title: 'inbox.browser_access'.tr(),
-              subtitle: 'inbox.browser_access_subtitle'.tr(),
-              onTap: () {
-                close();
-                showWebAccess(context);
-              },
-            ),
-            if (InboxCubit.canSaveToPhotos && items.any(isMedia))
-              AppValueRow(
-                icon: AppIcons.imageDown,
-                title: 'inbox.save_all_media'.tr(),
-                chevron: false,
-                onTap: () {
-                  close();
-                  savePhotos(context, items);
-                },
-              ),
-            if (items.isNotEmpty)
-              AppValueRow(
-                icon: AppIcons.trashDelete,
-                title: 'inbox.clear_inbox'.tr(),
-                destructive: true,
-                chevron: false,
-                onTap: () async {
-                  close();
-                  final yes = await showAppConfirm(
-                    context,
-                    title: 'inbox.clear_title'.tr(),
-                    message: 'inbox.clear_body'.tr(),
-                    confirmLabel: 'inbox.clear'.tr(),
-                  );
-                  if (yes) await cubit.deleteMany(List.of(items));
-                },
-              ),
-          ],
-        );
-      },
     );
   }
 }
@@ -773,4 +684,108 @@ class _Rings extends CustomPainter {
 
   @override
   bool shouldRepaint(_Rings old) => old.color != color;
+}
+
+/// The Inbox menu (the ⋯ of the Inbox tab on Received): browse files,
+/// browser access, save all media, clear.
+Future<void> showInboxMenu(BuildContext context) {
+  final cubit = context.read<InboxCubit>();
+  final items = cubit.state;
+  return showAppSheet<void>(
+    context,
+    title: 'inbox.title'.tr(),
+    builder: (ctx) {
+      void close() => Navigator.of(ctx).pop();
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppValueRow(
+            icon: AppIcons.folder,
+            title: 'inbox.browse_files'.tr(),
+            subtitle: 'inbox.browse_files_hint'.tr(),
+            onTap: () {
+              close();
+              context.push('/files');
+            },
+          ),
+          AppValueRow(
+            icon: AppIcons.globePublic,
+            title: 'inbox.browser_access'.tr(),
+            subtitle: 'inbox.browser_access_subtitle'.tr(),
+            onTap: () {
+              close();
+              showWebAccess(context);
+            },
+          ),
+          if (InboxCubit.canSaveToPhotos && items.any(isMedia))
+            AppValueRow(
+              icon: AppIcons.imageDown,
+              title: 'inbox.save_all_media'.tr(),
+              chevron: false,
+              onTap: () {
+                close();
+                savePhotos(context, items);
+              },
+            ),
+          if (items.isNotEmpty)
+            AppValueRow(
+              icon: AppIcons.trashDelete,
+              title: 'inbox.clear_inbox'.tr(),
+              destructive: true,
+              chevron: false,
+              onTap: () async {
+                close();
+                final yes = await showAppConfirm(
+                  context,
+                  title: 'inbox.clear_title'.tr(),
+                  message: 'inbox.clear_body'.tr(),
+                  confirmLabel: 'inbox.clear'.tr(),
+                );
+                if (yes) await cubit.deleteMany(List.of(items));
+              },
+            ),
+        ],
+      );
+    },
+  );
+}
+
+/// Over the received files: how many and how big, and Select or Done.
+class _Summary extends StatelessWidget {
+  const _Summary({
+    required this.text,
+    required this.action,
+    required this.onAction,
+  });
+
+  final String text;
+  final String action;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 2, 6, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              text,
+              style: AppType.secondary.copyWith(
+                color: t.text2,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+          AppButton(
+            label: action,
+            variant: AppButtonVariant.ghost,
+            size: AppButtonSize.small,
+            onPressed: onAction,
+          ),
+        ],
+      ),
+    );
+  }
 }

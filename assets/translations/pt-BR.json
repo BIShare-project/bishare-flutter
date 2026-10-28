@@ -277,7 +277,8 @@
     "remove": "Remover",
     "remove_title": "Remover do histórico?",
     "remove_body": "A transferência sai do histórico.",
-    "remove_body_file": "A transferência sai do histórico e o arquivo é excluído deste dispositivo."
+    "remove_body_file": "A transferência sai do histórico e o arquivo é excluído deste dispositivo.",
+    "filter_title": "Mostrar"
   },
   "devices": {
     "add_favorite": "Adicionar aos favoritos",

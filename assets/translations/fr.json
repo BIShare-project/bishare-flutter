@@ -277,7 +277,8 @@
     "remove": "Retirer",
     "remove_title": "Retirer de l’historique ?",
     "remove_body": "Le transfert quitte l’historique.",
-    "remove_body_file": "Le transfert quitte l’historique et le fichier est supprimé de cet appareil."
+    "remove_body_file": "Le transfert quitte l’historique et le fichier est supprimé de cet appareil.",
+    "filter_title": "Afficher"
   },
   "devices": {
     "add_favorite": "Ajouter aux favoris",

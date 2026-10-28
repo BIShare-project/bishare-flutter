@@ -39,8 +39,8 @@ class _Settings extends Cubit<Settings> implements SettingsCubit {
 }
 
 /// Kotak Masuk (redesign-plan.md 2.2): the received files and the transfer
-/// history are two segments of one tab; Drive is a tab of its own, so the
-/// switch never offers it, whatever the vault flag says.
+/// history are two content tabs of one Inbox tab; Drive is a tab of its own,
+/// so the tabs never offer it, whatever the vault flag says.
 void main() {
   setUpAll(() => driftRuntimeOptions.dontWarnAboutMultipleDatabases = true);
 
@@ -78,8 +78,7 @@ void main() {
       tester,
     ) async {
       await pump(tester, flags);
-      final page = tester.widget<InboxPage>(find.byType(InboxPage));
-      expect(page.segment, isNotNull);
+      expect(find.byType(InboxPage), findsOneWidget);
       expect(find.text('history.received'), findsOneWidget);
       expect(find.text('history.title'), findsOneWidget);
       expect(find.text('inbox.segment_drive'), findsNothing);

@@ -277,7 +277,8 @@
     "remove": "削除",
     "remove_title": "履歴から削除しますか？",
     "remove_body": "この転送は履歴から消えます。",
-    "remove_body_file": "この転送は履歴から消え、ファイルもこの端末から削除されます。"
+    "remove_body_file": "この転送は履歴から消え、ファイルもこの端末から削除されます。",
+    "filter_title": "表示"
   },
   "devices": {
     "add_favorite": "お気に入りに追加",

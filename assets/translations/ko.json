@@ -277,7 +277,8 @@
     "remove": "삭제",
     "remove_title": "기록에서 삭제할까요?",
     "remove_body": "이 전송이 기록에서 사라집니다.",
-    "remove_body_file": "이 전송이 기록에서 사라지고 파일도 이 기기에서 삭제됩니다."
+    "remove_body_file": "이 전송이 기록에서 사라지고 파일도 이 기기에서 삭제됩니다.",
+    "filter_title": "표시"
   },
   "devices": {
     "add_favorite": "즐겨찾기에 추가",

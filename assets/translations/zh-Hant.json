@@ -277,7 +277,8 @@
     "remove": "移除",
     "remove_title": "從歷史記錄中移除？",
     "remove_body": "此傳輸將從歷史記錄中移除。",
-    "remove_body_file": "此傳輸將從歷史記錄中移除，檔案也會從此裝置中刪除。"
+    "remove_body_file": "此傳輸將從歷史記錄中移除，檔案也會從此裝置中刪除。",
+    "filter_title": "顯示"
   },
   "devices": {
     "add_favorite": "加入我的最愛",

@@ -277,7 +277,8 @@
     "remove": "Entfernen",
     "remove_title": "Aus dem Verlauf entfernen?",
     "remove_body": "Die Übertragung verschwindet aus dem Verlauf.",
-    "remove_body_file": "Die Übertragung verschwindet aus dem Verlauf und die Datei wird von diesem Gerät gelöscht."
+    "remove_body_file": "Die Übertragung verschwindet aus dem Verlauf und die Datei wird von diesem Gerät gelöscht.",
+    "filter_title": "Anzeigen"
   },
   "devices": {
     "add_favorite": "Zu Favoriten hinzufügen",

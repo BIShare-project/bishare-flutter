@@ -277,7 +277,8 @@
     "remove": "Remove",
     "remove_title": "Remove from history?",
     "remove_body": "The transfer leaves the history.",
-    "remove_body_file": "The transfer leaves the history and the file is deleted from this device."
+    "remove_body_file": "The transfer leaves the history and the file is deleted from this device.",
+    "filter_title": "Show"
   },
   "devices": {
     "add_favorite": "Add to favorites",
