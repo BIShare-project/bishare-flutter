@@ -1063,15 +1063,18 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         AppGroup(
           child: Column(
             children: [
-              AppListTile(
-                leading: const Glyph(AppIcons.close),
-                title: Text('vault.sign_out'.tr()),
+              AppValueRow(
+                icon: AppIcons.close,
+                title: 'vault.sign_out'.tr(),
+                chevron: false,
                 onTap: _busy ? null : _signOut,
               ),
-              const AppRowDivider(indent: 58),
-              AppListTile(
-                leading: const Glyph(AppIcons.trashDelete),
-                title: Text('vault.delete'.tr()),
+              // Red: it deletes every file for good.
+              AppValueRow(
+                icon: AppIcons.trashDelete,
+                title: 'vault.delete'.tr(),
+                chevron: false,
+                destructive: true,
                 onTap: _busy ? null : _delete,
               ),
             ],
