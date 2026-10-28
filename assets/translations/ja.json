@@ -1251,7 +1251,12 @@
     "tab_files": "ファイル",
     "kind_all": "すべて",
     "list_view": "リスト表示",
-    "grid_view": "グリッド表示"
+    "grid_view": "グリッド表示",
+    "backup_strip_off": "バックアップはオフです",
+    "backup_strip_off_sub": "このスマートフォンの写真はまだDriveに保存されていません。",
+    "backup_strip_done": "すべての写真がDriveに保存されています",
+    "backup_turn_on": "オンにする",
+    "backup_explain": "このスマートフォンの写真とビデオは、スマートフォン上で暗号化されてからDriveの「{folder}」フォルダに保存されます。"
   },
   "compose": {
     "visible": "表示中",

@@ -1251,7 +1251,12 @@
     "tab_files": "फ़ाइलें",
     "kind_all": "सभी",
     "list_view": "सूची दृश्य",
-    "grid_view": "ग्रिड दृश्य"
+    "grid_view": "ग्रिड दृश्य",
+    "backup_strip_off": "बैकअप बंद है",
+    "backup_strip_off_sub": "इस फ़ोन की फ़ोटो अभी Drive में सुरक्षित नहीं हैं।",
+    "backup_strip_done": "सभी फ़ोटो Drive में सुरक्षित हैं",
+    "backup_turn_on": "चालू करें",
+    "backup_explain": "इस फ़ोन की फ़ोटो और वीडियो आपके Drive के “{folder}” फ़ोल्डर में जाते हैं, पहले फ़ोन पर एन्क्रिप्ट होकर।"
   },
   "compose": {
     "visible": "दिखाई दे रहा है",

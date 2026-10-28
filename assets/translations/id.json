@@ -1251,7 +1251,12 @@
     "tab_files": "File",
     "kind_all": "Semua",
     "list_view": "Tampilan daftar",
-    "grid_view": "Tampilan grid"
+    "grid_view": "Tampilan grid",
+    "backup_strip_off": "Pencadangan mati",
+    "backup_strip_off_sub": "Foto di ponsel ini belum aman di Drive.",
+    "backup_strip_done": "Semua foto aman di Drive",
+    "backup_turn_on": "Nyalakan",
+    "backup_explain": "Foto dan video dari ponsel ini masuk ke folder “{folder}” di Drive Anda, dienkripsi di ponsel dulu."
   },
   "compose": {
     "visible": "Terlihat",

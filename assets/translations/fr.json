@@ -1251,7 +1251,12 @@
     "tab_files": "Fichiers",
     "kind_all": "Tout",
     "list_view": "Affichage en liste",
-    "grid_view": "Affichage en grille"
+    "grid_view": "Affichage en grille",
+    "backup_strip_off": "La sauvegarde est désactivée",
+    "backup_strip_off_sub": "Les photos de ce téléphone ne sont pas encore à l’abri dans Drive.",
+    "backup_strip_done": "Toutes les photos sont à l’abri dans Drive",
+    "backup_turn_on": "Activer",
+    "backup_explain": "Les photos et vidéos de ce téléphone vont dans le dossier « {folder} » de votre Drive, chiffrées d’abord sur le téléphone."
   },
   "compose": {
     "visible": "Visible",

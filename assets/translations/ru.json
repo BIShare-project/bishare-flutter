@@ -1287,7 +1287,12 @@
     "tab_files": "Файлы",
     "kind_all": "Все",
     "list_view": "Списком",
-    "grid_view": "Сеткой"
+    "grid_view": "Сеткой",
+    "backup_strip_off": "Резервное копирование выключено",
+    "backup_strip_off_sub": "Фото с этого телефона ещё не сохранены в Drive.",
+    "backup_strip_done": "Все фото сохранены в Drive",
+    "backup_turn_on": "Включить",
+    "backup_explain": "Фото и видео с этого телефона попадают в папку «{folder}» вашего Drive, сначала шифруясь на телефоне."
   },
   "compose": {
     "visible": "Видно другим",

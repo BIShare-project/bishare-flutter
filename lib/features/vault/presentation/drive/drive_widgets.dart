@@ -638,163 +638,68 @@ class DriveKindChips extends StatelessWidget {
   );
 }
 
-/// The quota under the Drive title: a short meter and "1.84 GB of 5 GB
-/// used"; it opens Drive's account page.
-class DriveQuotaLine extends StatelessWidget {
-  const DriveQuotaLine({
+/// Drive's account, with a ring around it that fills as the Drive does
+/// (red when full). The words are in its tooltip and for screen readers.
+class DriveAccountButton extends StatelessWidget {
+  const DriveAccountButton({
     super.key,
     required this.used,
     required this.quota,
     required this.onTap,
   });
 
-  final int used;
-  final int quota;
+  final int? used;
+  final int? quota;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
-    final share = quota <= 0 ? 0.0 : (used / quota).clamp(0.0, 1.0);
-    final full = share >= 1;
-    return Semantics(
-      button: true,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(2),
-                child: SizedBox(
-                  width: 56,
-                  height: 4,
-                  child: Stack(
-                    children: [
-                      // The line colour: sunken vanishes on dark.
-                      ColoredBox(color: t.line, child: const SizedBox.expand()),
-                      FractionallySizedBox(
-                        widthFactor: share,
-                        child: ColoredBox(
-                          color: full ? t.danger : t.accent,
-                          child: const SizedBox.expand(),
+    final u = used, q = quota;
+    final known = u != null && q != null && q > 0;
+    final share = known ? (u / q).clamp(0.0, 1.0) : 0.0;
+    final words = known
+        ? 'vault.quota_line'.tr(
+            namedArgs: {'used': decimalBytes(u), 'quota': decimalBytes(q)},
+          )
+        : null;
+    final label = ['vault.account_title'.tr(), ?words].join(', ');
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        label: label,
+        excludeSemantics: true,
+        child: InkResponse(
+          onTap: onTap,
+          radius: 24,
+          child: SizedBox.square(
+            dimension: 44,
+            child: Center(
+              child: SizedBox.square(
+                dimension: 32,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    if (known)
+                      SizedBox.expand(
+                        child: CircularProgressIndicator(
+                          value: share,
+                          strokeWidth: 2.5,
+                          backgroundColor: t.line,
+                          color: share >= 1 ? t.danger : t.accent,
                         ),
                       ),
-                    ],
-                  ),
+                    AppSvgIcon(AppIcons.user, size: 18, color: t.text),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  'vault.quota_line'.tr(
-                    namedArgs: {
-                      'used': decimalBytes(used),
-                      'quota': decimalBytes(quota),
-                    },
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppType.secondary.copyWith(
-                    color: full ? t.danger : t.text2,
-                  ),
-                ),
-              ),
-              AppSvgIcon(AppIcons.chevronRight, size: 16, color: t.text3),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
-}
-
-/// The views, as chips (phones).
-class DriveViewChips extends StatelessWidget {
-  const DriveViewChips({super.key, required this.ctrl});
-
-  final DriveController ctrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    return SizedBox(
-      height: 38,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        children: [
-          for (final v in DriveView.values)
-            Padding(
-              padding: const EdgeInsets.only(right: 6, bottom: 4),
-              child: _Chip(
-                label: driveViewLabel(v),
-                icon: driveViewIcon(v),
-                on: ctrl.view == v && !ctrl.searching,
-                onTap: () => ctrl.setView(v),
-                cs: cs,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.label,
-    required this.icon,
-    required this.on,
-    required this.onTap,
-    required this.cs,
-  });
-
-  final String label;
-  final String icon;
-  final bool on;
-  final VoidCallback onTap;
-  final ShadColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) => InkWell(
-    borderRadius: BorderRadius.circular(20),
-    onTap: () {
-      tapHaptic();
-      onTap();
-    },
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: on ? cs.primary : cs.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: on ? cs.primary : cs.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppSvgIcon(
-            icon,
-            size: 14,
-            color: on ? Colors.white : cs.mutedForeground,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: on ? Colors.white : cs.foreground,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
 }
 
 String driveViewLabel(DriveView v) => switch (v) {

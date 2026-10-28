@@ -1251,7 +1251,12 @@
     "tab_files": "Arquivos",
     "kind_all": "Tudo",
     "list_view": "Ver em lista",
-    "grid_view": "Ver em grade"
+    "grid_view": "Ver em grade",
+    "backup_strip_off": "O backup está desligado",
+    "backup_strip_off_sub": "As fotos deste celular ainda não estão seguras no Drive.",
+    "backup_strip_done": "Todas as fotos estão seguras no Drive",
+    "backup_turn_on": "Ligar",
+    "backup_explain": "Fotos e vídeos deste celular vão para a pasta “{folder}” do seu Drive, criptografados primeiro no celular."
   },
   "compose": {
     "visible": "Visível",

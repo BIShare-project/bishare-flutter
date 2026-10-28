@@ -641,8 +641,8 @@ String photoBackupStateLabel(PhotoBackupState s) => switch (s) {
   PhotoBackupState.failed => 'vault.backup_state_failed',
 }.tr();
 
-/// No access to the library yet (or it was refused): what backup does, and
-/// the way to allow it.
+/// No access to the library yet (or it was refused): one line, and the way
+/// to allow it.
 class _AccessCard extends StatelessWidget {
   const _AccessCard({required this.backup});
 
@@ -650,181 +650,212 @@ class _AccessCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              AppSvgIcon(AppIcons.image, size: 20, color: cs.primary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'vault.backup_access_title'.tr(),
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: cs.foreground,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'vault.backup_access_body'.tr(),
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              color: cs.mutedForeground,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ShadButton(
-                size: ShadButtonSize.sm,
-                onPressed: () => unawaited(backup.refreshAccess(ask: true)),
-                child: Text('vault.backup_allow'.tr()),
-              ),
-              ShadButton.outline(
-                size: ShadButtonSize.sm,
-                onPressed: () => unawaited(backup.library.openSettings()),
-                child: Text('vault.backup_open_settings'.tr()),
-              ),
-            ],
-          ),
-        ],
+    final t = context.tokens;
+    return _StripShell(
+      icon: AppIcons.image,
+      iconColor: t.text2,
+      title: 'vault.backup_access_title'.tr(),
+      subtitle: 'vault.backup_access_body'.tr(),
+      subtitleLines: 2,
+      trailing: AppButton(
+        label: 'vault.backup_allow'.tr(),
+        size: AppButtonSize.small,
+        onPressed: () => unawaited(backup.refreshAccess(ask: true)),
       ),
+      onTap: () => unawaited(backup.library.openSettings()),
     );
   }
 }
 
-/// The switch, "Wi-Fi only", and how much is left.
+/// Photo backup as one line over the gallery: where it stands, and
+/// "Turn on" while it is off. Tapping it opens the switches (backup, Wi-Fi
+/// only) and their explanation in a sheet.
 class _BackupCard extends StatelessWidget {
   const _BackupCard({required this.backup, required this.onSwitch});
 
   final VaultPhotoBackup backup;
   final Future<void> Function(bool) onSwitch;
 
-  String get _status {
-    if (!backup.on) {
-      return 'vault.backup_off_body'.tr(
-        namedArgs: {'folder': 'vault.backup_folder'.tr()},
-      );
-    }
-    if (backup.noRoom) return 'vault.backup_no_room'.tr();
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
     final left = backup.left;
-    if (left == null) return 'vault.backup_counting'.tr();
-    return 'vault.backup_left'.plural(left);
+    final (String icon, Color color, String title, String sub) = !backup.on
+        ? (
+            AppIcons.cloudOff,
+            t.text2,
+            'vault.backup_strip_off'.tr(),
+            'vault.backup_strip_off_sub'.tr(),
+          )
+        : backup.noRoom
+        ? (
+            AppIcons.circleAlert,
+            t.danger,
+            'vault.backup_title'.tr(),
+            'vault.backup_no_room'.tr(),
+          )
+        : left == null
+        ? (
+            AppIcons.cloudSync,
+            t.accent,
+            'vault.backup_title'.tr(),
+            'vault.backup_counting'.tr(),
+          )
+        : left == 0
+        ? (
+            AppIcons.cloudDone,
+            t.accent,
+            'vault.backup_strip_done'.tr(),
+            backup.wifiOnly
+                ? 'vault.backup_wifi_only'.tr()
+                : 'vault.backup_title'.tr(),
+          )
+        : (
+            AppIcons.cloudSync,
+            t.accent,
+            'vault.backup_title'.tr(),
+            'vault.backup_left'.plural(left),
+          );
+    return _StripShell(
+      icon: icon,
+      iconColor: color,
+      title: title,
+      subtitle: sub,
+      busy: backup.on && backup.scanning,
+      trailing: backup.on
+          ? AppSvgIcon(AppIcons.chevronRight, size: 18, color: t.text3)
+          : AppButton(
+              label: 'vault.backup_turn_on'.tr(),
+              size: AppButtonSize.small,
+              onPressed: () => unawaited(onSwitch(true)),
+            ),
+      onTap: () => _settings(context),
+    );
   }
+
+  Future<void> _settings(BuildContext context) => showAppSheet<void>(
+    context,
+    icon: AppIcons.cloudSync,
+    title: 'vault.backup_title'.tr(),
+    builder: (ctx) => ListenableBuilder(
+      listenable: backup,
+      builder: (ctx, _) {
+        final t = ctx.tokens;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'vault.backup_explain'.tr(
+                namedArgs: {'folder': 'vault.backup_folder'.tr()},
+              ),
+              style: AppType.secondary.copyWith(color: t.text2),
+            ),
+            const SizedBox(height: 8),
+            AppSwitchRow(
+              icon: AppIcons.cloudSync,
+              title: 'vault.backup_title'.tr(),
+              value: backup.on,
+              onChanged: (v) => unawaited(onSwitch(v)),
+            ),
+            if (backup.on)
+              AppSwitchRow(
+                icon: AppIcons.wifi,
+                title: 'vault.backup_wifi_only'.tr(),
+                subtitle: 'vault.backup_wifi_only_body'.tr(),
+                value: backup.wifiOnly,
+                onChanged: (v) => unawaited(backup.setWifiOnly(v)),
+              ),
+            if (backup.access == PhotoAccess.limited)
+              AppValueRow(
+                icon: AppIcons.image,
+                title: 'vault.backup_choose_more'.tr(),
+                subtitle: 'vault.backup_limited'.tr(),
+                onTap: () => unawaited(backup.library.chooseMore()),
+              ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+/// The shared shape of the backup and access lines.
+class _StripShell extends StatelessWidget {
+  const _StripShell({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+    required this.onTap,
+    this.busy = false,
+    this.subtitleLines = 1,
+  });
+
+  final String icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final Widget trailing;
+  final VoidCallback onTap;
+  final bool busy;
+  final int subtitleLines;
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    final muted = TextStyle(
-      fontSize: 12.5,
-      height: 1.35,
-      color: cs.mutedForeground,
-    );
-    return AppCard(
-      margin: const EdgeInsets.fromLTRB(14, 4, 14, 8),
-      padding: const EdgeInsets.fromLTRB(14, 12, 10, 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    final t = context.tokens;
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 10, 12, 10),
+          child: Row(
             children: [
-              AppSvgIcon(
-                backup.on ? AppIcons.cloudDone : AppIcons.cloudOff,
-                size: 20,
-                color: backup.on ? cs.primary : cs.mutedForeground,
+              Container(
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: t.sunken,
+                  shape: BoxShape.circle,
+                ),
+                child: busy
+                    ? SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: iconColor,
+                        ),
+                      )
+                    : AppSvgIcon(icon, size: 19, color: iconColor),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'vault.backup_title'.tr(),
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                        color: cs.foreground,
-                      ),
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppType.rowStrong.copyWith(color: t.text),
                     ),
-                    const SizedBox(height: 2),
-                    Text(_status, style: muted),
+                    Text(
+                      subtitle,
+                      maxLines: subtitleLines,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppType.secondary.copyWith(color: t.text2),
+                    ),
                   ],
                 ),
               ),
-              if (backup.scanning && backup.on)
-                const Padding(
-                  padding: EdgeInsets.only(right: 8),
-                  child: SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-              ShadSwitch(
-                value: backup.on,
-                onChanged: (v) => unawaited(onSwitch(v)),
-              ),
+              const SizedBox(width: 8),
+              trailing,
             ],
           ),
-          if (backup.on) ...[
-            const SizedBox(height: 10),
-            Divider(height: 1, color: cs.border),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                AppSvgIcon(AppIcons.wifi, size: 18, color: cs.mutedForeground),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'vault.backup_wifi_only'.tr(),
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                          color: cs.foreground,
-                        ),
-                      ),
-                      Text('vault.backup_wifi_only_body'.tr(), style: muted),
-                    ],
-                  ),
-                ),
-                ShadSwitch(
-                  value: backup.wifiOnly,
-                  onChanged: (v) => unawaited(backup.setWifiOnly(v)),
-                ),
-              ],
-            ),
-          ],
-          if (backup.access == PhotoAccess.limited) ...[
-            const SizedBox(height: 8),
-            Divider(height: 1, color: cs.border),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: Text('vault.backup_limited'.tr(), style: muted),
-                ),
-                ShadButton.ghost(
-                  size: ShadButtonSize.sm,
-                  onPressed: () => unawaited(backup.library.chooseMore()),
-                  child: Text('vault.backup_choose_more'.tr()),
-                ),
-              ],
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }

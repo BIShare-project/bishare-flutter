@@ -46,8 +46,7 @@ class DrivePage extends StatefulWidget {
   State<DrivePage> createState() => _DrivePageState();
 }
 
-class _DrivePageState extends State<DrivePage>
-    with SingleTickerProviderStateMixin {
+class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
   final VaultAccount _account = getIt<VaultAccount>();
   final VaultDao _dao = getIt<AppDatabase>().vaultDao;
   final VaultSync _sync = getIt<VaultSync>();
@@ -120,6 +119,31 @@ class _DrivePageState extends State<DrivePage>
     DriveView.trash => 3,
   };
 
+  /// The phone header's title row: it slides away while scrolling down and
+  /// comes back on the way up; the tabs stay.
+  late final AnimationController _headerShown = AnimationController(
+    vsync: this,
+    duration: AppMotion.bar,
+    value: 1,
+  );
+
+  bool _onScroll(ScrollUpdateNotification n) {
+    if (n.metrics.axis != Axis.vertical) return false;
+    final d = n.scrollDelta ?? 0;
+    if (n.metrics.pixels <= 0 || d < -6) {
+      if (_headerShown.status != AnimationStatus.forward &&
+          _headerShown.value < 1) {
+        _headerShown.forward();
+      }
+    } else if (d > 6 && n.metrics.pixels > 48) {
+      if (_headerShown.status != AnimationStatus.reverse &&
+          _headerShown.value > 0) {
+        _headerShown.reverse();
+      }
+    }
+    return false;
+  }
+
   late final TabController _tabs = TabController(
     length: _tabViews.length,
     vsync: this,
@@ -159,6 +183,7 @@ class _DrivePageState extends State<DrivePage>
       ..removeListener(_onCtrl)
       ..dispose();
     _tabs.dispose();
+    _headerShown.dispose();
     _searchFocus.removeListener(_onSearchFocus);
     _search.dispose();
     _searchFocus.dispose();
@@ -657,7 +682,14 @@ class _DrivePageState extends State<DrivePage>
             actions: _headerActions(wide: false),
           )
         else
-          _phoneHeader(),
+          SizeTransition(
+            sizeFactor: CurvedAnimation(
+              parent: _headerShown,
+              curve: AppMotion.standard,
+            ),
+            alignment: Alignment.bottomCenter,
+            child: _phoneHeader(),
+          ),
         if (!_ctrl.selecting && _ctrl.path.isEmpty) ?widget.segment,
         if (!_ctrl.selecting)
           SizedBox(
@@ -692,58 +724,53 @@ class _DrivePageState extends State<DrivePage>
         if (tab == 1 && _ctrl.path.isEmpty && !_ctrl.searching)
           DriveKindChips(ctrl: _ctrl),
         DriveBreadcrumb(ctrl: _ctrl),
-        Expanded(child: _queueAndContent()),
+        Expanded(
+          child: NotificationListener<ScrollUpdateNotification>(
+            onNotification: _onScroll,
+            child: _queueAndContent(),
+          ),
+        ),
         if (_ctrl.selecting) DriveSelectionBar(actions: _selectionActions()),
       ],
     );
   }
 
-  /// "Drive" with Upload, Account and the page menu; under it, across the
-  /// whole width, the quota meter (it opens the account).
+  /// One row: "Drive", then Account (a ring around it shows how full the
+  /// Drive is), Upload and the page menu.
   Widget _phoneHeader() {
     final t = context.tokens;
-    final used = _account.usedBytes;
-    final quota = _account.quotaBytes;
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(18, 8, 8, 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Semantics(
-                  header: true,
-                  child: Text(
-                    'vault.drive'.tr(),
-                    style: AppType.title.copyWith(color: t.text),
-                  ),
+      padding: const EdgeInsetsDirectional.fromSTEB(18, 4, 8, 0),
+      child: SizedBox(
+        height: 52,
+        child: Row(
+          children: [
+            Expanded(
+              child: Semantics(
+                header: true,
+                child: Text(
+                  'vault.drive'.tr(),
+                  style: AppType.title.copyWith(color: t.text),
                 ),
               ),
-              AppIconButton(
-                icon: AppIcons.uploadFile,
-                tooltip: 'vault.upload'.tr(),
-                onPressed: () => _act.addMenu(),
-              ),
-              AppIconButton(
-                icon: AppIcons.user,
-                tooltip: 'vault.account_title'.tr(),
-                onPressed: () => context.push('/drive-account'),
-              ),
-              AppIconButton(
-                icon: AppIcons.moreMenu,
-                tooltip: 'inbox.more'.tr(),
-                onPressed: _pageMenu,
-              ),
-            ],
-          ),
-          if (used != null && quota != null && quota > 0)
-            DriveQuotaLine(
-              used: used,
-              quota: quota,
+            ),
+            DriveAccountButton(
+              used: _account.usedBytes,
+              quota: _account.quotaBytes,
               onTap: () => context.push('/drive-account'),
             ),
-        ],
+            AppIconButton(
+              icon: AppIcons.uploadFile,
+              tooltip: 'vault.upload'.tr(),
+              onPressed: () => _act.addMenu(),
+            ),
+            AppIconButton(
+              icon: AppIcons.moreMenu,
+              tooltip: 'inbox.more'.tr(),
+              onPressed: _pageMenu,
+            ),
+          ],
+        ),
       ),
     );
   }

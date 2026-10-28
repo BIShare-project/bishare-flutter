@@ -1251,7 +1251,12 @@
     "tab_files": "Dateien",
     "kind_all": "Alle",
     "list_view": "Listenansicht",
-    "grid_view": "Rasteransicht"
+    "grid_view": "Rasteransicht",
+    "backup_strip_off": "Sicherung ist aus",
+    "backup_strip_off_sub": "Fotos auf diesem Telefon sind noch nicht im Drive gesichert.",
+    "backup_strip_done": "Alle Fotos sind im Drive gesichert",
+    "backup_turn_on": "Einschalten",
+    "backup_explain": "Fotos und Videos von diesem Telefon kommen in den Ordner „{folder}“ in deinem Drive, zuerst auf dem Telefon verschlüsselt."
   },
   "compose": {
     "visible": "Sichtbar",
