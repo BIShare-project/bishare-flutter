@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:gal/gal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -28,6 +29,9 @@ class InboxCubit extends Cubit<List<TransferRecord>> {
   /// a group, the count on the tab).
   final ValueNotifier<DateTime> seenAt;
 
+  /// [seenAt] is gone: a [markSeen] deferred past a frame must not touch it.
+  bool _closing = false;
+
   /// Received after the last visit.
   int get unseen =>
       state.where((r) => r.timestamp.isAfter(seenAt.value)).length;
@@ -35,8 +39,17 @@ class InboxCubit extends Cubit<List<TransferRecord>> {
   /// Called when the Inbox is left: everything on it now counts as seen.
   void markSeen() {
     final now = DateTime.now();
-    seenAt.value = now;
     _prefs?.setInt(_kSeenAt, now.millisecondsSinceEpoch);
+    // Called while the Inbox leaves the screen, which can be in the middle
+    // of a build: the tab badge listens, so it hears after the frame.
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (!_closing) seenAt.value = now;
+      });
+    } else {
+      seenAt.value = now;
+    }
   }
 
   late final StreamSubscription<List<TransferRecord>> _sub;
@@ -101,6 +114,7 @@ class InboxCubit extends Cubit<List<TransferRecord>> {
 
   @override
   Future<void> close() async {
+    _closing = true;
     seenAt.dispose();
     await _sub.cancel();
     return super.close();
