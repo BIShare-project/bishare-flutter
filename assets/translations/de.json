@@ -1246,7 +1246,12 @@
     "remind_free_title": "Dein kostenloses Drive wird nicht genutzt",
     "remind_channel": "Erinnerungen zu Ihrem Drive-Tarif",
     "remind_free_body": "Ein kostenloses Drive, das 12 Monate lang kein Gerät öffnet, wird gelöscht. Öffne BIShare vor dem {date}, um es zu behalten.",
-    "error_snap_keyring": "BIShare erreicht den Schlüsselbund dieses Computers nicht, in dem Drive seinen Schlüssel ablegt. Erlaube es einmalig mit diesem Befehl im Terminal und versuche es dann erneut:"
+    "error_snap_keyring": "BIShare erreicht den Schlüsselbund dieses Computers nicht, in dem Drive seinen Schlüssel ablegt. Erlaube es einmalig mit diesem Befehl im Terminal und versuche es dann erneut:",
+    "tab_photos": "Fotos",
+    "tab_files": "Dateien",
+    "kind_all": "Alle",
+    "list_view": "Listenansicht",
+    "grid_view": "Rasteransicht"
   },
   "compose": {
     "visible": "Sichtbar",

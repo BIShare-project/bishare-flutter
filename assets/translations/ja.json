@@ -1246,7 +1246,12 @@
     "remind_free_title": "無料の Drive が使われていません",
     "remind_channel": "Driveプランに関するリマインダー",
     "remind_free_body": "12 か月間どのデバイスからも開かれていない無料の Drive は削除されます。残すには {date} までに BIShare を開いてください。",
-    "error_snap_keyring": "BIShare はこのコンピュータのキーリングにアクセスできませんでした。Drive はここに鍵を保存します。ターミナルで次のコマンドを一度実行して許可してから、もう一度お試しください:"
+    "error_snap_keyring": "BIShare はこのコンピュータのキーリングにアクセスできませんでした。Drive はここに鍵を保存します。ターミナルで次のコマンドを一度実行して許可してから、もう一度お試しください:",
+    "tab_photos": "写真",
+    "tab_files": "ファイル",
+    "kind_all": "すべて",
+    "list_view": "リスト表示",
+    "grid_view": "グリッド表示"
   },
   "compose": {
     "visible": "表示中",

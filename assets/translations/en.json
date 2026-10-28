@@ -1246,7 +1246,12 @@
     "remind_free_title": "Your free Drive hasn't been used",
     "remind_channel": "Reminders about your Drive plan",
     "remind_free_body": "A free Drive that no device opens for 12 months is deleted. Open BIShare before {date} to keep it.",
-    "error_snap_keyring": "BIShare could not reach this computer's keyring, where Drive keeps its key. Allow it once by running this in a terminal, then try again:"
+    "error_snap_keyring": "BIShare could not reach this computer's keyring, where Drive keeps its key. Allow it once by running this in a terminal, then try again:",
+    "tab_photos": "Photos",
+    "tab_files": "Files",
+    "kind_all": "All",
+    "list_view": "List view",
+    "grid_view": "Grid view"
   },
   "compose": {
     "visible": "Visible",

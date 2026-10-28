@@ -13,31 +13,43 @@ class AppSearchField extends StatefulWidget {
     required this.hint,
     required this.onChanged,
     this.margin = const EdgeInsets.fromLTRB(14, 6, 14, 4),
+    this.controller,
+    this.focusNode,
   });
 
   final String hint;
   final ValueChanged<String> onChanged;
   final EdgeInsetsGeometry margin;
 
+  /// The page's own, when it also changes the text or the focus (Drive's
+  /// shortcuts); otherwise the field keeps its own.
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+
   @override
   State<AppSearchField> createState() => _AppSearchFieldState();
 }
 
 class _AppSearchFieldState extends State<AppSearchField> {
-  final _focus = FocusNode();
-  final _text = TextEditingController();
+  late final FocusNode _focus = widget.focusNode ?? FocusNode();
+  late final TextEditingController _text =
+      widget.controller ?? TextEditingController();
+
+  void _changed() => setState(() {});
 
   @override
   void initState() {
     super.initState();
-    _focus.addListener(() => setState(() {}));
-    _text.addListener(() => setState(() {}));
+    _focus.addListener(_changed);
+    _text.addListener(_changed);
   }
 
   @override
   void dispose() {
-    _focus.dispose();
-    _text.dispose();
+    _focus.removeListener(_changed);
+    _text.removeListener(_changed);
+    if (widget.focusNode == null) _focus.dispose();
+    if (widget.controller == null) _text.dispose();
     super.dispose();
   }
 
@@ -67,7 +79,10 @@ class _AppSearchFieldState extends State<AppSearchField> {
                 focusNode: _focus,
                 onChanged: widget.onChanged,
                 textInputAction: TextInputAction.search,
-                style: AppType.row.copyWith(color: t.text, fontWeight: FontWeight.w400),
+                style: AppType.row.copyWith(
+                  color: t.text,
+                  fontWeight: FontWeight.w400,
+                ),
                 decoration: InputDecoration(
                   isDense: true,
                   border: InputBorder.none,

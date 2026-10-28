@@ -158,62 +158,58 @@ class DriveListRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final o = object;
     final sub = _subtitle(context, o, items);
     return Material(
-      color: selected ? cs.primary.withValues(alpha: 0.09) : Colors.transparent,
+      color: selected ? t.accentSoft : Colors.transparent,
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          child: Row(
-            children: [
-              if (selecting) ...[
-                _Check(on: selected),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 64),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(14, 8, 4, 8),
+            child: Row(
+              children: [
+                DriveThumb(object: o, size: 44),
                 const SizedBox(width: 12),
-              ],
-              DriveThumb(object: o, size: 38),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      o.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: cs.foreground,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        o.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppType.row.copyWith(color: t.text),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      location == null ? sub : '$location · $sub',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: cs.mutedForeground,
+                      const SizedBox(height: 2),
+                      Text(
+                        location == null ? sub : '$location · $sub',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppType.secondary.copyWith(color: t.text2),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              if (!selecting)
-                IconButton(
-                  onPressed: onMore,
-                  visualDensity: VisualDensity.compact,
-                  icon: AppSvgIcon(
-                    AppIcons.moreMenu,
-                    size: 18,
-                    color: cs.mutedForeground,
+                    ],
                   ),
                 ),
-            ],
+                if (selecting)
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(
+                      start: 10,
+                      end: 10,
+                    ),
+                    child: AppRowCheck(selected: selected),
+                  )
+                else
+                  AppIconButton(
+                    icon: AppIcons.moreMenu,
+                    tooltip: 'inbox.more'.tr(),
+                    onPressed: onMore,
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -469,7 +465,7 @@ class DriveBreadcrumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final path = ctrl.path;
     if (path.isEmpty) return const SizedBox.shrink();
     Widget crumb(String label, VoidCallback? onTap, {bool last = false}) =>
@@ -477,38 +473,50 @@ class DriveBreadcrumb extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
             child: Text(
               label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: last ? FontWeight.w600 : FontWeight.w500,
-                color: last ? cs.foreground : cs.primary,
+              style: AppType.row.copyWith(
+                fontSize: 14,
+                fontWeight: last ? FontWeight.w600 : FontWeight.w400,
+                color: last ? t.text : t.text2,
               ),
             ),
           ),
         );
-    Widget sep() =>
-        Icon(Icons.chevron_right_rounded, size: 16, color: cs.mutedForeground);
-    return SizedBox(
-      height: 34,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        reverse: true,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        children: [
-          // Reversed so the current folder is in view when the path is long.
-          for (var i = path.length - 1; i >= 0; i--) ...[
-            crumb(
-              path[i].name,
-              i == path.length - 1 ? null : () => ctrl.goTo(i + 1),
-              last: i == path.length - 1,
+    Widget sep() => AppSvgIcon(AppIcons.chevronRight, size: 14, color: t.text3);
+    return Row(
+      children: [
+        // Up one folder (the header has no back arrow at the top level).
+        AppIconButton(
+          icon: AppIcons.chevronLeft,
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: () => ctrl.up(),
+        ),
+        Expanded(
+          child: SizedBox(
+            height: 44,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              reverse: true,
+              padding: const EdgeInsetsDirectional.only(end: 12),
+              children: [
+                // Reversed so the current folder is in view when the path is
+                // long.
+                for (var i = path.length - 1; i >= 0; i--) ...[
+                  crumb(
+                    path[i].name,
+                    i == path.length - 1 ? null : () => ctrl.goTo(i + 1),
+                    last: i == path.length - 1,
+                  ),
+                  sep(),
+                ],
+                crumb('vault.drive'.tr(), () => ctrl.goTo(0)),
+              ],
             ),
-            sep(),
-          ],
-          crumb('vault.drive'.tr(), () => ctrl.goTo(0)),
-        ],
-      ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -552,55 +560,153 @@ class DriveToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
+    // Recent is newest first, always.
+    final canSort = ctrl.view != DriveView.recent || ctrl.searching;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
+      padding: const EdgeInsetsDirectional.fromSTEB(0, 2, 6, 2),
       child: Row(
         children: [
           Expanded(
-            child: ShadInput(
+            child: AppSearchField(
+              hint: 'vault.search'.tr(),
               controller: search,
               focusNode: searchFocus,
-              placeholder: Text('vault.search'.tr()),
-              leading: const Padding(
-                padding: EdgeInsets.only(right: 4),
-                child: AppSvgIcon(AppIcons.search, size: 16),
-              ),
-              trailing: ctrl.searching
-                  ? GestureDetector(
-                      onTap: () {
-                        search.clear();
-                        ctrl.setQuery('');
-                      },
-                      child: AppSvgIcon(
-                        AppIcons.close,
-                        size: 14,
-                        color: cs.mutedForeground,
-                      ),
-                    )
-                  : null,
               onChanged: ctrl.setQuery,
+              margin: const EdgeInsetsDirectional.fromSTEB(14, 4, 4, 4),
             ),
           ),
-          const SizedBox(width: 6),
-          ShadButton.ghost(
-            size: ShadButtonSize.sm,
-            // Recent is newest first, always.
-            onPressed: ctrl.view == DriveView.recent && !ctrl.searching
-                ? null
-                : () => _sortMenu(context),
-            leading: AppSvgIcon(AppIcons.sort, size: 16, color: cs.foreground),
-            child: Text('vault.sort_${ctrl.sort.name}'.tr()),
+          Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: canSort ? () => _sortMenu(context) : null,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 44),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppSvgIcon(
+                        AppIcons.sort,
+                        size: 18,
+                        color: canSort ? t.text : t.text3,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'vault.sort_${ctrl.sort.name}'.tr(),
+                        style: AppType.secondary.copyWith(
+                          color: canSort ? t.text : t.text3,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-          ShadIconButton.ghost(
+          AppIconButton(
+            icon: ctrl.grid ? AppIcons.listView : AppIcons.gridView,
+            tooltip: (ctrl.grid ? 'vault.list_view' : 'vault.grid_view').tr(),
             onPressed: () => ctrl.setGrid(!ctrl.grid),
-            icon: AppSvgIcon(
-              ctrl.grid ? AppIcons.listView : AppIcons.gridView,
-              size: 18,
-            ),
           ),
           ...trailing,
         ],
+      ),
+    );
+  }
+}
+
+/// The File tab's kinds (redesign-plan.md 6.1): everything, documents,
+/// audio. Photos and videos have their own tab.
+class DriveKindChips extends StatelessWidget {
+  const DriveKindChips({super.key, required this.ctrl});
+
+  final DriveController ctrl;
+
+  @override
+  Widget build(BuildContext context) => AppChips<DriveView>(
+    value: ctrl.view,
+    options: [
+      (DriveView.files, 'vault.kind_all'.tr()),
+      (DriveView.documents, driveViewLabel(DriveView.documents)),
+      (DriveView.audio, driveViewLabel(DriveView.audio)),
+    ],
+    onChanged: ctrl.setView,
+  );
+}
+
+/// The quota under the Drive title: a short meter and "1.84 GB of 5 GB
+/// used"; it opens Drive's account page.
+class DriveQuotaLine extends StatelessWidget {
+  const DriveQuotaLine({
+    super.key,
+    required this.used,
+    required this.quota,
+    required this.onTap,
+  });
+
+  final int used;
+  final int quota;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    final share = quota <= 0 ? 0.0 : (used / quota).clamp(0.0, 1.0);
+    final full = share >= 1;
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: SizedBox(
+                  width: 56,
+                  height: 4,
+                  child: Stack(
+                    children: [
+                      // The line colour: sunken vanishes on dark.
+                      ColoredBox(color: t.line, child: const SizedBox.expand()),
+                      FractionallySizedBox(
+                        widthFactor: share,
+                        child: ColoredBox(
+                          color: full ? t.danger : t.accent,
+                          child: const SizedBox.expand(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'vault.quota_line'.tr(
+                    namedArgs: {
+                      'used': decimalBytes(used),
+                      'quota': decimalBytes(quota),
+                    },
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppType.secondary.copyWith(
+                    color: full ? t.danger : t.text2,
+                  ),
+                ),
+              ),
+              AppSvgIcon(AppIcons.chevronRight, size: 16, color: t.text3),
+            ],
+          ),
+        ),
       ),
     );
   }

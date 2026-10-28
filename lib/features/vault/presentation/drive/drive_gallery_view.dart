@@ -329,13 +329,10 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
               ? _AccessCard(backup: _backup)
               : _BackupCard(backup: _backup, onSwitch: _switch),
         ),
+        if (!noAccess && !waiting && _hasUnsafe(items, backed, uploads))
+          SliverToBoxAdapter(child: _Legend()),
         if (waiting)
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          )
+          SliverToBoxAdapter(child: _skeleton())
         else if (items.isEmpty)
           SliverToBoxAdapter(
             child: AppEmptyState(
@@ -345,24 +342,123 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
             ),
           )
         else
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(3, 2, 3, 24),
-            sliver: SliverGrid.builder(
-              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: context.isWideLayout ? 170 : 128,
-                mainAxisSpacing: 3,
-                crossAxisSpacing: 3,
-              ),
-              itemCount: items.length,
-              itemBuilder: (context, i) => switch (items[i]) {
-                _Local(:final asset) => _localTile(asset, backed, uploads),
-                _Remote(:final object) => _remoteTile(object),
-              },
-            ),
+          SliverLayoutBuilder(
+            builder: (context, c) {
+              // The same grid as the Send tab's gallery: about 104 wide,
+              // at least four across, 2 apart, grouped by day.
+              final columns = (c.crossAxisExtent / 104).floor().clamp(4, 10);
+              final tile = (c.crossAxisExtent - (columns - 1) * 2) / columns;
+              final lines = _lines(items, columns, context);
+              return SliverPadding(
+                padding: const EdgeInsets.only(bottom: 120),
+                sliver: SliverList.builder(
+                  itemCount: lines.length,
+                  itemBuilder: (context, i) => switch (lines[i]) {
+                    _DayLine(:final label) => Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        16,
+                        16,
+                        16,
+                        8,
+                      ),
+                      child: Text(
+                        label,
+                        style: AppType.label.copyWith(
+                          fontSize: 14,
+                          color: context.tokens.text,
+                        ),
+                      ),
+                    ),
+                    _TileLine(:final row) => Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Row(
+                        children: [
+                          for (var k = 0; k < columns; k++) ...[
+                            if (k > 0) const SizedBox(width: 2),
+                            SizedBox(
+                              width: tile,
+                              height: tile,
+                              child: k < row.length
+                                  ? switch (row[k]) {
+                                      _Local(:final asset) => _localTile(
+                                        asset,
+                                        backed,
+                                        uploads,
+                                      ),
+                                      _Remote(:final object) => _remoteTile(
+                                        object,
+                                      ),
+                                    }
+                                  : null,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  },
+                ),
+              );
+            },
           ),
       ],
     );
   }
+
+  /// Day headings and rows of [columns] tiles, newest first.
+  List<_Line> _lines(List<_Item> items, int columns, BuildContext context) {
+    final locale = context.locale.toLanguageTag();
+    final lines = <_Line>[];
+    var i = 0;
+    while (i < items.length) {
+      final day = DateTime.fromMillisecondsSinceEpoch(items[i].at);
+      var j = i;
+      while (j < items.length &&
+          _sameDay(DateTime.fromMillisecondsSinceEpoch(items[j].at), day)) {
+        j++;
+      }
+      lines.add(_DayLine(dayLabel(day, locale)));
+      for (var k = i; k < j; k += columns) {
+        lines.add(_TileLine(items.sublist(k, (k + columns).clamp(0, j))));
+      }
+      i = j;
+    }
+    return lines;
+  }
+
+  static bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Any photo on screen not safe in the Drive yet: the legend shows.
+  bool _hasUnsafe(
+    List<_Item> items,
+    Set<String> backed,
+    Map<String, String> uploads,
+  ) => items.any(
+    (it) =>
+        it is _Local &&
+        VaultPhotoBackup.stateOf(it.asset.id, backed, uploads) !=
+            PhotoBackupState.backedUp,
+  );
+
+  Widget _skeleton() => AppShimmer(
+    child: LayoutBuilder(
+      builder: (context, c) {
+        final columns = (c.maxWidth / 104).floor().clamp(4, 10);
+        final tile = (c.maxWidth - (columns - 1) * 2) / columns;
+        return Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Wrap(
+            spacing: 2,
+            runSpacing: 2,
+            children: [
+              for (var i = 0; i < columns * 5; i++)
+                AppSkeletonBox(width: tile, height: tile),
+            ],
+          ),
+        );
+      },
+    ),
+  );
 
   Widget _localTile(
     PhotoAsset a,
@@ -379,7 +475,10 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
       selecting: selecting,
       onTap: () => selecting ? _toggle(a) : unawaited(_view(a)),
       onLongPress: () => _toggle(a),
-      badge: PhotoBackupBadge(state: state),
+      // Only what is not safe yet carries a mark (redesign-plan.md 6.2).
+      badge: state == PhotoBackupState.backedUp
+          ? null
+          : PhotoBackupBadge(state: state),
       label: photoBackupStateLabel(state),
     );
   }
@@ -404,8 +503,50 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
         if (_selected.isEmpty) widget.onOpen(o);
       },
       onLongPress: () => widget.onMore(o),
-      badge: const PhotoBackupBadge(state: PhotoBackupState.backedUp),
       label: o.name,
+    );
+  }
+}
+
+/// One line of the gallery: a day heading or a row of tiles.
+sealed class _Line {}
+
+final class _DayLine extends _Line {
+  _DayLine(this.label);
+  final String label;
+}
+
+final class _TileLine extends _Line {
+  _TileLine(this.row);
+  final List<_Item> row;
+}
+
+/// What the marks on the tiles mean (shown while some are not safe yet).
+class _Legend extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    Widget item(PhotoBackupState s) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Transform.scale(scale: 0.85, child: PhotoBackupBadge(state: s)),
+        const SizedBox(width: 6),
+        Text(
+          photoBackupStateLabel(s),
+          style: AppType.secondary.copyWith(color: t.text2),
+        ),
+      ],
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 4),
+      child: Wrap(
+        spacing: 16,
+        runSpacing: 6,
+        children: [
+          item(PhotoBackupState.notBackedUp),
+          item(PhotoBackupState.failed),
+        ],
+      ),
     );
   }
 }

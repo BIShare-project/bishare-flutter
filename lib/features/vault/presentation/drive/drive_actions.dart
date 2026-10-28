@@ -655,9 +655,8 @@ class DriveActions {
     if (link != null && context.mounted) await _showLink(link);
   }
 
-  String _lifetime(int days) => days == 0
-      ? 'vault.link_forever'.tr()
-      : 'vault.link_days'.plural(days);
+  String _lifetime(int days) =>
+      days == 0 ? 'vault.link_forever'.tr() : 'vault.link_days'.plural(days);
 
   /// When [l] stops opening, in the app's language.
   String _ends(VaultLink l) => l.expiresAt == null

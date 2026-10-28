@@ -1246,7 +1246,12 @@
     "remind_free_title": "Votre Drive gratuit n’est pas utilisé",
     "remind_channel": "Rappels concernant votre forfait Drive",
     "remind_free_body": "Un Drive gratuit qu’aucun appareil n’ouvre pendant 12 mois est supprimé. Ouvrez BIShare avant le {date} pour le garder.",
-    "error_snap_keyring": "BIShare n’a pas pu accéder au trousseau de cet ordinateur, où Drive garde sa clé. Autorisez-le une fois en lançant ceci dans un terminal, puis réessayez :"
+    "error_snap_keyring": "BIShare n’a pas pu accéder au trousseau de cet ordinateur, où Drive garde sa clé. Autorisez-le une fois en lançant ceci dans un terminal, puis réessayez :",
+    "tab_photos": "Photos",
+    "tab_files": "Fichiers",
+    "kind_all": "Tout",
+    "list_view": "Affichage en liste",
+    "grid_view": "Affichage en grille"
   },
   "compose": {
     "visible": "Visible",

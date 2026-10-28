@@ -46,7 +46,8 @@ class DrivePage extends StatefulWidget {
   State<DrivePage> createState() => _DrivePageState();
 }
 
-class _DrivePageState extends State<DrivePage> {
+class _DrivePageState extends State<DrivePage>
+    with SingleTickerProviderStateMixin {
   final VaultAccount _account = getIt<VaultAccount>();
   final VaultDao _dao = getIt<AppDatabase>().vaultDao;
   final VaultSync _sync = getIt<VaultSync>();
@@ -103,9 +104,33 @@ class _DrivePageState extends State<DrivePage> {
   /// The storage line follows uploads (VaultAccount.followUsage).
   StreamSubscription<Object?>? _usage;
 
+  /// The four tabs of a phone (redesign-plan.md 6.1): Photos, Files,
+  /// Recent, Trash. Documents and Audio are chips inside Files.
+  static const _tabViews = [
+    DriveView.media,
+    DriveView.files,
+    DriveView.recent,
+    DriveView.trash,
+  ];
+
+  static int _tabOf(DriveView v) => switch (v) {
+    DriveView.media => 0,
+    DriveView.files || DriveView.documents || DriveView.audio => 1,
+    DriveView.recent => 2,
+    DriveView.trash => 3,
+  };
+
+  late final TabController _tabs = TabController(
+    length: _tabViews.length,
+    vsync: this,
+    initialIndex: _tabOf(_ctrl.view),
+  );
+
   @override
   void initState() {
     super.initState();
+    // A phone opens on its photos, as the redesign's Drive does.
+    if (_library) _ctrl.setView(DriveView.media);
     _account.addListener(_onAccount);
     unawaited(_account.load().then((_) => _onAccount()));
     _usage = _account.followUsage();
@@ -133,6 +158,7 @@ class _DrivePageState extends State<DrivePage> {
     _ctrl
       ..removeListener(_onCtrl)
       ..dispose();
+    _tabs.dispose();
     _searchFocus.removeListener(_onSearchFocus);
     _search.dispose();
     _searchFocus.dispose();
@@ -142,6 +168,8 @@ class _DrivePageState extends State<DrivePage> {
 
   void _onCtrl() {
     if (_search.text != _ctrl.query) _search.text = _ctrl.query;
+    final tab = _tabOf(_ctrl.view);
+    if (_tabs.index != tab) _tabs.animateTo(tab);
     final ids = [for (final o in _ctrl.path) o.id];
     final key = ids.join('/');
     if (key != _pathKey) {
@@ -179,6 +207,10 @@ class _DrivePageState extends State<DrivePage> {
     _started = status;
     // Signed out, or another account: nothing of the old path or selection.
     if (status != VaultStatus.ready) _ctrl.reset();
+    // Ready on a phone: open on its photos, as the redesign's Drive does.
+    if (status == VaultStatus.ready && _library) {
+      _ctrl.setView(DriveView.media);
+    }
     if (mounted) setState(() {});
     if (status != VaultStatus.ready) return;
     unawaited(_sync.start());
@@ -615,25 +647,104 @@ class _DrivePageState extends State<DrivePage> {
   }
 
   Widget _narrow(ShadColorScheme cs) {
+    final tab = _tabOf(_ctrl.view);
     return Column(
       children: [
-        AppScreenHeader(
-          title: _title,
-          subtitle: _subtitle,
-          onBack: _ctrl.selecting || _ctrl.path.isNotEmpty || _ctrl.searching
-              ? () => _ctrl.up()
-              : null,
-          actions: _headerActions(wide: false),
-        ),
+        if (_ctrl.selecting)
+          AppScreenHeader(
+            title: _title,
+            onBack: _ctrl.clearSelection,
+            actions: _headerActions(wide: false),
+          )
+        else
+          _phoneHeader(),
         if (!_ctrl.selecting && _ctrl.path.isEmpty) ?widget.segment,
-        if (!_ctrl.selecting) DriveViewChips(ctrl: _ctrl),
-        if (!_phoneGallery) ...[
-          DriveToolbar(ctrl: _ctrl, search: _search, searchFocus: _searchFocus),
-          DriveBreadcrumb(ctrl: _ctrl),
-        ],
+        if (!_ctrl.selecting)
+          SizedBox(
+            width: double.infinity,
+            child: AppTabBar(
+              controller: _tabs,
+              tabs: [
+                AppTab('vault.tab_photos'.tr()),
+                AppTab('vault.tab_files'.tr()),
+                AppTab(driveViewLabel(DriveView.recent)),
+                AppTab(driveViewLabel(DriveView.trash)),
+              ],
+              onTap: (i) => _ctrl.setView(_tabViews[i]),
+            ),
+          ),
+        if (!_phoneGallery)
+          DriveToolbar(
+            ctrl: _ctrl,
+            search: _search,
+            searchFocus: _searchFocus,
+            trailing: [
+              if (tab == 1 && !_ctrl.selecting)
+                AppIconButton(
+                  icon: AppIcons.squareCheck,
+                  tooltip: 'compose.select'.tr(),
+                  onPressed: () {
+                    if (_visible.isNotEmpty) _ctrl.toggle(_visible.first.id);
+                  },
+                ),
+            ],
+          ),
+        if (tab == 1 && _ctrl.path.isEmpty && !_ctrl.searching)
+          DriveKindChips(ctrl: _ctrl),
+        DriveBreadcrumb(ctrl: _ctrl),
         Expanded(child: _queueAndContent()),
         if (_ctrl.selecting) DriveSelectionBar(actions: _selectionActions()),
       ],
+    );
+  }
+
+  /// "Drive" with Upload, Account and the page menu; under it, across the
+  /// whole width, the quota meter (it opens the account).
+  Widget _phoneHeader() {
+    final t = context.tokens;
+    final used = _account.usedBytes;
+    final quota = _account.quotaBytes;
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(18, 8, 8, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    'vault.drive'.tr(),
+                    style: AppType.title.copyWith(color: t.text),
+                  ),
+                ),
+              ),
+              AppIconButton(
+                icon: AppIcons.uploadFile,
+                tooltip: 'vault.upload'.tr(),
+                onPressed: () => _act.addMenu(),
+              ),
+              AppIconButton(
+                icon: AppIcons.user,
+                tooltip: 'vault.account_title'.tr(),
+                onPressed: () => context.push('/drive-account'),
+              ),
+              AppIconButton(
+                icon: AppIcons.moreMenu,
+                tooltip: 'inbox.more'.tr(),
+                onPressed: _pageMenu,
+              ),
+            ],
+          ),
+          if (used != null && quota != null && quota > 0)
+            DriveQuotaLine(
+              used: used,
+              quota: quota,
+              onTap: () => context.push('/drive-account'),
+            ),
+        ],
+      ),
     );
   }
 
@@ -662,7 +773,6 @@ class _DrivePageState extends State<DrivePage> {
                     AppScreenHeader(
                       title: _title,
                       subtitle: _subtitle,
-                      onBack: _ctrl.path.isNotEmpty ? () => _ctrl.up() : null,
                       actions: [
                         if (_ctrl.canAdd && !_ctrl.selecting) ...[
                           ShadButton.outline(
@@ -849,42 +959,21 @@ class _DrivePageState extends State<DrivePage> {
         : row;
   }
 
+  /// Flat rows, as in the Inbox: a hairline between them past the thumb.
   Widget _list(List<VaultObject> items, Map<String?, int> counts) {
-    final cs = ShadTheme.of(context).colorScheme;
-    final line = BorderSide(color: cs.border.withValues(alpha: 0.35));
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 28),
-          // One rounded card behind the whole list, so rows stay lazy.
-          sliver: DecoratedSliver(
-            decoration: BoxDecoration(
-              color: cs.card,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: cs.border.withValues(alpha: 0.8)),
-            ),
-            sliver: SliverList.builder(
-              itemCount: items.length,
-              itemBuilder: (context, i) {
-                final last = i == items.length - 1;
-                Widget row = DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: last ? null : Border(bottom: line),
-                  ),
-                  child: _row(items[i], counts),
-                );
-                if (i == 0 || last) {
-                  row = ClipRRect(
-                    borderRadius: BorderRadius.vertical(
-                      top: i == 0 ? const Radius.circular(16) : Radius.zero,
-                      bottom: last ? const Radius.circular(16) : Radius.zero,
-                    ),
-                    child: row,
-                  );
-                }
-                return row;
-              },
+          padding: const EdgeInsets.only(top: 2, bottom: 120),
+          sliver: SliverList.builder(
+            itemCount: items.length,
+            itemBuilder: (context, i) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (i > 0) const AppRowDivider(indent: 70),
+                _row(items[i], counts),
+              ],
             ),
           ),
         ),

@@ -1246,7 +1246,12 @@
     "remind_free_title": "Drive gratis Anda belum dipakai",
     "remind_channel": "Pengingat tentang paket Drive Anda",
     "remind_free_body": "Drive gratis yang tidak dibuka perangkat mana pun selama 12 bulan akan dihapus. Buka BIShare sebelum {date} untuk menyimpannya.",
-    "error_snap_keyring": "BIShare tidak bisa menjangkau keyring komputer ini, tempat Drive menyimpan kuncinya. Izinkan sekali dengan menjalankan perintah ini di terminal, lalu coba lagi:"
+    "error_snap_keyring": "BIShare tidak bisa menjangkau keyring komputer ini, tempat Drive menyimpan kuncinya. Izinkan sekali dengan menjalankan perintah ini di terminal, lalu coba lagi:",
+    "tab_photos": "Foto",
+    "tab_files": "File",
+    "kind_all": "Semua",
+    "list_view": "Tampilan daftar",
+    "grid_view": "Tampilan grid"
   },
   "compose": {
     "visible": "Terlihat",

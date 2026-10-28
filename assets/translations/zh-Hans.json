@@ -1246,7 +1246,12 @@
     "remind_free_title": "你的免费 Drive 尚未使用",
     "remind_channel": "关于你的 Drive 套餐的提醒",
     "remind_free_body": "12 个月内没有任何设备打开的免费 Drive 会被删除。请在 {date} 之前打开 BIShare 以保留它。",
-    "error_snap_keyring": "BIShare 无法访问这台电脑的密钥环，Drive 的密钥保存在那里。请在终端中运行以下命令授权一次，然后重试："
+    "error_snap_keyring": "BIShare 无法访问这台电脑的密钥环，Drive 的密钥保存在那里。请在终端中运行以下命令授权一次，然后重试：",
+    "tab_photos": "照片",
+    "tab_files": "文件",
+    "kind_all": "全部",
+    "list_view": "列表视图",
+    "grid_view": "网格视图"
   },
   "compose": {
     "visible": "可被发现",

@@ -1246,7 +1246,12 @@
     "remind_free_title": "你的免費 Drive 尚未使用",
     "remind_channel": "關於你的 Drive 方案的提醒",
     "remind_free_body": "12 個月內沒有任何裝置開啟的免費 Drive 會被刪除。請在 {date} 之前開啟 BIShare 以保留它。",
-    "error_snap_keyring": "BIShare 無法存取這台電腦的金鑰圈，Drive 的金鑰保存在那裡。請在終端機中執行以下指令授權一次，然後再試一次："
+    "error_snap_keyring": "BIShare 無法存取這台電腦的金鑰圈，Drive 的金鑰保存在那裡。請在終端機中執行以下指令授權一次，然後再試一次：",
+    "tab_photos": "照片",
+    "tab_files": "檔案",
+    "kind_all": "全部",
+    "list_view": "列表檢視",
+    "grid_view": "格狀檢視"
   },
   "compose": {
     "visible": "可被發現",
