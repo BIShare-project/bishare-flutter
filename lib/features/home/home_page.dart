@@ -5,7 +5,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../core/desktop/desktop_service.dart';
 import '../../core/ui/app_showcase.dart';
@@ -34,9 +33,9 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: t.bg,
       body: DropTarget(
         // Desktop drag-drop: dropped files/folders join the staging tray.
         // Only while Home is on screen: the tabs share one window, and a
@@ -137,11 +136,11 @@ class HomePage extends StatelessWidget {
   ) async {
     final controller = TextEditingController();
     final cubit = context.read<SendCubit>();
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final pin = await showAppSheet<String>(
       context,
       icon: AppIcons.passwordLock,
-      iconColor: message.isNotEmpty ? cs.destructive : null,
+      iconColor: message.isNotEmpty ? t.danger : null,
       title: 'home.pin_required'.tr(),
       subtitle: message.isNotEmpty
           ? message

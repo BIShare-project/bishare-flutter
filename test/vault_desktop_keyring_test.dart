@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 class _Account extends Mock implements VaultAccount {}
 
@@ -69,7 +68,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(900, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
-      const ShadApp(home: Scaffold(body: VaultDesktopPairingPanel())),
+      const MaterialApp(home: Scaffold(body: VaultDesktopPairingPanel())),
     );
     await tester.pumpAndSettle();
   }

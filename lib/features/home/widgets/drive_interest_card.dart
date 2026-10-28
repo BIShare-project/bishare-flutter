@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/config/feature_flags.dart';
@@ -120,14 +119,14 @@ class _DriveInterestCardState extends State<DriveInterestCard> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
 
     if (_thanks) {
       return AppCard(
         child: Text(
           'interest.thanks'.tr(),
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+          style: TextStyle(fontSize: 13, color: t.text2),
         ),
       );
     }
@@ -151,17 +150,14 @@ class _DriveInterestCardState extends State<DriveInterestCard> {
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.8,
-                    color: cs.mutedForeground,
+                    color: t.text2,
                   ),
                 ),
               ),
               Semantics(
                 label: 'interest.close'.tr(),
                 button: true,
-                child: ShadIconButton.ghost(
-                  icon: AppSvgIcon(AppIcons.close, size: 18, color: cs.mutedForeground),
-                  onPressed: () => _answer('dismiss'),
-                ),
+                child: AppIconButton(icon: AppIcons.close, onPressed: () => _answer('dismiss'),),
               ),
             ],
           ),
@@ -175,13 +171,13 @@ class _DriveInterestCardState extends State<DriveInterestCard> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: cs.foreground,
+                    color: t.text,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'interest.body'.tr(),
-                  style: TextStyle(fontSize: 13, height: 1.4, color: cs.mutedForeground),
+                  style: TextStyle(fontSize: 13, height: 1.4, color: t.text2),
                 ),
                 const SizedBox(height: 12),
                 Wrap(

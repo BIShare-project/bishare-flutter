@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../core/storage/app_database.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../discovery/domain/discovered_device.dart';
@@ -15,7 +14,7 @@ class DeviceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return BlocBuilder<FavoritesCubit, Map<String, FavoriteDevice>>(
       builder: (context, favs) {
         final fav = favs[device.fingerprint];
@@ -78,14 +77,14 @@ class DeviceRow extends StatelessWidget {
                     size: 20,
                     color: fav != null
                         ? kAmber
-                        : cs.mutedForeground.withValues(alpha: 0.5),
+                        : t.text2.withValues(alpha: 0.5),
                   ),
                 ),
               ),
               AppSvgIcon(
                 AppIcons.chevronRight,
                 size: 18,
-                color: cs.mutedForeground.withValues(alpha: 0.6),
+                color: t.text2.withValues(alpha: 0.6),
               ),
             ],
           ),
@@ -124,12 +123,7 @@ class DeviceRow extends StatelessWidget {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ShadInput(
-              controller: controller,
-              autofocus: true,
-              placeholder: Text('home.message_optional'.tr()),
-              onSubmitted: (_) => submit(),
-            ),
+            AppTextField(controller: controller, autofocus: true, hint: 'home.message_optional'.tr(), onSubmitted: (_) => submit(),),
             const SizedBox(height: 14),
             AppButton(
               label: 'home.send_request'.tr(),
@@ -230,12 +224,7 @@ class DeviceRow extends StatelessWidget {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ShadInput(
-              controller: controller,
-              autofocus: true,
-              placeholder: Text('home.device_name'.tr()),
-              onSubmitted: (_) => submit(),
-            ),
+            AppTextField(controller: controller, autofocus: true, hint: 'home.device_name'.tr(), onSubmitted: (_) => submit(),),
             const SizedBox(height: 14),
             AppButton(
               label: 'home.save'.tr(),

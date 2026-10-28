@@ -391,7 +391,7 @@ class SettingsPage extends StatelessWidget {
         );
       },
     );
-    controller.dispose();
+    disposeAfterSheet(controller);
     if (name != null && name.trim().isNotEmpty) await cubit.setAlias(name);
   }
 
@@ -449,7 +449,7 @@ class SettingsPage extends StatelessWidget {
         },
       ),
     );
-    controller.dispose();
+    disposeAfterSheet(controller);
     if (code != null && code.isNotEmpty) {
       await cubit.setPin(enabled: true, code: code);
     }

@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/ui/app_ui.dart';
 import '../../send/domain/sendable_file.dart';
@@ -18,7 +17,7 @@ class TrayChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final isImage = file.mimeType.startsWith('image/');
     return GestureDetector(
       onTap: () {
@@ -29,9 +28,9 @@ class TrayChip extends StatelessWidget {
         width: 138,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: cs.muted,
+          color: t.sunken,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cs.border.withValues(alpha: 0.7)),
+          border: Border.all(color: t.line.withValues(alpha: 0.7)),
         ),
         child: Row(
           children: [
@@ -45,13 +44,13 @@ class TrayChip extends StatelessWidget {
                         File(file.path),
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) =>
-                            AppSvgIcon(AppIcons.image, color: cs.mutedForeground),
+                            AppSvgIcon(AppIcons.image, color: t.text2),
                       ),
                     )
                   : AppSvgIcon(
                       fileIcon(file.mimeType),
                       size: 22,
-                      color: cs.mutedForeground,
+                      color: t.text2,
                     ),
             ),
             const SizedBox(width: 8),
@@ -60,7 +59,7 @@ class TrayChip extends StatelessWidget {
                 file.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12.5, color: cs.foreground),
+                style: TextStyle(fontSize: 12.5, color: t.text),
               ),
             ),
             GestureDetector(
@@ -68,7 +67,7 @@ class TrayChip extends StatelessWidget {
                 tapHaptic();
                 onRemove();
               },
-              child: AppSvgIcon(AppIcons.close, size: 16, color: cs.mutedForeground),
+              child: AppSvgIcon(AppIcons.close, size: 16, color: t.text2),
             ),
           ],
         ),

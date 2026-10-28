@@ -106,7 +106,7 @@ class AppSheetAction extends StatelessWidget {
         : selected
         ? t.accent
         : t.text2;
-    // Transparent Material so the InkWell has a Material ancestor under ShadApp
+    // Transparent Material so the InkWell has a Material ancestor in a sheet
     // (a bare InkWell throws Material.of on desktop hover).
     return Material(
       type: MaterialType.transparency,
@@ -497,4 +497,13 @@ Future<bool> showAppConfirm(
     ),
   );
   return yes ?? false;
+}
+
+/// Disposes a sheet's text [controller] once the sheet has finished closing:
+/// its field still reads the controller during the exit animation.
+void disposeAfterSheet(ChangeNotifier controller) {
+  Future<void>.delayed(
+    const Duration(milliseconds: 500),
+    controller.dispose,
+  );
 }

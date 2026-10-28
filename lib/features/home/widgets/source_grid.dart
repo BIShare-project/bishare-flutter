@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/apps/installed_apps_channel.dart';
 import '../../../core/ui/app_ui.dart';
@@ -125,12 +124,7 @@ Future<void> _textNote(BuildContext context, TrayCubit tray) async {
     builder: (ctx) => Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ShadInput(
-          controller: controller,
-          autofocus: true,
-          maxLines: 4,
-          placeholder: Text('home.type_something'.tr()),
-        ),
+        AppTextField(controller: controller, autofocus: true, maxLines: 4, hint: 'home.type_something'.tr(),),
         const SizedBox(height: 14),
         AppButton(
           label: 'home.add'.tr(),

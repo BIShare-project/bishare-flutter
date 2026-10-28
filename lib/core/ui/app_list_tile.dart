@@ -31,7 +31,7 @@ class AppListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
-    // ShadApp provides no Material ancestor, so a bare InkWell throws
+    // Sheets and dialogs provide no Material ancestor, so a bare InkWell throws
     // `Material.of` on mouse hover (desktop). A transparent Material gives it
     // the ancestor it needs without changing the visuals.
     return Material(

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/di/locator.dart';
 import '../../../../core/storage/app_database.dart';
@@ -46,9 +45,9 @@ class _DriveStoragePageState extends State<DriveStoragePage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: t.bg,
       body: SafeArea(
         child: AppResponsivePane(
           maxWidth: 720,
@@ -116,7 +115,7 @@ class _DriveStoragePageState extends State<DriveStoragePage> {
                                       trailing: Text(
                                         decimalBytes(by[k] ?? 0),
                                         style: TextStyle(
-                                          color: cs.mutedForeground,
+                                          color: t.text2,
                                         ),
                                       ),
                                     ),
@@ -133,9 +132,7 @@ class _DriveStoragePageState extends State<DriveStoragePage> {
                                     'folders': '$folders',
                                   },
                                 ),
-                                style: ShadTheme.of(
-                                  context,
-                                ).textTheme.muted.copyWith(fontSize: 12),
+                                style: AppType.secondary.copyWith(color: context.tokens.text2).copyWith(fontSize: 12),
                               ),
                             ),
                           ],

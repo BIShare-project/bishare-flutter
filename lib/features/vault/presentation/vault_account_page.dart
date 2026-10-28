@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/clipboard/clipboard_channel.dart';
@@ -159,27 +158,19 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
           Text(
             'vault.phrase_store_hint'.tr(),
             textAlign: TextAlign.center,
-            style: ShadTheme.of(ctx).textTheme.muted.copyWith(fontSize: 12),
+            style: AppType.secondary.copyWith(color: ctx.tokens.text2).copyWith(fontSize: 12),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
               if (_canCopyPhrase) ...[
                 Expanded(
-                  child: ShadButton.outline(
-                    onPressed: () => _copyPhrase(phrase),
-                    leading: const AppSvgIcon(AppIcons.copyDuplicate, size: 15),
-                    child: Text('vault.phrase_copy'.tr()),
-                  ),
+                  child: AppButton(label: 'vault.phrase_copy'.tr(), icon: AppIcons.copyDuplicate, variant: AppButtonVariant.outline, onPressed: () => _copyPhrase(phrase),),
                 ),
                 const SizedBox(width: 8),
               ],
               Expanded(
-                child: ShadButton.outline(
-                  onPressed: () => _savePhrase(phrase),
-                  leading: const AppSvgIcon(AppIcons.downloadFile, size: 15),
-                  child: Text('vault.phrase_save'.tr()),
-                ),
+                child: AppButton(label: 'vault.phrase_save'.tr(), icon: AppIcons.downloadFile, variant: AppButtonVariant.outline, onPressed: () => _savePhrase(phrase),),
               ),
             ],
           ),
@@ -317,27 +308,16 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ShadInput(
-            controller: controller,
-            autofocus: true,
-            minLines: 3,
-            maxLines: 5,
-            autocorrect: false,
-            enableSuggestions: false,
-            placeholder: Text('vault.enter_phrase_hint'.tr()),
-          ),
+          AppTextField(controller: controller, autofocus: true, minLines: 3, maxLines: 5, autocorrect: false, enableSuggestions: false, hint: 'vault.enter_phrase_hint'.tr(),),
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            child: ShadButton(
-              onPressed: () => Navigator.pop(ctx, controller.text),
-              child: Text('vault.continue'.tr()),
-            ),
+            child: AppButton(label: 'vault.continue'.tr(), onPressed: () => Navigator.pop(ctx, controller.text),),
           ),
         ],
       ),
     );
-    controller.dispose();
+    disposeAfterSheet(controller);
     if (phrase == null || phrase.trim().isEmpty) return;
     await _run(() async {
       await _account.acceptPhrase(phrase);
@@ -436,31 +416,19 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
       builder: (ctx) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ShadInput(
-            controller: controller,
-            autofocus: true,
-            autocorrect: false,
-            enableSuggestions: false,
-            textCapitalization: TextCapitalization.characters,
-            style: const TextStyle(
+          AppTextField(controller: controller, autofocus: true, autocorrect: false, enableSuggestions: false, textCapitalization: TextCapitalization.characters, style: const TextStyle(
               letterSpacing: 2,
               fontWeight: FontWeight.w600,
-            ),
-            placeholder: Text('vault.web_type_hint'.tr()),
-            onSubmitted: (v) => Navigator.pop(ctx, v),
-          ),
+            ), hint: 'vault.web_type_hint'.tr(), onSubmitted: (v) => Navigator.pop(ctx, v),),
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            child: ShadButton(
-              onPressed: () => Navigator.pop(ctx, controller.text),
-              child: Text('vault.continue'.tr()),
-            ),
+            child: AppButton(label: 'vault.continue'.tr(), onPressed: () => Navigator.pop(ctx, controller.text),),
           ),
         ],
       ),
     );
-    controller.dispose();
+    disposeAfterSheet(controller);
     if (typed == null || typed.trim().isEmpty || !mounted) return;
     await _openWebWith(() => _account.browserFromCode(typed));
   }
@@ -471,7 +439,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     await _run(() async => browser = await find());
     final b = browser;
     if (b == null || !mounted) return;
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final ok = await showAppSheet<bool>(
       context,
       icon: b.desktop ? AppIcons.monitor : AppIcons.globePublic,
@@ -490,7 +458,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
                     ? 'vault.approve_kind_computer'
                     : 'vault.approve_kind_browser')
                 .tr(),
-            style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+            style: TextStyle(fontSize: 13, color: t.text2),
           ),
           const SizedBox(height: 2),
           Text(
@@ -500,7 +468,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
           const SizedBox(height: 12),
           Text(
             'vault.web_approve_check'.tr(),
-            style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+            style: TextStyle(fontSize: 13, color: t.text2),
           ),
           const SizedBox(height: 4),
           Text(
@@ -521,7 +489,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
             style: TextStyle(
               fontSize: 13,
               height: 1.4,
-              color: cs.mutedForeground,
+              color: t.text2,
             ),
           ),
           const SizedBox(height: 16),
@@ -632,26 +600,17 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ShadInput(
-              controller: controller,
-              autofocus: true,
-              maxLength: 100,
-              placeholder: Text('vault.name_hint'.tr()),
-              onSubmitted: (_) => submit(),
-            ),
+            AppTextField(controller: controller, autofocus: true, maxLength: 100, hint: 'vault.name_hint'.tr(), onSubmitted: (_) => submit(),),
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
-              child: ShadButton(
-                onPressed: submit,
-                child: Text('vault.rename'.tr()),
-              ),
+              child: AppButton(label: 'vault.rename'.tr(), onPressed: submit,),
             ),
           ],
         );
       },
     );
-    controller.dispose();
+    disposeAfterSheet(controller);
     if (name == null || name.isEmpty || name == d.name) return;
     await _run(() => _account.renameDevice(d.id, name));
     if (mounted) setState(() => _devices = null);
@@ -668,7 +627,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     final provider = await showAppSheet<String>(
       context,
       icon: AppIcons.trashDelete,
-      iconColor: ShadTheme.of(context).colorScheme.destructive,
+      iconColor: context.tokens.danger,
       title: 'vault.remove_device_title'.tr(
         namedArgs: {'name': d.name ?? 'vault.unnamed_device'.tr()},
       ),
@@ -707,7 +666,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     final ok = await showAppSheet<bool>(
       context,
       icon: AppIcons.trashDelete,
-      iconColor: ShadTheme.of(context).colorScheme.destructive,
+      iconColor: context.tokens.danger,
       title: 'vault.remove_device_title'.tr(
         namedArgs: {'name': d.name ?? 'vault.unnamed_device'.tr()},
       ),
@@ -738,11 +697,11 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
 
   /// Windows and Linux: the computer leaves the Drive by itself.
   Future<void> _disconnect() async {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final ok = await showAppSheet<bool>(
       context,
       icon: AppIcons.close,
-      iconColor: cs.destructive,
+      iconColor: t.danger,
       title: 'vault.disconnect_title'.tr(),
       subtitle: 'vault.disconnect_body'.tr(),
       builder: (ctx) => Column(
@@ -779,7 +738,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     final provider = await showAppSheet<String>(
       context,
       icon: AppIcons.trashDelete,
-      iconColor: ShadTheme.of(context).colorScheme.destructive,
+      iconColor: context.tokens.danger,
       title: 'vault.delete_title'.tr(),
       subtitle: providers.isEmpty
           ? 'vault.delete_no_signin'.tr()
@@ -844,7 +803,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     final pick = await showAppSheet<String>(
       context,
       icon: AppIcons.circleAlert,
-      iconColor: ShadTheme.of(context).colorScheme.destructive,
+      iconColor: context.tokens.danger,
       title: 'vault.delete_plan_title'.tr(),
       subtitle: 'vault.delete_plan_body_$store'.tr(),
       builder: (ctx) => Column(
@@ -880,11 +839,11 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
   }
 
   Future<void> _signOut() async {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final ok = await showAppSheet<bool>(
       context,
       icon: AppIcons.close,
-      iconColor: cs.destructive,
+      iconColor: t.danger,
       title: 'vault.sign_out_title'.tr(),
       subtitle: 'vault.sign_out_body'.tr(),
       builder: (ctx) => Column(
@@ -919,9 +878,9 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: t.bg,
       body: SafeArea(
         child: AppResponsivePane(
           maxWidth: 720,
@@ -950,7 +909,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
   }
 
   List<Widget> _sections(BuildContext context) {
-    final muted = ShadTheme.of(context).textTheme.muted.copyWith(fontSize: 12);
+    final muted = AppType.secondary.copyWith(color: context.tokens.text2).copyWith(fontSize: 12);
     final status = _account.status;
     final ready = status == VaultStatus.ready;
     Widget note(String key) => Padding(
@@ -1173,16 +1132,13 @@ class _Buttons extends StatelessWidget {
     children: [
       SizedBox(
         width: double.infinity,
-        child: ShadButton(onPressed: onPrimary, child: Text(primary)),
+        child: AppButton(label: primary, onPressed: onPrimary,),
       ),
       if (secondary != null) ...[
         const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
-          child: ShadButton.outline(
-            onPressed: onSecondary,
-            child: Text(secondary!),
-          ),
+          child: AppButton(label: secondary!, variant: AppButtonVariant.outline, onPressed: onSecondary,),
         ),
       ],
     ],
@@ -1198,7 +1154,7 @@ class _PhraseWords extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
+    
     final half = (words.length / 2).ceil();
     Widget column(int from, int to) => Expanded(
       child: Column(
@@ -1212,13 +1168,13 @@ class _PhraseWords extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: '${i + 1}'.padLeft(2),
-                      style: theme.textTheme.muted.copyWith(
+                      style: AppType.secondary.copyWith(color: context.tokens.text2).copyWith(
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                     TextSpan(
                       text: '  ${words[i]}',
-                      style: theme.textTheme.p.copyWith(
+                      style: AppType.body.copyWith(color: context.tokens.text).copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1321,8 +1277,6 @@ class _Chevron extends StatelessWidget {
   Widget build(BuildContext context) => AppSvgIcon(
     AppIcons.chevronRight,
     size: 18,
-    color: ShadTheme.of(
-      context,
-    ).colorScheme.mutedForeground.withValues(alpha: 0.6),
+    color: context.tokens.text2.withValues(alpha: 0.6),
   );
 }

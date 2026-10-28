@@ -5,15 +5,12 @@ import 'package:bishare/core/ui/app_ui.dart';
 import 'package:bishare/features/home/widgets/transfer_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 Widget _host(Widget child, {required bool dark, required bool rtl}) {
-  return ShadApp(
+  return MaterialApp(
     theme: AppTheme.light('blue'),
     darkTheme: AppTheme.dark('blue'),
     themeMode: dark ? ThemeMode.dark : ThemeMode.light,
-    materialThemeBuilder: (context, theme) =>
-        AppTheme.material(theme, accent: 'blue', receive: 'green'),
     home: Directionality(
       textDirection: rtl ? TextDirection.rtl : TextDirection.ltr,
       child: MediaQuery(

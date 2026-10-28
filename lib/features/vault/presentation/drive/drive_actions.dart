@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gal/gal.dart';
 import 'package:mime/mime.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/config/feature_flags.dart';
@@ -216,22 +215,22 @@ class DriveActions {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ShadInput(
+            AppTextField(
               controller: controller,
               autofocus: true,
-              placeholder: Text('vault.name_hint'.tr()),
+              hint: 'vault.name_hint'.tr(),
               onSubmitted: (_) => submit(),
             ),
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
-              child: ShadButton(onPressed: submit, child: Text(action)),
+              child: AppButton(label: action, onPressed: submit),
             ),
           ],
         );
       },
     );
-    controller.dispose();
+    disposeAfterSheet(controller);
     return name == null || name.isEmpty || name == initial ? null : name;
   }
 
@@ -495,11 +494,11 @@ class DriveActions {
         if (o.trashedAt != null) o,
     ];
     if (items.isEmpty) return;
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final ok = await showAppSheet<bool>(
       context,
       icon: AppIcons.trashDelete,
-      iconColor: cs.destructive,
+      iconColor: t.danger,
       title: all
           ? 'vault.empty_trash_title'.tr()
           : items.length == 1
@@ -586,7 +585,7 @@ class DriveActions {
       if (same > 0)
         ('vault.info_same'.tr(), 'vault.info_same_value'.plural(same)),
     ];
-    final muted = ShadTheme.of(context).textTheme.muted;
+    final muted = AppType.secondary.copyWith(color: context.tokens.text2);
     await showAppSheet<void>(
       context,
       icon: o.kind == 'dir' ? AppIcons.folder : AppIcons.fileDocument,
@@ -642,7 +641,9 @@ class DriveActions {
             const SizedBox(height: 10),
             Text(
               'vault.link_new'.tr(),
-              style: ShadTheme.of(ctx).textTheme.muted.copyWith(fontSize: 12),
+              style: AppType.secondary
+                  .copyWith(color: ctx.tokens.text2)
+                  .copyWith(fontSize: 12),
             ),
             const SizedBox(height: 8),
           ],
@@ -653,17 +654,21 @@ class DriveActions {
               runSpacing: 8,
               children: [
                 for (final v in const [1, 7, 30, 0])
-                  (v == d ? ShadButton.new : ShadButton.outline)(
+                  AppButton(
+                    label: _lifetime(v),
+                    variant: v == d
+                        ? AppButtonVariant.primary
+                        : AppButtonVariant.outline,
+                    size: AppButtonSize.small,
                     onPressed: () => days.value = v,
-                    child: Text(_lifetime(v)),
                   ),
               ],
             ),
           ),
           const SizedBox(height: 14),
-          ShadButton(
+          AppButton(
+            label: 'vault.link_create'.tr(),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('vault.link_create'.tr()),
           ),
         ],
       ),
@@ -746,7 +751,7 @@ class DriveActions {
               child: Text(
                 'vault.link_no_key'.tr(),
                 textAlign: TextAlign.center,
-                style: ShadTheme.of(ctx).textTheme.muted,
+                style: AppType.secondary.copyWith(color: ctx.tokens.text2),
               ),
             ),
           AppSheetAction(
@@ -776,26 +781,26 @@ class DriveActions {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ShadInput(
+            AppTextField(
               controller: controller,
               autofocus: true,
               keyboardType: TextInputType.emailAddress,
-              placeholder: Text('vault.link_email_hint'.tr()),
+              hint: 'vault.link_email_hint'.tr(),
               onSubmitted: (_) => submit(),
             ),
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
-              child: ShadButton(
+              child: AppButton(
+                label: 'vault.link_email_send'.tr(),
                 onPressed: submit,
-                child: Text('vault.link_email_send'.tr()),
               ),
             ),
           ],
         );
       },
     );
-    controller.dispose();
+    disposeAfterSheet(controller);
     if (to == null || to.isEmpty) return;
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(to)) {
       _say('vault.link_email_bad', type: ToastType.error);
@@ -815,11 +820,11 @@ class DriveActions {
 
   /// Turn [link] off after a confirmation; true when it was.
   Future<bool> turnOffLink(VaultLink link) async {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final ok = await showAppSheet<bool>(
       context,
       icon: AppIcons.close,
-      iconColor: cs.destructive,
+      iconColor: t.danger,
       title: 'vault.link_turn_off_title'.tr(),
       subtitle: 'vault.link_turn_off_body'.tr(),
       builder: (ctx) => Column(
@@ -982,7 +987,7 @@ class _FolderPickerState extends State<_FolderPicker> {
 
   @override
   Widget build(BuildContext context) {
-    final muted = ShadTheme.of(context).textTheme.muted;
+    final muted = AppType.secondary.copyWith(color: context.tokens.text2);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1041,21 +1046,22 @@ class _FolderPickerState extends State<_FolderPicker> {
         Row(
           children: [
             Expanded(
-              child: ShadButton.outline(
+              child: AppButton(
+                label: 'vault.new_folder'.tr(),
+                variant: AppButtonVariant.outline,
                 onPressed: () async {
                   final id = await widget.onNewFolder(_here);
                   if (id == null || !mounted) return;
                   final made = await _dao.object(id);
                   if (made != null && mounted) setState(() => _path.add(made));
                 },
-                child: Text('vault.new_folder'.tr()),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: ShadButton(
+              child: AppButton(
+                label: widget.action,
                 onPressed: () => Navigator.pop(context, _here ?? ''),
-                child: Text(widget.action),
               ),
             ),
           ],

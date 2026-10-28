@@ -4,7 +4,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../core/di/locator.dart';
 import '../core/l10n/app_locales.dart';
@@ -28,7 +27,7 @@ import '../features/settings/domain/settings.dart';
 import '../features/settings/presentation/settings_cubit.dart';
 import '../features/web_nearby/presentation/web_nearby_cubit.dart';
 
-/// Root widget. Provides the app-scoped BLoCs, the shadcn-themed [ShadApp]
+/// Root widget. Provides the app-scoped BLoCs, the [MaterialApp] themed from the tokens
 /// (theme + accent driven by [SettingsCubit]), and drives discovery on the app
 /// lifecycle (refresh on resume, announce goodbye on background/terminate).
 class BIShareApp extends StatefulWidget {
@@ -115,7 +114,7 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
               (_) => appLocaleTag.value = tag,
             );
           }
-          return ShadApp.router(
+          return MaterialApp.router(
             title: 'BIShare',
             debugShowCheckedModeBanner: false,
             // easy_localization: delegates + supported locales + active locale.
@@ -131,13 +130,6 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
               receive: settings.receiveAccent,
             ),
             themeMode: settings.themeMode,
-            // IBM Plex Sans, the design tokens and the background for raw
-            // Material widgets too (not just shadcn).
-            materialThemeBuilder: (context, theme) => AppTheme.material(
-              theme,
-              accent: settings.accent,
-              receive: settings.receiveAccent,
-            ),
             routerConfig: appRouter,
             // Status-bar icons follow the app theme (dark icons on the light
             // theme). Full-screen dark pages override this with their own region.

@@ -5,7 +5,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:record/record.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/io/scratch_dir.dart';
@@ -111,7 +110,7 @@ class _VoiceBodyState extends State<_VoiceBody> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     if (_denied) {
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -119,15 +118,12 @@ class _VoiceBodyState extends State<_VoiceBody> {
           Text(
             'send.mic_permission'.tr(),
             textAlign: TextAlign.center,
-            style: TextStyle(color: cs.mutedForeground),
+            style: TextStyle(color: t.text2),
           ),
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            child: ShadButton.outline(
-              onPressed: () => widget.onDone(null),
-              child: Text('send.close'.tr()),
-            ),
+            child: AppButton(label: 'send.close'.tr(), variant: AppButtonVariant.outline, onPressed: () => widget.onDone(null),),
           ),
         ],
       );
@@ -141,30 +137,23 @@ class _VoiceBodyState extends State<_VoiceBody> {
             fontSize: 34,
             fontWeight: FontWeight.w700,
             fontFeatures: const [FontFeature.tabularFigures()],
-            color: cs.foreground,
+            color: t.text,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           _recording ? 'send.recording'.tr() : 'send.starting'.tr(),
-          style: TextStyle(color: cs.mutedForeground),
+          style: TextStyle(color: t.text2),
         ),
         const SizedBox(height: 18),
         Row(
           children: [
             Expanded(
-              child: ShadButton.outline(
-                onPressed: _cancel,
-                child: Text('send.cancel'.tr()),
-              ),
+              child: AppButton(label: 'send.cancel'.tr(), variant: AppButtonVariant.outline, onPressed: _cancel,),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: ShadButton(
-                onPressed: _recording ? _finish : null,
-                leading: const AppSvgIcon(AppIcons.check, size: 18),
-                child: Text('send.stop_and_add'.tr()),
-              ),
+              child: AppButton(label: 'send.stop_and_add'.tr(), icon: AppIcons.check, onPressed: _recording ? _finish : null,),
             ),
           ],
         ),

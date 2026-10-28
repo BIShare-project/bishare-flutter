@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -362,7 +361,7 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final wide = context.isWideLayout;
     // Every tab stays alive (discovery and the receiver never restart on a
     // switch), but only the visible one may tick: a hidden tab's spinners,
@@ -408,7 +407,7 @@ class _MainShellState extends State<MainShell> {
     // variants; only one is ever mounted (wide XOR narrow).
     if (wide) {
       return Scaffold(
-        backgroundColor: cs.background,
+        backgroundColor: t.bg,
         body: Row(
           children: [
             nav(
@@ -424,7 +423,7 @@ class _MainShellState extends State<MainShell> {
       );
     }
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: t.bg,
       body: content,
       bottomNavigationBar: nav(
         (items) => AppBottomNav(

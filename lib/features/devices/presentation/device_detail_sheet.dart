@@ -192,7 +192,7 @@ class _DeviceDetailBodyState extends State<_DeviceDetailBody> {
         );
       },
     );
-    controller.dispose();
+    disposeAfterSheet(controller);
     if (name != null && name.trim().isNotEmpty) {
       await widget.favorites.rename(widget.device.fingerprint, name.trim());
     }

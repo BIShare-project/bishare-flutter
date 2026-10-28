@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../theme/app_tokens.dart';
 import '../theme/app_type.dart';
@@ -50,7 +49,7 @@ class AppSwitchRow extends StatelessWidget {
             ? null
             : Text(subtitle!),
         onTap: onChanged == null ? null : () => onChanged!(!value),
-        trailing: ShadSwitch(value: value, onChanged: onChanged),
+        trailing: AppSwitch(value: value, onChanged: onChanged),
       ),
     );
   }
@@ -179,4 +178,30 @@ class AppSelectRow<T> extends StatelessWidget {
     value: label(value),
     onTap: () => _pick(context),
   );
+}
+
+/// The app's switch: the accent track when on, the sunken colour when off,
+/// a white thumb. Null [onChanged] disables it.
+class AppSwitch extends StatelessWidget {
+  const AppSwitch({super.key, required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return Switch(
+      value: value,
+      onChanged: onChanged,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      activeThumbColor: Colors.white,
+      activeTrackColor: t.accent,
+      inactiveThumbColor: Colors.white,
+      inactiveTrackColor: t.sunken,
+      trackOutlineColor: WidgetStatePropertyAll(
+        value ? Colors.transparent : t.line,
+      ),
+    );
+  }
 }

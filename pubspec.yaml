@@ -75,7 +75,6 @@ dependencies:
   flutter_rust_bridge: 2.13.0
   bishare_ffi:
     path: rust_builder
-  shadcn_ui: ^0.57.3
   archive: ^4.0.9
   image: ^4.8.0
   desktop_drop: ^0.8.4

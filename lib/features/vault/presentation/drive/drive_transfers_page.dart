@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/di/locator.dart';
 import '../../../../core/storage/app_database.dart';
@@ -29,9 +28,9 @@ class _DriveTransfersPageState extends State<DriveTransfersPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: t.bg,
       body: SafeArea(
         child: AppResponsivePane(
           maxWidth: 720,
@@ -135,7 +134,6 @@ class _UploadRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
     final p = uploader.progressOf(t.id);
     final failed = t.state == 'failed';
     final done = t.state == 'done';
@@ -164,7 +162,7 @@ class _UploadRow extends StatelessWidget {
         children: [
           Text(
             done || failed ? status : '$status · ${decimalBytes(t.size)}',
-            style: TextStyle(color: failed ? cs.destructive : null),
+            style: TextStyle(color: failed ? context.tokens.danger : null),
           ),
           if (!done && !failed && p != null)
             Padding(
@@ -186,7 +184,7 @@ class _UploadRow extends StatelessWidget {
                     icon: AppSvgIcon(
                       AppIcons.refreshSync,
                       size: 18,
-                      color: cs.primary,
+                      color: context.tokens.accent,
                     ),
                   ),
                 IconButton(
@@ -195,7 +193,7 @@ class _UploadRow extends StatelessWidget {
                   icon: AppSvgIcon(
                     AppIcons.close,
                     size: 16,
-                    color: cs.mutedForeground,
+                    color: context.tokens.text2,
                   ),
                 ),
               ],
@@ -212,7 +210,6 @@ class _DownloadRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
     final status = switch (job.state) {
       VaultJobState.running =>
         job.isFolder
@@ -236,7 +233,7 @@ class _DownloadRow extends StatelessWidget {
           Text(
             status,
             style: TextStyle(
-              color: job.state == VaultJobState.failed ? cs.destructive : null,
+              color: job.state == VaultJobState.failed ? context.tokens.danger : null,
             ),
           ),
           if (job.state == VaultJobState.running)
@@ -253,7 +250,7 @@ class _DownloadRow extends StatelessWidget {
               icon: AppSvgIcon(
                 AppIcons.close,
                 size: 16,
-                color: cs.mutedForeground,
+                color: context.tokens.text2,
               ),
             )
           : null,

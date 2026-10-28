@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../theme/app_tokens.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'app_svg_icon.dart';
 
@@ -16,14 +17,14 @@ class BiShareQr extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [cs.primary, cs.primary.withValues(alpha: 0.3)],
+          colors: [t.accent, t.accent.withValues(alpha: 0.3)],
         ),
         borderRadius: BorderRadius.circular(24),
       ),
@@ -43,7 +44,7 @@ class BiShareQr extends StatelessWidget {
               errorCorrectionLevel: QrErrorCorrectLevel.H,
               eyeStyle: QrEyeStyle(
                 eyeShape: QrEyeShape.square,
-                color: cs.primary,
+                color: t.accent,
               ),
               dataModuleStyle: const QrDataModuleStyle(
                 dataModuleShape: QrDataModuleShape.square,
@@ -66,8 +67,8 @@ class BiShareQr extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      cs.primary,
-                      Color.lerp(cs.primary, Colors.black, 0.24)!,
+                      t.accent,
+                      Color.lerp(t.accent, Colors.black, 0.24)!,
                     ],
                   ),
                   shape: BoxShape.circle,

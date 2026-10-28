@@ -3,11 +3,14 @@ import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+
+import 'app_button.dart';
+
+import '../theme/app_tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:universal_file_viewer/universal_file_viewer.dart' as ufv;
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
@@ -702,7 +705,7 @@ class _FileInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Column(
@@ -714,14 +717,10 @@ class _FileInfoCard extends StatelessWidget {
               width: 84,
               height: 84,
               decoration: BoxDecoration(
-                color: cs.primary.withValues(alpha: 0.12),
+                color: t.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: AppSvgIcon(
-                fileIcon(mimeType),
-                size: 40,
-                color: cs.primary,
-              ),
+              child: AppSvgIcon(fileIcon(mimeType), size: 40, color: t.accent),
             ),
           ),
           const SizedBox(height: 16),
@@ -733,34 +732,35 @@ class _FileInfoCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w700,
-              color: cs.foreground,
+              color: t.text,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             [_typeLabel, if (size != null) formatBytes(size!)].join('  ·  '),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+            style: TextStyle(fontSize: 13, color: t.text2),
           ),
           const SizedBox(height: 22),
-          ShadButton(
-            size: ShadButtonSize.lg,
-            leading: const AppSvgIcon(AppIcons.externalLink, size: 18),
+          AppButton(
+            label: 'common.open'.tr(),
+            icon: AppIcons.externalLink,
+            size: AppButtonSize.large,
             onPressed: () {
               tapHaptic();
               _open(context, path);
             },
-            child: Text('common.open'.tr()),
           ),
           const SizedBox(height: 10),
-          ShadButton.outline(
-            size: ShadButtonSize.lg,
-            leading: const AppSvgIcon(AppIcons.shareLink, size: 18),
+          AppButton(
+            label: 'common.share'.tr(),
+            icon: AppIcons.shareLink,
+            variant: AppButtonVariant.outline,
+            size: AppButtonSize.large,
             onPressed: () {
               tapHaptic();
               _share(path);
             },
-            child: Text('common.share'.tr()),
           ),
         ],
       ),

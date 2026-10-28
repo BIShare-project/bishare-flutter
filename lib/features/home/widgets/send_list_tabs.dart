@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mime/mime.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/apps/installed_apps_channel.dart';
 import '../../../core/storage/all_files_access.dart';
@@ -800,12 +799,7 @@ Future<void> composeTextNote(BuildContext context) async {
     builder: (ctx) => Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ShadInput(
-          controller: controller,
-          autofocus: true,
-          maxLines: 4,
-          placeholder: Text('home.type_something'.tr()),
-        ),
+        AppTextField(controller: controller, autofocus: true, maxLines: 4, hint: 'home.type_something'.tr(),),
         const SizedBox(height: 14),
         AppButton(
           label: 'home.add'.tr(),

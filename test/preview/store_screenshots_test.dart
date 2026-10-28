@@ -36,6 +36,7 @@ import 'package:bishare/core/l10n/app_locales.dart';
 import 'package:bishare/core/storage/app_database.dart';
 import 'package:bishare/core/storage/vault_tables.dart';
 import 'package:bishare/core/theme/app_theme.dart';
+import 'package:bishare/core/theme/app_tokens.dart';
 import 'package:bishare/core/ui/app_bottom_nav.dart';
 import 'package:bishare/core/ui/app_nav_rail.dart';
 import 'package:bishare/core/ui/app_showcase.dart';
@@ -85,7 +86,6 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image/image.dart' as img;
 import 'package:mocktail/mocktail.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// One store device: logical size, pixel ratio, how it draws, its safe-area
@@ -705,10 +705,10 @@ Widget _shell(BuildContext context, int index, Widget page) {
     AppNavItem(icon: AppIcons.history, label: 'nav.tab_history'.tr()),
     AppNavItem(icon: AppIcons.settings, label: 'nav.tab_settings'.tr()),
   ];
-  final cs = ShadTheme.of(context).colorScheme;
+  final t = context.tokens;
   if (MediaQuery.sizeOf(context).width >= 760) {
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: t.bg,
       body: Row(
         children: [
           AppNavRail(items: items, currentIndex: index, onTap: (_) {}),
@@ -718,7 +718,7 @@ Widget _shell(BuildContext context, int index, Widget page) {
     );
   }
   return Scaffold(
-    backgroundColor: cs.background,
+    backgroundColor: t.bg,
     body: page,
     bottomNavigationBar: AppBottomNav(
       items: items,
@@ -761,17 +761,17 @@ class _ConnectPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: t.bg,
       body: Center(
         child: Container(
           width: 460,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: cs.card,
+            color: t.surface,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: cs.border),
+            border: Border.all(color: t.line),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -792,7 +792,7 @@ class _ConnectPreview extends StatelessWidget {
                   },
                 ),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+                style: TextStyle(fontSize: 13, color: t.text2),
               ),
               const SizedBox(height: 16),
               const VaultDesktopPairingPanel(),
@@ -1022,7 +1022,7 @@ Future<void> _run(
                 BlocProvider<WebNearbyCubit>.value(value: webNearby),
               ],
               child: Builder(
-                builder: (context) => ShadApp.router(
+                builder: (context) => MaterialApp.router(
                   title: 'BIShare',
                   debugShowCheckedModeBanner: false,
                   localizationsDelegates: context.localizationDelegates,
@@ -1031,11 +1031,6 @@ Future<void> _run(
                   theme: AppTheme.light('blue'),
                   darkTheme: AppTheme.dark('blue'),
                   themeMode: _theme,
-                  materialThemeBuilder: (context, theme) => theme.copyWith(
-                    textTheme: theme.textTheme.apply(
-                      fontFamily: AppTheme.fontFamily,
-                    ),
-                  ),
                   routerConfig: router,
                 ),
               ),

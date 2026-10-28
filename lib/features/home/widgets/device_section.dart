@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/ui/app_ui.dart';
 import '../../discovery/domain/discovered_device.dart';
@@ -44,11 +43,7 @@ class DeviceSection extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 4, bottom: 8),
                     child: Center(
-                      child: ShadButton.outline(
-                        onPressed: () => showInviteDeviceSheet(context),
-                        leading: const AppSvgIcon(AppIcons.qrShare, size: 16),
-                        child: Text('home.invite_device'.tr()),
-                      ),
+                      child: AppButton(label: 'home.invite_device'.tr(), icon: AppIcons.qrShare, variant: AppButtonVariant.outline, onPressed: () => showInviteDeviceSheet(context),),
                     ),
                   ),
                   const _OtherWays(),
@@ -100,7 +95,7 @@ class _SeeAllDevicesLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
@@ -117,7 +112,7 @@ class _SeeAllDevicesLink extends StatelessWidget {
             AppSvgIcon(
               AppIcons.chevronRight,
               size: 12,
-              color: cs.mutedForeground,
+              color: t.text2,
             ),
           ],
         ),
@@ -150,7 +145,7 @@ class _OtherWays extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Column(
@@ -164,14 +159,14 @@ class _OtherWays extends StatelessWidget {
                   leading: AppSvgIcon(
                     AppIcons.send,
                     size: 20,
-                    color: cs.primary,
+                    color: t.accent,
                   ),
                   title: Text('home.send_link'.tr()),
                   subtitle: Text('home.send_link_sub'.tr()),
                   trailing: AppSvgIcon(
                     AppIcons.chevronRight,
                     size: 16,
-                    color: cs.mutedForeground,
+                    color: t.text2,
                   ),
                   onTap: () => _sendAsLink(context),
                 ),
@@ -180,14 +175,14 @@ class _OtherWays extends StatelessWidget {
                   leading: AppSvgIcon(
                     AppIcons.globePublic,
                     size: 20,
-                    color: cs.primary,
+                    color: t.accent,
                   ),
                   title: Text('home.use_browser'.tr()),
                   subtitle: Text('home.use_browser_sub'.tr()),
                   trailing: AppSvgIcon(
                     AppIcons.copyDuplicate,
                     size: 16,
-                    color: cs.mutedForeground,
+                    color: t.text2,
                   ),
                   onTap: () => _copyBrowserLink(context),
                 ),

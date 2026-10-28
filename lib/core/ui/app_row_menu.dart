@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
+
+import '../theme/app_tokens.dart';
+import '../theme/app_type.dart';
 
 import 'app_format.dart';
 import 'app_responsive.dart';
@@ -41,28 +43,45 @@ class AppRowMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (context.isWideLayout) {
-      final cs = ShadTheme.of(context).colorScheme;
-      return ShadContextMenuRegion(
-        // A tap opens the row; on a tablet shadcn would pop the menu too.
-        tapEnabled: false,
-        items: [
-          for (final a in actions)
-            ShadContextMenuItem(
-              leading: AppSvgIcon(
-                a.icon,
-                size: 16,
-                color: a.destructive ? cs.destructive : null,
-              ),
-              onPressed: () {
-                tapHaptic();
-                a.onTap();
-              },
-              child: Text(
-                a.label,
-                style: a.destructive ? TextStyle(color: cs.destructive) : null,
-              ),
-            ),
-        ],
+      final t = context.tokens;
+      // Right click opens the actions as a menu at the pointer; a tap
+      // still opens the row.
+      return GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onSecondaryTapUp: (d) async {
+          final o = d.globalPosition;
+          final picked = await showMenu<AppMenuAction>(
+            context: context,
+            color: t.raised,
+            position: RelativeRect.fromLTRB(o.dx, o.dy, o.dx, o.dy),
+            items: [
+              for (final a in actions)
+                PopupMenuItem(
+                  value: a,
+                  height: 40,
+                  child: Row(
+                    children: [
+                      AppSvgIcon(
+                        a.icon,
+                        size: 16,
+                        color: a.destructive ? t.danger : t.text2,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        a.label,
+                        style: AppType.body.copyWith(
+                          color: a.destructive ? t.danger : t.text,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          );
+          if (picked == null) return;
+          tapHaptic();
+          picked.onTap();
+        },
         child: child,
       );
     }

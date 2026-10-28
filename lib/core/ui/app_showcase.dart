@@ -35,12 +35,12 @@ class ShowcaseKeys {
 /// Registers the shell's showcase scope. Call once in the shell's initState
 /// (before the first build mounts any [AppShowcase]); unregister on dispose.
 ShowcaseView registerAppShowcase() => ShowcaseView.register(
-      scope: kShowcaseScope,
-      // Tour lists are fixed; whatever isn't on screen (empty states, an
-      // active room instead of the lobby) is skipped, not crashed on.
-      skipIfTargetNotPresent: true,
-      disableMovingAnimation: true,
-    );
+  scope: kShowcaseScope,
+  // Tour lists are fixed; whatever isn't on screen (empty states, an
+  // active room instead of the lobby) is skipped, not crashed on.
+  skipIfTargetNotPresent: true,
+  disableMovingAnimation: true,
+);
 
 /// A [Showcase] styled for BIShare — dark card tooltip, soft radii. Tap
 /// anywhere to advance.
@@ -75,11 +75,7 @@ class AppShowcase extends StatelessWidget {
         fontWeight: FontWeight.w700,
         color: t.text,
       ),
-      descTextStyle: TextStyle(
-        fontSize: 13,
-        height: 1.35,
-        color: t.text2,
-      ),
+      descTextStyle: TextStyle(fontSize: 13, height: 1.35, color: t.text2),
       tooltipBackgroundColor: t.surface,
       tooltipBorderRadius: BorderRadius.circular(14),
       tooltipPadding: const EdgeInsets.fromLTRB(14, 12, 14, 12),

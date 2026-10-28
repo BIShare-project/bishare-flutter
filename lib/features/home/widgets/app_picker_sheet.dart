@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/apps/installed_apps_channel.dart';
 import '../../../core/ui/app_ui.dart';
@@ -53,15 +52,16 @@ class _AppPickerBodyState extends State<_AppPickerBody> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final apps = _apps;
     final filtered = _filtered;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ShadInput(
-          placeholder: Text('home.apps_search'.tr()),
+        AppSearchField(
+          hint: 'home.apps_search'.tr(),
           onChanged: (v) => setState(() => _query = v),
+          margin: EdgeInsets.zero,
         ),
         const SizedBox(height: 10),
         SizedBox(
@@ -69,19 +69,16 @@ class _AppPickerBodyState extends State<_AppPickerBody> {
           child: apps == null
               ? const Center(child: CircularProgressIndicator())
               : filtered.isEmpty
-                  ? Center(
-                      child: Text(
-                        'home.apps_empty'.tr(),
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: cs.mutedForeground,
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: filtered.length,
-                      itemBuilder: (_, i) => _row(filtered[i]),
-                    ),
+              ? Center(
+                  child: Text(
+                    'home.apps_empty'.tr(),
+                    style: TextStyle(fontSize: 14, color: t.text2),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (_, i) => _row(filtered[i]),
+                ),
         ),
         // Said before sending, not discovered after: the receiving phone's own
         // file manager cannot open a split bundle.
@@ -92,11 +89,7 @@ class _AppPickerBodyState extends State<_AppPickerBody> {
           const SizedBox(height: 10),
           Text(
             'home.apps_split_hint'.tr(),
-            style: TextStyle(
-              fontSize: 12,
-              height: 1.35,
-              color: cs.mutedForeground,
-            ),
+            style: TextStyle(fontSize: 12, height: 1.35, color: t.text2),
           ),
         ],
         const SizedBox(height: 12),
@@ -110,18 +103,18 @@ class _AppPickerBodyState extends State<_AppPickerBody> {
           onPressed: _selected.isEmpty
               ? null
               : () => Navigator.pop(
-                    widget.sheetContext,
-                    _apps!
-                        .where((a) => _selected.contains(a.packageName))
-                        .toList(),
-                  ),
+                  widget.sheetContext,
+                  _apps!
+                      .where((a) => _selected.contains(a.packageName))
+                      .toList(),
+                ),
         ),
       ],
     );
   }
 
   Widget _row(InstalledApp app) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final selected = _selected.contains(app.packageName);
     final meta = [
       if (app.version.isNotEmpty) app.version,
@@ -155,11 +148,11 @@ class _AppPickerBodyState extends State<_AppPickerBody> {
                     : Container(
                         width: 38,
                         height: 38,
-                        color: cs.muted,
+                        color: t.sunken,
                         child: AppSvgIcon(
                           AppIcons.gridView,
                           size: 18,
-                          color: cs.mutedForeground,
+                          color: t.text2,
                         ),
                       ),
               ),
@@ -175,7 +168,7 @@ class _AppPickerBodyState extends State<_AppPickerBody> {
                       style: TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w600,
-                        color: cs.foreground,
+                        color: t.text,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -186,10 +179,7 @@ class _AppPickerBodyState extends State<_AppPickerBody> {
                             meta,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: cs.mutedForeground,
-                            ),
+                            style: TextStyle(fontSize: 12, color: t.text2),
                           ),
                         ),
                         if (app.isSplit) ...[
@@ -207,9 +197,9 @@ class _AppPickerBodyState extends State<_AppPickerBody> {
                 height: 22,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: selected ? cs.primary : Colors.transparent,
+                  color: selected ? t.accent : Colors.transparent,
                   border: Border.all(
-                    color: selected ? cs.primary : cs.border,
+                    color: selected ? t.accent : t.line,
                     width: 1.4,
                   ),
                 ),
@@ -218,7 +208,7 @@ class _AppPickerBodyState extends State<_AppPickerBody> {
                         child: AppSvgIcon(
                           AppIcons.check,
                           size: 13,
-                          color: cs.primaryForeground,
+                          color: t.onAccent,
                         ),
                       )
                     : null,

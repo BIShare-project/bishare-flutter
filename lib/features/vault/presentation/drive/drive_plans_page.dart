@@ -5,7 +5,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_links.dart';
@@ -169,9 +168,9 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: t.bg,
       body: SafeArea(
         bottom: false,
         child: AppResponsivePane(
@@ -182,7 +181,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
               final buy = _canBuy;
               final current = _showCurrent;
               final inset = MediaQuery.paddingOf(context).bottom;
-              final dark = ShadTheme.of(context).brightness == Brightness.dark;
+              final dark = Theme.of(context).brightness == Brightness.dark;
               return Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -199,10 +198,10 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
                           decoration: BoxDecoration(
                             gradient: RadialGradient(
                               colors: [
-                                cs.primary.withValues(
+                                t.accent.withValues(
                                   alpha: dark ? 0.24 : 0.13,
                                 ),
-                                cs.primary.withValues(alpha: 0),
+                                t.accent.withValues(alpha: 0),
                               ],
                             ),
                           ),
@@ -212,7 +211,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
                   ),
                   Column(
                     children: [
-                      _topBar(cs),
+                      _topBar(t),
                       Expanded(
                         child: Stack(
                           children: [
@@ -221,15 +220,15 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
                                 bottom: buy ? 28 : 32 + inset,
                               ),
                               children: [
-                                _hero(cs, usage: !current),
+                                _hero(t, usage: !current),
                                 if (current) ...[
-                                  _current(cs),
+                                  _current(t),
                                   const SizedBox(height: 22),
                                 ],
-                                ..._offer(cs),
+                                ..._offer(t),
                                 const SizedBox(height: 26),
-                                _includes(cs),
-                                if (VaultPurchases.supported) _legal(cs),
+                                _includes(t),
+                                if (VaultPurchases.supported) _legal(t),
                               ],
                             ),
                             if (buy)
@@ -246,8 +245,8 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
                                         begin: Alignment.topCenter,
                                         end: Alignment.bottomCenter,
                                         colors: [
-                                          cs.background.withValues(alpha: 0),
-                                          cs.background,
+                                          t.bg.withValues(alpha: 0),
+                                          t.bg,
                                         ],
                                       ),
                                     ),
@@ -257,7 +256,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
                           ],
                         ),
                       ),
-                      if (buy) _buyBar(cs, inset),
+                      if (buy) _buyBar(t, inset),
                     ],
                   ),
                 ],
@@ -269,16 +268,13 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
     );
   }
 
-  Widget _topBar(ShadColorScheme cs) {
+  Widget _topBar(AppTokens t) {
     final restoring = _purchases.restoring;
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(8, 6, 10, 0),
       child: Row(
         children: [
-          ShadIconButton.ghost(
-            icon: const AppSvgIcon(AppIcons.chevronLeft, size: 22),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
+          AppIconButton(icon: AppIcons.chevronLeft, onPressed: () => Navigator.of(context).maybePop(),),
           const Spacer(),
           if (VaultPurchases.supported)
             _Link(
@@ -296,7 +292,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
   // ---- what a plan buys ------------------------------------------------------------------
 
   /// [usage]: the free Drive's fill, when there is no plan card to show it.
-  Widget _hero(ShadColorScheme cs, {required bool usage}) {
+  Widget _hero(AppTokens t, {required bool usage}) {
     final quota = _account.quotaBytes ?? 0;
     final used = _account.usedBytes;
     return Padding(
@@ -307,12 +303,12 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
             width: 68,
             height: 68,
             decoration: BoxDecoration(
-              gradient: _brand(cs.primary),
+              gradient: _brand(t.accent),
               borderRadius: BorderRadius.circular(21),
               border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
               boxShadow: [
                 BoxShadow(
-                  color: cs.primary.withValues(alpha: 0.42),
+                  color: t.accent.withValues(alpha: 0.42),
                   blurRadius: 28,
                   offset: const Offset(0, 12),
                   spreadRadius: -10,
@@ -323,7 +319,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
               child: AppSvgIcon(
                 AppIcons.cloudDone,
                 size: 34,
-                color: _on(cs.primary),
+                color: _on(t.accent),
               ),
             ),
           ),
@@ -336,7 +332,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
               fontWeight: FontWeight.w800,
               letterSpacing: -0.6,
               height: 1.15,
-              color: cs.foreground,
+              color: t.text,
             ),
           ),
           const SizedBox(height: 8),
@@ -349,7 +345,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
               style: TextStyle(
                 fontSize: 15,
                 height: 1.4,
-                color: cs.mutedForeground,
+                color: t.text2,
               ),
             ),
           ),
@@ -358,16 +354,16 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
             Container(
               padding: const EdgeInsetsDirectional.fromSTEB(12, 7, 14, 7),
               decoration: BoxDecoration(
-                color: cs.card,
+                color: t.surface,
                 borderRadius: BorderRadius.circular(99),
-                border: Border.all(color: cs.border.withValues(alpha: 0.8)),
+                border: Border.all(color: t.line.withValues(alpha: 0.8)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SizedBox(
                     width: 44,
-                    child: _UsageBar(share: used / quota, color: cs.primary),
+                    child: _UsageBar(share: used / quota, color: t.accent),
                   ),
                   const SizedBox(width: 10),
                   Flexible(
@@ -381,7 +377,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: cs.foreground.withValues(alpha: 0.85),
+                        color: t.text.withValues(alpha: 0.85),
                       ),
                     ),
                   ),
@@ -403,12 +399,12 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
       _account.state == 'grace' ||
       _account.state == 'lapsed';
 
-  Widget _current(ShadColorScheme cs) {
+  Widget _current(AppTokens t) {
     final plan = _account.plan ?? 'free';
     final quota = _account.quotaBytes ?? 0;
     final used = _account.usedBytes;
     final paid = plan != 'free';
-    final muted = ShadTheme.of(context).textTheme.muted.copyWith(fontSize: 13);
+    final muted = AppType.secondary.copyWith(color: context.tokens.text2).copyWith(fontSize: 13);
     final ends = _account.planEnds;
     final lapse = _account.lapseEnds;
     final store = _account.planStore;
@@ -430,12 +426,12 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: cs.card,
+        color: t.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: warn
-              ? cs.destructive.withValues(alpha: 0.5)
-              : cs.border.withValues(alpha: 0.8),
+              ? t.danger.withValues(alpha: 0.5)
+              : t.line.withValues(alpha: 0.8),
         ),
       ),
       child: Column(
@@ -471,14 +467,14 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
               fontSize: 20,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.3,
-              color: cs.foreground,
+              color: t.text,
             ),
           ),
           if (quota > 0 && used != null) ...[
             const SizedBox(height: 10),
             _UsageBar(
               share: used / quota,
-              color: warn ? cs.destructive : cs.primary,
+              color: warn ? t.danger : t.accent,
             ),
             const SizedBox(height: 6),
             Text(
@@ -496,7 +492,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
             Text(
               line,
               style: muted.copyWith(
-                color: warn ? cs.destructive : null,
+                color: warn ? t.danger : null,
                 height: 1.35,
               ),
             ),
@@ -524,7 +520,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
 
   // ---- the four sizes ------------------------------------------------------------------
 
-  List<Widget> _offer(ShadColorScheme cs) {
+  List<Widget> _offer(AppTokens t) {
     if (!VaultPurchases.supported) {
       return [
         _Note(icon: AppIcons.smartphone, text: 'vault.plans_desktop'.tr()),
@@ -572,7 +568,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
             style: TextStyle(
               fontSize: 12,
               height: 1.35,
-              color: cs.mutedForeground,
+              color: t.text2,
             ),
           ),
         ),
@@ -600,7 +596,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
 
   // ---- the button ------------------------------------------------------------------
 
-  Widget _buyBar(ShadColorScheme cs, double inset) {
+  Widget _buyBar(AppTokens t, double inset) {
     final id = _product;
     final details = _purchases.products[id];
     final current = _account.plan == id;
@@ -613,7 +609,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
         ? (_yearly ? 'vault.plans_cta_yearly' : 'vault.plans_cta_monthly').tr()
         : 'vault.plans_cta_switch'.tr(namedArgs: {'size': decimalBytes(_size)});
     return Container(
-      color: cs.background,
+      color: t.bg,
       padding: EdgeInsets.fromLTRB(16, 2, 16, 12 + inset),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -640,7 +636,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
             style: TextStyle(
               fontSize: 12,
               height: 1.35,
-              color: cs.mutedForeground,
+              color: t.text2,
             ),
           ),
         ],
@@ -650,7 +646,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
 
   // ---- every plan has ------------------------------------------------------------------
 
-  Widget _includes(ShadColorScheme cs) {
+  Widget _includes(AppTokens t) {
     const items = [
       ('e2e', AppIcons.passwordLock),
       ('photos', AppIcons.image),
@@ -669,7 +665,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: cs.foreground,
+                color: t.text,
               ),
             ),
             const SizedBox(height: 12),
@@ -682,11 +678,11 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: cs.primary.withValues(alpha: 0.12),
+                        color: t.accent.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(11),
                       ),
                       child: Center(
-                        child: AppSvgIcon(icon, size: 18, color: cs.primary),
+                        child: AppSvgIcon(icon, size: 18, color: t.accent),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -696,7 +692,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
                         style: TextStyle(
                           fontSize: 14,
                           height: 1.35,
-                          color: cs.foreground,
+                          color: t.text,
                         ),
                       ),
                     ),
@@ -711,7 +707,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
 
   // ---- what the stores require next to a subscription ------------------------------------
 
-  Widget _legal(ShadColorScheme cs) {
+  Widget _legal(AppTokens t) {
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Column(
@@ -724,7 +720,7 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
               style: TextStyle(
                 fontSize: 12,
                 height: 1.45,
-                color: cs.mutedForeground,
+                color: t.text2,
               ),
             ),
           ),
@@ -782,8 +778,8 @@ class _PeriodSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    final dark = ShadTheme.of(context).brightness == Brightness.dark;
+    final t = context.tokens;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final green = dark ? const Color(0xFF30D158) : const Color(0xFF1E8E3E);
     Widget part(bool value, String label, {String? note}) {
       final on = yearly == value;
@@ -810,7 +806,7 @@ class _PeriodSwitch extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: on ? cs.foreground : cs.mutedForeground,
+                        color: on ? t.text : t.text2,
                       ),
                     ),
                     if (note != null) ...[
@@ -847,7 +843,7 @@ class _PeriodSwitch extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: cs.muted,
+        color: t.sunken,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Stack(
@@ -867,12 +863,12 @@ class _PeriodSwitch extends StatelessWidget {
                     color: dark
                         ? Color.alphaBlend(
                             Colors.white.withValues(alpha: 0.09),
-                            cs.muted,
+                            t.sunken,
                           )
-                        : cs.background,
+                        : t.bg,
                     borderRadius: BorderRadius.circular(11),
                     border: Border.all(
-                      color: cs.border.withValues(alpha: dark ? 0.9 : 0.4),
+                      color: t.line.withValues(alpha: dark ? 0.9 : 0.4),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -925,7 +921,7 @@ class _PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final on = selected && onTap != null;
     final radius = BorderRadius.circular(18);
     return Padding(
@@ -950,19 +946,19 @@ class _PlanCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: on
                     ? Color.alphaBlend(
-                        cs.primary.withValues(alpha: 0.08),
-                        cs.card,
+                        t.accent.withValues(alpha: 0.08),
+                        t.surface,
                       )
-                    : cs.card,
+                    : t.surface,
                 borderRadius: radius,
                 border: Border.all(
-                  color: on ? cs.primary : cs.border.withValues(alpha: 0.8),
+                  color: on ? t.accent : t.line.withValues(alpha: 0.8),
                   width: on ? 2 : 1,
                 ),
                 boxShadow: on
                     ? [
                         BoxShadow(
-                          color: cs.primary.withValues(alpha: 0.2),
+                          color: t.accent.withValues(alpha: 0.2),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                           spreadRadius: -8,
@@ -989,7 +985,7 @@ class _PlanCard extends StatelessWidget {
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: -0.4,
-                                color: cs.foreground,
+                                color: t.text,
                               ),
                             ),
                             if (current)
@@ -1004,7 +1000,7 @@ class _PlanCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14.5,
                             fontWeight: FontWeight.w600,
-                            color: cs.foreground.withValues(
+                            color: t.text.withValues(
                               alpha: on ? 1 : 0.85,
                             ),
                           ),
@@ -1015,7 +1011,7 @@ class _PlanCard extends StatelessWidget {
                             perMonth!,
                             style: TextStyle(
                               fontSize: 12.5,
-                              color: cs.mutedForeground,
+                              color: t.text2,
                             ),
                           ),
                         ],
@@ -1039,22 +1035,22 @@ class _Radio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       width: 24,
       height: 24,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: on ? _brand(cs.primary) : null,
-        border: on ? null : Border.all(color: cs.border, width: 2),
+        gradient: on ? _brand(t.accent) : null,
+        border: on ? null : Border.all(color: t.line, width: 2),
       ),
       child: on
           ? Center(
               child: AppSvgIcon(
                 AppIcons.check,
                 size: 14,
-                color: _on(cs.primary),
+                color: _on(t.accent),
               ),
             )
           : null,
@@ -1069,7 +1065,7 @@ class _Ribbon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = ShadTheme.of(context).colorScheme.primary;
+    final primary = context.tokens.accent;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -1142,12 +1138,12 @@ class _BuyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final enabled = onPressed != null && !loading;
     // Nothing to buy (the plan in force, or not on sale): a plain grey bar.
     final idle = onPressed == null && !loading;
     final radius = BorderRadius.circular(16);
-    final fg = idle ? cs.mutedForeground : _on(cs.primary);
+    final fg = idle ? t.text2 : _on(t.accent);
     return Semantics(
       button: true,
       enabled: enabled,
@@ -1155,13 +1151,13 @@ class _BuyButton extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         height: price == null ? 54 : 62,
         decoration: BoxDecoration(
-          color: idle ? cs.muted : null,
-          gradient: idle ? null : _brand(cs.primary),
+          color: idle ? t.sunken : null,
+          gradient: idle ? null : _brand(t.accent),
           borderRadius: radius,
           boxShadow: enabled
               ? [
                   BoxShadow(
-                    color: cs.primary.withValues(alpha: 0.38),
+                    color: t.accent.withValues(alpha: 0.38),
                     blurRadius: 24,
                     offset: const Offset(0, 10),
                     spreadRadius: -10,
@@ -1237,19 +1233,19 @@ class _Note extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cs.primary.withValues(alpha: 0.07),
+        color: t.accent.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: cs.primary.withValues(alpha: 0.25)),
+        border: Border.all(color: t.accent.withValues(alpha: 0.25)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppSvgIcon(icon, size: 20, color: cs.primary),
+          AppSvgIcon(icon, size: 20, color: t.accent),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1260,7 +1256,7 @@ class _Note extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.4,
-                    color: cs.foreground,
+                    color: t.text,
                   ),
                 ),
                 if (action != null) ...[const SizedBox(height: 10), action!],
@@ -1282,7 +1278,7 @@ class _Link extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: onTap,
@@ -1293,7 +1289,7 @@ class _Link extends StatelessWidget {
           style: TextStyle(
             fontSize: size,
             fontWeight: FontWeight.w600,
-            color: onTap == null ? cs.mutedForeground : cs.primary,
+            color: onTap == null ? t.text2 : t.accent,
           ),
         ),
       ),
@@ -1318,7 +1314,7 @@ class DrivePlanNotice extends StatelessWidget {
       if (state != 'grace' && !(state == 'lapsed' && lapse != null)) {
         return const SizedBox.shrink();
       }
-      final cs = ShadTheme.of(context).colorScheme;
+      final t = context.tokens;
       final text = state == 'grace'
           ? 'vault.plans_grace'.tr()
           : 'vault.plans_lapsed'.tr(
@@ -1335,13 +1331,13 @@ class DrivePlanNotice extends StatelessWidget {
           margin: const EdgeInsets.fromLTRB(14, 2, 14, 8),
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           decoration: BoxDecoration(
-            color: cs.destructive.withValues(alpha: 0.08),
+            color: t.danger.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: cs.destructive.withValues(alpha: 0.5)),
+            border: Border.all(color: t.danger.withValues(alpha: 0.5)),
           ),
           child: Row(
             children: [
-              AppSvgIcon(AppIcons.circleAlert, size: 18, color: cs.destructive),
+              AppSvgIcon(AppIcons.circleAlert, size: 18, color: t.danger),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -1355,7 +1351,7 @@ class DrivePlanNotice extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: cs.primary,
+                  color: t.accent,
                 ),
               ),
             ],

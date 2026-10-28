@@ -13,7 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _Links extends Mock implements VaultLinks {}
@@ -89,7 +88,7 @@ void main() {
         startLocale: const Locale('en'),
         saveLocale: false,
         child: Builder(
-          builder: (context) => ShadApp(
+          builder: (context) => MaterialApp(
             localizationsDelegates: context.localizationDelegates,
             supportedLocales: context.supportedLocales,
             locale: context.locale,

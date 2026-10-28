@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/config/feature_flags.dart';
 import '../../../core/di/locator.dart';
@@ -119,8 +118,6 @@ class _Chevron extends StatelessWidget {
   Widget build(BuildContext context) => AppSvgIcon(
     AppIcons.chevronRight,
     size: 18,
-    color: ShadTheme.of(
-      context,
-    ).colorScheme.mutedForeground.withValues(alpha: 0.6),
+    color: context.tokens.text2.withValues(alpha: 0.6),
   );
 }

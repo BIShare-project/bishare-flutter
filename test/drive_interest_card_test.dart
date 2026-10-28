@@ -2,8 +2,8 @@ import 'package:bishare/core/config/feature_flags.dart';
 import 'package:bishare/core/telemetry/telemetry_service.dart';
 import 'package:bishare/features/home/widgets/drive_interest_card.dart';
 import 'package:flutter/material.dart';
+import 'package:bishare/core/ui/app_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _Flags extends FeatureFlags {
@@ -60,7 +60,7 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     final t = _Telemetry(prefs, on: telemetry);
     await tester.pumpWidget(
-      ShadApp(
+      MaterialApp(
         home: Scaffold(
           body: DriveInterestCard(prefs: prefs, flags: _Flags(prefs, flag, drive: drive), telemetry: t),
         ),
@@ -123,7 +123,7 @@ void main() {
 
   testWidgets('closing counts a dismissal and shows nothing', (tester) async {
     final (prefs, t) = await pump(tester);
-    await tester.tap(find.byType(ShadIconButton));
+    await tester.tap(find.byType(AppIconButton));
     await tester.pump();
     expect(t.events, ['view', 'dismiss']);
     expect(prefs.getString(DriveInterestCard.answerKey), 'dismiss');

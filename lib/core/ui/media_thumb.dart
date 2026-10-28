@@ -2,7 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
+
+import '../theme/app_tokens.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 import 'app_format.dart';
@@ -29,7 +30,7 @@ class MediaThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final m = mime ?? '';
     final hasFile = path != null && File(path!).existsSync();
 
@@ -41,16 +42,16 @@ class MediaThumb extends StatelessWidget {
           height: size,
           fit: BoxFit.cover,
           cacheWidth: (size * 2.6).round(),
-          errorBuilder: (_, _, _) => _iconTile(cs, m),
+          errorBuilder: (_, _, _) => _iconTile(t, m),
         ),
       );
     }
     if (hasFile && m.startsWith('video/') && _videoSupported) {
       return _clip(
-        _VideoThumb(path: path!, size: size, fallback: _iconTile(cs, m)),
+        _VideoThumb(path: path!, size: size, fallback: _iconTile(t, m)),
       );
     }
-    return _iconTile(cs, m);
+    return _iconTile(t, m);
   }
 
   Widget _clip(Widget child) => ClipRRect(
@@ -58,14 +59,14 @@ class MediaThumb extends StatelessWidget {
     child: SizedBox(width: size, height: size, child: child),
   );
 
-  Widget _iconTile(ShadColorScheme cs, String m) => Container(
+  Widget _iconTile(AppTokens t, String m) => Container(
     width: size,
     height: size,
     decoration: BoxDecoration(
-      color: cs.muted,
+      color: t.sunken,
       borderRadius: BorderRadius.circular(radius),
     ),
-    child: AppSvgIcon(fileIcon(m), size: size * 0.5, color: cs.mutedForeground),
+    child: AppSvgIcon(fileIcon(m), size: size * 0.5, color: t.text2),
   );
 }
 

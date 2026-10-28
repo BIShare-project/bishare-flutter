@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+
 import 'package:bishare/core/config/feature_flags.dart';
 import 'package:bishare/core/di/locator.dart';
 import 'package:bishare/core/storage/app_database.dart';
@@ -16,7 +18,6 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// No database: a drift stream inside a widget test never settles.
@@ -56,7 +57,7 @@ void main() {
     final showcase = registerAppShowcase();
     addTearDown(showcase.unregister);
     await tester.pumpWidget(
-      ShadApp(
+      MaterialApp(
         home: MultiBlocProvider(
           providers: [
             BlocProvider(create: (_) => InboxCubit(_History())),

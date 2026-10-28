@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_links.dart';
@@ -26,7 +25,7 @@ class _InviteBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -36,7 +35,7 @@ class _InviteBody extends StatelessWidget {
         Text(
           'invite.scan_hint'.tr(),
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+          style: TextStyle(fontSize: 13, color: t.text2),
         ),
         const SizedBox(height: 18),
         AppGroup(

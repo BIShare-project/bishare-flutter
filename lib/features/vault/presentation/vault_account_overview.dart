@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/di/locator.dart';
 import '../../../core/storage/app_database.dart';
@@ -112,8 +111,8 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
     List<VaultObject> live,
     List<VaultObject> trash,
   ) {
-    final cs = ShadTheme.of(context).colorScheme;
-    final muted = TextStyle(fontSize: 13, color: cs.mutedForeground);
+    final t = context.tokens;
+    final muted = TextStyle(fontSize: 13, color: t.text2);
     final byKind = storageByKind(live, trash);
     final quota = _account.quotaBytes;
     final used =
@@ -149,7 +148,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w800,
-                                color: cs.foreground,
+                                color: t.text,
                               ),
                             ),
                             if (known)
@@ -168,7 +167,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
                         ),
                         style: muted.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: full ? cs.destructive : cs.mutedForeground,
+                          color: full ? t.danger : t.text2,
                         ),
                       ),
                   ],
@@ -212,13 +211,13 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
                   const SizedBox(height: 10),
                   Text(
                     'vault.storage_full'.tr(),
-                    style: muted.copyWith(color: cs.destructive),
+                    style: muted.copyWith(color: t.danger),
                   ),
                 ],
               ],
             ),
           ),
-          Divider(height: 1, color: cs.border),
+          Divider(height: 1, color: t.line),
           IntrinsicHeight(
             child: Row(
               children: [
@@ -227,11 +226,11 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
                   label: 'vault.stat_left'.tr(),
                   strong: true,
                 ),
-                VerticalDivider(width: 1, color: cs.border),
+                VerticalDivider(width: 1, color: t.line),
                 _Stat(value: '$files', label: 'vault.stat_files'.tr()),
-                VerticalDivider(width: 1, color: cs.border),
+                VerticalDivider(width: 1, color: t.line),
                 _Stat(value: '$folders', label: 'vault.stat_folders'.tr()),
-                VerticalDivider(width: 1, color: cs.border),
+                VerticalDivider(width: 1, color: t.line),
                 _Stat(
                   value: decimalBytes(byKind['trash'] ?? 0),
                   label: 'vault.kind_trash'.tr(),
@@ -239,7 +238,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
               ],
             ),
           ),
-          Divider(height: 1, color: cs.border),
+          Divider(height: 1, color: t.line),
           AppListTile(
             leading: const AppGlyph(AppIcons.starFavorite),
             title: Text('vault.plan'.tr()),
@@ -251,7 +250,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
                 AppSvgIcon(
                   AppIcons.chevronRight,
                   size: 16,
-                  color: cs.mutedForeground,
+                  color: t.text2,
                 ),
               ],
             ),
@@ -275,7 +274,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
             trailing: AppSvgIcon(
               AppIcons.chevronRight,
               size: 16,
-              color: cs.mutedForeground,
+              color: t.text2,
             ),
             onTap: () => context.push('/drive-storage'),
           ),
@@ -303,8 +302,8 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
   // ---- activity ----------------------------------------------------------------
 
   Widget _uploads(BuildContext context, List<VaultTransfer> transfers) {
-    final cs = ShadTheme.of(context).colorScheme;
-    final muted = TextStyle(fontSize: 12.5, color: cs.mutedForeground);
+    final t = context.tokens;
+    final muted = TextStyle(fontSize: 12.5, color: t.text2);
     return ListenableBuilder(
       // The file being sent reports every few kilobytes.
       listenable: _uploader,
@@ -343,7 +342,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
                 const SizedBox(height: 4),
                 Text(
                   'vault.uploads_stopped'.plural(stopped),
-                  style: muted.copyWith(color: cs.destructive),
+                  style: muted.copyWith(color: t.danger),
                 ),
               ],
             ],
@@ -351,7 +350,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
           trailing: AppSvgIcon(
             AppIcons.chevronRight,
             size: 16,
-            color: cs.mutedForeground,
+            color: t.text2,
           ),
           onTap: () => context.push('/drive-transfers'),
         );
@@ -360,8 +359,8 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
   }
 
   Widget _photos(BuildContext context, VaultPhotoBackup backup) {
-    final cs = ShadTheme.of(context).colorScheme;
-    final muted = TextStyle(fontSize: 12.5, color: cs.mutedForeground);
+    final t = context.tokens;
+    final muted = TextStyle(fontSize: 12.5, color: t.text2);
     final left = backup.left;
     final total = backup.total;
     final String status;
@@ -391,7 +390,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
                 Expanded(
                   child: Text(
                     'vault.backup_gave_up'.plural(backup.gaveUp),
-                    style: muted.copyWith(color: cs.destructive),
+                    style: muted.copyWith(color: t.danger),
                   ),
                 ),
                 AppButton(
@@ -419,9 +418,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
           ],
         ],
       ),
-      trailing: ShadSwitch(
-        value: backup.on,
-        onChanged: (v) async {
+      trailing: AppSwitch(value: backup.on, onChanged: (v) async {
           final ok = await backup.setOn(v);
           if (!ok && context.mounted) {
             toast(
@@ -430,8 +427,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
               type: ToastType.error,
             );
           }
-        },
-      ),
+        },),
     );
   }
 }
@@ -445,7 +441,7 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
@@ -458,7 +454,7 @@ class _Stat extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14.5,
                 fontWeight: FontWeight.w700,
-                color: strong ? cs.primary : cs.foreground,
+                color: strong ? t.accent : t.text,
               ),
             ),
             const SizedBox(height: 2),
@@ -466,7 +462,7 @@ class _Stat extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11.5, color: cs.mutedForeground),
+              style: TextStyle(fontSize: 11.5, color: t.text2),
             ),
           ],
         ),
@@ -483,14 +479,14 @@ class _Progress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return ClipRRect(
       borderRadius: BorderRadius.circular(3),
       child: LinearProgressIndicator(
         value: value,
         minHeight: 6,
-        backgroundColor: cs.muted,
-        color: cs.primary,
+        backgroundColor: t.sunken,
+        color: t.accent,
       ),
     );
   }

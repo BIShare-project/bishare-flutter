@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/ui/app_ui.dart';
 import '../../../core/io/picked_mtime.dart';
@@ -43,7 +42,7 @@ class BrowserDeviceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return AppListTile(
       onTap: sending ? null : () => _send(context),
       leading: Container(
@@ -51,7 +50,7 @@ class BrowserDeviceRow extends StatelessWidget {
         height: 36,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: cs.primary.withValues(alpha: 0.10),
+          color: t.accent.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(peer.emoji, style: const TextStyle(fontSize: 18)),
@@ -64,7 +63,7 @@ class BrowserDeviceRow extends StatelessWidget {
               height: 18,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : AppSvgIcon(AppIcons.send, size: 18, color: cs.primary),
+          : AppSvgIcon(AppIcons.send, size: 18, color: t.accent),
     );
   }
 }

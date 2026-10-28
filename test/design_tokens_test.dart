@@ -54,9 +54,8 @@ void main() {
           }
           _expectReads(a.onAccent, a.accentStrong, 'onAccent on $name fill');
           _expectReads(a.onReceive, a.receiveStrong, 'onReceive on $name fill');
-          final cs = a.toShadColorScheme();
-          _expectReads(cs.primaryForeground, cs.primary, 'shadcn primary pair');
-          _expectReads(cs.primary, cs.background, 'shadcn primary as text');
+          _expectReads(AppPalette.onColor(a.accent), a.accent, 'theme primary pair');
+          _expectReads(a.accent, a.bg, 'theme primary as text');
         });
       }
 

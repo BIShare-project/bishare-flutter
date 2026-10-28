@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'app_palette.dart';
 
 /// The BIShare design tokens for one brightness and one pair of accents.
 /// Read them with `context.tokens`. They ride on the Material theme as a
 /// [ThemeExtension] (see `BIShareApp`); a tree without that extension (a
-/// widget test that builds its own ShadApp) gets the defaults for its
+/// widget test that builds its own MaterialApp) gets the defaults for its
 /// brightness, so nothing ever reads null.
 @immutable
 class AppTokens extends ThemeExtension<AppTokens> {
@@ -205,35 +204,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
       brandLine: t < 0.5 ? brandLine : other.brandLine,
     );
   }
-
-  /// The shadcn colour scheme the existing widgets read (117 files use
-  /// `ShadTheme`), filled from these tokens so every screen takes the new
-  /// palette before it is rebuilt.
-  ///
-  /// `primary` is the text-safe accent, so `cs.primary` used as a link colour
-  /// stays readable; filled buttons of the new kit use [accentStrong].
-  ShadColorScheme toShadColorScheme() => ShadColorScheme(
-    background: bg,
-    foreground: text,
-    card: surface,
-    cardForeground: text,
-    popover: raised,
-    popoverForeground: text,
-    primary: accent,
-    primaryForeground: AppPalette.onColor(accent),
-    secondary: sunken,
-    secondaryForeground: text,
-    muted: sunken,
-    mutedForeground: text2,
-    accent: sunken,
-    accentForeground: text,
-    destructive: danger,
-    destructiveForeground: onDanger,
-    border: line,
-    input: line,
-    ring: accent,
-    selection: accentSoft,
-  );
 }
 
 /// Puts [AppTokens.receiving] over [child]: the receive accent becomes the
@@ -264,5 +234,5 @@ extension AppTokensContext on BuildContext {
   /// The design tokens of the nearest theme.
   AppTokens get tokens =>
       Theme.of(this).extension<AppTokens>() ??
-      AppTokens.of(ShadTheme.of(this).brightness);
+      AppTokens.of(Theme.of(this).brightness);
 }

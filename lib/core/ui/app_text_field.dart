@@ -20,6 +20,13 @@ class AppTextField extends StatelessWidget {
     this.maxLength,
     this.onChanged,
     this.onSubmitted,
+    this.minLines,
+    this.maxLines = 1,
+    this.autocorrect = true,
+    this.enableSuggestions = true,
+    this.textCapitalization = TextCapitalization.none,
+    this.style,
+    this.textInputAction,
   });
 
   final TextEditingController controller;
@@ -32,6 +39,15 @@ class AppTextField extends StatelessWidget {
   final int? maxLength;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+  final int? minLines;
+  final int? maxLines;
+  final bool autocorrect;
+  final bool enableSuggestions;
+  final TextCapitalization textCapitalization;
+
+  /// Merged over the body style (a monospace phrase, a code).
+  final TextStyle? style;
+  final TextInputAction? textInputAction;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +68,13 @@ class AppTextField extends StatelessWidget {
       onChanged: onChanged,
       onSubmitted: onSubmitted,
       cursorColor: t.accent,
-      style: AppType.body.copyWith(color: t.text),
+      minLines: minLines,
+      maxLines: obscure ? 1 : maxLines,
+      autocorrect: autocorrect,
+      enableSuggestions: enableSuggestions,
+      textCapitalization: textCapitalization,
+      textInputAction: textInputAction,
+      style: AppType.body.copyWith(color: t.text).merge(style),
       decoration: InputDecoration(
         isDense: true,
         filled: true,

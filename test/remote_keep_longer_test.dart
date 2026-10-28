@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _Account extends Mock implements VaultAccount {}
@@ -68,7 +67,7 @@ void main() {
         ),
       ],
     );
-    await tester.pumpWidget(ShadApp.router(routerConfig: router));
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pumpAndSettle();
     return router;
   }

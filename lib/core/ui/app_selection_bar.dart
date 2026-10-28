@@ -248,6 +248,7 @@ class _BarButton extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
   final String tooltip;
+
   /// Side room of a labelled action; null for an icon-only button.
   final double? gap;
 

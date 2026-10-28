@@ -1,5 +1,6 @@
+import '../theme/app_tokens.dart';
 import 'package:flutter/widgets.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 /// Semantic names for the custom BIShare SVG icon set (`assets/icon/svg/*.svg`).
 ///
@@ -197,7 +198,7 @@ class AppSvgIcon extends StatelessWidget {
                         width: glyph * 3 / 24,
                         height: glyph * 3 / 24,
                         decoration: BoxDecoration(
-                          color: ShadTheme.of(context).colorScheme.primary,
+                          color: context.tokens.accent,
                           shape: BoxShape.circle,
                         ),
                       ),
