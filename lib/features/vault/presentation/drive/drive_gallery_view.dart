@@ -1,8 +1,8 @@
+import 'dart:ui' as ui;
 import 'dart:async';
-import 'dart:collection';
-import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mime/mime.dart';
 
@@ -92,7 +92,6 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
   PhotoAccess? _shownFor;
 
   /// Thumbnails, the most recent few hundred (a gallery scrolls a lot).
-  final LinkedHashMap<String, Future<Uint8List?>> _thumbs = LinkedHashMap();
 
   @override
   void initState() {
@@ -211,14 +210,6 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
       out.add(_Remote(remote[r++]));
     }
     return out;
-  }
-
-  Future<Uint8List?> _thumb(PhotoAsset a) {
-    final had = _thumbs.remove(a.id);
-    final f = had ?? _library.thumbnail(a, 240);
-    _thumbs[a.id] = f;
-    if (_thumbs.length > 400) _thumbs.remove(_thumbs.keys.first);
-    return f;
   }
 
   void _toggle(PhotoAsset a) {
@@ -361,6 +352,40 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
   ) {
     final noAccess = _backup.access == PhotoAccess.none;
     final waiting = !noAccess && _pages == null;
+    // Columns and the day lines depend on the width only: worked out here,
+    // outside the scroll view. Inside a SliverLayoutBuilder they were redone
+    // on every scrolled frame (its constraints carry the scroll offset).
+    return LayoutBuilder(
+      builder: (context, box) {
+        final columns = (box.maxWidth / 104).floor().clamp(4, 10);
+        final tile = (box.maxWidth - (columns - 1) * 2) / columns;
+        final lines = waiting || items.isEmpty
+            ? const <_Line>[]
+            : _lines(items, columns, context);
+        return _scrollView(
+          items,
+          backed,
+          uploads,
+          noAccess: noAccess,
+          waiting: waiting,
+          columns: columns,
+          tile: tile,
+          lines: lines,
+        );
+      },
+    );
+  }
+
+  Widget _scrollView(
+    List<_Item> items,
+    Set<String> backed,
+    Map<String, String> uploads, {
+    required bool noAccess,
+    required bool waiting,
+    required int columns,
+    required double tile,
+    required List<_Line> lines,
+  }) {
     return CustomScrollView(
       controller: _scroll,
       physics: const AlwaysScrollableScrollPhysics(),
@@ -385,13 +410,10 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
             ),
           )
         else
-          SliverLayoutBuilder(
-            builder: (context, c) {
-              // The same grid as the Send tab's gallery: about 104 wide,
-              // at least four across, 2 apart, grouped by day.
-              final columns = (c.crossAxisExtent / 104).floor().clamp(4, 10);
-              final tile = (c.crossAxisExtent - (columns - 1) * 2) / columns;
-              final lines = _lines(items, columns, context);
+          // The same grid as the Send tab's gallery: about 104 wide, at
+          // least four across, 2 apart, grouped by day.
+          Builder(
+            builder: (context) {
               return SliverPadding(
                 padding: const EdgeInsets.only(bottom: 120),
                 sliver: SliverList.builder(
@@ -511,7 +533,15 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
     final state = VaultPhotoBackup.stateOf(a.id, backed, uploads);
     final selecting = _selected.isNotEmpty;
     return DriveMediaTile(
-      image: _Thumb(future: _thumb(a)),
+      image: Image(
+        image: _PhotoThumb(_library, a),
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.low,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (_, _, _) => const SizedBox.expand(),
+      ),
       video: a.video,
       durationS: a.video ? a.durationS : null,
       selected: _selected.contains(a.id),
@@ -600,26 +630,46 @@ class _Legend extends StatelessWidget {
   }
 }
 
-class _Thumb extends StatelessWidget {
-  const _Thumb({required this.future});
+/// A phone photo's 240 px thumbnail as an image provider, keyed by the
+/// asset, so Flutter's image cache keeps it decoded and scrolling back never
+/// asks the library or decodes again (the Send gallery does the same).
+@immutable
+class _PhotoThumb extends ImageProvider<_PhotoThumb> {
+  const _PhotoThumb(this.library, this.asset);
 
-  final Future<Uint8List?> future;
+  final PhotoLibrary library;
+  final PhotoAsset asset;
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<Uint8List?>(
-    future: future,
-    builder: (context, snap) {
-      final jpeg = snap.data;
-      if (jpeg == null) return const SizedBox.expand();
-      return Image.memory(
-        jpeg,
-        fit: BoxFit.cover,
-        gaplessPlayback: true,
-        width: double.infinity,
-        height: double.infinity,
-      );
-    },
-  );
+  Future<_PhotoThumb> obtainKey(ImageConfiguration configuration) =>
+      SynchronousFuture(this);
+
+  @override
+  ImageStreamCompleter loadImage(
+    _PhotoThumb key,
+    ImageDecoderCallback decode,
+  ) => OneFrameImageStreamCompleter(_load(key, decode));
+
+  static Future<ImageInfo> _load(
+    _PhotoThumb key,
+    ImageDecoderCallback decode,
+  ) async {
+    final bytes = await key.library.thumbnail(key.asset, 240);
+    if (bytes == null || bytes.isEmpty) {
+      throw StateError('no thumbnail for ${key.asset.id}');
+    }
+    final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
+    final codec = await decode(buffer);
+    final frame = await codec.getNextFrame();
+    return ImageInfo(image: frame.image);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is _PhotoThumb && other.asset.id == asset.id;
+
+  @override
+  int get hashCode => asset.id.hashCode;
 }
 
 /// The cloud on a photo: crossed out until it is in the Drive, in the
