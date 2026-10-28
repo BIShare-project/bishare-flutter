@@ -332,7 +332,9 @@
     "title": "Dispositivos",
     "turn_on_auto_accept": "Activar la aceptación automática",
     "browsers_nearby": "Navegadores cercanos",
-    "browser_subtitle": "Navegador web · misma red"
+    "browser_subtitle": "Navegador web · misma red",
+    "sort_title": "Ordenar por",
+    "address": "Dirección"
   },
   "clipboard": {
     "clear_all": "Borrar historial",

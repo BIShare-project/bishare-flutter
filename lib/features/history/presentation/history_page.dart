@@ -42,7 +42,15 @@ class HistoryPage extends StatelessWidget {
                     ValueListenableBuilder<bool>(
                       valueListenable: historySearchOpen,
                       builder: (context, open, _) => open
-                          ? _SearchRow(cubit: cubit)
+                          ? AppSearchRow(
+                              hint: 'history.search_placeholder'.tr(),
+                              initial: cubit.state.query,
+                              onChanged: cubit.setQuery,
+                              onCancel: () {
+                                cubit.setQuery('');
+                                historySearchOpen.value = false;
+                              },
+                            )
                           : const SizedBox.shrink(),
                     ),
                     _Toolbar(
@@ -88,66 +96,6 @@ class HistoryPage extends StatelessWidget {
 
 /// The search field, open from the header's magnifier. Closing it clears
 /// the search.
-class _SearchRow extends StatefulWidget {
-  const _SearchRow({required this.cubit});
-
-  final HistoryCubit cubit;
-
-  @override
-  State<_SearchRow> createState() => _SearchRowState();
-}
-
-class _SearchRowState extends State<_SearchRow> {
-  late final TextEditingController _text = TextEditingController(
-    text: widget.cubit.state.query,
-  );
-  final FocusNode _focus = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focus.requestFocus();
-    });
-  }
-
-  @override
-  void dispose() {
-    _text.dispose();
-    _focus.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(0, 6, 4, 2),
-      child: Row(
-        children: [
-          Expanded(
-            child: AppSearchField(
-              hint: 'history.search_placeholder'.tr(),
-              controller: _text,
-              focusNode: _focus,
-              onChanged: widget.cubit.setQuery,
-              margin: const EdgeInsetsDirectional.fromSTEB(16, 0, 2, 0),
-            ),
-          ),
-          AppButton(
-            label: 'common.cancel'.tr(),
-            variant: AppButtonVariant.ghost,
-            size: AppButtonSize.small,
-            onPressed: () {
-              widget.cubit.setQuery('');
-              historySearchOpen.value = false;
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// What is shown (count and size) and the direction filter, one row.
 class _Toolbar extends StatelessWidget {
   const _Toolbar({

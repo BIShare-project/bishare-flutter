@@ -332,7 +332,9 @@
     "title": "デバイス",
     "turn_on_auto_accept": "自動承認をオンにする",
     "browsers_nearby": "近くのブラウザ",
-    "browser_subtitle": "ウェブブラウザ · 同じネットワーク"
+    "browser_subtitle": "ウェブブラウザ · 同じネットワーク",
+    "sort_title": "並べ替え",
+    "address": "アドレス"
   },
   "clipboard": {
     "clear_all": "履歴を消去",

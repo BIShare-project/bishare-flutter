@@ -1,30 +1,64 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/devices/device_registry.dart';
-import '../../../core/ui/app_ui.dart';
-import 'devices_cubit.dart';
-import 'dart:io';
 import '../../../core/io/picked_mtime.dart';
+import '../../../core/ui/app_ui.dart';
 import '../../web_nearby/data/web_nearby_service.dart';
 import '../../web_nearby/presentation/web_nearby_cubit.dart';
-import 'widgets/device_sort_bar.dart';
-import 'widgets/known_device_row.dart';
+import 'device_detail_sheet.dart';
+import 'devices_cubit.dart';
 
 /// The Devices dashboard: every peer this device has ever known, in two
-/// sections — "Online now" (currently discovered) and "Known devices"
-/// (remembered roster + favorites) — with search, sort, and a per-device
-/// detail sheet (stats + rename / favorite / auto-accept / forget).
-class DevicesPage extends StatelessWidget {
+/// sections, "Online now" (currently discovered) and "Known devices"
+/// (remembered roster + favorites), then browsers nearby. Search hides
+/// behind the header's magnifier and the order is a sheet, as in History
+/// and Drive; a row opens the device's sheet (stats + rename / favorite /
+/// auto-accept / forget).
+class DevicesPage extends StatefulWidget {
   const DevicesPage({super.key});
 
   @override
+  State<DevicesPage> createState() => _DevicesPageState();
+}
+
+class _DevicesPageState extends State<DevicesPage> {
+  bool _searchOpen = false;
+
+  void _closeSearch(DevicesCubit cubit) {
+    cubit.setQuery('');
+    setState(() => _searchOpen = false);
+  }
+
+  Future<void> _sortSheet(BuildContext context, DevicesCubit cubit) async {
+    final picked = await showAppSheet<DeviceSort>(
+      context,
+      icon: AppIcons.sort,
+      title: 'devices.sort_title'.tr(),
+      builder: (ctx) => AppSheetGroup(
+        first: true,
+        indent: 4,
+        children: [
+          for (final s in DeviceSort.values)
+            AppSheetAction(
+              label: s.label,
+              selected: s == cubit.state.sort,
+              onTap: () => Navigator.pop(ctx, s),
+            ),
+        ],
+      ),
+    );
+    if (picked != null) cubit.setSort(picked);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: t.bg,
       body: SafeArea(
         child: BlocBuilder<DevicesCubit, DevicesState>(
           builder: (context, state) {
@@ -39,16 +73,28 @@ class DevicesPage extends StatelessWidget {
                     title: 'devices.title'.tr(),
                     subtitle: 'devices.devices_count'.plural(state.all.length),
                     onBack: () => Navigator.of(context).maybePop(),
+                    actions: [
+                      AppIconButton(
+                        icon: AppIcons.search,
+                        tooltip: 'devices.search_placeholder'.tr(),
+                        onPressed: () => _searchOpen
+                            ? _closeSearch(cubit)
+                            : setState(() => _searchOpen = true),
+                      ),
+                      AppIconButton(
+                        icon: AppIcons.sort,
+                        tooltip: 'devices.sort_title'.tr(),
+                        onPressed: () => _sortSheet(context, cubit),
+                      ),
+                    ],
                   ),
-                  DeviceSortBar(value: state.sort, onChanged: cubit.setSort),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
-                    child: ShadInput(
-                      placeholder: Text('devices.search_placeholder'.tr()),
-                      leading: const AppSvgIcon(AppIcons.search, size: 16),
+                  if (_searchOpen)
+                    AppSearchRow(
+                      hint: 'devices.search_placeholder'.tr(),
+                      initial: state.query,
                       onChanged: cubit.setQuery,
+                      onCancel: () => _closeSearch(cubit),
                     ),
-                  ),
                   Expanded(
                     child: (online.isEmpty && known.isEmpty)
                         ? AppEmptyState(
@@ -61,21 +107,21 @@ class DevicesPage extends StatelessWidget {
                                 : 'devices.empty_no_matches_message'.tr(),
                           )
                         : ListView(
-                            padding: const EdgeInsets.only(top: 4, bottom: 28),
+                            padding: const EdgeInsets.only(bottom: 28),
                             children: [
                               if (online.isNotEmpty) ...[
                                 AppSectionHeader(
                                   'devices.online_now'.tr(),
                                   trailing: Text('${online.length}'),
                                 ),
-                                _group(online),
+                                ..._rows(online),
                               ],
                               if (known.isNotEmpty) ...[
                                 AppSectionHeader(
                                   'devices.known'.tr(),
                                   trailing: Text('${known.length}'),
                                 ),
-                                _group(known),
+                                ..._rows(known),
                               ],
                               const _BrowsersNearbySection(),
                             ],
@@ -90,22 +136,62 @@ class DevicesPage extends StatelessWidget {
     );
   }
 
-  Widget _group(List<KnownDeviceView> devices) => AppGroup(
-    child: Column(
-      children: [
-        for (var i = 0; i < devices.length; i++) ...[
-          if (i > 0) const AppRowDivider(indent: 68),
-          KnownDeviceRow(device: devices[i]),
+  static List<Widget> _rows(List<KnownDeviceView> devices) => [
+    for (var i = 0; i < devices.length; i++) ...[
+      if (i > 0) const AppRowDivider(indent: 70),
+      KnownDeviceRow(device: devices[i]),
+    ],
+  ];
+}
+
+/// One roster row: avatar with a live presence dot, display name (+
+/// favorite star), model + presence. Tap opens the device sheet.
+class KnownDeviceRow extends StatelessWidget {
+  const KnownDeviceRow({super.key, required this.device});
+  final KnownDeviceView device;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppListTile(
+      onTap: () => showDeviceDetailSheet(context, device),
+      leading: AppAvatar(
+        icon: iconForDevice(device.deviceType ?? 'mobile'),
+        size: 40,
+        online: device.isOnline,
+      ),
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              device.displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (device.isFavorite) ...[
+            const SizedBox(width: 6),
+            const AppSvgIcon(AppIcons.starFavorite, size: 13, color: kAmber),
+          ],
         ],
-      ],
-    ),
-  );
+      ),
+      subtitle: Text(
+        deviceSubtitle(device),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      trailing: AppIconButton(
+        icon: AppIcons.moreMenu,
+        tooltip: 'inbox.more'.tr(),
+        onPressed: () => showDeviceDetailSheet(context, device),
+      ),
+    );
+  }
 }
 
 /// Browsers on this network (the app↔web Nearby bridge): each row is a live
-/// peer from bishare.app/transfer's Nearby tab — tap send, pick files, and
-/// they stream browser-ward over WebRTC. Hidden while the bridge is off or
-/// no browser is around.
+/// peer from bishare.app/transfer's Nearby tab; tap, pick files, and they
+/// stream browser-ward over WebRTC. Hidden while the bridge is off or no
+/// browser is around.
 class _BrowsersNearbySection extends StatelessWidget {
   const _BrowsersNearbySection();
 
@@ -128,20 +214,14 @@ class _BrowsersNearbySection extends StatelessWidget {
               'devices.browsers_nearby'.tr(),
               trailing: Text('${state.peers.length}'),
             ),
-            AppGroup(
-              child: Column(
-                children: [
-                  for (var i = 0; i < state.peers.length; i++) ...[
-                    if (i > 0) const AppRowDivider(indent: 68),
-                    _BrowserRow(
-                      peer: state.peers[i],
-                      sending: state.sendingTo.contains(state.peers[i].peerId),
-                      onSend: () => _send(context, state.peers[i].peerId),
-                    ),
-                  ],
-                ],
+            for (var i = 0; i < state.peers.length; i++) ...[
+              if (i > 0) const AppRowDivider(indent: 70),
+              _BrowserRow(
+                peer: state.peers[i],
+                sending: state.sendingTo.contains(state.peers[i].peerId),
+                onSend: () => _send(context, state.peers[i].peerId),
               ),
-            ),
+            ],
           ],
         );
       },
@@ -162,34 +242,25 @@ class _BrowserRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    return ListTile(
+    final t = context.tokens;
+    return AppListTile(
       onTap: sending ? null : onSend,
       leading: Container(
-        width: 44,
-        height: 44,
+        width: 40,
+        height: 40,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: cs.primary.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(peer.emoji, style: const TextStyle(fontSize: 20)),
+        decoration: BoxDecoration(color: t.sunken, shape: BoxShape.circle),
+        child: Text(peer.emoji, style: const TextStyle(fontSize: 19)),
       ),
-      title: Text(
-        peer.alias,
-        style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
-      ),
-      subtitle: Text(
-        'devices.browser_subtitle'.tr(),
-        style: TextStyle(fontSize: 12, color: cs.mutedForeground),
-      ),
+      title: Text(peer.alias, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text('devices.browser_subtitle'.tr()),
       trailing: sending
-          ? const SizedBox(
+          ? SizedBox(
               width: 18,
               height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: CircularProgressIndicator(strokeWidth: 2, color: t.accent),
             )
-          : AppSvgIcon(AppIcons.send, size: 18, color: cs.primary),
+          : AppSvgIcon(AppIcons.send, size: 20, color: t.accent),
     );
   }
 }

@@ -332,7 +332,9 @@
     "title": "기기",
     "turn_on_auto_accept": "자동 수락 켜기",
     "browsers_nearby": "주변 브라우저",
-    "browser_subtitle": "웹 브라우저 · 같은 네트워크"
+    "browser_subtitle": "웹 브라우저 · 같은 네트워크",
+    "sort_title": "정렬 기준",
+    "address": "주소"
   },
   "clipboard": {
     "clear_all": "기록 지우기",

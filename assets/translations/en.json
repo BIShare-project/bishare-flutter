@@ -332,7 +332,9 @@
     "title": "Devices",
     "turn_on_auto_accept": "Turn on auto-accept",
     "browsers_nearby": "Browsers nearby",
-    "browser_subtitle": "Web browser · same network"
+    "browser_subtitle": "Web browser · same network",
+    "sort_title": "Sort by",
+    "address": "Address"
   },
   "clipboard": {
     "clear_all": "Clear history",

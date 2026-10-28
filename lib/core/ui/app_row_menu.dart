@@ -82,8 +82,8 @@ class AppRowMenu extends StatelessWidget {
 }
 
 /// Imperatively show [actions] as a sheet (the touch fallback / any
-/// explicit "more" affordance): the actions on one card, the destructive
-/// ones on a card of their own below. [leading] is the item's picture.
+/// explicit "more" affordance): the actions in one flat group, the
+/// destructive ones in a group of their own below. [leading] is the item's picture.
 Future<void> showActionSheet(
   BuildContext context, {
   required String title,
@@ -106,6 +106,7 @@ Future<void> showActionSheet(
           a.onTap();
         },
       );
+      final plain = actions.any((a) => !a.destructive);
       return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -118,6 +119,7 @@ Future<void> showActionSheet(
             ],
           ),
           AppSheetGroup(
+            first: !plain,
             children: [
               for (final a in actions)
                 if (a.destructive) row(a),

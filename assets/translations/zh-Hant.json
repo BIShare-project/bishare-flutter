@@ -332,7 +332,9 @@
     "title": "裝置",
     "turn_on_auto_accept": "開啟自動接收",
     "browsers_nearby": "附近的瀏覽器",
-    "browser_subtitle": "網頁瀏覽器 · 同一網路"
+    "browser_subtitle": "網頁瀏覽器 · 同一網路",
+    "sort_title": "排序方式",
+    "address": "位址"
   },
   "clipboard": {
     "clear_all": "清除記錄",

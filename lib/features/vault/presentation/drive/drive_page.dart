@@ -742,10 +742,11 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
             ),
           ),
         if (_searchOpen && !_ctrl.selecting)
-          DriveSearchRow(
-            ctrl: _ctrl,
-            search: _search,
-            searchFocus: _searchFocus,
+          AppSearchRow(
+            hint: 'vault.search'.tr(),
+            controller: _search,
+            focusNode: _searchFocus,
+            onChanged: _ctrl.setQuery,
             onCancel: _closeSearch,
           ),
         if (!_phoneGallery)

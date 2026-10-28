@@ -344,7 +344,9 @@
     "title": "الأجهزة",
     "turn_on_auto_accept": "تشغيل القبول التلقائي",
     "browsers_nearby": "المتصفحات القريبة",
-    "browser_subtitle": "متصفح ويب · الشبكة نفسها"
+    "browser_subtitle": "متصفح ويب · الشبكة نفسها",
+    "sort_title": "الترتيب حسب",
+    "address": "العنوان"
   },
   "clipboard": {
     "clear_all": "مسح السجل",

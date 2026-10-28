@@ -628,49 +628,6 @@ class DriveToolbar extends StatelessWidget {
   }
 }
 
-/// The phone's search row, opened from the header's magnifier: the field
-/// and Cancel, which clears the search and closes the row.
-class DriveSearchRow extends StatelessWidget {
-  const DriveSearchRow({
-    super.key,
-    required this.ctrl,
-    required this.search,
-    required this.searchFocus,
-    required this.onCancel,
-  });
-
-  final DriveController ctrl;
-  final TextEditingController search;
-  final FocusNode searchFocus;
-  final VoidCallback onCancel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(0, 6, 4, 2),
-      child: Row(
-        children: [
-          Expanded(
-            child: AppSearchField(
-              hint: 'vault.search'.tr(),
-              controller: search,
-              focusNode: searchFocus,
-              onChanged: ctrl.setQuery,
-              margin: const EdgeInsetsDirectional.fromSTEB(16, 0, 2, 0),
-            ),
-          ),
-          AppButton(
-            label: 'common.cancel'.tr(),
-            variant: AppButtonVariant.ghost,
-            size: AppButtonSize.small,
-            onPressed: onCancel,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// The File tab's kinds (redesign-plan.md 6.1): everything, documents,
 /// audio. Photos and videos have their own tab.
 class DriveKindChips extends StatelessWidget {

@@ -338,7 +338,9 @@
     "title": "Устройства",
     "turn_on_auto_accept": "Включить автоприём",
     "browsers_nearby": "Браузеры рядом",
-    "browser_subtitle": "Веб-браузер · та же сеть"
+    "browser_subtitle": "Веб-браузер · та же сеть",
+    "sort_title": "Сортировка",
+    "address": "Адрес"
   },
   "clipboard": {
     "clear_all": "Очистить историю",

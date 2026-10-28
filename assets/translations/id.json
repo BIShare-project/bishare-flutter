@@ -332,7 +332,9 @@
     "title": "Perangkat",
     "turn_on_auto_accept": "Aktifkan terima otomatis",
     "browsers_nearby": "Browser di sekitar",
-    "browser_subtitle": "Browser web · jaringan yang sama"
+    "browser_subtitle": "Browser web · jaringan yang sama",
+    "sort_title": "Urutkan",
+    "address": "Alamat"
   },
   "clipboard": {
     "clear_all": "Hapus riwayat",

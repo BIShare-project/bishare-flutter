@@ -332,7 +332,9 @@
     "title": "डिवाइस",
     "turn_on_auto_accept": "ऑटो-एक्सेप्ट चालू करें",
     "browsers_nearby": "आस-पास के ब्राउज़र",
-    "browser_subtitle": "वेब ब्राउज़र · समान नेटवर्क"
+    "browser_subtitle": "वेब ब्राउज़र · समान नेटवर्क",
+    "sort_title": "इसके अनुसार क्रम",
+    "address": "पता"
   },
   "clipboard": {
     "clear_all": "इतिहास साफ़ करें",
