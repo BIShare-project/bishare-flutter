@@ -5,6 +5,29 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.8.0] — unreleased
+
+### Changed
+- **A new look across the app.** Send, Inbox, Drive, Rooms and Settings share
+  one flat design: one-row headers, content tabs that swipe, a search behind a
+  magnifier, and sheets as plain rows without cards. The shadcn_ui package is
+  gone; the app is about 2 MB smaller.
+- **Send in one place.** Photos, Videos, Audio, Documents, Apps and More are
+  tabs of the Send screen, each with a count of what is chosen. On Android it
+  asks once for access to all files.
+- **Settings in a clearer order:** this device, Receiving, Sending, Drive,
+  Devices and sync, Appearance, Privacy, About. Choices open a sheet; the
+  accent sheet names its 12 colours; the PIN is six boxes; the footer shows the
+  app's real version.
+- **Android TV:** devices on the network, a browser QR to the TV's own address,
+  the latest file large and a slideshow.
+
+### Fixed
+- Drive photos scroll smoothly (74 to 87 fps on a 90 Hz phone).
+- Tabs on Send start at the screen's edge.
+- No long dashes left in any language; iOS and macOS permission prompts are
+  translated.
+
 ## [2.6.3] — 2026-10-17
 
 ### Added
