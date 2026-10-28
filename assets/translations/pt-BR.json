@@ -234,7 +234,8 @@
     "via_qr": "Por QR",
     "select_all": "Selecionar tudo",
     "select_none": "Limpar seleção",
-    "detail_saved_as": "Salvo como"
+    "detail_saved_as": "Salvo como",
+    "open_in_browser": "Abrir no navegador"
   },
   "history": {
     "all": "Tudo",

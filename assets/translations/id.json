@@ -234,7 +234,8 @@
     "via_qr": "Via QR",
     "select_all": "Pilih semua",
     "select_none": "Batal pilih",
-    "detail_saved_as": "Disimpan sebagai"
+    "detail_saved_as": "Disimpan sebagai",
+    "open_in_browser": "Buka di browser"
   },
   "history": {
     "all": "Semua",

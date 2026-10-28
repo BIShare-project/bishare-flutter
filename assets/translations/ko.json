@@ -234,7 +234,8 @@
     "via_qr": "QR로",
     "select_all": "모두 선택",
     "select_none": "선택 해제",
-    "detail_saved_as": "저장된 이름"
+    "detail_saved_as": "저장된 이름",
+    "open_in_browser": "브라우저에서 열기"
   },
   "history": {
     "all": "전체",

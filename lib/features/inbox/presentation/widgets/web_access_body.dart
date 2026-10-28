@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/ui/app_ui.dart';
 import 'web_access_cloud_tab.dart';
@@ -42,7 +43,8 @@ class _WebAccessBodyState extends State<WebAccessBody> {
   }
 }
 
-/// The LAN tab: QR and the copyable address, and what to do with it. On iOS
+/// The LAN tab: QR, the copyable address, a button that opens it in this
+/// device's browser, and what to do with it. On iOS
 /// the local server stops when the app goes to the background, so the hint
 /// says to keep it open.
 class _LanTab extends StatelessWidget {
@@ -67,14 +69,19 @@ class _LanTab extends StatelessWidget {
           ),
           child: Row(
             children: [
+              // Shrinks to fit instead of cutting off: the port at the end
+              // is part of the address.
               Expanded(
-                child: Text(
-                  url,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppType.row.copyWith(
-                    color: t.text,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    url,
+                    maxLines: 1,
+                    style: AppType.row.copyWith(
+                      color: t.text,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
                 ),
               ),
@@ -93,6 +100,17 @@ class _LanTab extends StatelessWidget {
                 },
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        AppButton(
+          label: 'inbox.open_in_browser'.tr(),
+          icon: AppIcons.externalLink,
+          variant: AppButtonVariant.secondary,
+          fullWidth: true,
+          onPressed: () => launchUrl(
+            Uri.parse(url),
+            mode: LaunchMode.externalApplication,
           ),
         ),
         const SizedBox(height: 12),

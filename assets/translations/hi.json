@@ -234,7 +234,8 @@
     "via_qr": "QR से",
     "select_all": "सभी चुनें",
     "select_none": "चयन हटाएँ",
-    "detail_saved_as": "इस नाम से सेव"
+    "detail_saved_as": "इस नाम से सेव",
+    "open_in_browser": "ब्राउज़र में खोलें"
   },
   "history": {
     "all": "सभी",
