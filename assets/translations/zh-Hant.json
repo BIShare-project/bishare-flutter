@@ -565,7 +565,12 @@
     "visible_subtitle": "關閉 = 隱藏，無法被找到",
     "telemetry": "匿名使用統計",
     "telemetry_subtitle": "匿名傳送傳輸次數和開啟 App 的天數，讓公開統計反映真實使用。不含檔案，不含個人資料，也不含任何可識別此裝置的資訊。",
-    "share_app_message": "試試 BIShare。不必連網，就能在你的裝置之間傳檔案。免費開源：{url}"
+    "share_app_message": "試試 BIShare。不必連網，就能在你的裝置之間傳檔案。免費開源：{url}",
+    "privacy": "隱私",
+    "devices_sync": "裝置與同步",
+    "pin_too_short": "請使用 4 到 8 位數字",
+    "version": "版本 {version}",
+    "license_line": "開源，Apache License 2.0"
   },
   "notification": {
     "clipboard_from": "從 {sender} 複製",
@@ -1348,5 +1353,19 @@
     "no_devices_title": "這個網路中還沒有裝置",
     "no_devices_body": "在同一 Wi-Fi 下的另一台裝置上開啟 BIShare，或使用下面的其他方式。",
     "search_again": "重新搜尋"
+  },
+  "accent": {
+    "blue": "藍色",
+    "violet": "紫羅蘭",
+    "rose": "玫瑰",
+    "green": "綠色",
+    "orange": "橙色",
+    "red": "紅色",
+    "yellow": "黃色",
+    "slate": "石板",
+    "gray": "灰色",
+    "zinc": "鋅色",
+    "neutral": "中性",
+    "stone": "石色"
   }
 }

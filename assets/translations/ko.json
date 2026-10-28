@@ -565,7 +565,12 @@
     "visible_subtitle": "끄기 = 숨김, 검색 불가",
     "telemetry": "익명 사용 통계",
     "telemetry_subtitle": "전송 횟수와 앱을 연 날의 수만 익명으로 보내 공개 통계에 실제 사용을 반영합니다. 파일도, 개인정보도, 이 기기를 식별할 정보도 없습니다.",
-    "share_app_message": "BIShare를 써 보세요. 인터넷 없이 내 기기끼리 파일을 보낼 수 있어요. 무료 오픈 소스: {url}"
+    "share_app_message": "BIShare를 써 보세요. 인터넷 없이 내 기기끼리 파일을 보낼 수 있어요. 무료 오픈 소스: {url}",
+    "privacy": "개인정보",
+    "devices_sync": "기기 및 동기화",
+    "pin_too_short": "4~8자리 숫자를 사용하세요",
+    "version": "버전 {version}",
+    "license_line": "오픈 소스, Apache License 2.0"
   },
   "notification": {
     "clipboard_from": "{sender}에서 복사됨",
@@ -1348,5 +1353,19 @@
     "no_devices_title": "이 네트워크에 아직 기기가 없습니다",
     "no_devices_body": "같은 Wi-Fi의 다른 기기에서 BIShare를 열거나 아래 방법 중 하나를 사용하세요.",
     "search_again": "다시 검색"
+  },
+  "accent": {
+    "blue": "파랑",
+    "violet": "보라",
+    "rose": "로즈",
+    "green": "초록",
+    "orange": "주황",
+    "red": "빨강",
+    "yellow": "노랑",
+    "slate": "슬레이트",
+    "gray": "회색",
+    "zinc": "징크",
+    "neutral": "뉴트럴",
+    "stone": "스톤"
   }
 }

@@ -13,6 +13,7 @@
 /// - [AppSelectionBar], [AppSelectionSummary]   the floating selection bar
 /// - [AppMediaTile], [AppRowCheck]              selectable photo tile / row check
 /// - [AppDeviceAvatar]  device circle with progress ring
+/// - [AppTextField]     text input for sheets (name, PIN)
 /// - [AppCodeBoxes]     code input (room, transfer, Drive browser)
 /// - [AppAvatar], [AppBadge], [AppStatusPill], [AppIconButton]
 /// - [AppButton], [AppIconOnlyButton]
@@ -36,6 +37,7 @@ export 'app_media_tile.dart';
 export 'app_rows.dart';
 export 'app_selection_bar.dart';
 export 'app_tabs.dart';
+export 'app_text_field.dart';
 export 'bishare_qr.dart';
 export 'file_open.dart';
 export 'file_preview.dart';

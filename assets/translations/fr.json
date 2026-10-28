@@ -565,7 +565,12 @@
     "visible_subtitle": "Désactivé = masqué, non détectable",
     "telemetry": "Statistiques d’usage anonymes",
     "telemetry_subtitle": "Envoie un décompte privé des transferts et des jours où l’app est ouverte, pour que les stats reflètent l’usage réel. Aucun fichier, aucune donnée personnelle, rien qui identifie cet appareil.",
-    "share_app_message": "Découvrez BIShare. Il envoie des fichiers entre vos appareils, sans connexion Internet. Gratuit et open source : {url}"
+    "share_app_message": "Découvrez BIShare. Il envoie des fichiers entre vos appareils, sans connexion Internet. Gratuit et open source : {url}",
+    "privacy": "Confidentialité",
+    "devices_sync": "Appareils et synchro",
+    "pin_too_short": "Utilisez 4 à 8 chiffres",
+    "version": "Version {version}",
+    "license_line": "Open source, licence Apache 2.0"
   },
   "notification": {
     "clipboard_from": "Copié depuis {sender}",
@@ -1348,5 +1353,19 @@
     "no_devices_title": "Aucun appareil sur ce réseau pour l'instant",
     "no_devices_body": "Ouvrez BIShare sur un autre appareil connecté au même Wi-Fi, ou utilisez l'un des moyens ci-dessous.",
     "search_again": "Chercher à nouveau"
+  },
+  "accent": {
+    "blue": "Bleu",
+    "violet": "Violet",
+    "rose": "Rose",
+    "green": "Vert",
+    "orange": "Orange",
+    "red": "Rouge",
+    "yellow": "Jaune",
+    "slate": "Ardoise",
+    "gray": "Gris",
+    "zinc": "Zinc",
+    "neutral": "Neutre",
+    "stone": "Pierre"
   }
 }

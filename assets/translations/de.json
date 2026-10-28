@@ -565,7 +565,12 @@
     "visible_subtitle": "Aus = versteckt, nicht auffindbar",
     "telemetry": "Anonyme Nutzungsstatistik",
     "telemetry_subtitle": "Sendet eine private Anzahl von Übertragungen und von Tagen, an denen die App geöffnet wird, damit die Statistik echte Nutzung zeigt. Keine Dateien, keine persönlichen Daten, nichts, was dieses Gerät erkennbar macht.",
-    "share_app_message": "Schau dir BIShare an. Es sendet Dateien zwischen deinen Geräten, ganz ohne Internet. Kostenlos und Open Source: {url}"
+    "share_app_message": "Schau dir BIShare an. Es sendet Dateien zwischen deinen Geräten, ganz ohne Internet. Kostenlos und Open Source: {url}",
+    "privacy": "Datenschutz",
+    "devices_sync": "Geräte und Sync",
+    "pin_too_short": "4 bis 8 Ziffern verwenden",
+    "version": "Version {version}",
+    "license_line": "Open Source, Apache-Lizenz 2.0"
   },
   "notification": {
     "clipboard_from": "Kopiert von {sender}",
@@ -1348,5 +1353,19 @@
     "no_devices_title": "Noch keine Geräte in diesem Netzwerk",
     "no_devices_body": "Öffne BIShare auf einem anderen Gerät im selben WLAN oder nutze einen der Wege unten.",
     "search_again": "Erneut suchen"
+  },
+  "accent": {
+    "blue": "Blau",
+    "violet": "Violett",
+    "rose": "Rosé",
+    "green": "Grün",
+    "orange": "Orange",
+    "red": "Rot",
+    "yellow": "Gelb",
+    "slate": "Schiefer",
+    "gray": "Grau",
+    "zinc": "Zink",
+    "neutral": "Neutral",
+    "stone": "Stein"
   }
 }

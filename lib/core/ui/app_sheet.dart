@@ -79,7 +79,7 @@ Future<T?> showGlassModal<T>(
 class AppSheetAction extends StatelessWidget {
   const AppSheetAction({
     super.key,
-    required this.icon,
+    this.icon,
     required this.label,
     required this.onTap,
     this.subtitle,
@@ -87,7 +87,8 @@ class AppSheetAction extends StatelessWidget {
     this.selected = false,
   });
 
-  final String icon;
+  /// Null for a plain option (a language, a size): the label alone.
+  final String? icon;
   final String label;
   final String? subtitle;
   final VoidCallback onTap;
@@ -121,8 +122,10 @@ class AppSheetAction extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
             child: Row(
               children: [
-                AppSvgIcon(icon, size: 22, color: glyph),
-                const SizedBox(width: 14),
+                if (icon != null) ...[
+                  AppSvgIcon(icon!, size: 22, color: glyph),
+                  const SizedBox(width: 14),
+                ],
                 // A long label (a Drive link's name and lifetime) wraps instead
                 // of running off the sheet.
                 Expanded(
@@ -160,12 +163,21 @@ class AppSheetAction extends StatelessWidget {
 /// Rows of a sheet with hairlines between them, flat on the sheet. A sheet
 /// stacks a few, a hairline apart: what to do, what it is, then delete.
 class AppSheetGroup extends StatelessWidget {
-  const AppSheetGroup({super.key, required this.children, this.first = false});
+  const AppSheetGroup({
+    super.key,
+    required this.children,
+    this.first = false,
+    this.indent = 40,
+  });
 
   final List<Widget> children;
 
   /// The top group: no hairline above it.
   final bool first;
+
+  /// Where the hairline between rows starts: past the glyph, or 4 for rows
+  /// without one.
+  final double indent;
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +197,7 @@ class AppSheetGroup extends StatelessWidget {
           const SizedBox(height: 6),
         ],
         for (var i = 0; i < children.length; i++) ...[
-          if (i > 0) line(40),
+          if (i > 0) line(indent),
           children[i],
         ],
       ],

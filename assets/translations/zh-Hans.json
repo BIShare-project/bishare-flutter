@@ -565,7 +565,12 @@
     "visible_subtitle": "关闭 = 隐藏，不可发现",
     "telemetry": "匿名使用统计",
     "telemetry_subtitle": "匿名发送传输次数和打开应用的天数，让公开统计反映真实使用。不含文件，不含个人数据，也不含任何可识别此设备的信息。",
-    "share_app_message": "试试 BIShare。无需联网，就能在你的设备之间传文件。免费开源：{url}"
+    "share_app_message": "试试 BIShare。无需联网，就能在你的设备之间传文件。免费开源：{url}",
+    "privacy": "隐私",
+    "devices_sync": "设备与同步",
+    "pin_too_short": "请使用 4 到 8 位数字",
+    "version": "版本 {version}",
+    "license_line": "开源，Apache License 2.0"
   },
   "notification": {
     "clipboard_from": "已从 {sender} 复制",
@@ -1348,5 +1353,19 @@
     "no_devices_title": "这个网络中还没有设备",
     "no_devices_body": "在同一 Wi-Fi 下的另一台设备上打开 BIShare，或使用下面的其他方式。",
     "search_again": "重新搜索"
+  },
+  "accent": {
+    "blue": "蓝色",
+    "violet": "紫罗兰",
+    "rose": "玫瑰",
+    "green": "绿色",
+    "orange": "橙色",
+    "red": "红色",
+    "yellow": "黄色",
+    "slate": "石板",
+    "gray": "灰色",
+    "zinc": "锌色",
+    "neutral": "中性",
+    "stone": "石色"
   }
 }

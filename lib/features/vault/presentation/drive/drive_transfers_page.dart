@@ -5,7 +5,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../../core/di/locator.dart';
 import '../../../../core/storage/app_database.dart';
 import '../../../../core/ui/app_ui.dart';
-import '../../../settings/presentation/widgets/glyph.dart';
 import '../../data/vault_downloads.dart';
 import '../../data/vault_uploader.dart';
 import 'drive_format.dart';
@@ -158,7 +157,7 @@ class _UploadRow extends StatelessWidget {
           };
     final fraction = p != null && p.total > 0 ? p.done / p.total : null;
     return AppListTile(
-      leading: const Glyph(AppIcons.uploadFile),
+      leading: const AppGlyph(AppIcons.uploadFile),
       title: Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +228,7 @@ class _DownloadRow extends StatelessWidget {
       VaultJobState.cancelled => 'vault.cancelled'.tr(),
     };
     return AppListTile(
-      leading: Glyph(job.isFolder ? AppIcons.folder : AppIcons.downloadFile),
+      leading: AppGlyph(job.isFolder ? AppIcons.folder : AppIcons.downloadFile),
       title: Text(job.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -565,7 +565,12 @@
     "visible_subtitle": "Mati = tersembunyi, tidak dapat ditemukan",
     "telemetry": "Statistik penggunaan anonim",
     "telemetry_subtitle": "Kirim hitungan transfer, dan hari saat aplikasi dibuka, secara privat agar statistik publik mencerminkan pemakaian nyata. Tanpa file, tanpa data pribadi, tanpa apa pun yang mengenali perangkat ini.",
-    "share_app_message": "Coba BIShare. Kirim file antar perangkatmu tanpa perlu internet. Gratis dan open source: {url}"
+    "share_app_message": "Coba BIShare. Kirim file antar perangkatmu tanpa perlu internet. Gratis dan open source: {url}",
+    "privacy": "Privasi",
+    "devices_sync": "Perangkat dan sinkron",
+    "pin_too_short": "Gunakan 4 sampai 8 angka",
+    "version": "Versi {version}",
+    "license_line": "Sumber terbuka, Lisensi Apache 2.0"
   },
   "notification": {
     "clipboard_from": "Disalin dari {sender}",
@@ -1348,5 +1353,19 @@
     "no_devices_title": "Belum ada perangkat di jaringan ini",
     "no_devices_body": "Buka BIShare di perangkat lain di Wi-Fi yang sama, atau pakai salah satu cara di bawah.",
     "search_again": "Cari lagi"
+  },
+  "accent": {
+    "blue": "Biru",
+    "violet": "Ungu",
+    "rose": "Mawar",
+    "green": "Hijau",
+    "orange": "Oranye",
+    "red": "Merah",
+    "yellow": "Kuning",
+    "slate": "Batu tulis",
+    "gray": "Abu-abu",
+    "zinc": "Seng",
+    "neutral": "Netral",
+    "stone": "Batu"
   }
 }

@@ -8,7 +8,6 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../core/config/feature_flags.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/ui/app_ui.dart';
-import '../../settings/presentation/widgets/glyph.dart';
 import '../data/vault_account.dart';
 import '../data/vault_signin.dart';
 import 'vault_sign_in_buttons.dart';
@@ -57,7 +56,7 @@ class _VaultGroupState extends State<_VaultGroup> {
           rows
             ..add(
               AppListTile(
-                leading: const Glyph(AppIcons.passwordLock),
+                leading: const AppGlyph(AppIcons.passwordLock),
                 title: Text('vault.title'.tr()),
                 subtitle: Text(
                   (VaultSignin.byApproval
@@ -76,7 +75,7 @@ class _VaultGroupState extends State<_VaultGroup> {
         } else {
           rows.add(
             AppListTile(
-              leading: const Glyph(AppIcons.passwordLock),
+              leading: const AppGlyph(AppIcons.passwordLock),
               title: Text('vault.title'.tr()),
               subtitle: Text(switch (status) {
                 VaultStatus.ready =>
@@ -94,7 +93,7 @@ class _VaultGroupState extends State<_VaultGroup> {
             ..add(const AppRowDivider(indent: 58))
             ..add(
               AppListTile(
-                leading: const Glyph(AppIcons.settings),
+                leading: const AppGlyph(AppIcons.settings),
                 title: Text('vault.manage'.tr()),
                 trailing: const _Chevron(),
                 onTap: () => context.push('/drive-account'),

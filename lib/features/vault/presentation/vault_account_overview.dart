@@ -10,7 +10,6 @@ import '../../../core/di/locator.dart';
 import '../../../core/storage/app_database.dart';
 import '../../../core/storage/vault_tables.dart';
 import '../../../core/ui/app_ui.dart';
-import '../../settings/presentation/widgets/glyph.dart';
 import '../data/vault_account.dart';
 import '../data/vault_photo_backup.dart';
 import '../data/vault_upload_batch.dart';
@@ -242,7 +241,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
           ),
           Divider(height: 1, color: cs.border),
           AppListTile(
-            leading: const Glyph(AppIcons.starFavorite),
+            leading: const AppGlyph(AppIcons.starFavorite),
             title: Text('vault.plan'.tr()),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
@@ -261,7 +260,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
           if (_account.region != null) ...[
             const AppRowDivider(indent: 58),
             AppListTile(
-              leading: const Glyph(AppIcons.globePublic),
+              leading: const AppGlyph(AppIcons.globePublic),
               title: Text('vault.region_title'.tr()),
               trailing: Text(
                 'vault.region_${_account.region}'.tr(),
@@ -271,7 +270,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
           ],
           const AppRowDivider(indent: 58),
           AppListTile(
-            leading: const Glyph(AppIcons.storageUsage),
+            leading: const AppGlyph(AppIcons.storageUsage),
             title: Text('vault.storage_details'.tr()),
             trailing: AppSvgIcon(
               AppIcons.chevronRight,
@@ -315,7 +314,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
         final running = batch?.running ?? const <VaultTransfer>[];
         final stopped = batch?.stopped ?? 0;
         return AppListTile(
-          leading: const Glyph(AppIcons.uploadFile),
+          leading: const AppGlyph(AppIcons.uploadFile),
           title: Text('vault.uploads'.tr()),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,7 +378,7 @@ class _VaultAccountOverviewState extends State<VaultAccountOverview> {
         ? (total - min(left, total)) / total
         : null;
     return AppListTile(
-      leading: const Glyph(AppIcons.cloudSync),
+      leading: const AppGlyph(AppIcons.cloudSync),
       title: Text('vault.backup_title'.tr()),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

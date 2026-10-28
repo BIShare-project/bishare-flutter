@@ -565,7 +565,12 @@
     "visible_subtitle": "オフ = 非表示・検出不可",
     "telemetry": "匿名の利用統計",
     "telemetry_subtitle": "転送回数と、アプリを開いた日の数だけを匿名で送り、公開統計に実際の利用を反映します。ファイルも個人データも、この端末を特定できる情報も送りません。",
-    "share_app_message": "BIShareを使ってみてください。インターネットなしで端末間にファイルを送れます。無料・オープンソース：{url}"
+    "share_app_message": "BIShareを使ってみてください。インターネットなしで端末間にファイルを送れます。無料・オープンソース：{url}",
+    "privacy": "プライバシー",
+    "devices_sync": "デバイスと同期",
+    "pin_too_short": "4〜8桁の数字にしてください",
+    "version": "バージョン {version}",
+    "license_line": "オープンソース、Apache License 2.0"
   },
   "notification": {
     "clipboard_from": "{sender}からコピーしました",
@@ -1348,5 +1353,19 @@
     "no_devices_title": "このネットワークにはまだデバイスがありません",
     "no_devices_body": "同じWi-Fiの別のデバイスでBIShareを開くか、下の方法を使ってください。",
     "search_again": "もう一度検索"
+  },
+  "accent": {
+    "blue": "ブルー",
+    "violet": "バイオレット",
+    "rose": "ローズ",
+    "green": "グリーン",
+    "orange": "オレンジ",
+    "red": "レッド",
+    "yellow": "イエロー",
+    "slate": "スレート",
+    "gray": "グレー",
+    "zinc": "ジンク",
+    "neutral": "ニュートラル",
+    "stone": "ストーン"
   }
 }

@@ -4,6 +4,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_type.dart';
 import 'app_list_tile.dart';
+import 'app_sheet.dart';
 import 'app_svg_icon.dart';
 
 /// The leading glyph of a row: the icon alone in the secondary colour, no
@@ -122,4 +123,60 @@ class AppValueRow extends StatelessWidget {
             ),
     );
   }
+}
+
+/// A row that shows its current value; a tap opens a sheet with
+/// every option, the one in force checked.
+class AppSelectRow<T> extends StatelessWidget {
+  const AppSelectRow({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.values,
+    required this.label,
+    required this.onChanged,
+    this.description,
+  });
+
+  final String icon;
+  final String title;
+  final T value;
+  final List<T> values;
+  final String Function(T) label;
+  final ValueChanged<T> onChanged;
+
+  /// Optional one-line explanation under each option in the sheet, so the
+  /// user understands the choice while picking (e.g. what each Transport does).
+  final String Function(T)? description;
+
+  Future<void> _pick(BuildContext context) async {
+    final picked = await showAppSheet<T>(
+      context,
+      icon: icon,
+      title: title,
+      builder: (ctx) => AppSheetGroup(
+        first: true,
+        indent: 4,
+        children: [
+          for (final o in values)
+            AppSheetAction(
+              label: label(o),
+              subtitle: description?.call(o),
+              selected: o == value,
+              onTap: () => Navigator.pop(ctx, o),
+            ),
+        ],
+      ),
+    );
+    if (picked != null && picked != value) onChanged(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) => AppValueRow(
+    icon: icon,
+    title: title,
+    value: label(value),
+    onTap: () => _pick(context),
+  );
 }

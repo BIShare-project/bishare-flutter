@@ -18,7 +18,6 @@ import '../../../core/di/locator.dart';
 import '../../../core/platform/device_lock.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../scanner/presentation/qr_camera.dart';
-import '../../settings/presentation/widgets/glyph.dart';
 import '../data/vault_account.dart';
 import '../data/vault_api.dart';
 import '../data/vault_key_copy.dart';
@@ -570,7 +569,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         'vault.last_seen'.tr(namedArgs: {'when': seen}),
     ].join(' · ');
     return AppListTile(
-      leading: Glyph(_deviceIcon(d)),
+      leading: AppGlyph(_deviceIcon(d)),
       title: Text(
         d.name ?? 'vault.unnamed_device'.tr(),
         maxLines: 1,
@@ -962,7 +961,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     return [
       AppGroup(
         child: AppListTile(
-          leading: const Glyph(AppIcons.passwordLock),
+          leading: const AppGlyph(AppIcons.passwordLock),
           title: Text('vault.title'.tr()),
           subtitle: Text(switch (status) {
             VaultStatus.ready =>
@@ -984,14 +983,14 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
           child: Column(
             children: [
               AppListTile(
-                leading: const Glyph(AppIcons.qrShare),
+                leading: const AppGlyph(AppIcons.qrShare),
                 title: Text('vault.show_code'.tr()),
                 trailing: const _Chevron(),
                 onTap: _busy ? null : _showCode,
               ),
               const AppRowDivider(indent: 58),
               AppListTile(
-                leading: const Glyph(AppIcons.keyboard),
+                leading: const AppGlyph(AppIcons.keyboard),
                 title: Text('vault.enter_phrase'.tr()),
                 trailing: const _Chevron(),
                 onTap: _busy ? null : _enterPhrase,
@@ -1026,7 +1025,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
                 if (rows.isNotEmpty) rows.add(const AppRowDivider(indent: 58));
                 rows.add(
                   AppListTile(
-                    leading: const Glyph(AppIcons.scanDocument),
+                    leading: const AppGlyph(AppIcons.scanDocument),
                     title: Text('vault.add_device'.tr()),
                     subtitle: Text('vault.add_device_body'.tr()),
                     trailing: const _Chevron(),
@@ -1042,7 +1041,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
                 }
                 rows.add(
                   AppListTile(
-                    leading: const Glyph(AppIcons.monitor),
+                    leading: const AppGlyph(AppIcons.monitor),
                     title: Text('vault.web_open'.tr()),
                     subtitle: Text('vault.web_open_body'.tr()),
                     trailing: const _Chevron(),
@@ -1059,7 +1058,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
       if (VaultSignin.byApproval) ...[
         AppGroup(
           child: AppListTile(
-            leading: const Glyph(AppIcons.close),
+            leading: const AppGlyph(AppIcons.close),
             title: Text('vault.disconnect'.tr()),
             onTap: _busy ? null : _disconnect,
           ),
@@ -1106,7 +1105,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
       if (!known) {
         add(
           AppListTile(
-            leading: const Glyph(AppIcons.logIn),
+            leading: const AppGlyph(AppIcons.logIn),
             title: Text('vault.way_$p'.tr()),
             subtitle: const Text('…'),
           ),
@@ -1119,7 +1118,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
           : KeyCopyState.unreachable;
       add(
         AppListTile(
-          leading: Glyph(isLinked ? AppIcons.verifiedCheck : AppIcons.logIn),
+          leading: AppGlyph(isLinked ? AppIcons.verifiedCheck : AppIcons.logIn),
           title: Text('vault.way_$p'.tr()),
           subtitle: Text(
             !isLinked
@@ -1144,7 +1143,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
     }
     add(
       AppListTile(
-        leading: const Glyph(AppIcons.eyePreview),
+        leading: const AppGlyph(AppIcons.eyePreview),
         title: Text('vault.phrase_row'.tr()),
         subtitle: Text('vault.phrase_row_body'.tr()),
         trailing: const _Chevron(),
