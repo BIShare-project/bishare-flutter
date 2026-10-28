@@ -11,10 +11,18 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/ui/app_ui.dart';
 import '../domain/beam_codec.dart';
 
-/// Max payload for QR Beam. QR throughput is tiny (~1 KB/frame), so this is for
-/// text, keys, and small docs — not media. Above this we refuse with a message.
-const int _maxBeamBytes = 100 * 1024;
-const int _warnBeamBytes = 30 * 1024;
+/// Max payload for QR Beam. Each frame carries [_chunkBytes], about 5 KB a
+/// second at 6 fps, so this is for text, keys and documents, not media.
+/// Above this we refuse with a message. (Owner 2026-10-28: 300 KB.)
+const int _maxBeamBytes = 300 * 1024;
+
+/// Above this the page says a beam takes a while.
+const int _warnBeamBytes = 100 * 1024;
+
+/// Bytes per frame. 900 rather than the codec's 600: 1.5 times faster, and a
+/// QR still sharp on a phone screen at the size shown. The header names the
+/// chunk size, so every receiver (app and web) reads it.
+const int _chunkBytes = 900;
 
 class QrBeamSendPage extends StatefulWidget {
   const QrBeamSendPage({super.key, this.initialPath});
@@ -119,6 +127,7 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
     final lower = ext.toLowerCase();
     final enc = encodeBeam(
       Uint8List.fromList(bytes),
+      chunkSize: _chunkBytes,
       name: name,
       mime: lower.isEmpty ? 'application/octet-stream' : lower,
     );
@@ -364,7 +373,7 @@ class _BeamQr extends StatelessWidget {
         child: QrImageView(
           data: data,
           version: QrVersions.auto,
-          size: 250,
+          size: 300,
           backgroundColor: Colors.white,
           errorCorrectionLevel: QrErrorCorrectLevel.M,
           eyeStyle: QrEyeStyle(eyeShape: QrEyeShape.square, color: t.accent),
