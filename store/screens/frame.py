@@ -41,7 +41,7 @@ TARGETS = {
     "play_phone": (1440, 2560, "android", "android_phone"),
     "play_tablet": (1600, 2560, "android_tablet", "android_tablet"),
 }
-SELF = {"ios_phone": "iPhone 17", "ios_ipad": "iPad Pro", "mac": "MacBook Pro", "play_phone": "Pixel 9", "play_tablet": "Galaxy Tab S10"}
+SELF = {"ios_phone": "Maya", "ios_ipad": "Maya", "mac": "Maya’s Mac", "play_phone": "Maya", "play_tablet": "Maya"}
 
 TOP = (40, 92, 222)
 BOTTOM = (6, 14, 40)
@@ -319,6 +319,7 @@ def device(raw: Image.Image, kind: str, dw: int) -> tuple[Image.Image, int]:
 # beside a list
 CHIP_Y = {
     "share": (0.165, 0.47),
+    "inbox": (0.2, 0.52),
     "link": (0.2, 0.46),
     "qr_beam": (0.19, 0.36),
     "rooms": (0.28, 0.5),

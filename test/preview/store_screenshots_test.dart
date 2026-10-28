@@ -28,6 +28,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:photo_manager/photo_manager.dart';
+import 'package:bishare/features/send/data/send_media_library.dart';
+import 'package:bishare/features/history/presentation/history_cubit.dart';
+import 'package:bishare/features/inbox/presentation/inbox_tab.dart';
+import 'package:bishare/features/inbox/presentation/inbox_cubit.dart';
+import 'package:bishare/core/desktop/desktop_service.dart';
 import 'package:bishare/core/config/feature_flags.dart';
 import 'package:bishare/core/crypto/e2e_crypto.dart';
 import 'package:bishare/core/di/locator.dart';
@@ -36,6 +42,7 @@ import 'package:bishare/core/l10n/app_locales.dart';
 import 'package:bishare/core/storage/app_database.dart';
 import 'package:bishare/core/storage/vault_tables.dart';
 import 'package:bishare/core/theme/app_theme.dart';
+import 'package:bishare/features/send/presentation/send_selection_cubit.dart';
 import 'package:bishare/core/theme/app_tokens.dart';
 import 'package:bishare/core/ui/app_bottom_nav.dart';
 import 'package:bishare/core/ui/app_nav_rail.dart';
@@ -45,12 +52,10 @@ import 'package:bishare/features/discovery/domain/discovered_device.dart';
 import 'package:bishare/features/discovery/presentation/discovery_cubit.dart';
 import 'package:bishare/features/favorites/presentation/favorites_cubit.dart';
 import 'package:bishare/features/home/home_page.dart';
-import 'package:bishare/features/qr_beam/presentation/qr_beam_page.dart';
 import 'package:bishare/features/receive/presentation/receive_cubit.dart';
 import 'package:bishare/features/remote/presentation/remote_share_page.dart';
 import 'package:bishare/features/room/domain/room_models.dart';
 import 'package:bishare/features/room/presentation/room_cubit.dart';
-import 'package:bishare/features/room/presentation/room_page.dart';
 import 'package:bishare/features/send/domain/sendable_file.dart';
 import 'package:bishare/features/send/presentation/send_cubit.dart';
 import 'package:bishare/features/send/presentation/tray_cubit.dart';
@@ -213,6 +218,117 @@ class _Settings extends MockCubit<Settings> implements SettingsCubit {}
 
 class _WebNearby extends MockCubit<WebNearbyState> implements WebNearbyCubit {}
 
+class _Desktop extends Mock implements DesktopService {}
+
+class _Inbox extends MockCubit<List<TransferRecord>> implements InboxCubit {}
+
+class _History extends MockCubit<HistoryState> implements HistoryCubit {}
+
+/// The sample photos (store/screens/photos, Unsplash License), read once.
+final Map<String, Uint8List> _photoBytes = {};
+
+List<String> get _photoNames => _photoBytes.keys.toList()..sort();
+
+Future<void> _loadPhotos() async {
+  if (_photoBytes.isNotEmpty) return;
+  final dir = Directory('store/screens/photos');
+  for (final f in dir.listSync().whereType<File>()) {
+    if (f.path.endsWith('.jpg')) {
+      _photoBytes[f.uri.pathSegments.last] = await f.readAsBytes();
+    }
+  }
+}
+
+/// A phone library of the sample photos, newest first, for the Send tab.
+class _FakeLibrary extends SendMediaLibrary {
+  _FakeLibrary() {
+    final now = DateTime(2026, 10, 28, 18).millisecondsSinceEpoch ~/ 1000;
+    _assets = [
+      for (final (i, name) in _photoNames.indexed)
+        AssetEntity(
+          id: name,
+          typeInt: 1,
+          width: 1200,
+          height: 1200,
+          title: name,
+          createDateSecond: now - i * 5400,
+        ),
+    ];
+  }
+
+  late final List<AssetEntity> _assets;
+
+  List<AssetEntity> get assets => _assets;
+
+  @override
+  Future<SendMediaAccess> access(
+    SendMediaKind kind, {
+    bool ask = false,
+  }) async => SendMediaAccess.full;
+
+  @override
+  Future<List<SendAlbum>> albums(SendMediaKind kind) async => [
+    if (kind == SendMediaKind.photo)
+      SendAlbum(
+        id: 'all',
+        name: 'Recents',
+        count: _assets.length,
+        cover: _assets.first,
+        path: AssetPathEntity(id: 'all', name: 'Recents', isAll: true),
+      ),
+  ];
+
+  @override
+  Future<List<AssetEntity>> page(SendAlbum album, int page, int size) async =>
+      page == 0 ? _assets.take(size).toList() : const [];
+
+  @override
+  Future<Uint8List?> thumbnail(AssetEntity a, int px) async =>
+      _photoBytes[a.id];
+
+  @override
+  Future<String> name(AssetEntity a) async => a.id;
+
+  @override
+  // A phone photo's size, not the small sample's.
+  Future<int?> sizeOf(AssetEntity a) async =>
+      3400000 + (_photoBytes[a.id]?.length ?? 0) * 3;
+
+  @override
+  Stream<void> get changes => const Stream.empty();
+}
+
+/// Photos received today and yesterday from the other devices.
+List<TransferRecord> _received() {
+  final now = DateTime(2026, 10, 28, 18, 20);
+  final from = ['Leo', 'Nadia', 'Leo', 'Studio'];
+  return [
+    for (final (i, name) in _photoNames.indexed)
+      TransferRecord(
+        id: i + 1,
+        fileName: 'IMG_${2041 + i}.jpg',
+        savedPath: File('store/screens/photos/$name').absolute.path,
+        fileSize: 3200000 + i * 410000,
+        fileType: 'image/jpeg',
+        direction: 'received',
+        deviceAlias: from[(i ~/ 4) % from.length],
+        deviceFingerprint: 'fp-${from[(i ~/ 4) % from.length].toLowerCase()}',
+        encrypted: true,
+        verified: true,
+        timestamp: now.subtract(
+          Duration(minutes: i < 8 ? i * 3 : 1440 + i * 7),
+        ),
+      ),
+  ];
+}
+
+/// Launch at login, off (Settings on a computer).
+DesktopService _desktop() {
+  final d = _Desktop();
+  when(d.isAutostartEnabled).thenAnswer((_) async => false);
+  return d;
+}
+
 class _Account extends Mock implements VaultAccount {}
 
 class _Purchases extends Mock implements VaultPurchases {}
@@ -358,6 +474,9 @@ List<VaultObject> _driveObjects() {
 
 /// Thumbnails: a soft two-colour gradient with a sun, one palette per photo.
 Uint8List _thumb(int seed) {
+  if (_photoBytes.isNotEmpty) {
+    return _photoBytes[_photoNames[seed % _photoBytes.length]]!;
+  }
   const palettes = [
     [(14, 116, 144), (250, 204, 21)],
     [(30, 64, 175), (244, 114, 182)],
@@ -537,7 +656,7 @@ void _registerDrive(String self, {required bool phone}) {
       ),
       VaultDeviceView(
         id: 'd2',
-        name: 'Galaxy S25',
+        name: 'Leo',
         thisDevice: false,
         pending: false,
         addedAt: now,
@@ -545,7 +664,7 @@ void _registerDrive(String self, {required bool phone}) {
       ),
       VaultDeviceView(
         id: 'd3',
-        name: self == 'MacBook Pro' ? 'Windows PC' : 'MacBook Pro',
+        name: self == 'MacBook Pro' ? 'Office' : 'Studio',
         thisDevice: false,
         pending: false,
         addedAt: now,
@@ -606,12 +725,20 @@ List<DiscoveredDevice> _cast(String self) {
         version: '2.6',
       );
   return [
-    if (!self.startsWith('iPhone')) peer('fp-iphone', 'iPhone 17', 'mobile', 5),
-    peer('fp-galaxy', 'Galaxy S25', 'mobile', 4),
-    if (self != 'MacBook Pro') peer('fp-mac', 'MacBook Pro', 'desktop', 3),
-    peer('fp-win', 'Windows PC', 'desktop', 2),
+    if (!self.startsWith('iPhone')) peer('fp-iphone', 'Nadia', 'mobile', 5),
+    peer('fp-galaxy', 'Leo', 'mobile', 4),
+    if (self != 'MacBook Pro') peer('fp-mac', 'Studio', 'desktop', 3),
+    peer('fp-win', 'Office', 'desktop', 2),
   ].take(3).toList();
 }
+
+/// The name this device shows: a person's, never a maker's (Apple rejects
+/// other brands in screenshots, and Play should match).
+String _alias(String preset) => switch (preset) {
+  'MacBook Pro' => 'Maya’s Mac',
+  'Windows PC' => 'Maya’s PC',
+  _ => 'Maya',
+};
 
 RoomState _room(String self) => RoomState(
   status: RoomStatus.inRoom,
@@ -624,9 +751,9 @@ RoomState _room(String self) => RoomState(
   ),
   members: const [
     // short names: the member row cuts labels after about seven letters
-    RoomMember(fingerprint: 'fp-galaxy', alias: 'Galaxy', deviceType: 'mobile'),
-    RoomMember(fingerprint: 'fp-mac', alias: 'MacBook', deviceType: 'desktop'),
-    RoomMember(fingerprint: 'fp-win', alias: 'Surface', deviceType: 'desktop'),
+    RoomMember(fingerprint: 'fp-galaxy', alias: 'Leo', deviceType: 'mobile'),
+    RoomMember(fingerprint: 'fp-mac', alias: 'Studio', deviceType: 'desktop'),
+    RoomMember(fingerprint: 'fp-win', alias: 'Office', deviceType: 'desktop'),
   ],
   files: const [
     RoomFile(
@@ -635,7 +762,7 @@ RoomState _room(String self) => RoomState(
       fileType: 'image/jpeg',
       size: 4718592,
       ownerFingerprint: 'fp-galaxy',
-      ownerAlias: 'Galaxy',
+      ownerAlias: 'Leo',
     ),
     RoomFile(
       id: 'f2',
@@ -643,7 +770,7 @@ RoomState _room(String self) => RoomState(
       fileType: 'application/pdf',
       size: 12582912,
       ownerFingerprint: 'fp-mac',
-      ownerAlias: 'MacBook',
+      ownerAlias: 'Studio',
     ),
     RoomFile(
       id: 'f3',
@@ -651,7 +778,7 @@ RoomState _room(String self) => RoomState(
       fileType: 'video/mp4',
       size: 268435456,
       ownerFingerprint: 'fp-win',
-      ownerAlias: 'Surface',
+      ownerAlias: 'Office',
     ),
   ],
   security: RoomSecurity.encrypted,
@@ -698,11 +825,12 @@ Future<void> _loadFonts(String? script) async {
 
 /// The tab shell as MainShell draws it, around one page.
 Widget _shell(BuildContext context, int index, Widget page) {
+  // The app's tabs (main_shell.dart): Send, Inbox, Drive, Rooms, Settings.
   final items = [
-    AppNavItem(icon: AppIcons.shareLink, label: 'nav.tab_share'.tr()),
+    AppNavItem(icon: AppIcons.send, label: 'nav.tab_share'.tr()),
     AppNavItem(icon: AppIcons.notification, label: 'nav.tab_inbox'.tr()),
+    AppNavItem(icon: AppIcons.cloudSync, label: 'vault.title'.tr()),
     AppNavItem(icon: AppIcons.teamGroup, label: 'nav.tab_rooms'.tr()),
-    AppNavItem(icon: AppIcons.history, label: 'nav.tab_history'.tr()),
     AppNavItem(icon: AppIcons.settings, label: 'nav.tab_settings'.tr()),
   ];
   final t = context.tokens;
@@ -731,9 +859,8 @@ Widget _shell(BuildContext context, int index, Widget page) {
 /// The five screens, in store order: (file name, tab or null when pushed, page).
 final List<(String, int?, Widget)> _screens = [
   ('1_share', 0, const HomePage()),
-  ('2_link', null, const RemoteSharePage()),
-  ('3_qr_beam', null, const QrBeamPage()),
-  ('4_rooms', 2, const RoomPage()),
+  ('2_inbox', 1, const InboxTab()),
+  ('3_link', null, const RemoteSharePage()),
   ('5_settings', 4, const SettingsPage()),
 ];
 
@@ -891,16 +1018,19 @@ Future<void> _run(
 
   await tester.runAsync(() async {
     await GetIt.instance.reset();
+    await _loadPhotos();
+    SendMediaLibrary.instance = _FakeLibrary();
     final prefs = await SharedPreferences.getInstance();
     final (crypto, _) = await E2ECrypto.create();
     getIt
       ..registerSingleton<SharedPreferences>(prefs)
+      ..registerSingleton<DesktopService>(_desktop())
       // no cached flags: Drive off, so Settings is the one in the stores
       ..registerSingleton<FeatureFlags>(FeatureFlags(prefs))
       ..registerSingleton<DeviceIdentity>(
         DeviceIdentity.forTesting(
           fingerprint: 'fp-self',
-          alias: preset.self,
+          alias: _alias(preset.self),
           crypto: crypto,
           deviceModel: preset.self,
           deviceType: preset.type,
@@ -918,7 +1048,7 @@ Future<void> _run(
   whenListen(
     settings,
     const Stream<Settings>.empty(),
-    initialState: Settings(alias: preset.self, themeMode: _theme),
+    initialState: Settings(alias: _alias(preset.self), themeMode: _theme),
   );
   when(() => settings.canPickSaveFolder).thenReturn(preset.type == 'desktop');
   when(() => settings.clipboardImagesSupported).thenReturn(true);
@@ -934,7 +1064,7 @@ Future<void> _run(
   whenListen(
     discovery,
     const Stream<List<DiscoveredDevice>>.empty(),
-    initialState: _cast(preset.self),
+    initialState: _cast(_alias(preset.self)),
   );
   final receive = _Receive();
   whenListen(
@@ -958,13 +1088,28 @@ Future<void> _run(
   whenListen(
     room,
     const Stream<RoomState>.empty(),
-    initialState: _room(preset.self),
+    initialState: _room(_alias(preset.self)),
   );
   final webNearby = _WebNearby();
   whenListen(
     webNearby,
     const Stream<WebNearbyState>.empty(),
     initialState: const WebNearbyState(),
+  );
+
+  final inbox = _Inbox();
+  // Everything already seen: no "new" dots on the shots.
+  when(() => inbox.seenAt).thenReturn(ValueNotifier(DateTime(2027)));
+  whenListen(
+    inbox,
+    const Stream<List<TransferRecord>>.empty(),
+    initialState: _received(),
+  );
+  final history = _History();
+  whenListen(
+    history,
+    const Stream<HistoryState>.empty(),
+    initialState: HistoryState(all: _received()),
   );
 
   final boundary = GlobalKey();
@@ -975,7 +1120,7 @@ Future<void> _run(
     final lang = _tag(locale);
     for (final (file, tab, page, view) in <(String, int?, Widget, DriveView?)>[
       for (final (file, tab, page) in _screens) (file, tab, page, null),
-      ('6_drive', 1, const DrivePage(), phone ? DriveView.media : null),
+      ('4_drive', 2, const DrivePage(), phone ? DriveView.media : null),
       ..._driveScreens,
       if (preset.platform == TargetPlatform.windows) ..._desktopScreens,
     ]) {
@@ -1016,9 +1161,22 @@ Future<void> _run(
                 BlocProvider<ReceiveCubit>.value(value: receive),
                 BlocProvider<SendCubit>.value(value: send),
                 BlocProvider<TrayCubit>.value(value: tray),
+                BlocProvider<SendSelectionCubit>(
+                  // Three photos chosen, so the Send bar shows.
+                  create: (_) => SendSelectionCubit(tray)
+                    ..setAssets(
+                      (SendMediaLibrary.instance as _FakeLibrary).assets
+                          .take(3)
+                          .toList(),
+                      SendKind.photo,
+                      true,
+                    ),
+                ),
                 BlocProvider<FavoritesCubit>.value(value: favorites),
                 BlocProvider<RoomCubit>.value(value: room),
                 BlocProvider<SettingsCubit>.value(value: settings),
+                BlocProvider<InboxCubit>.value(value: inbox),
+                BlocProvider<HistoryCubit>.value(value: history),
                 BlocProvider<WebNearbyCubit>.value(value: webNearby),
               ],
               child: Builder(
@@ -1040,11 +1198,20 @@ Future<void> _run(
       );
       await _settle(tester);
       if (view != null) {
-        // The chips scroll sideways: the later ones start off screen.
-        await tester.ensureVisible(find.text(driveViewLabel(view)).first);
-        await _settle(tester);
-        await tester.tap(find.text(driveViewLabel(view)).first);
-        await _settle(tester);
+        // Phones show Drive's tabs (Photos, Files, ...); a computer, the
+        // sidebar's views.
+        final label = switch (view) {
+          DriveView.media when phone => 'vault.tab_photos'.tr(),
+          DriveView.files when phone => 'vault.tab_files'.tr(),
+          _ => driveViewLabel(view),
+        };
+        final target = find.text(label);
+        if (target.evaluate().isNotEmpty) {
+          await tester.ensureVisible(target.first);
+          await _settle(tester);
+          await tester.tap(target.first);
+          await _settle(tester);
+        }
       }
       await tester.runAsync(() async {
         final render =

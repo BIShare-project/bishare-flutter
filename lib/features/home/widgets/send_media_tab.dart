@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -79,7 +80,8 @@ class _SendMediaTabState extends State<SendMediaTab>
   /// The system picker comes back on Android only if an admin turns the
   /// grid off (redesign-plan.md D3).
   bool get _gridAllowed =>
-      !Platform.isAndroid || getIt<FeatureFlags>().sendGalleryAndroid;
+      defaultTargetPlatform != TargetPlatform.android ||
+      getIt<FeatureFlags>().sendGalleryAndroid;
 
   @override
   bool get wantKeepAlive => true;

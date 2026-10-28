@@ -45,11 +45,15 @@ class SendMediaLibrary {
   /// Public so a test can stand in a fake; the app uses [instance].
   SendMediaLibrary();
 
-  static final SendMediaLibrary instance = SendMediaLibrary();
+  /// The one the app reads. The store screenshots put a fake library here.
+  static SendMediaLibrary instance = SendMediaLibrary();
 
-  /// iOS and Android have a library; computers do not.
+  /// iOS and Android have a library; computers do not. By the target
+  /// platform, the same in the app, so the screenshots can take a phone's.
   static bool get available =>
-      !kIsWeb && (Platform.isIOS || Platform.isAndroid);
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.android);
 
   static RequestType _type(SendMediaKind k) => switch (k) {
     SendMediaKind.photo => RequestType.image,
@@ -161,6 +165,10 @@ class SendMediaLibrary {
     return c.stream;
   }
 
+  /// A square JPEG thumbnail of [a], [px] on a side.
+  Future<Uint8List?> thumbnail(AssetEntity a, int px) =>
+      a.thumbnailDataWithSize(ThumbnailSize.square(px), quality: 82);
+
   Future<void> openSettings() => PhotoManager.openSetting();
 
   /// iOS limited access: the system sheet to choose more photos.
@@ -193,10 +201,7 @@ class AssetThumbProvider extends ImageProvider<AssetThumbProvider> {
     AssetThumbProvider key,
     ImageDecoderCallback decode,
   ) async {
-    final bytes = await key.asset.thumbnailDataWithSize(
-      ThumbnailSize.square(key.px),
-      quality: 82,
-    );
+    final bytes = await SendMediaLibrary.instance.thumbnail(key.asset, key.px);
     if (bytes == null || bytes.isEmpty) {
       throw StateError('no thumbnail for ${key.asset.id}');
     }
