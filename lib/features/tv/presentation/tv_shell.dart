@@ -70,13 +70,13 @@ class _ReadyPanel extends StatelessWidget {
             'BIShare',
             style: AppType.title.copyWith(fontSize: 22, color: t.text2),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 16),
           Text(
             name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: AppType.title.copyWith(
-              fontSize: 40,
+              fontSize: 34,
               height: 1.1,
               color: t.text,
             ),
@@ -107,19 +107,12 @@ class _ReadyPanel extends StatelessWidget {
               color: t.text2,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // White under the code in both themes, so a phone reads it.
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const BiShareQr(data: 'https://bishare.app', size: 96),
-              ),
+              // BiShareQr draws its own white frame.
+              const BiShareQr(data: 'https://bishare.app', size: 96),
               const SizedBox(width: 18),
               Expanded(
                 child: Text(
