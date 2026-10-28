@@ -59,7 +59,7 @@ class SendDesktopPane extends StatelessWidget {
                   ),
                 ),
               ),
-              const DeviceSection(list: true),
+              const DeviceSection(),
               AppSectionHeader('compose.ways'.tr()),
               const SendWays(inSheet: false),
             ],

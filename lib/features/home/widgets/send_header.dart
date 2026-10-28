@@ -133,6 +133,6 @@ Future<void> showDeviceList(BuildContext context) => showGlassModal<void>(
   context,
   builder: (_) => const Padding(
     padding: EdgeInsets.only(bottom: 8),
-    child: DeviceSection(list: true),
+    child: DeviceSection(),
   ),
 );

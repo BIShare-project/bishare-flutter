@@ -11,15 +11,12 @@ import '../../discovery/presentation/discovery_cubit.dart';
 import '../../send/presentation/tray_cubit.dart';
 import '../../web_nearby/presentation/web_nearby_cubit.dart';
 import 'browser_device_row.dart';
-import 'device_grid.dart';
 import 'device_row.dart';
 import 'invite_device_sheet.dart';
 
+/// Nearby devices and browsers as rows (the device sheet, the desktop pane).
 class DeviceSection extends StatelessWidget {
-  const DeviceSection({super.key, this.list = false});
-
-  /// Always rows, never the wide grid (a side pane, a sheet).
-  final bool list;
+  const DeviceSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -57,19 +54,16 @@ class DeviceSection extends StatelessWidget {
                   const _OtherWays(),
                 ] else ...[
                   if (devices.isNotEmpty)
-                    if (context.isWideLayout && !list)
-                      DeviceGrid(devices: devices)
-                    else
-                      AppGroup(
-                        child: Column(
-                          children: [
-                            for (var i = 0; i < devices.length; i++) ...[
-                              if (i > 0) const AppRowDivider(),
-                              DeviceRow(device: devices[i]),
-                            ],
+                    AppGroup(
+                      child: Column(
+                        children: [
+                          for (var i = 0; i < devices.length; i++) ...[
+                            if (i > 0) const AppRowDivider(),
+                            DeviceRow(device: devices[i]),
                           ],
-                        ),
+                        ],
                       ),
+                    ),
                   // Browsers on this network (bishare.app/transfer → Nearby):
                   // same tap-to-send flow, bytes go over WebRTC.
                   if (browsers.isNotEmpty) ...[
