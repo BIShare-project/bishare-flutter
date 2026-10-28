@@ -1,8 +1,7 @@
-/* iOS permission prompts — localize the values (keep the keys).
-   'en' is the source; translate the others. */
+/* Permission prompts: localize the values, keep the keys. */
 
-"NSCameraUsageDescription" = "BIShare uses the camera to scan QR codes for transfers, share links and rooms.";
-"NSContactsUsageDescription" = "BIShare lets you pick a contact to share it as a vCard with nearby devices.";
-"NSLocalNetworkUsageDescription" = "BIShare discovers and transfers files with nearby devices on your local network.";
-"NSMicrophoneUsageDescription" = "BIShare records a short voice message so you can send it to nearby devices.";
-"NSPhotoLibraryUsageDescription" = "BIShare lets you choose photos and videos from your library to send to your devices.";
+"NSCameraUsageDescription" = "BIShare 使用相機掃描傳輸、分享連結和房間的 QR 碼。";
+"NSContactsUsageDescription" = "BIShare 讓你選擇聯絡人，以 vCard 形式分享給附近的裝置。";
+"NSLocalNetworkUsageDescription" = "BIShare 透過區域網路探索附近的裝置並傳輸檔案。";
+"NSMicrophoneUsageDescription" = "BIShare 錄製簡短的語音訊息，方便你傳送到附近的裝置。";
+"NSPhotoLibraryUsageDescription" = "BIShare 讓你從圖庫中選擇照片和影片，傳送到你的裝置。";

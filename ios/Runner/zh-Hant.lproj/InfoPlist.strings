@@ -1,10 +1,9 @@
-/* iOS permission prompts — localize the values (keep the keys).
-   'en' is the source; translate the others. */
+/* Permission prompts: localize the values, keep the keys. */
 
-"NSCameraUsageDescription" = "BIShare uses the camera to scan QR codes for transfers, share links and rooms.";
-"NSContactsUsageDescription" = "BIShare lets you pick a contact to share it as a vCard with nearby devices.";
-"NSFaceIDUsageDescription" = "BIShare uses Face ID before it shows your Drive recovery phrase.";
-"NSLocalNetworkUsageDescription" = "BIShare finds nearby devices and transfers files over your local network.";
-"NSMicrophoneUsageDescription" = "BIShare records a short voice message so you can send it to nearby devices.";
-"NSPhotoLibraryAddUsageDescription" = "BIShare saves received photos and videos to your photo library.";
-"NSPhotoLibraryUsageDescription" = "BIShare saves received photos and videos to a BIShare album in your photo library, and, when you turn on Drive photo backup, reads your photos to back them up, encrypted on this device first.";
+"NSCameraUsageDescription" = "BIShare 使用相機掃描傳輸、分享連結和房間的 QR 碼。";
+"NSContactsUsageDescription" = "BIShare 讓你選擇聯絡人，以 vCard 形式分享給附近的裝置。";
+"NSFaceIDUsageDescription" = "BIShare 會在顯示 Drive 復原短語前使用 Face ID。";
+"NSLocalNetworkUsageDescription" = "BIShare 透過區域網路尋找附近的裝置並傳輸檔案。";
+"NSMicrophoneUsageDescription" = "BIShare 錄製簡短的語音訊息，方便你傳送到附近的裝置。";
+"NSPhotoLibraryAddUsageDescription" = "BIShare 將收到的照片和影片儲存到你的照片圖庫。";
+"NSPhotoLibraryUsageDescription" = "BIShare 會顯示你的照片和影片，方便你選擇要傳送到裝置的內容。它也會將收到的照片儲存到 BIShare 相簿；開啟 Drive 照片備份後，會先在本裝置上加密再備份你的照片。";

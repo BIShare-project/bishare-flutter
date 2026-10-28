@@ -1,10 +1,9 @@
-/* iOS permission prompts — localize the values (keep the keys).
-   'en' is the source; translate the others. */
+/* Permission prompts: localize the values, keep the keys. */
 
-"NSCameraUsageDescription" = "BIShare uses the camera to scan QR codes for transfers, share links and rooms.";
-"NSContactsUsageDescription" = "BIShare lets you pick a contact to share it as a vCard with nearby devices.";
-"NSFaceIDUsageDescription" = "BIShare uses Face ID before it shows your Drive recovery phrase.";
-"NSLocalNetworkUsageDescription" = "BIShare finds nearby devices and transfers files over your local network.";
-"NSMicrophoneUsageDescription" = "BIShare records a short voice message so you can send it to nearby devices.";
-"NSPhotoLibraryAddUsageDescription" = "BIShare saves received photos and videos to your photo library.";
-"NSPhotoLibraryUsageDescription" = "BIShare saves received photos and videos to a BIShare album in your photo library, and, when you turn on Drive photo backup, reads your photos to back them up, encrypted on this device first.";
+"NSCameraUsageDescription" = "O BIShare usa a câmera para ler códigos QR de transferências, links e salas.";
+"NSContactsUsageDescription" = "O BIShare permite escolher um contato para compartilhá-lo como vCard com dispositivos próximos.";
+"NSFaceIDUsageDescription" = "O BIShare usa o Face ID antes de mostrar sua frase de recuperação do Drive.";
+"NSLocalNetworkUsageDescription" = "O BIShare encontra dispositivos próximos e transfere arquivos pela sua rede local.";
+"NSMicrophoneUsageDescription" = "O BIShare grava uma mensagem de voz curta para você enviar a dispositivos próximos.";
+"NSPhotoLibraryAddUsageDescription" = "O BIShare salva as fotos e os vídeos recebidos na sua fototeca.";
+"NSPhotoLibraryUsageDescription" = "O BIShare mostra suas fotos e vídeos para você escolher quais enviar para seus dispositivos. Ele também salva as fotos recebidas em um álbum do BIShare e, quando você ativa o backup de fotos do Drive, faz backup das suas fotos, criptografadas primeiro neste dispositivo.";

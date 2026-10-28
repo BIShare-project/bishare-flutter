@@ -1,10 +1,9 @@
-/* iOS permission prompts — localize the values (keep the keys).
-   'en' is the source; translate the others. */
+/* Permission prompts: localize the values, keep the keys. */
 
-"NSCameraUsageDescription" = "BIShare uses the camera to scan QR codes for transfers, share links and rooms.";
-"NSContactsUsageDescription" = "BIShare lets you pick a contact to share it as a vCard with nearby devices.";
-"NSFaceIDUsageDescription" = "BIShare uses Face ID before it shows your Drive recovery phrase.";
-"NSLocalNetworkUsageDescription" = "BIShare finds nearby devices and transfers files over your local network.";
-"NSMicrophoneUsageDescription" = "BIShare records a short voice message so you can send it to nearby devices.";
-"NSPhotoLibraryAddUsageDescription" = "BIShare saves received photos and videos to your photo library.";
-"NSPhotoLibraryUsageDescription" = "BIShare saves received photos and videos to a BIShare album in your photo library, and, when you turn on Drive photo backup, reads your photos to back them up, encrypted on this device first.";
+"NSCameraUsageDescription" = "BIShare usa la cámara para escanear códigos QR de transferencias, enlaces y salas.";
+"NSContactsUsageDescription" = "BIShare te permite elegir un contacto para compartirlo como vCard con dispositivos cercanos.";
+"NSFaceIDUsageDescription" = "BIShare usa Face ID antes de mostrar tu frase de recuperación de Drive.";
+"NSLocalNetworkUsageDescription" = "BIShare encuentra dispositivos cercanos y transfiere archivos por tu red local.";
+"NSMicrophoneUsageDescription" = "BIShare graba un mensaje de voz corto para que puedas enviarlo a dispositivos cercanos.";
+"NSPhotoLibraryAddUsageDescription" = "BIShare guarda las fotos y los vídeos recibidos en tu fototeca.";
+"NSPhotoLibraryUsageDescription" = "BIShare muestra tus fotos y vídeos para que elijas cuáles enviar a tus dispositivos. También guarda las fotos recibidas en un álbum de BIShare y, si activas la copia de fotos de Drive, hace una copia de tus fotos, cifradas primero en este dispositivo.";

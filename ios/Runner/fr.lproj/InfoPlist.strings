@@ -1,10 +1,9 @@
-/* iOS permission prompts — localize the values (keep the keys).
-   'en' is the source; translate the others. */
+/* Permission prompts: localize the values, keep the keys. */
 
-"NSCameraUsageDescription" = "BIShare uses the camera to scan QR codes for transfers, share links and rooms.";
-"NSContactsUsageDescription" = "BIShare lets you pick a contact to share it as a vCard with nearby devices.";
-"NSFaceIDUsageDescription" = "BIShare uses Face ID before it shows your Drive recovery phrase.";
-"NSLocalNetworkUsageDescription" = "BIShare finds nearby devices and transfers files over your local network.";
-"NSMicrophoneUsageDescription" = "BIShare records a short voice message so you can send it to nearby devices.";
-"NSPhotoLibraryAddUsageDescription" = "BIShare saves received photos and videos to your photo library.";
-"NSPhotoLibraryUsageDescription" = "BIShare saves received photos and videos to a BIShare album in your photo library, and, when you turn on Drive photo backup, reads your photos to back them up, encrypted on this device first.";
+"NSCameraUsageDescription" = "BIShare utilise l’appareil photo pour scanner les codes QR des transferts, des liens de partage et des salons.";
+"NSContactsUsageDescription" = "BIShare vous permet de choisir un contact pour le partager en vCard avec les appareils à proximité.";
+"NSFaceIDUsageDescription" = "BIShare utilise Face ID avant d’afficher votre phrase de récupération Drive.";
+"NSLocalNetworkUsageDescription" = "BIShare trouve les appareils à proximité et transfère les fichiers sur votre réseau local.";
+"NSMicrophoneUsageDescription" = "BIShare enregistre un court message vocal pour que vous puissiez l’envoyer aux appareils à proximité.";
+"NSPhotoLibraryAddUsageDescription" = "BIShare enregistre les photos et vidéos reçues dans votre photothèque.";
+"NSPhotoLibraryUsageDescription" = "BIShare affiche vos photos et vidéos pour que vous choisissiez celles à envoyer à vos appareils. Il enregistre aussi les photos reçues dans un album BIShare et, si vous activez la sauvegarde des photos Drive, sauvegarde vos photos, chiffrées d’abord sur cet appareil.";

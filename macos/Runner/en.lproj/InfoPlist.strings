@@ -1,5 +1,4 @@
-/* iOS permission prompts — localize the values (keep the keys).
-   'en' is the source; translate the others. */
+/* Permission prompts: localize the values, keep the keys. */
 
 "NSCameraUsageDescription" = "BIShare uses the camera to scan QR codes for transfers, share links and rooms.";
 "NSContactsUsageDescription" = "BIShare lets you pick a contact to share it as a vCard with nearby devices.";

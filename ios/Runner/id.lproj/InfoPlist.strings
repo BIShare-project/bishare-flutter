@@ -1,10 +1,9 @@
-/* iOS permission prompts — localize the values (keep the keys).
-   'en' is the source; translate the others. */
+/* Permission prompts: localize the values, keep the keys. */
 
-"NSCameraUsageDescription" = "BIShare uses the camera to scan QR codes for transfers, share links and rooms.";
-"NSContactsUsageDescription" = "BIShare lets you pick a contact to share it as a vCard with nearby devices.";
-"NSFaceIDUsageDescription" = "BIShare uses Face ID before it shows your Drive recovery phrase.";
-"NSLocalNetworkUsageDescription" = "BIShare finds nearby devices and transfers files over your local network.";
-"NSMicrophoneUsageDescription" = "BIShare records a short voice message so you can send it to nearby devices.";
-"NSPhotoLibraryAddUsageDescription" = "BIShare saves received photos and videos to your photo library.";
-"NSPhotoLibraryUsageDescription" = "BIShare saves received photos and videos to a BIShare album in your photo library, and, when you turn on Drive photo backup, reads your photos to back them up, encrypted on this device first.";
+"NSCameraUsageDescription" = "BIShare memakai kamera untuk memindai kode QR transfer, tautan berbagi, dan ruangan.";
+"NSContactsUsageDescription" = "BIShare memungkinkan Anda memilih kontak untuk dibagikan sebagai vCard ke perangkat terdekat.";
+"NSFaceIDUsageDescription" = "BIShare memakai Face ID sebelum menampilkan frasa pemulihan Drive Anda.";
+"NSLocalNetworkUsageDescription" = "BIShare menemukan perangkat terdekat dan mengirim file lewat jaringan lokal Anda.";
+"NSMicrophoneUsageDescription" = "BIShare merekam pesan suara singkat agar bisa Anda kirim ke perangkat terdekat.";
+"NSPhotoLibraryAddUsageDescription" = "BIShare menyimpan foto dan video yang diterima ke galeri foto Anda.";
+"NSPhotoLibraryUsageDescription" = "BIShare menampilkan foto dan video Anda agar Anda bisa memilih mana yang dikirim ke perangkat Anda. BIShare juga menyimpan foto yang diterima ke album BIShare dan, saat cadangan foto Drive dinyalakan, mencadangkan foto Anda dengan enkripsi di perangkat ini lebih dulu.";

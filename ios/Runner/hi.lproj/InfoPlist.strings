@@ -1,10 +1,9 @@
-/* iOS permission prompts — localize the values (keep the keys).
-   'en' is the source; translate the others. */
+/* Permission prompts: localize the values, keep the keys. */
 
-"NSCameraUsageDescription" = "BIShare uses the camera to scan QR codes for transfers, share links and rooms.";
-"NSContactsUsageDescription" = "BIShare lets you pick a contact to share it as a vCard with nearby devices.";
-"NSFaceIDUsageDescription" = "BIShare uses Face ID before it shows your Drive recovery phrase.";
-"NSLocalNetworkUsageDescription" = "BIShare finds nearby devices and transfers files over your local network.";
-"NSMicrophoneUsageDescription" = "BIShare records a short voice message so you can send it to nearby devices.";
-"NSPhotoLibraryAddUsageDescription" = "BIShare saves received photos and videos to your photo library.";
-"NSPhotoLibraryUsageDescription" = "BIShare saves received photos and videos to a BIShare album in your photo library, and, when you turn on Drive photo backup, reads your photos to back them up, encrypted on this device first.";
+"NSCameraUsageDescription" = "BIShare ट्रांसफ़र, शेयर लिंक और रूम के QR कोड स्कैन करने के लिए कैमरा इस्तेमाल करता है।";
+"NSContactsUsageDescription" = "BIShare से आप कोई संपर्क चुनकर उसे vCard के रूप में आस-पास के डिवाइस से शेयर कर सकते हैं।";
+"NSFaceIDUsageDescription" = "BIShare आपका Drive रिकवरी वाक्यांश दिखाने से पहले Face ID इस्तेमाल करता है।";
+"NSLocalNetworkUsageDescription" = "BIShare आस-पास के डिवाइस ढूँढता है और आपके लोकल नेटवर्क पर फ़ाइलें भेजता है।";
+"NSMicrophoneUsageDescription" = "BIShare एक छोटा वॉइस मैसेज रिकॉर्ड करता है ताकि आप उसे आस-पास के डिवाइस पर भेज सकें।";
+"NSPhotoLibraryAddUsageDescription" = "BIShare मिली हुई फ़ोटो और वीडियो आपकी फ़ोटो लाइब्रेरी में सेव करता है।";
+"NSPhotoLibraryUsageDescription" = "BIShare आपकी फ़ोटो और वीडियो दिखाता है ताकि आप चुन सकें कि अपने डिवाइस पर कौन-सी भेजनी हैं। यह मिली हुई फ़ोटो को BIShare एल्बम में सेव भी करता है और Drive फ़ोटो बैकअप चालू होने पर आपकी फ़ोटो का बैकअप लेता है, पहले इसी डिवाइस पर एन्क्रिप्ट करके।";
