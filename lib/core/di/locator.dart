@@ -331,7 +331,17 @@ Future<void> setupLocator() async {
         files: getIt<VaultFiles>(),
         keys: getIt<VaultKeyStore>(),
         prefs: getIt<SharedPreferences>(),
-        folderName: () => 'vault.backup_folder'.tr(),
+        // Before the translations load, tr() hands back the key: never name
+        // the Drive folder that. The background run's saved name, else the
+        // English one, as VaultBackground does.
+        folderName: () {
+          final name = 'vault.backup_folder'.tr();
+          if (name != 'vault.backup_folder') return name;
+          return getIt<SharedPreferences>().getString(
+                VaultBackground.folderNameKey,
+              ) ??
+              'Camera';
+        },
         catchUp: () => getIt<VaultSync>().pull(),
       ),
     );
