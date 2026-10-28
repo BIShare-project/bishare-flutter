@@ -434,7 +434,8 @@
     "keep_longer_title": "需要保留更久？",
     "keep_longer_body": "此链接 24 小时后失效。在 BIShare Drive 中，文件会一直保留到你删除为止，还可以用最长 30 天或直到你关闭为止的链接来分享。",
     "keep_longer_saved": "已加入 Drive 上传队列。文件进入 Drive 后，选择“以链接分享”即可获得更长效的链接。",
-    "keep_longer_setup": "设置 Drive"
+    "keep_longer_setup": "设置 Drive",
+    "downloading": "正在下载"
   },
   "room": {
     "connecting_create_local": "正在创建本地房间",

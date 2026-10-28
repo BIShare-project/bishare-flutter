@@ -434,7 +434,8 @@
     "keep_longer_title": "Länger nötig?",
     "keep_longer_body": "Dieser Link funktioniert nach 24 Stunden nicht mehr. In BIShare Drive bleibt die Datei, bis du sie löschst, und du kannst sie mit einem Link teilen, der bis zu 30 Tage gilt oder bis du ihn ausschaltest.",
     "keep_longer_saved": "Zu den Drive-Uploads hinzugefügt. Sobald die Datei im Drive ist, wähle „Als Link teilen“ für einen Link, der länger gilt.",
-    "keep_longer_setup": "Drive einrichten"
+    "keep_longer_setup": "Drive einrichten",
+    "downloading": "Wird geladen"
   },
   "room": {
     "connecting_create_local": "Lokaler Raum wird erstellt",

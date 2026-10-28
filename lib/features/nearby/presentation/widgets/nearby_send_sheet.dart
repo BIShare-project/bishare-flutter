@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/ui/app_ui.dart';
 import '../../../home/widgets/source_grid.dart';
@@ -34,7 +33,7 @@ class _NearbySendBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return BlocBuilder<TrayCubit, List<SendableFile>>(
       builder: (context, items) {
         final tray = context.read<TrayCubit>();
@@ -56,7 +55,7 @@ class _NearbySendBody extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: cs.mutedForeground,
+                        color: t.text2,
                       ),
                     ),
                     const Spacer(),
@@ -67,7 +66,7 @@ class _NearbySendBody extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
-                          color: cs.primary,
+                          color: t.accent,
                         ),
                       ),
                     ),
@@ -96,21 +95,19 @@ class _NearbySendBody extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ShadButton(
-                onPressed: items.isEmpty
-                    ? null
-                    : () {
-                        onSend(List.of(items));
-                        Navigator.of(context).pop();
-                      },
-                child: Text(
-                  items.isEmpty
-                      ? 'nearby.pick_files'.tr()
-                      : 'nearby.send_n'.plural(items.length),
-                ),
-              ),
+            AppButton(
+              label: items.isEmpty
+                  ? 'nearby.pick_files'.tr()
+                  : 'nearby.send_n'.plural(items.length),
+              icon: items.isEmpty ? null : AppIcons.send,
+              variant: AppButtonVariant.brand,
+              fullWidth: true,
+              onPressed: items.isEmpty
+                  ? null
+                  : () {
+                      onSend(List.of(items));
+                      Navigator.of(context).pop();
+                    },
             ),
           ],
         );

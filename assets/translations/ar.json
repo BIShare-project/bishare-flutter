@@ -446,7 +446,8 @@
     "keep_longer_title": "تحتاجه لمدة أطول؟",
     "keep_longer_body": "يتوقف هذا الرابط عن العمل بعد 24 ساعة. في BIShare Drive يبقى الملف حتى تحذفه، ويمكنك مشاركته برابط يعمل حتى 30 يومًا أو حتى توقفه.",
     "keep_longer_saved": "أُضيف إلى رفعيات Drive. بعد وصوله إلى Drive، اختر «مشاركة كرابط» للحصول على رابط يدوم أطول.",
-    "keep_longer_setup": "إعداد Drive"
+    "keep_longer_setup": "إعداد Drive",
+    "downloading": "جارٍ التنزيل"
   },
   "room": {
     "connecting_create_local": "جارٍ إنشاء غرفة محلية",

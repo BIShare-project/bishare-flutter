@@ -434,7 +434,8 @@
     "keep_longer_title": "もっと長く必要ですか？",
     "keep_longer_body": "このリンクは 24 時間で使えなくなります。BIShare Drive ならファイルは削除するまで残り、最長 30 日間またはオフにするまで有効なリンクで共有できます。",
     "keep_longer_saved": "Drive のアップロードに追加しました。Drive に入ったら「リンクで共有」を選ぶと、より長く使えるリンクを作れます。",
-    "keep_longer_setup": "Drive を設定"
+    "keep_longer_setup": "Drive を設定",
+    "downloading": "ダウンロード中"
   },
   "room": {
     "connecting_create_local": "ローカルルームを作成中",

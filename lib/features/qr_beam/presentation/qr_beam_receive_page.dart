@@ -4,7 +4,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/di/locator.dart';
 import '../../../core/io/scratch_dir.dart';
@@ -139,37 +138,34 @@ class _ProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final scanning = total == 0;
     final pct = total == 0 ? 0.0 : received / total;
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: cs.card.withValues(alpha: 0.92),
+        color: t.surface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: cs.border),
+        border: Border.all(color: t.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              AppSvgIcon(AppIcons.scanDocument, size: 20, color: cs.primary),
+              AppSvgIcon(AppIcons.scanDocument, size: 20, color: t.receive),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   scanning ? 'qr_beam.aim'.tr() : 'qr_beam.receiving'.tr(),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppType.row.copyWith(color: t.text),
                 ),
               ),
               if (!scanning)
                 Text(
                   '${(pct * 100).round()}%',
-                  style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+                  style: TextStyle(fontSize: 13, color: t.text2),
                 ),
             ],
           ),
@@ -179,8 +175,8 @@ class _ProgressCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: scanning ? null : pct,
               minHeight: 6,
-              backgroundColor: cs.muted,
-              valueColor: AlwaysStoppedAnimation(cs.primary),
+              backgroundColor: t.sunken,
+              valueColor: AlwaysStoppedAnimation(t.receive),
             ),
           ),
           const SizedBox(height: 10),
@@ -190,18 +186,11 @@ class _ProgressCard extends StatelessWidget {
                 : 'qr_beam.chunks_of'.tr(
                     namedArgs: {'i': '$received', 'n': '$total'},
                   ),
-            style: TextStyle(
-              fontSize: 12.5,
-              height: 1.4,
-              color: cs.mutedForeground,
-            ),
+            style: TextStyle(fontSize: 12.5, height: 1.4, color: t.text2),
           ),
           if (error != null) ...[
             const SizedBox(height: 8),
-            Text(
-              error!,
-              style: TextStyle(fontSize: 12.5, color: cs.destructive),
-            ),
+            Text(error!, style: TextStyle(fontSize: 12.5, color: t.danger)),
           ],
         ],
       ),
@@ -216,35 +205,21 @@ class _DoneCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: cs.card,
+        color: t.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: cs.border),
+        border: Border.all(color: t.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: AppSvgIcon(
-                    AppIcons.successSent,
-                    size: 22,
-                    color: cs.primary,
-                  ),
-                ),
-              ),
+              AppSvgIcon(AppIcons.successSent, size: 28, color: t.ok),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -252,17 +227,14 @@ class _DoneCard extends StatelessWidget {
                   children: [
                     Text(
                       'qr_beam.received_title'.tr(),
-                      style: const TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppType.row.copyWith(color: t.text),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+                      style: TextStyle(fontSize: 13, color: t.text2),
                     ),
                   ],
                 ),
@@ -373,7 +345,7 @@ class _ScanFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = ShadTheme.of(context).colorScheme.primary;
+    final accent = context.tokens.accent;
     return SizedBox(
       width: 250,
       height: 250,

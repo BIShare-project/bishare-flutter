@@ -1,14 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/server/transfer_types.dart';
 import '../../../core/ui/app_ui.dart';
 import '../data/cloud_transfer_service.dart';
 import '../../../core/review/review_prompter.dart';
 
-/// Runs a remote download behind a premium glass progress modal (determinate
+/// Runs a remote download behind a progress sheet (determinate
 /// ring + Cancel). On success shows a success toast (the file is already in the
 /// Inbox); on failure an error toast; on cancel, silent. Reused by every
 /// deep-link / QR download action.
@@ -122,7 +121,7 @@ class _DownloadModalState extends State<_DownloadModal> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final fraction = _total > 0 ? _received / _total : null;
     final pct = fraction != null
         ? (fraction * 100).clamp(0, 100).toInt()
@@ -133,6 +132,7 @@ class _DownloadModalState extends State<_DownloadModal> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // The receive colour: a download is a file coming in.
           Center(
             child: SizedBox(
               width: 64,
@@ -146,24 +146,24 @@ class _DownloadModalState extends State<_DownloadModal> {
                     child: CircularProgressIndicator(
                       value: fraction,
                       strokeWidth: 5,
-                      backgroundColor: cs.muted,
-                      valueColor: AlwaysStoppedAnimation(cs.primary),
+                      strokeCap: StrokeCap.round,
+                      backgroundColor: t.sunken,
+                      valueColor: AlwaysStoppedAnimation(t.receive),
                     ),
                   ),
                   if (pct != null)
                     Text(
                       '$pct%',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: cs.foreground,
+                      style: AppType.label.copyWith(
+                        color: t.text,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     )
                   else
                     AppSvgIcon(
                       AppIcons.downloadFile,
                       size: 22,
-                      color: cs.primary,
+                      color: t.receive,
                     ),
                 ],
               ),
@@ -171,13 +171,9 @@ class _DownloadModalState extends State<_DownloadModal> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Downloading',
+            'remote.downloading'.tr(),
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: cs.foreground,
-            ),
+            style: AppType.sheetTitle.copyWith(color: t.text),
           ),
           const SizedBox(height: 4),
           Text(
@@ -185,21 +181,26 @@ class _DownloadModalState extends State<_DownloadModal> {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+            style: AppType.secondary.copyWith(color: t.text2),
           ),
           if (_total > 0) ...[
             const SizedBox(height: 6),
             Text(
               '${formatBytes(_received)} / ${formatBytes(_total)}',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: cs.mutedForeground),
+              style: AppType.secondary.copyWith(
+                fontSize: 13,
+                color: t.text2,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ],
           const SizedBox(height: 20),
-          ShadButton.outline(
-            size: ShadButtonSize.lg,
+          AppButton(
+            label: 'common.cancel'.tr(),
+            variant: AppButtonVariant.secondary,
+            fullWidth: true,
             onPressed: _onCancel,
-            child: Text('common.cancel'.tr()),
           ),
         ],
       ),

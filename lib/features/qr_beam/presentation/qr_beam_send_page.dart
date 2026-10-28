@@ -354,33 +354,24 @@ class _BeamQr extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
+    // White under the code in both themes, so every camera reads it.
     return Container(
-      padding: const EdgeInsets.all(3),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [t.accent, t.accent.withValues(alpha: 0.3)],
-        ),
-        borderRadius: BorderRadius.circular(28),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: t.line),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(25),
-        ),
-        child: QrImageView(
-          data: data,
-          version: QrVersions.auto,
-          size: 300,
-          backgroundColor: Colors.white,
-          errorCorrectionLevel: QrErrorCorrectLevel.M,
-          eyeStyle: QrEyeStyle(eyeShape: QrEyeShape.square, color: t.accent),
-          dataModuleStyle: const QrDataModuleStyle(
-            dataModuleShape: QrDataModuleShape.square,
-            color: Color(0xFF0A0A0A),
-          ),
+      child: QrImageView(
+        data: data,
+        version: QrVersions.auto,
+        size: 300,
+        backgroundColor: Colors.white,
+        errorCorrectionLevel: QrErrorCorrectLevel.M,
+        eyeStyle: QrEyeStyle(eyeShape: QrEyeShape.square, color: t.accent),
+        dataModuleStyle: const QrDataModuleStyle(
+          dataModuleShape: QrDataModuleShape.square,
+          color: Color(0xFF0A0A0A),
         ),
       ),
     );

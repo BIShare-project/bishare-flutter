@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/ui/app_ui.dart';
 import '../../domain/nearby_peer.dart';
@@ -36,9 +35,9 @@ class _NearbyRadarState extends State<NearbyRadar>
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = cs.primary;
+    final accent = t.accent;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -66,7 +65,7 @@ class _NearbyRadarState extends State<NearbyRadar>
                     maxR: maxR,
                     pulse: _pulse.value,
                     accent: accent,
-                    ring: cs.mutedForeground.withValues(alpha: isDark ? 0.22 : 0.18),
+                    ring: t.text2.withValues(alpha: isDark ? 0.22 : 0.18),
                     isDark: isDark,
                     beams: [
                       for (var i = 0; i < widget.peers.length; i++)
@@ -87,7 +86,7 @@ class _NearbyRadarState extends State<NearbyRadar>
               child: AppSvgIcon(
                 AppIcons.smartphone,
                 size: 28,
-                color: cs.primaryForeground,
+                color: t.onAccent,
               ),
             ),
 
@@ -127,14 +126,18 @@ class _NearbyRadarState extends State<NearbyRadar>
 }
 
 class _PeerNode extends StatelessWidget {
-  const _PeerNode({required this.peer, required this.accent, required this.onTap});
+  const _PeerNode({
+    required this.peer,
+    required this.accent,
+    required this.onTap,
+  });
   final NearbyPeer peer;
   final Color accent;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final busy = peer.isBusy;
     final live = busy || peer.state == NearbyPeerState.connected;
     return TweenAnimationBuilder<double>(
@@ -142,9 +145,9 @@ class _PeerNode extends StatelessWidget {
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 340),
       curve: Curves.easeOutBack,
-      builder: (context, t, child) => Opacity(
-        opacity: t.clamp(0, 1),
-        child: Transform.scale(scale: 0.6 + 0.4 * t.clamp(0, 1), child: child),
+      builder: (context, v, child) => Opacity(
+        opacity: v.clamp(0, 1),
+        child: Transform.scale(scale: 0.6 + 0.4 * v.clamp(0, 1), child: child),
       ),
       child: GestureDetector(
         onTap: onTap,
@@ -157,16 +160,9 @@ class _PeerNode extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    cs.card,
-                    Color.lerp(cs.card, accent, live ? 0.16 : 0.0)!,
-                  ],
-                ),
+                color: live ? t.accentSoft : t.surface,
                 border: Border.all(
-                  color: live ? accent : cs.border,
+                  color: live ? accent : t.line,
                   width: live ? 2 : 1,
                 ),
               ),
@@ -178,7 +174,7 @@ class _PeerNode extends StatelessWidget {
                         valueColor: AlwaysStoppedAnimation(accent),
                       ),
                     )
-                  : AppSvgIcon(AppIcons.user, size: 22, color: cs.foreground),
+                  : AppSvgIcon(AppIcons.user, size: 22, color: t.text),
             ),
             const SizedBox(height: 4),
             SizedBox(
@@ -188,10 +184,10 @@ class _PeerNode extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
+                style: AppType.secondary.copyWith(
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: live ? cs.foreground : cs.mutedForeground,
+                  color: live ? t.text : t.text2,
                 ),
               ),
             ),

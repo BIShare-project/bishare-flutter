@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/constants/protocol.dart';
 import '../../../core/di/locator.dart';
@@ -82,14 +81,14 @@ class _InstantShareSheetState extends State<_InstantShareSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final url = _url;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppSvgIcon(fileIcon(widget.mimeType), size: 28, color: cs.primary),
+          AppSvgIcon(fileIcon(widget.mimeType), size: 28, color: t.accent),
           const SizedBox(height: 8),
           Text(
             widget.fileName,
@@ -98,14 +97,14 @@ class _InstantShareSheetState extends State<_InstantShareSheet> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: cs.foreground,
+              color: t.text,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'instant.scan_hint'.tr(),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12.5, color: cs.mutedForeground),
+            style: TextStyle(fontSize: 12.5, color: t.text2),
           ),
           const SizedBox(height: 16),
           _ModeToggle(oneTime: _oneTime, onChanged: _setMode),
@@ -121,7 +120,7 @@ class _InstantShareSheetState extends State<_InstantShareSheet> {
             Container(
               padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
               decoration: BoxDecoration(
-                color: cs.muted,
+                color: t.sunken,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -131,11 +130,12 @@ class _InstantShareSheetState extends State<_InstantShareSheet> {
                       url,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12.5, color: cs.foreground),
+                      style: TextStyle(fontSize: 12.5, color: t.text),
                     ),
                   ),
-                  ShadIconButton.ghost(
-                    icon: const AppSvgIcon(AppIcons.copyDuplicate, size: 18),
+                  AppIconButton(
+                    icon: AppIcons.copyDuplicate,
+                    tooltip: 'common.copy'.tr(),
                     onPressed: () async {
                       await Clipboard.setData(ClipboardData(text: url));
                       if (context.mounted) {
@@ -165,24 +165,24 @@ class _ModeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: cs.muted,
+        color: t.sunken,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           _seg(
-            cs,
+            t,
             'instant.one_time_24h'.tr(),
             AppIcons.flame,
             oneTime,
             () => onChanged(true),
           ),
           _seg(
-            cs,
+            t,
             'instant.timed_5min'.tr(),
             AppIcons.clock,
             !oneTime,
@@ -194,7 +194,7 @@ class _ModeToggle extends StatelessWidget {
   }
 
   Widget _seg(
-    ShadColorScheme cs,
+    AppTokens t,
     String label,
     String icon,
     bool active,
@@ -207,24 +207,20 @@ class _ModeToggle extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(vertical: 9),
           decoration: BoxDecoration(
-            color: active ? cs.background : Colors.transparent,
+            color: active ? t.bg : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AppSvgIcon(
-                icon,
-                size: 14,
-                color: active ? cs.primary : cs.mutedForeground,
-              ),
+              AppSvgIcon(icon, size: 14, color: active ? t.accent : t.text2),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
-                  color: active ? cs.foreground : cs.mutedForeground,
+                  color: active ? t.text : t.text2,
                 ),
               ),
             ],

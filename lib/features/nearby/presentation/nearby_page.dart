@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/ui/app_ui.dart';
 import '../domain/nearby_peer.dart';
@@ -48,31 +47,11 @@ class _NearbyPageState extends State<NearbyPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = context.tokens;
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: t.bg,
       body: Stack(
         children: [
-          // Ambient top glow for depth.
-          Positioned(
-            top: -140,
-            left: 0,
-            right: 0,
-            height: 360,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topCenter,
-                  radius: 0.9,
-                  colors: [
-                    cs.primary.withValues(alpha: isDark ? 0.18 : 0.10),
-                    cs.primary.withValues(alpha: 0),
-                  ],
-                ),
-              ),
-            ),
-          ),
           SafeArea(
             child: AppResponsivePane(
               maxWidth: 640,
@@ -129,21 +108,20 @@ class _NearbyPageState extends State<NearbyPage> {
   }
 }
 
-/// A glass pill showing the live search status with a breathing dot.
+/// The live search status: a dot and the count, on the sunken colour.
 class _StatusPill extends StatelessWidget {
   const _StatusPill({required this.count});
   final int count;
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final searching = count == 0;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
       decoration: BoxDecoration(
-        color: cs.card.withValues(alpha: 0.7),
+        color: t.sunken,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: cs.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -154,11 +132,7 @@ class _StatusPill extends StatelessWidget {
             searching
                 ? 'nearby.searching'.tr()
                 : 'nearby.devices_nearby'.plural(count),
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: cs.foreground,
-            ),
+            style: AppType.label.copyWith(color: t.text),
           ),
         ],
       ),
@@ -166,7 +140,7 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-/// A softly pulsing accent dot.
+/// The accent dot beside the status.
 class _LiveDot extends StatefulWidget {
   const _LiveDot();
 
@@ -178,7 +152,7 @@ class _LiveDotState extends State<_LiveDot> {
   // A steady dot: the old one breathed with an animated blur shadow forever.
   @override
   Widget build(BuildContext context) {
-    final accent = ShadTheme.of(context).colorScheme.primary;
+    final accent = context.tokens.accent;
     return Container(
       width: 8,
       height: 8,
@@ -187,30 +161,25 @@ class _LiveDotState extends State<_LiveDot> {
   }
 }
 
-/// A glass transfer card with a mini progress ring.
+/// The running transfer: a ring, the direction, the name and the percent.
+/// Receiving takes the receive colour.
 class _TransferCard extends StatelessWidget {
   const _TransferCard({super.key, required this.state});
   final NearbyState state;
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final sending = state.direction == 'send';
     final pct = (state.progress * 100).clamp(0, 100).toInt();
+    final tone = sending ? t.accent : t.receive;
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: cs.card.withValues(alpha: 0.75),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cs.primary.withValues(alpha: 0.45)),
-        boxShadow: [
-          BoxShadow(
-            color: cs.primary.withValues(alpha: 0.18),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: t.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: t.line),
       ),
       child: Row(
         children: [
@@ -223,13 +192,14 @@ class _TransferCard extends StatelessWidget {
                 CircularProgressIndicator(
                   value: state.progress == 0 ? null : state.progress,
                   strokeWidth: 3.5,
-                  backgroundColor: cs.muted,
-                  valueColor: AlwaysStoppedAnimation(cs.primary),
+                  strokeCap: StrokeCap.round,
+                  backgroundColor: t.sunken,
+                  valueColor: AlwaysStoppedAnimation(tone),
                 ),
                 AppSvgIcon(
                   sending ? AppIcons.uploadFile : AppIcons.downloadFile,
                   size: 16,
-                  color: cs.primary,
+                  color: tone,
                 ),
               ],
             ),
@@ -242,18 +212,17 @@ class _TransferCard extends StatelessWidget {
               children: [
                 Text(
                   sending ? 'nearby.sending'.tr() : 'nearby.receiving'.tr(),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13.5,
-                    color: cs.foreground,
-                  ),
+                  style: AppType.row.copyWith(color: t.text),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   state.fileName ?? '…',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12, color: cs.mutedForeground),
+                  style: AppType.secondary.copyWith(
+                    fontSize: 13,
+                    color: t.text2,
+                  ),
                 ),
               ],
             ),
@@ -261,10 +230,9 @@ class _TransferCard extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             '$pct%',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-              color: cs.primary,
+            style: AppType.label.copyWith(
+              color: tone,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],

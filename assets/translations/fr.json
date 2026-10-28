@@ -434,7 +434,8 @@
     "keep_longer_title": "Besoin de plus de temps ?",
     "keep_longer_body": "Ce lien cesse de fonctionner au bout de 24 heures. Dans BIShare Drive, le fichier reste jusqu’à ce que vous le supprimiez, et vous pouvez le partager avec un lien valable jusqu’à 30 jours ou jusqu’à ce que vous le désactiviez.",
     "keep_longer_saved": "Ajouté aux envois vers Drive. Une fois le fichier dans Drive, choisissez Partager en lien pour un lien qui dure plus longtemps.",
-    "keep_longer_setup": "Configurer Drive"
+    "keep_longer_setup": "Configurer Drive",
+    "downloading": "Téléchargement"
   },
   "room": {
     "connecting_create_local": "Création d’un salon local",
