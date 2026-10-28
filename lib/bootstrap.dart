@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'core/bench.dart';
@@ -26,8 +28,14 @@ Future<void> bootstrap() async {
   } on Object catch (e) {
     debugPrint('[bootstrap] server start failed: $e');
   }
+  // mDNS can wait on the system (macOS asks for Local Network access, and
+  // the call does not return until that is answered): the window must not
+  // stay blank meanwhile. Past the limit discovery keeps starting in the
+  // background.
   try {
-    await getIt<DiscoveryService>().start();
+    await getIt<DiscoveryService>().start().timeout(const Duration(seconds: 4));
+  } on TimeoutException {
+    debugPrint('[bootstrap] discovery still starting; not waiting for it');
   } on Object catch (e) {
     debugPrint('[bootstrap] discovery start failed: $e');
   }
