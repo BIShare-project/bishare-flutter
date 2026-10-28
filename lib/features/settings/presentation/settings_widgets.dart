@@ -1,11 +1,11 @@
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/feature_flags.dart';
 import '../../../core/constants/app_links.dart';
-import '../../../core/constants/protocol.dart';
 import '../../../core/desktop/desktop_service.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/identity/device_identity.dart';
@@ -362,6 +362,18 @@ class VersionFooter extends StatefulWidget {
 }
 
 class _VersionFooterState extends State<VersionFooter> {
+  /// The app's own version and build (pubspec), e.g. "2.8.0 (280)".
+  String _version = '';
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (!mounted) return;
+      setState(() => _version = '${info.version} (${info.buildNumber})');
+    }, onError: (Object _) {});
+  }
+
   int _taps = 0;
   DateTime _first = DateTime.fromMillisecondsSinceEpoch(0);
 
@@ -405,10 +417,11 @@ class _VersionFooterState extends State<VersionFooter> {
                 ),
               ),
               const SizedBox(height: 2),
+              // Empty for the moment it takes to read the version.
               Text(
-                'settings.version'.tr(
-                  namedArgs: {'version': BIShareConfig.version},
-                ),
+                _version.isEmpty
+                    ? ''
+                    : 'settings.version'.tr(namedArgs: {'version': _version}),
                 style: AppType.secondary.copyWith(fontSize: 12, color: t.text3),
               ),
               const SizedBox(height: 2),
