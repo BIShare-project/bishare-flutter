@@ -1257,7 +1257,8 @@
     "backup_strip_done": "Alle Fotos sind im Drive gesichert",
     "backup_turn_on": "Einschalten",
     "backup_explain": "Fotos und Videos von diesem Telefon kommen in den Ordner „{folder}“ in deinem Drive, zuerst auf dem Telefon verschlüsselt.",
-    "clear_finished": "Abgeschlossene entfernen"
+    "clear_finished": "Abgeschlossene entfernen",
+    "backup_short": "Sichern"
   },
   "compose": {
     "visible": "Sichtbar",

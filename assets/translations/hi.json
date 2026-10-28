@@ -1257,7 +1257,8 @@
     "backup_strip_done": "सभी फ़ोटो Drive में सुरक्षित हैं",
     "backup_turn_on": "चालू करें",
     "backup_explain": "इस फ़ोन की फ़ोटो और वीडियो आपके Drive के “{folder}” फ़ोल्डर में जाते हैं, पहले फ़ोन पर एन्क्रिप्ट होकर।",
-    "clear_finished": "पूरे हो चुके हटाएँ"
+    "clear_finished": "पूरे हो चुके हटाएँ",
+    "backup_short": "बैकअप"
   },
   "compose": {
     "visible": "दिखाई दे रहा है",

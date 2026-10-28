@@ -118,7 +118,9 @@ class AppSelectionBar extends StatelessWidget {
                             _BarButton(
                               tooltip: a.label,
                               onTap: a.enabled ? a.onTap : null,
-                              wide: true,
+                              // Few actions: room around each; many: tight,
+                              // so the count keeps its space.
+                              gap: actions.length <= 2 ? 10 : 2,
                               child: Opacity(
                                 opacity: a.enabled ? 1 : 0.45,
                                 child: Column(
@@ -240,13 +242,14 @@ class _BarButton extends StatelessWidget {
     required this.child,
     required this.onTap,
     required this.tooltip,
-    this.wide = false,
+    this.gap,
   });
 
   final Widget child;
   final VoidCallback? onTap;
   final String tooltip;
-  final bool wide;
+  /// Side room of a labelled action; null for an icon-only button.
+  final double? gap;
 
   @override
   Widget build(BuildContext context) {
@@ -266,10 +269,15 @@ class _BarButton extends StatelessWidget {
                 },
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minWidth: wide ? 56 : 44,
+              minWidth: gap != null ? 56 : 44,
               minHeight: 48,
             ),
-            child: Center(child: child),
+            // Labelled actions get room on both sides, so the last one
+            // does not sit in the bar's corner.
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: gap ?? 0),
+              child: Center(child: child),
+            ),
           ),
         ),
       ),

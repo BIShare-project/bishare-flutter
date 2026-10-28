@@ -1257,7 +1257,8 @@
     "backup_strip_done": "모든 사진이 Drive에 안전하게 저장됨",
     "backup_turn_on": "켜기",
     "backup_explain": "이 휴대폰의 사진과 동영상은 휴대폰에서 먼저 암호화된 뒤 Drive의 “{folder}” 폴더로 들어갑니다.",
-    "clear_finished": "완료된 항목 지우기"
+    "clear_finished": "완료된 항목 지우기",
+    "backup_short": "백업"
   },
   "compose": {
     "visible": "표시 중",

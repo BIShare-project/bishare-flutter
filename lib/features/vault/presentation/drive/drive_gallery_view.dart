@@ -252,7 +252,7 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
         else
           PreviewAction(
             icon: AppIcons.cloudSync,
-            label: 'vault.backup_now'.tr(),
+            label: 'vault.backup_short'.tr(),
             onTap: () => unawaited(_backUpOne(a)),
           ),
         PreviewAction(
@@ -339,7 +339,7 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
                       actions: [
                         (
                           AppIcons.cloudSync,
-                          'vault.backup_now'.tr(),
+                          'vault.backup_short'.tr(),
                           () => unawaited(_backUpChosen(ids)),
                           false,
                         ),

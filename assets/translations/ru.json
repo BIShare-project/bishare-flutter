@@ -1293,7 +1293,8 @@
     "backup_strip_done": "Все фото сохранены в Drive",
     "backup_turn_on": "Включить",
     "backup_explain": "Фото и видео с этого телефона попадают в папку «{folder}» вашего Drive, сначала шифруясь на телефоне.",
-    "clear_finished": "Очистить завершённые"
+    "clear_finished": "Очистить завершённые",
+    "backup_short": "Сохранить"
   },
   "compose": {
     "visible": "Видно другим",
