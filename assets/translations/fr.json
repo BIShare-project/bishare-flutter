@@ -200,7 +200,40 @@
     "share_via_qr": "Partager via QR",
     "title": "Boîte de réception",
     "segment_device": "Sur cet appareil",
-    "segment_drive": "Drive"
+    "segment_drive": "Drive",
+    "no_files_yet": "Aucun fichier pour l’instant",
+    "more": "Plus",
+    "select_files": "Choisir des fichiers",
+    "n_files": {
+      "one": "{} fichier",
+      "other": "{} fichiers"
+    },
+    "group_title": "{day} · de {alias}",
+    "new": "Nouveau",
+    "delete_n_title": {
+      "one": "Supprimer {} fichier ?",
+      "other": "Supprimer {} fichiers ?"
+    },
+    "delete_body": "Ils sont supprimés de cet appareil et de l’historique.",
+    "clear_title": "Vider la boîte de réception ?",
+    "clear_body": "Tous les fichiers reçus sont supprimés de cet appareil et de l’historique.",
+    "clear": "Vider",
+    "browse_files": "Parcourir les fichiers",
+    "browse_files_hint": "Par dossier, expéditeur ou date",
+    "ready_title": "{name} est prêt à recevoir",
+    "ready_body": "Les appareils à proximité vous voient comme « {name} ». Ce qu’ils envoient apparaît ici.",
+    "hidden_title": "{name} est masqué",
+    "hidden_body": "Les autres appareils ne peuvent pas vous trouver. Activez Visible pour recevoir des appareils à proximité.",
+    "receive_code": "Recevoir avec un code",
+    "turn_visible": "Activer Visible",
+    "detail_from": "De",
+    "detail_received": "Reçu",
+    "detail_encrypted": "Chiffré",
+    "detail_verified": "Vérifié",
+    "via_qr": "Par QR",
+    "select_all": "Tout sélectionner",
+    "select_none": "Tout désélectionner",
+    "detail_saved_as": "Enregistré sous"
   },
   "history": {
     "all": "Tous",
@@ -235,7 +268,15 @@
       "one": "{} transfert",
       "other": "{} transferts"
     },
-    "yes": "Oui"
+    "yes": "Oui",
+    "send_a_file": "Envoyer un fichier",
+    "total_size": "Total {size}",
+    "clear_title": "Effacer l’historique ?",
+    "clear_body": "La liste est vidée et tous les fichiers reçus sont supprimés de cet appareil.",
+    "remove": "Retirer",
+    "remove_title": "Retirer de l’historique ?",
+    "remove_body": "Le transfert quitte l’historique.",
+    "remove_body_file": "Le transfert quitte l’historique et le fichier est supprimé de cet appareil."
   },
   "devices": {
     "add_favorite": "Ajouter aux favoris",

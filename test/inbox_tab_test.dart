@@ -10,6 +10,8 @@ import 'package:bishare/features/history/presentation/history_page.dart';
 import 'package:bishare/features/inbox/presentation/inbox_cubit.dart';
 import 'package:bishare/features/inbox/presentation/inbox_page.dart';
 import 'package:bishare/features/inbox/presentation/inbox_tab.dart';
+import 'package:bishare/features/settings/domain/settings.dart';
+import 'package:bishare/features/settings/presentation/settings_cubit.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,6 +28,14 @@ class _History extends HistoryRepository {
 
   @override
   Stream<List<TransferRecord>> watchAll() => Stream.value(const []);
+}
+
+/// Only the state the Inbox reads: this device's name and visibility.
+class _Settings extends Cubit<Settings> implements SettingsCubit {
+  _Settings() : super(const Settings(alias: 'Pixel'));
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
 }
 
 /// Kotak Masuk (redesign-plan.md 2.2): the received files and the transfer
@@ -51,6 +61,7 @@ void main() {
           providers: [
             BlocProvider(create: (_) => InboxCubit(_History())),
             BlocProvider(create: (_) => HistoryCubit(_History())),
+            BlocProvider<SettingsCubit>(create: (_) => _Settings()),
           ],
           child: const InboxTab(),
         ),
@@ -73,6 +84,8 @@ void main() {
       expect(find.text('history.title'), findsOneWidget);
       expect(find.text('inbox.segment_drive'), findsNothing);
       expect(find.byType(HistoryPage), findsNothing);
+      // Nothing received yet: the device, ready, and ways to receive.
+      expect(find.text('inbox.ready_title'), findsOneWidget);
     });
   }
 }

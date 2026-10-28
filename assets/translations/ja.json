@@ -200,7 +200,40 @@
     "share_via_qr": "QRで共有",
     "title": "受信トレイ",
     "segment_device": "このデバイス",
-    "segment_drive": "Drive"
+    "segment_drive": "Drive",
+    "no_files_yet": "まだファイルはありません",
+    "more": "その他",
+    "select_files": "ファイルを選択",
+    "n_files": {
+      "one": "{} 件",
+      "other": "{} 件"
+    },
+    "group_title": "{day} · {alias} から",
+    "new": "新着",
+    "delete_n_title": {
+      "one": "{} 件のファイルを削除しますか？",
+      "other": "{} 件のファイルを削除しますか？"
+    },
+    "delete_body": "この端末と履歴から削除されます。",
+    "clear_title": "受信トレイを空にしますか？",
+    "clear_body": "受信したすべてのファイルがこの端末と履歴から削除されます。",
+    "clear": "空にする",
+    "browse_files": "ファイルを見る",
+    "browse_files_hint": "フォルダ、送信者、日付ごと",
+    "ready_title": "{name} は受信できます",
+    "ready_body": "近くの端末からは「{name}」として見えます。送られたファイルはここに表示されます。",
+    "hidden_title": "{name} は非表示です",
+    "hidden_body": "他の端末からあなたを見つけられません。近くの端末から受け取るには「表示」をオンにしてください。",
+    "receive_code": "コードで受け取る",
+    "turn_visible": "表示をオンにする",
+    "detail_from": "送信元",
+    "detail_received": "受信日時",
+    "detail_encrypted": "暗号化",
+    "detail_verified": "検証済み",
+    "via_qr": "QR で",
+    "select_all": "すべて選択",
+    "select_none": "選択を解除",
+    "detail_saved_as": "保存名"
   },
   "history": {
     "all": "すべて",
@@ -235,7 +268,15 @@
       "one": "{} 件の転送",
       "other": "{} 件の転送"
     },
-    "yes": "はい"
+    "yes": "はい",
+    "send_a_file": "ファイルを送る",
+    "total_size": "合計 {size}",
+    "clear_title": "履歴を消去しますか？",
+    "clear_body": "一覧が消去され、受信したすべてのファイルがこの端末から削除されます。",
+    "remove": "削除",
+    "remove_title": "履歴から削除しますか？",
+    "remove_body": "この転送は履歴から消えます。",
+    "remove_body_file": "この転送は履歴から消え、ファイルもこの端末から削除されます。"
   },
   "devices": {
     "add_favorite": "お気に入りに追加",

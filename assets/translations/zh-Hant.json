@@ -200,7 +200,40 @@
     "share_via_qr": "透過 QR 碼分享",
     "title": "收件匣",
     "segment_device": "這部裝置",
-    "segment_drive": "Drive"
+    "segment_drive": "Drive",
+    "no_files_yet": "還沒有檔案",
+    "more": "更多",
+    "select_files": "選擇檔案",
+    "n_files": {
+      "one": "{} 個檔案",
+      "other": "{} 個檔案"
+    },
+    "group_title": "{day} · 來自 {alias}",
+    "new": "新",
+    "delete_n_title": {
+      "one": "刪除 {} 個檔案？",
+      "other": "刪除 {} 個檔案？"
+    },
+    "delete_body": "將從此裝置和歷史記錄中刪除。",
+    "clear_title": "清空收件匣？",
+    "clear_body": "收到的所有檔案都會從此裝置和歷史記錄中刪除。",
+    "clear": "清空",
+    "browse_files": "瀏覽檔案",
+    "browse_files_hint": "依資料夾、傳送者或日期",
+    "ready_title": "{name} 已準備好接收",
+    "ready_body": "附近的裝置看到你的名稱是「{name}」。他們傳送的內容會顯示在這裡。",
+    "hidden_title": "{name} 已隱藏",
+    "hidden_body": "其他裝置找不到你。開啟「可見」即可接收附近裝置的檔案。",
+    "receive_code": "用代碼接收",
+    "turn_visible": "開啟可見",
+    "detail_from": "來自",
+    "detail_received": "接收時間",
+    "detail_encrypted": "已加密",
+    "detail_verified": "已驗證",
+    "via_qr": "透過 QR",
+    "select_all": "全選",
+    "select_none": "取消全選",
+    "detail_saved_as": "儲存為"
   },
   "history": {
     "all": "全部",
@@ -235,7 +268,15 @@
       "one": "{} 次傳輸",
       "other": "{} 次傳輸"
     },
-    "yes": "是"
+    "yes": "是",
+    "send_a_file": "傳送檔案",
+    "total_size": "總計 {size}",
+    "clear_title": "清除歷史記錄？",
+    "clear_body": "清單將被清空，收到的所有檔案也會從此裝置中刪除。",
+    "remove": "移除",
+    "remove_title": "從歷史記錄中移除？",
+    "remove_body": "此傳輸將從歷史記錄中移除。",
+    "remove_body_file": "此傳輸將從歷史記錄中移除，檔案也會從此裝置中刪除。"
   },
   "devices": {
     "add_favorite": "加入我的最愛",

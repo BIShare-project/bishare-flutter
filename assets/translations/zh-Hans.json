@@ -200,7 +200,40 @@
     "share_via_qr": "通过二维码分享",
     "title": "收件箱",
     "segment_device": "本设备",
-    "segment_drive": "Drive"
+    "segment_drive": "Drive",
+    "no_files_yet": "还没有文件",
+    "more": "更多",
+    "select_files": "选择文件",
+    "n_files": {
+      "one": "{} 个文件",
+      "other": "{} 个文件"
+    },
+    "group_title": "{day} · 来自 {alias}",
+    "new": "新",
+    "delete_n_title": {
+      "one": "删除 {} 个文件？",
+      "other": "删除 {} 个文件？"
+    },
+    "delete_body": "将从此设备和历史记录中删除。",
+    "clear_title": "清空收件箱？",
+    "clear_body": "收到的所有文件都会从此设备和历史记录中删除。",
+    "clear": "清空",
+    "browse_files": "浏览文件",
+    "browse_files_hint": "按文件夹、发送者或日期",
+    "ready_title": "{name} 已准备好接收",
+    "ready_body": "附近的设备看到你的名称是“{name}”。他们发送的内容会显示在这里。",
+    "hidden_title": "{name} 已隐藏",
+    "hidden_body": "其他设备找不到你。打开“可见”即可接收附近设备的文件。",
+    "receive_code": "用代码接收",
+    "turn_visible": "打开可见",
+    "detail_from": "来自",
+    "detail_received": "接收时间",
+    "detail_encrypted": "已加密",
+    "detail_verified": "已验证",
+    "via_qr": "通过 QR",
+    "select_all": "全选",
+    "select_none": "取消全选",
+    "detail_saved_as": "保存为"
   },
   "history": {
     "all": "全部",
@@ -235,7 +268,15 @@
       "one": "{} 次传输",
       "other": "{} 次传输"
     },
-    "yes": "是"
+    "yes": "是",
+    "send_a_file": "发送文件",
+    "total_size": "总计 {size}",
+    "clear_title": "清除历史记录？",
+    "clear_body": "列表将被清空，收到的所有文件也会从此设备中删除。",
+    "remove": "移除",
+    "remove_title": "从历史记录中移除？",
+    "remove_body": "此传输将从历史记录中移除。",
+    "remove_body_file": "此传输将从历史记录中移除，文件也会从此设备中删除。"
   },
   "devices": {
     "add_favorite": "添加到收藏",

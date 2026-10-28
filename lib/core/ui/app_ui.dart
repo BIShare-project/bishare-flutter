@@ -46,6 +46,7 @@ export 'media_thumb.dart';
 export 'app_responsive.dart';
 export 'app_screen_header.dart';
 export 'app_section.dart';
+export 'app_search_field.dart';
 export 'app_sheet.dart';
 export 'app_source_pill.dart';
 export 'app_svg_icon.dart';

@@ -204,7 +204,8 @@ class _MainShellState extends State<MainShell> {
       case ShellTabId.inbox:
         maybeStartShowcase(
           id: ShowcaseIds.inbox,
-          keys: [ShowcaseKeys.inboxFiles, ShowcaseKeys.inboxWeb],
+          // Browse files and Browser access both live in the menu now.
+          keys: [ShowcaseKeys.inboxFiles],
         );
       case ShellTabId.rooms:
         maybeStartShowcase(
@@ -422,15 +423,23 @@ class _MainShellState extends State<MainShell> {
     // Only the bar reads the inbox count, so a new file rebuilds the bar and
     // not the whole shell.
     Widget nav(Widget Function(List<AppNavItem> items) build) =>
-        BlocSelector<InboxCubit, List<TransferRecord>, int>(
-          selector: (items) => items.length,
-          builder: (context, count) => AppShowcase(
-            showcaseKey: ShowcaseKeys.homeNav,
-            title: 'showcase.home_nav_title'.tr(),
-            description: 'showcase.home_nav_body'.tr(),
-            targetRadius: 0,
-            child: build(_items(count)),
-          ),
+        // The count is what arrived since the Inbox was last left, and none
+        // while it is open.
+        ValueListenableBuilder<DateTime>(
+          valueListenable: context.read<InboxCubit>().seenAt,
+          builder: (context, seenAt, _) =>
+              BlocSelector<InboxCubit, List<TransferRecord>, int>(
+                selector: (items) => _tab == ShellTabId.inbox
+                    ? 0
+                    : items.where((r) => r.timestamp.isAfter(seenAt)).length,
+                builder: (context, count) => AppShowcase(
+                  showcaseKey: ShowcaseKeys.homeNav,
+                  title: 'showcase.home_nav_title'.tr(),
+                  description: 'showcase.home_nav_body'.tr(),
+                  targetRadius: 0,
+                  child: build(_items(count)),
+                ),
+              ),
         );
 
     // Wide (desktop / tablet-landscape): a side rail + content pane. Narrow

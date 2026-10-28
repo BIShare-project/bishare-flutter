@@ -149,19 +149,6 @@ class _SendMediaTabState extends State<SendMediaTab>
     });
   }
 
-  String _dayLabel(DateTime d) {
-    final now = DateTime.now();
-    final day = DateTime(d.year, d.month, d.day);
-    final today = DateTime(now.year, now.month, now.day);
-    final diff = today.difference(day).inDays;
-    if (diff == 0) return 'compose.today'.tr();
-    if (diff == 1) return 'compose.yesterday'.tr();
-    final locale = context.locale.toLanguageTag();
-    return d.year == now.year
-        ? DateFormat.MMMEd(locale).format(d)
-        : DateFormat.yMMMEd(locale).format(d);
-  }
-
   List<_Row> _rows(int columns) {
     final rows = <_Row>[];
     if (!_photos) {
@@ -180,7 +167,7 @@ class _SendMediaTabState extends State<SendMediaTab>
         j++;
       }
       final day = _assets.sublist(i, j);
-      rows.add(_DayRow(_dayLabel(d), day));
+      rows.add(_DayRow(dayLabel(d, context.locale.toLanguageTag()), day));
       for (var k = 0; k < day.length; k += columns) {
         rows.add(_TilesRow(day.sublist(k, (k + columns).clamp(0, day.length))));
       }

@@ -208,46 +208,50 @@ class AppChips<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: padding,
-      child: Row(
-        children: [
-          for (final (v, label) in options) ...[
-            Semantics(
-              button: true,
-              selected: v == value,
-              child: Material(
-                color: v == value ? t.text : Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(color: v == value ? t.text : t.line),
-                ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () {
-                    if (v == value) return;
-                    tapHaptic();
-                    onChanged(v);
-                  },
-                  child: Container(
-                    constraints: const BoxConstraints(minHeight: 36),
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: 13),
-                    child: Text(
-                      label,
-                      style: AppType.row.copyWith(
-                        fontSize: 13.5,
-                        color: v == value ? t.bg : t.text2,
+    // Start-aligned even inside a centring Column.
+    return SizedBox(
+      width: double.infinity,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: padding,
+        child: Row(
+          children: [
+            for (final (v, label) in options) ...[
+              Semantics(
+                button: true,
+                selected: v == value,
+                child: Material(
+                  color: v == value ? t.text : Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(color: v == value ? t.text : t.line),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () {
+                      if (v == value) return;
+                      tapHaptic();
+                      onChanged(v);
+                    },
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 36),
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(horizontal: 13),
+                      child: Text(
+                        label,
+                        style: AppType.row.copyWith(
+                          fontSize: 13.5,
+                          color: v == value ? t.bg : t.text2,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 6),
+              const SizedBox(width: 6),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

@@ -200,7 +200,40 @@
     "share_via_qr": "Bagikan via QR",
     "title": "Kotak Masuk",
     "segment_device": "Di perangkat ini",
-    "segment_drive": "Drive"
+    "segment_drive": "Drive",
+    "no_files_yet": "Belum ada file",
+    "more": "Lainnya",
+    "select_files": "Pilih file",
+    "n_files": {
+      "one": "{} file",
+      "other": "{} file"
+    },
+    "group_title": "{day} · dari {alias}",
+    "new": "Baru",
+    "delete_n_title": {
+      "one": "Hapus {} file?",
+      "other": "Hapus {} file?"
+    },
+    "delete_body": "File dihapus dari perangkat ini dan dari riwayat.",
+    "clear_title": "Bersihkan kotak masuk?",
+    "clear_body": "Semua file yang diterima dihapus dari perangkat ini dan dari riwayat.",
+    "clear": "Bersihkan",
+    "browse_files": "Telusuri file",
+    "browse_files_hint": "Per folder, pengirim atau tanggal",
+    "ready_title": "{name} siap menerima",
+    "ready_body": "Perangkat terdekat melihatmu sebagai “{name}”. Kiriman mereka muncul di sini.",
+    "hidden_title": "{name} tersembunyi",
+    "hidden_body": "Perangkat lain tidak bisa menemukanmu. Nyalakan Terlihat untuk menerima dari perangkat terdekat.",
+    "receive_code": "Terima dengan kode",
+    "turn_visible": "Nyalakan Terlihat",
+    "detail_from": "Dari",
+    "detail_received": "Diterima",
+    "detail_encrypted": "Terenkripsi",
+    "detail_verified": "Terverifikasi",
+    "via_qr": "Via QR",
+    "select_all": "Pilih semua",
+    "select_none": "Batal pilih",
+    "detail_saved_as": "Disimpan sebagai"
   },
   "history": {
     "all": "Semua",
@@ -235,7 +268,15 @@
       "one": "{} transfer",
       "other": "{} transfer"
     },
-    "yes": "Ya"
+    "yes": "Ya",
+    "send_a_file": "Kirim file",
+    "total_size": "Total {size}",
+    "clear_title": "Bersihkan riwayat?",
+    "clear_body": "Daftar dikosongkan dan semua file yang diterima dihapus dari perangkat ini.",
+    "remove": "Hapus",
+    "remove_title": "Hapus dari riwayat?",
+    "remove_body": "Transfer ini hilang dari riwayat.",
+    "remove_body_file": "Transfer ini hilang dari riwayat dan filenya dihapus dari perangkat ini."
   },
   "devices": {
     "add_favorite": "Tambah ke favorit",

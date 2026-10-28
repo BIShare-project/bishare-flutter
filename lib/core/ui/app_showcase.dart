@@ -28,7 +28,6 @@ class ShowcaseKeys {
   static final homeActions = GlobalKey();
   static final homeNav = GlobalKey();
   static final inboxFiles = GlobalKey();
-  static final inboxWeb = GlobalKey();
   static final roomCreate = GlobalKey();
   static final roomJoin = GlobalKey();
 }

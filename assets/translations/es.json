@@ -200,7 +200,40 @@
     "share_via_qr": "Compartir vía QR",
     "title": "Bandeja de entrada",
     "segment_device": "En este dispositivo",
-    "segment_drive": "Drive"
+    "segment_drive": "Drive",
+    "no_files_yet": "Aún no hay archivos",
+    "more": "Más",
+    "select_files": "Elegir archivos",
+    "n_files": {
+      "one": "{} archivo",
+      "other": "{} archivos"
+    },
+    "group_title": "{day} · de {alias}",
+    "new": "Nuevo",
+    "delete_n_title": {
+      "one": "¿Eliminar {} archivo?",
+      "other": "¿Eliminar {} archivos?"
+    },
+    "delete_body": "Se eliminan de este dispositivo y del historial.",
+    "clear_title": "¿Vaciar la bandeja?",
+    "clear_body": "Todos los archivos recibidos se eliminan de este dispositivo y del historial.",
+    "clear": "Vaciar",
+    "browse_files": "Explorar archivos",
+    "browse_files_hint": "Por carpeta, remitente o fecha",
+    "ready_title": "{name} está listo para recibir",
+    "ready_body": "Los dispositivos cercanos te ven como “{name}”. Lo que envíen aparece aquí.",
+    "hidden_title": "{name} está oculto",
+    "hidden_body": "Otros dispositivos no pueden encontrarte. Activa Visible para recibir de dispositivos cercanos.",
+    "receive_code": "Recibir con un código",
+    "turn_visible": "Activar Visible",
+    "detail_from": "De",
+    "detail_received": "Recibido",
+    "detail_encrypted": "Cifrado",
+    "detail_verified": "Verificado",
+    "via_qr": "Por QR",
+    "select_all": "Seleccionar todo",
+    "select_none": "Quitar selección",
+    "detail_saved_as": "Guardado como"
   },
   "history": {
     "all": "Todo",
@@ -235,7 +268,15 @@
       "one": "{} transferencia",
       "other": "{} transferencias"
     },
-    "yes": "Sí"
+    "yes": "Sí",
+    "send_a_file": "Enviar un archivo",
+    "total_size": "Total {size}",
+    "clear_title": "¿Borrar el historial?",
+    "clear_body": "La lista se vacía y todos los archivos recibidos se eliminan de este dispositivo.",
+    "remove": "Quitar",
+    "remove_title": "¿Quitar del historial?",
+    "remove_body": "La transferencia sale del historial.",
+    "remove_body_file": "La transferencia sale del historial y el archivo se elimina de este dispositivo."
   },
   "devices": {
     "add_favorite": "Añadir a favoritos",

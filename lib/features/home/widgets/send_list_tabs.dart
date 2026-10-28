@@ -292,7 +292,6 @@ class _SendAppsTabState extends State<SendAppsTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final t = context.tokens;
     final apps = _apps;
     if (apps == null) {
       return const Center(child: CircularProgressIndicator(strokeWidth: 2.4));
@@ -304,13 +303,10 @@ class _SendAppsTabState extends State<SendAppsTab>
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
-            child: ShadInput(
-              placeholder: Text('home.apps_search'.tr()),
-              leading: AppSvgIcon(AppIcons.search, size: 18, color: t.text3),
-              onChanged: (v) => setState(() => _q = v),
-            ),
+          child: AppSearchField(
+            hint: 'home.apps_search'.tr(),
+            margin: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+            onChanged: (v) => setState(() => _q = v),
           ),
         ),
         if (shown.isEmpty)

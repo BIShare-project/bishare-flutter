@@ -200,7 +200,40 @@
     "share_via_qr": "Share via QR",
     "title": "Inbox",
     "segment_device": "On this device",
-    "segment_drive": "Drive"
+    "segment_drive": "Drive",
+    "no_files_yet": "No files yet",
+    "more": "More",
+    "select_files": "Select files",
+    "n_files": {
+      "one": "{} file",
+      "other": "{} files"
+    },
+    "group_title": "{day} · from {alias}",
+    "new": "New",
+    "delete_n_title": {
+      "one": "Delete {} file?",
+      "other": "Delete {} files?"
+    },
+    "delete_body": "They are deleted from this device and removed from the history.",
+    "clear_title": "Clear the inbox?",
+    "clear_body": "Every received file is deleted from this device and removed from the history.",
+    "clear": "Clear",
+    "browse_files": "Browse files",
+    "browse_files_hint": "By folder, sender or date",
+    "ready_title": "{name} is ready to receive",
+    "ready_body": "Nearby devices see you as “{name}”. What they send appears here.",
+    "hidden_title": "{name} is hidden",
+    "hidden_body": "Other devices cannot find you. Turn on Visible to receive from devices nearby.",
+    "receive_code": "Receive with a code",
+    "turn_visible": "Turn on Visible",
+    "detail_from": "From",
+    "detail_received": "Received",
+    "detail_encrypted": "Encrypted",
+    "detail_verified": "Verified",
+    "via_qr": "Via QR",
+    "select_all": "Select all",
+    "select_none": "Select none",
+    "detail_saved_as": "Saved as"
   },
   "history": {
     "all": "All",
@@ -235,7 +268,15 @@
       "one": "{} transfer",
       "other": "{} transfers"
     },
-    "yes": "Yes"
+    "yes": "Yes",
+    "send_a_file": "Send a file",
+    "total_size": "Total {size}",
+    "clear_title": "Clear the history?",
+    "clear_body": "The list is cleared and every received file is deleted from this device.",
+    "remove": "Remove",
+    "remove_title": "Remove from history?",
+    "remove_body": "The transfer leaves the history.",
+    "remove_body_file": "The transfer leaves the history and the file is deleted from this device."
   },
   "devices": {
     "add_favorite": "Add to favorites",

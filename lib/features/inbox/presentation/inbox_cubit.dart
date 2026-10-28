@@ -2,18 +2,43 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:gal/gal.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/storage/app_database.dart';
 import '../../history/data/history_repository.dart';
 
 /// Reactive list of received files (drift-backed → survives restart).
 class InboxCubit extends Cubit<List<TransferRecord>> {
-  InboxCubit(this._history) : super(const []) {
+  InboxCubit(this._history, {SharedPreferences? prefs})
+    : _prefs = prefs,
+      seenAt = ValueNotifier(
+        DateTime.fromMillisecondsSinceEpoch(prefs?.getInt(_kSeenAt) ?? 0),
+      ),
+      super(const []) {
     _sub = _history.watchReceived().listen(emit);
   }
 
   final HistoryRepository _history;
+  final SharedPreferences? _prefs;
+  static const _kSeenAt = 'inbox.seenAt';
+
+  /// When the Inbox was last left: what arrived after it is new (the dot on
+  /// a group, the count on the tab).
+  final ValueNotifier<DateTime> seenAt;
+
+  /// Received after the last visit.
+  int get unseen =>
+      state.where((r) => r.timestamp.isAfter(seenAt.value)).length;
+
+  /// Called when the Inbox is left: everything on it now counts as seen.
+  void markSeen() {
+    final now = DateTime.now();
+    seenAt.value = now;
+    _prefs?.setInt(_kSeenAt, now.millisecondsSinceEpoch);
+  }
+
   late final StreamSubscription<List<TransferRecord>> _sub;
 
   /// Save-to-Photos is only supported on mobile (gal). Elsewhere it's hidden.
@@ -76,6 +101,7 @@ class InboxCubit extends Cubit<List<TransferRecord>> {
 
   @override
   Future<void> close() async {
+    seenAt.dispose();
     await _sub.cancel();
     return super.close();
   }

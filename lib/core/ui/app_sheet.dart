@@ -1,7 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_tokens.dart';
 import '../theme/app_type.dart';
+import 'app_button.dart';
 import 'app_format.dart';
 import 'app_responsive.dart';
 import 'app_svg_icon.dart';
@@ -331,4 +333,44 @@ class _Dialog extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Asks before something that cannot be undone. True only when the person
+/// confirms; closing the sheet any other way is no.
+Future<bool> showAppConfirm(
+  BuildContext context, {
+  required String title,
+  required String message,
+  required String confirmLabel,
+  bool destructive = true,
+}) async {
+  final yes = await showAppSheet<bool>(
+    context,
+    title: title,
+    subtitle: message,
+    builder: (ctx) => Row(
+      children: [
+        Expanded(
+          child: AppButton(
+            label: 'common.cancel'.tr(),
+            variant: AppButtonVariant.secondary,
+            size: AppButtonSize.large,
+            onPressed: () => Navigator.pop(ctx, false),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: AppButton(
+            label: confirmLabel,
+            variant: destructive
+                ? AppButtonVariant.destructive
+                : AppButtonVariant.primary,
+            size: AppButtonSize.large,
+            onPressed: () => Navigator.pop(ctx, true),
+          ),
+        ),
+      ],
+    ),
+  );
+  return yes ?? false;
 }

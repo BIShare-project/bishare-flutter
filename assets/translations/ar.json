@@ -204,7 +204,48 @@
     "share_via_qr": "مشاركة عبر رمز QR",
     "title": "الوارد",
     "segment_device": "على هذا الجهاز",
-    "segment_drive": "Drive"
+    "segment_drive": "Drive",
+    "no_files_yet": "لا توجد ملفات بعد",
+    "more": "المزيد",
+    "select_files": "اختر الملفات",
+    "n_files": {
+      "zero": "لا ملفات",
+      "one": "ملف واحد",
+      "two": "ملفان",
+      "few": "{} ملفات",
+      "many": "{} ملفًا",
+      "other": "{} ملف"
+    },
+    "group_title": "{day} · من {alias}",
+    "new": "جديد",
+    "delete_n_title": {
+      "zero": "حذف الملفات؟",
+      "one": "حذف ملف واحد؟",
+      "two": "حذف ملفين؟",
+      "few": "حذف {} ملفات؟",
+      "many": "حذف {} ملفًا؟",
+      "other": "حذف {} ملف؟"
+    },
+    "delete_body": "تُحذف من هذا الجهاز ومن السجل.",
+    "clear_title": "إفراغ صندوق الوارد؟",
+    "clear_body": "تُحذف كل الملفات المستلمة من هذا الجهاز ومن السجل.",
+    "clear": "إفراغ",
+    "browse_files": "تصفّح الملفات",
+    "browse_files_hint": "حسب المجلد أو المرسل أو التاريخ",
+    "ready_title": "{name} جاهز للاستلام",
+    "ready_body": "تراك الأجهزة القريبة باسم “{name}”. ما ترسله يظهر هنا.",
+    "hidden_title": "{name} مخفي",
+    "hidden_body": "لا تستطيع الأجهزة الأخرى العثور عليك. فعّل «مرئي» لتستلم من الأجهزة القريبة.",
+    "receive_code": "الاستلام برمز",
+    "turn_visible": "تفعيل «مرئي»",
+    "detail_from": "من",
+    "detail_received": "الاستلام",
+    "detail_encrypted": "مشفّر",
+    "detail_verified": "تم التحقق",
+    "via_qr": "عبر QR",
+    "select_all": "تحديد الكل",
+    "select_none": "إلغاء التحديد",
+    "detail_saved_as": "حُفظ باسم"
   },
   "history": {
     "all": "الكل",
@@ -239,7 +280,15 @@
       "one": "{} عملية نقل",
       "other": "{} عمليات نقل"
     },
-    "yes": "نعم"
+    "yes": "نعم",
+    "send_a_file": "إرسال ملف",
+    "total_size": "الإجمالي {size}",
+    "clear_title": "مسح السجل؟",
+    "clear_body": "تُفرَّغ القائمة وتُحذف كل الملفات المستلمة من هذا الجهاز.",
+    "remove": "إزالة",
+    "remove_title": "إزالة من السجل؟",
+    "remove_body": "يُزال النقل من السجل.",
+    "remove_body_file": "يُزال النقل من السجل ويُحذف الملف من هذا الجهاز."
   },
   "devices": {
     "add_favorite": "إضافة إلى المفضلة",

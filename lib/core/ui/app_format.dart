@@ -86,3 +86,20 @@ String fileIcon(String mime) {
   }
   return AppIcons.fileDocument;
 }
+
+/// "Today", "Yesterday", or the date (with the year when it is not this
+/// year), for a day heading.
+String dayLabel(DateTime d, String locale) {
+  final now = DateTime.now();
+  final day = DateTime(d.year, d.month, d.day);
+  final today = DateTime(now.year, now.month, now.day);
+  final diff = today.difference(day).inDays;
+  if (diff == 0) return 'compose.today'.tr();
+  if (diff == 1) return 'compose.yesterday'.tr();
+  return d.year == now.year
+      ? DateFormat.MMMEd(locale).format(d)
+      : DateFormat.yMMMEd(locale).format(d);
+}
+
+/// The time of day in the locale's own form ("08.14", "8:14 AM").
+String timeLabel(DateTime d, String locale) => DateFormat.Hm(locale).format(d);

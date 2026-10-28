@@ -200,7 +200,40 @@
     "share_via_qr": "QR로 공유",
     "title": "받은 파일",
     "segment_device": "이 기기",
-    "segment_drive": "Drive"
+    "segment_drive": "Drive",
+    "no_files_yet": "아직 파일이 없습니다",
+    "more": "더보기",
+    "select_files": "파일 선택",
+    "n_files": {
+      "one": "파일 {}개",
+      "other": "파일 {}개"
+    },
+    "group_title": "{day} · {alias}에서",
+    "new": "새 파일",
+    "delete_n_title": {
+      "one": "파일 {}개를 삭제할까요?",
+      "other": "파일 {}개를 삭제할까요?"
+    },
+    "delete_body": "이 기기와 기록에서 삭제됩니다.",
+    "clear_title": "받은 편지함을 비울까요?",
+    "clear_body": "받은 모든 파일이 이 기기와 기록에서 삭제됩니다.",
+    "clear": "비우기",
+    "browse_files": "파일 둘러보기",
+    "browse_files_hint": "폴더, 보낸 사람, 날짜별",
+    "ready_title": "{name}에서 받을 준비가 되었습니다",
+    "ready_body": "근처 기기에서는 “{name}”(으)로 보입니다. 보낸 파일이 여기에 표시됩니다.",
+    "hidden_title": "{name}이(가) 숨겨져 있습니다",
+    "hidden_body": "다른 기기에서 찾을 수 없습니다. 근처 기기에서 받으려면 표시를 켜세요.",
+    "receive_code": "코드로 받기",
+    "turn_visible": "표시 켜기",
+    "detail_from": "보낸 기기",
+    "detail_received": "받은 시간",
+    "detail_encrypted": "암호화",
+    "detail_verified": "확인됨",
+    "via_qr": "QR로",
+    "select_all": "모두 선택",
+    "select_none": "선택 해제",
+    "detail_saved_as": "저장된 이름"
   },
   "history": {
     "all": "전체",
@@ -235,7 +268,15 @@
       "one": "전송 {}건",
       "other": "전송 {}건"
     },
-    "yes": "예"
+    "yes": "예",
+    "send_a_file": "파일 보내기",
+    "total_size": "합계 {size}",
+    "clear_title": "기록을 지울까요?",
+    "clear_body": "목록이 지워지고 받은 모든 파일이 이 기기에서 삭제됩니다.",
+    "remove": "삭제",
+    "remove_title": "기록에서 삭제할까요?",
+    "remove_body": "이 전송이 기록에서 사라집니다.",
+    "remove_body_file": "이 전송이 기록에서 사라지고 파일도 이 기기에서 삭제됩니다."
   },
   "devices": {
     "add_favorite": "즐겨찾기에 추가",

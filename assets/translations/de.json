@@ -200,7 +200,40 @@
     "share_via_qr": "Über QR-Code teilen",
     "title": "Posteingang",
     "segment_device": "Auf diesem Gerät",
-    "segment_drive": "Drive"
+    "segment_drive": "Drive",
+    "no_files_yet": "Noch keine Dateien",
+    "more": "Mehr",
+    "select_files": "Dateien auswählen",
+    "n_files": {
+      "one": "{} Datei",
+      "other": "{} Dateien"
+    },
+    "group_title": "{day} · von {alias}",
+    "new": "Neu",
+    "delete_n_title": {
+      "one": "{} Datei löschen?",
+      "other": "{} Dateien löschen?"
+    },
+    "delete_body": "Sie werden von diesem Gerät und aus dem Verlauf gelöscht.",
+    "clear_title": "Posteingang leeren?",
+    "clear_body": "Alle empfangenen Dateien werden von diesem Gerät und aus dem Verlauf gelöscht.",
+    "clear": "Leeren",
+    "browse_files": "Dateien durchsuchen",
+    "browse_files_hint": "Nach Ordner, Absender oder Datum",
+    "ready_title": "{name} ist empfangsbereit",
+    "ready_body": "Geräte in der Nähe sehen dich als „{name}“. Was sie senden, erscheint hier.",
+    "hidden_title": "{name} ist verborgen",
+    "hidden_body": "Andere Geräte finden dich nicht. Schalte Sichtbar ein, um von Geräten in der Nähe zu empfangen.",
+    "receive_code": "Mit Code empfangen",
+    "turn_visible": "Sichtbar einschalten",
+    "detail_from": "Von",
+    "detail_received": "Empfangen",
+    "detail_encrypted": "Verschlüsselt",
+    "detail_verified": "Geprüft",
+    "via_qr": "Per QR",
+    "select_all": "Alle auswählen",
+    "select_none": "Auswahl aufheben",
+    "detail_saved_as": "Gespeichert als"
   },
   "history": {
     "all": "Alle",
@@ -235,7 +268,15 @@
       "one": "{} Übertragung",
       "other": "{} Übertragungen"
     },
-    "yes": "Ja"
+    "yes": "Ja",
+    "send_a_file": "Datei senden",
+    "total_size": "Gesamt {size}",
+    "clear_title": "Verlauf löschen?",
+    "clear_body": "Die Liste wird geleert und alle empfangenen Dateien werden von diesem Gerät gelöscht.",
+    "remove": "Entfernen",
+    "remove_title": "Aus dem Verlauf entfernen?",
+    "remove_body": "Die Übertragung verschwindet aus dem Verlauf.",
+    "remove_body_file": "Die Übertragung verschwindet aus dem Verlauf und die Datei wird von diesem Gerät gelöscht."
   },
   "devices": {
     "add_favorite": "Zu Favoriten hinzufügen",
