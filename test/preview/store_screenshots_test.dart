@@ -114,6 +114,25 @@ const Map<String, _Preset> _presets = {
     self: 'iPhone 17',
     type: 'mobile',
   ),
+  // iPhone Duo outer display: 1398×2034 (Apple's screenshot
+  // specifications; the logical size assumes 3x)
+  'ios_duo_outer': (
+    size: Size(466, 678),
+    ratio: 3,
+    platform: TargetPlatform.iOS,
+    insets: EdgeInsets.only(top: 54, bottom: 30),
+    self: 'iPhone 17',
+    type: 'mobile',
+  ),
+  // iPhone Duo inner display: 2007×2853
+  'ios_duo_inner': (
+    size: Size(669, 951),
+    ratio: 3,
+    platform: TargetPlatform.iOS,
+    insets: EdgeInsets.only(top: 32, bottom: 24),
+    self: 'iPad Pro',
+    type: 'mobile',
+  ),
   // iPad Pro 13": 2064×2752
   'ios_ipad': (
     size: Size(1032, 1376),

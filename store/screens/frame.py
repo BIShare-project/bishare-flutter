@@ -40,8 +40,15 @@ TARGETS = {
     "mac": (2880, 1800, "mac", "mac"),
     "play_phone": (1440, 2560, "android", "android_phone"),
     "play_tablet": (1600, 2560, "android_tablet", "android_tablet"),
+    # iPhone Duo (Apple's screenshot specifications): optional now, required
+    # from April 2027 for apps built with the iOS 27.1 SDK
+    "ios_duo_outer": (1398, 2034, "duo_outer", "ios_duo_outer"),
+    "ios_duo_inner": (2007, 2853, "duo_inner", "ios_duo_inner"),
 }
-SELF = {"ios_phone": "Maya", "ios_ipad": "Maya", "mac": "Maya’s Mac", "play_phone": "Maya", "play_tablet": "Maya"}
+# the required 6.1" size (iPhone with Dynamic Island, medium): the 6.9"
+# set scaled, the same aspect
+SCALED = {"ios_phone_61": ("ios_phone", 1206, 2622)}
+SELF = {"ios_phone": "Maya", "ios_ipad": "Maya", "mac": "Maya’s Mac", "play_phone": "Maya", "play_tablet": "Maya", "ios_duo_outer": "Maya", "ios_duo_inner": "Maya"}
 
 TOP = (40, 92, 222)
 BOTTOM = (6, 14, 40)
@@ -225,6 +232,9 @@ def glyph(size: int, kind: str, color) -> Image.Image:
     elif kind == "phone":
         d.rounded_rectangle((s * 0.35, s * 0.24, s * 0.65, s * 0.76), radius=s * 0.06, outline=W, width=lw)
         d.line([(s * 0.46, s * 0.68), (s * 0.54, s * 0.68)], fill=W, width=lw)
+    elif kind == "laptop":
+        d.rounded_rectangle((s * 0.27, s * 0.3, s * 0.73, s * 0.62), radius=s * 0.04, outline=W, width=lw)
+        d.line([(s * 0.2, s * 0.7), (s * 0.8, s * 0.7)], fill=W, width=lw)
     elif kind == "link":
         for dx in (-0.09, 0.09):
             box = (c + s * dx - s * 0.17, c - s * 0.1, c + s * dx + s * 0.17, c + s * 0.1)
@@ -293,13 +303,13 @@ def chip(title: str, sub: str, kind: str, color: str, base: float, lang: str) ->
 # ---------------------------------------------------------------- devices
 def device(raw: Image.Image, kind: str, dw: int) -> tuple[Image.Image, int]:
     """The capture inside a device body `dw` wide. Returns (image, rim+bezel inset)."""
-    phone = kind in ("iphone", "android")
+    phone = kind in ("iphone", "android", "duo_outer")
     rim = round(dw * (0.012 if phone else 0.008))
     bezel = round(dw * (0.022 if phone else 0.018))
     sw = dw - 2 * (rim + bezel)
     sh = round(raw.height * sw / raw.width)
     dh = sh + 2 * (rim + bezel)
-    radius = round(dw * (0.135 if kind == "iphone" else 0.1 if kind == "android" else 0.05))
+    radius = round(dw * {"iphone": 0.135, "android": 0.1, "duo_outer": 0.11, "duo_inner": 0.06}.get(kind, 0.05))
     body = Image.new("RGBA", (dw, dh), (0, 0, 0, 0))
     d = ImageDraw.Draw(body)
     d.rounded_rectangle((0, 0, dw - 1, dh - 1), radius=radius, fill=RIM + (255,))
@@ -328,7 +338,7 @@ CHIP_Y = {
 }
 
 # logical width of each raw preset in points, so status bars scale right
-LOGICAL_W = {"iphone": 440, "android": 412, "ipad": 1032, "android_tablet": 800}
+LOGICAL_W = {"iphone": 440, "android": 412, "ipad": 1032, "android_tablet": 800, "duo_outer": 466, "duo_inner": 669}
 
 
 def home_indicator(screen: Image.Image, scale: float, width_pt: float, bottom_pt: float) -> None:
@@ -344,15 +354,17 @@ def framed_screen(raw: Image.Image, kind: str) -> Image.Image:
     indicator on its bottom one (the test leaves both insets empty)."""
     shot = raw.convert("RGBA")
     scale = shot.width / LOGICAL_W[kind]
-    if kind == "iphone":
+    if kind in ("iphone", "duo_outer"):
         home_indicator(shot, scale, 140, 8)
+    elif kind == "duo_inner":
+        home_indicator(shot, scale, 220, 8)
     elif kind == "ipad":
         home_indicator(shot, scale, 300, 7)
     elif kind in ("android", "android_tablet"):
         home_indicator(shot, scale, 108 if kind == "android" else 160, 9)
-    if kind == "iphone":
+    if kind in ("iphone", "duo_outer"):
         status_ios(shot, scale, island=True)
-    elif kind == "ipad":
+    elif kind in ("ipad", "duo_inner"):
         status_ios(shot, scale, island=False)
     elif kind == "android":
         status_android(shot, scale, hole=True)
@@ -431,6 +443,9 @@ def compose(target: str, lang: str, screen: str, raw: Image.Image) -> Image.Imag
     self_name = SELF[target]
     chips = [(t.replace("{self}", self_name), s.replace("{self}", self_name)) for t, s in chips]
     kinds = SCREENS[screen]
+    if kind == "mac":
+        # this device is a computer here
+        kinds = [("laptop", c) if k == "phone" else (k, c) for k, c in kinds]
 
     if kind == "mac":
         base = h * 1.0
@@ -446,7 +461,7 @@ def compose(target: str, lang: str, screen: str, raw: Image.Image) -> Image.Imag
         anchors = [(wx - base * 0.06, wy + win.height * (ya + 0.1), -2.5), (wx + win.width + base * 0.06, wy + win.height * (yb + 0.1), 2.0)]
         chip_base = base * 0.9
     else:
-        tablet = kind in ("ipad", "android_tablet")
+        tablet = kind in ("ipad", "android_tablet", "duo_inner")
         base = w * (0.62 if tablet else 1.0)
         y = captions_block(canvas, lang, eyebrow, head, sub, base, h * (0.05 if tablet else 0.058), w * (0.82 if tablet else 0.86))
         dw = round(w * (0.8 if tablet else 0.86))
@@ -476,6 +491,11 @@ def compose(target: str, lang: str, screen: str, raw: Image.Image) -> Image.Imag
     return canvas.convert("RGB")
 
 
+# Store order: the first three portrait shots show in App Store search
+# results (Apple, product page guidance).
+ORDER = {"share": "1", "link": "2", "drive": "3", "inbox": "4", "settings": "5"}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--raw", required=True)
@@ -500,12 +520,25 @@ def main() -> int:
                 continue
             out = out_root / lang / target
             out.mkdir(parents=True, exist_ok=True)
+            for old in out.glob("*.png"):
+                old.unlink()
             for png in sorted(ldir.glob("*.png")):
                 screen = png.stem.split("_", 1)[1]
                 im = compose(target, lang, screen, Image.open(png))
-                im.save(out / png.name, optimize=True)
+                im.save(out / f"{ORDER.get(screen, '9')}_{screen}.png", optimize=True)
                 written += 1
             print(f"{target} {lang}: {out}")
+    for target, (src, sw, sh) in SCALED.items():
+        if args.target and target not in args.target and src not in args.target:
+            continue
+        for sdir in sorted(out_root.glob(f"*/{src}")):
+            out = sdir.parent / target
+            out.mkdir(exist_ok=True)
+            for old in out.glob("*.png"):
+                old.unlink()
+            for png in sorted(sdir.glob("*.png")):
+                Image.open(png).convert("RGB").resize((sw, sh), Image.LANCZOS).save(out / png.name, optimize=True)
+                written += 1
     print(f"{written} screenshots written")
     return 0
 

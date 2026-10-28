@@ -22,6 +22,7 @@ macOS) and Google Play. Adapted from the games repo's store_listing.py.
                the editable app info gets name, subtitle and privacy URL.
                --screenshots <dir> replaces the sets from <dir>/<lang>/:
                ios_phone → APP_IPHONE_67 (and removes APP_IPHONE_65),
+               ios_phone_61 → APP_IPHONE_61 (the required 6.1"),
                ios_ipad → APP_IPAD_PRO_3GEN_129, mac → APP_DESKTOP.
 --play         one edit: every listing's title, short and full description;
                with --screenshots, phone (play_phone) and 7"/10" tablet
@@ -71,7 +72,9 @@ LIMITS = {
 }
 # screenshot folder per App Store display type, per platform
 ASC_SETS = {
-    "IOS": {"APP_IPHONE_67": "ios_phone", "APP_IPAD_PRO_3GEN_129": "ios_ipad"},
+    # iPhone Duo (ios_duo_outer, ios_duo_inner) has no display type in the
+    # App Store Connect API yet (spec 4.5.1): upload those in the web UI.
+    "IOS": {"APP_IPHONE_67": "ios_phone", "APP_IPHONE_61": "ios_phone_61", "APP_IPAD_PRO_3GEN_129": "ios_ipad"},
     "MAC_OS": {"APP_DESKTOP": "mac"},
 }
 # older sets that the new ones replace (the store would show them to older devices)
