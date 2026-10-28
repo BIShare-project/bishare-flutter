@@ -329,8 +329,10 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
               ? _AccessCard(backup: _backup)
               : _BackupCard(backup: _backup, onSwitch: _switch),
         ),
-        if (!noAccess && !waiting && _hasUnsafe(items, backed, uploads))
-          SliverToBoxAdapter(child: _Legend()),
+        if (!noAccess && !waiting && items.isNotEmpty)
+          SliverToBoxAdapter(
+            child: _Legend(failed: _hasFailed(items, backed, uploads)),
+          ),
         if (waiting)
           SliverToBoxAdapter(child: _skeleton())
         else if (items.isEmpty)
@@ -428,16 +430,16 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
   static bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  /// Any photo on screen not safe in the Drive yet: the legend shows.
-  bool _hasUnsafe(
+  /// Any photo on screen whose upload failed: the legend explains that mark.
+  bool _hasFailed(
     List<_Item> items,
     Set<String> backed,
     Map<String, String> uploads,
   ) => items.any(
     (it) =>
         it is _Local &&
-        VaultPhotoBackup.stateOf(it.asset.id, backed, uploads) !=
-            PhotoBackupState.backedUp,
+        VaultPhotoBackup.stateOf(it.asset.id, backed, uploads) ==
+            PhotoBackupState.failed,
   );
 
   Widget _skeleton() => AppShimmer(
@@ -475,10 +477,9 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
       selecting: selecting,
       onTap: () => selecting ? _toggle(a) : unawaited(_view(a)),
       onLongPress: () => _toggle(a),
-      // Only what is not safe yet carries a mark (redesign-plan.md 6.2).
-      badge: state == PhotoBackupState.backedUp
-          ? null
-          : PhotoBackupBadge(state: state),
+      // Every photo says where it stands (owner 2026-10-21 and again
+      // 2026-10-28: without a mark, "backed up" and "not yet" look alike).
+      badge: PhotoBackupBadge(state: state),
       label: photoBackupStateLabel(state),
     );
   }
@@ -503,6 +504,7 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
         if (_selected.isEmpty) widget.onOpen(o);
       },
       onLongPress: () => widget.onMore(o),
+      badge: const PhotoBackupBadge(state: PhotoBackupState.backedUp),
       label: o.name,
     );
   }
@@ -521,15 +523,20 @@ final class _TileLine extends _Line {
   final List<_Item> row;
 }
 
-/// What the marks on the tiles mean (shown while some are not safe yet).
+/// What the marks on the tiles mean.
 class _Legend extends StatelessWidget {
+  const _Legend({required this.failed});
+
+  /// Some upload failed: its mark is explained too.
+  final bool failed;
+
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
     Widget item(PhotoBackupState s) => Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Transform.scale(scale: 0.85, child: PhotoBackupBadge(state: s)),
+        PhotoBackupBadge(state: s),
         const SizedBox(width: 6),
         Text(
           photoBackupStateLabel(s),
@@ -543,8 +550,9 @@ class _Legend extends StatelessWidget {
         spacing: 16,
         runSpacing: 6,
         children: [
+          item(PhotoBackupState.backedUp),
           item(PhotoBackupState.notBackedUp),
-          item(PhotoBackupState.failed),
+          if (failed) item(PhotoBackupState.failed),
         ],
       ),
     );
