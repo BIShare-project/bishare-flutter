@@ -47,8 +47,8 @@ class _DriveTransfersPageState extends State<DriveTransfersPage> {
                   builder: (context, _) => AppScreenHeader(
                     title: 'vault.transfers'.tr(),
                     onBack: widget.embedded
-                    ? null
-                    : () => Navigator.of(context).maybePop(),
+                        ? null
+                        : () => Navigator.of(context).maybePop(),
                     actions: [
                       if ((snap.data?.isNotEmpty ?? false) ||
                           downloads.jobs.isNotEmpty)

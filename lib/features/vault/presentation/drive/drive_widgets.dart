@@ -523,7 +523,8 @@ class DriveBreadcrumb extends StatelessWidget {
   }
 }
 
-/// Search, sort and layout.
+/// Search, sort and layout. On a phone the search field hides behind the
+/// header's magnifier ([showSearch] false) and opens as [DriveSearchRow].
 class DriveToolbar extends StatelessWidget {
   const DriveToolbar({
     super.key,
@@ -531,7 +532,10 @@ class DriveToolbar extends StatelessWidget {
     required this.search,
     required this.searchFocus,
     this.trailing = const [],
+    this.showSearch = true,
   });
+
+  final bool showSearch;
 
   final DriveController ctrl;
   final TextEditingController search;
@@ -566,18 +570,19 @@ class DriveToolbar extends StatelessWidget {
     // Recent is newest first, always.
     final canSort = ctrl.view != DriveView.recent || ctrl.searching;
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(0, 2, 6, 2),
+      padding: EdgeInsetsDirectional.fromSTEB(showSearch ? 0 : 8, 2, 6, 2),
       child: Row(
         children: [
-          Expanded(
-            child: AppSearchField(
-              hint: 'vault.search'.tr(),
-              controller: search,
-              focusNode: searchFocus,
-              onChanged: ctrl.setQuery,
-              margin: const EdgeInsetsDirectional.fromSTEB(14, 4, 4, 4),
+          if (showSearch)
+            Expanded(
+              child: AppSearchField(
+                hint: 'vault.search'.tr(),
+                controller: search,
+                focusNode: searchFocus,
+                onChanged: ctrl.setQuery,
+                margin: const EdgeInsetsDirectional.fromSTEB(14, 4, 4, 4),
+              ),
             ),
-          ),
           Material(
             type: MaterialType.transparency,
             child: InkWell(
@@ -609,12 +614,56 @@ class DriveToolbar extends StatelessWidget {
               ),
             ),
           ),
+          if (!showSearch) const Spacer(),
           AppIconButton(
             icon: ctrl.grid ? AppIcons.listView : AppIcons.gridView,
             tooltip: (ctrl.grid ? 'vault.list_view' : 'vault.grid_view').tr(),
             onPressed: () => ctrl.setGrid(!ctrl.grid),
           ),
           ...trailing,
+        ],
+      ),
+    );
+  }
+}
+
+/// The phone's search row, opened from the header's magnifier: the field
+/// and Cancel, which clears the search and closes the row.
+class DriveSearchRow extends StatelessWidget {
+  const DriveSearchRow({
+    super.key,
+    required this.ctrl,
+    required this.search,
+    required this.searchFocus,
+    required this.onCancel,
+  });
+
+  final DriveController ctrl;
+  final TextEditingController search;
+  final FocusNode searchFocus;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(0, 6, 4, 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: AppSearchField(
+              hint: 'vault.search'.tr(),
+              controller: search,
+              focusNode: searchFocus,
+              onChanged: ctrl.setQuery,
+              margin: const EdgeInsetsDirectional.fromSTEB(16, 0, 2, 0),
+            ),
+          ),
+          AppButton(
+            label: 'common.cancel'.tr(),
+            variant: AppButtonVariant.ghost,
+            size: AppButtonSize.small,
+            onPressed: onCancel,
+          ),
         ],
       ),
     );

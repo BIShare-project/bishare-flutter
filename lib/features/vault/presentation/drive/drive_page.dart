@@ -64,6 +64,9 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
   late final DriveActions _act = DriveActions(context, _ctrl);
   final TextEditingController _search = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
+
+  /// Phone: the search row is open (the header's magnifier).
+  bool _searchOpen = false;
   final FocusNode _focus = FocusNode(debugLabel: 'drive');
 
   List<VaultObject> _visible = const [];
@@ -212,6 +215,21 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
           : _dao.watchObjects(ids).skip(1).listen((_) => _ctrl.prune());
     }
     if (mounted) setState(() {});
+  }
+
+  /// Phone: open the search row and type at once. Results show as rows on
+  /// every tab, Photos too.
+  void _openSearch() {
+    setState(() => _searchOpen = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _searchFocus.requestFocus();
+    });
+  }
+
+  void _closeSearch() {
+    _searchFocus.unfocus();
+    if (_ctrl.searching) _ctrl.setQuery('');
+    setState(() => _searchOpen = false);
   }
 
   /// Typing in the search box: the page's shortcuts step aside.
@@ -713,11 +731,19 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
               onTap: (i) => _ctrl.setView(_tabViews[i]),
             ),
           ),
+        if (_searchOpen && !_ctrl.selecting)
+          DriveSearchRow(
+            ctrl: _ctrl,
+            search: _search,
+            searchFocus: _searchFocus,
+            onCancel: _closeSearch,
+          ),
         if (!_phoneGallery)
           DriveToolbar(
             ctrl: _ctrl,
             search: _search,
             searchFocus: _searchFocus,
+            showSearch: false,
             trailing: [
               if (tab == 1 && !_ctrl.selecting)
                 AppIconButton(
@@ -766,6 +792,11 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
                   style: AppType.title.copyWith(color: t.text),
                 ),
               ),
+            ),
+            AppIconButton(
+              icon: AppIcons.search,
+              tooltip: 'vault.search'.tr(),
+              onPressed: _openSearch,
             ),
             DriveAccountButton(
               used: _account.usedBytes,
