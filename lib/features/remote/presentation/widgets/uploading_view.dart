@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/ui/app_ui.dart';
 
@@ -20,7 +19,7 @@ class UploadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final pct = (fraction * 100).clamp(0, 100).toInt();
     return Center(
       child: Column(
@@ -38,30 +37,22 @@ class UploadingView extends StatelessWidget {
                   child: CircularProgressIndicator(
                     value: fraction == 0 ? null : fraction,
                     strokeWidth: 6,
-                    backgroundColor: cs.muted,
-                    valueColor: AlwaysStoppedAnimation(cs.primary),
+                    backgroundColor: t.line,
+                    valueColor: AlwaysStoppedAnimation(t.accent),
                   ),
                 ),
                 Text(
                   '$pct%',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: cs.foreground,
+                  style: AppType.rowStrong.copyWith(
+                    color: t.text,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: cs.foreground,
-            ),
-          ),
+          Text(title, style: AppType.rowStrong.copyWith(color: t.text)),
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -69,7 +60,7 @@ class UploadingView extends StatelessWidget {
               '$name · ${formatBytes(size)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+              style: AppType.secondary.copyWith(color: t.text2),
             ),
           ),
         ],

@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/constants/cloud.dart';
 import '../../../../core/ui/app_ui.dart';
@@ -18,7 +17,7 @@ class StreamWaitingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
       child: Column(
@@ -31,11 +30,10 @@ class StreamWaitingView extends StatelessWidget {
           const SizedBox(height: 18),
           Text(
             code,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 3,
-              color: cs.foreground,
+            style: AppType.title.copyWith(
+              color: t.text,
+              letterSpacing: 4,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
           if (keyFragment != null) ...[
@@ -51,13 +49,13 @@ class StreamWaitingView extends StatelessWidget {
                 height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation(cs.primary),
+                  color: t.accent,
                 ),
               ),
               const SizedBox(width: 10),
               Text(
                 'remote.waiting_scan'.tr(),
-                style: TextStyle(fontSize: 13.5, color: cs.mutedForeground),
+                style: AppType.secondary.copyWith(color: t.text2),
               ),
             ],
           ),
@@ -65,11 +63,7 @@ class StreamWaitingView extends StatelessWidget {
           Text(
             'remote.keep_open'.tr(),
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12.5,
-              height: 1.3,
-              color: cs.mutedForeground,
-            ),
+            style: AppType.secondary.copyWith(color: t.text2),
           ),
         ],
       ),

@@ -7,6 +7,12 @@ enum ShellTabId { send, inbox, drive, rooms, settings }
 /// the Rooms tab). The shell listens and resets it to null.
 final ValueNotifier<ShellTabId?> shellTabRequest = ValueNotifier(null);
 
+/// The tab the shell shows now: a page pushed over it on a computer draws
+/// the same side rail with this tab selected.
+final ValueNotifier<ShellTabId> shellTabCurrent = ValueNotifier(
+  ShellTabId.send,
+);
+
 /// Whether the tab around a page is the one on screen. MainShell keeps every
 /// tab alive in an IndexedStack, so a hidden tab is still laid out: a page
 /// that takes drops from the desktop, catches "back" or listens to the

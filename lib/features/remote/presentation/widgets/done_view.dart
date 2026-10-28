@@ -4,7 +4,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/config/feature_flags.dart';
@@ -36,7 +35,7 @@ class DoneView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
       child: Column(
@@ -45,11 +44,10 @@ class DoneView extends StatelessWidget {
           const SizedBox(height: 18),
           Text(
             result.code,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 3,
-              color: cs.foreground,
+            style: AppType.title.copyWith(
+              color: t.text,
+              letterSpacing: 4,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
           const SizedBox(height: 4),
@@ -58,7 +56,7 @@ class DoneView extends StatelessWidget {
                 ? 'remote.done_hint_encrypted'.tr()
                 : 'remote.done_hint'.tr(),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+            style: AppType.secondary.copyWith(color: t.text2),
           ),
           const SizedBox(height: 14),
           Wrap(
@@ -75,9 +73,11 @@ class DoneView extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: ShadButton.outline(
-                  size: ShadButtonSize.lg,
-                  leading: const AppSvgIcon(AppIcons.copyDuplicate, size: 18),
+                child: AppButton(
+                  label: 'common.copy'.tr(),
+                  icon: AppIcons.copyDuplicate,
+                  variant: AppButtonVariant.secondary,
+                  size: AppButtonSize.large,
                   onPressed: () async {
                     await Clipboard.setData(ClipboardData(text: result.url));
                     if (context.mounted) {
@@ -88,30 +88,18 @@ class DoneView extends StatelessWidget {
                       );
                     }
                   },
-                  // Long words (Russian) shrink to fit a narrow phone.
-                  child: Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text('common.copy'.tr()),
-                    ),
-                  ),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: ShadButton(
-                  size: ShadButtonSize.lg,
-                  leading: const AppSvgIcon(AppIcons.shareLink, size: 18),
+                child: AppButton(
+                  label: 'common.share'.tr(),
+                  icon: AppIcons.shareLink,
+                  size: AppButtonSize.large,
                   onPressed: () => SharePlus.instance.share(
                     ShareParams(
                       text: _shareMessage(result),
                       subject: result.fileName,
-                    ),
-                  ),
-                  child: Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text('common.share'.tr()),
                     ),
                   ),
                 ),
@@ -152,7 +140,7 @@ class _KeepLongerState extends State<_KeepLonger> {
       listenable: flags,
       builder: (context, _) {
         if (!flags.vaultVisible) return const SizedBox.shrink();
-        final cs = ShadTheme.of(context).colorScheme;
+        final t = context.tokens;
         final path = widget.path;
         final ready = driveReady;
         final canSave = ready && path != null && File(path).existsSync();
@@ -163,11 +151,7 @@ class _KeepLongerState extends State<_KeepLonger> {
             children: [
               Text(
                 'remote.keep_longer_title'.tr(),
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: cs.foreground,
-                ),
+                style: AppType.rowStrong.copyWith(color: t.text),
               ),
               const SizedBox(height: 4),
               Text(
@@ -175,21 +159,21 @@ class _KeepLongerState extends State<_KeepLonger> {
                         ? 'remote.keep_longer_saved'
                         : 'remote.keep_longer_body')
                     .tr(),
-                style: TextStyle(fontSize: 13, color: cs.mutedForeground),
+                style: AppType.secondary.copyWith(color: t.text2),
               ),
               if (!_saved && (canSave || !ready)) ...[
                 const SizedBox(height: 12),
-                ShadButton.outline(
-                  leading: const AppSvgIcon(AppIcons.cloudDone, size: 18),
+                AppButton(
+                  label:
+                      (canSave
+                              ? 'vault.save_to_drive'
+                              : 'remote.keep_longer_setup')
+                          .tr(),
+                  icon: AppIcons.cloudDone,
+                  variant: AppButtonVariant.secondary,
                   onPressed: canSave
                       ? () => _save(path)
                       : () => context.push('/drive-account'),
-                  child: Text(
-                    (canSave
-                            ? 'vault.save_to_drive'
-                            : 'remote.keep_longer_setup')
-                        .tr(),
-                  ),
                 ),
               ],
             ],

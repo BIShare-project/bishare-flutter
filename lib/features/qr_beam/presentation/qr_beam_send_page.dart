@@ -5,7 +5,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/ui/app_ui.dart';
 import '../domain/beam_codec.dart';
@@ -48,9 +47,11 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
       // Size first: a beam carries a few KB, so never load a big pick whole.
       final size = f.lengthSync() ?? await f.length();
       if (size != null && size > _maxBeamBytes) {
-        setState(() => _error = 'qr_beam.err_too_large'.tr(
-              namedArgs: {'max': formatBytes(_maxBeamBytes)},
-            ));
+        setState(
+          () => _error = 'qr_beam.err_too_large'.tr(
+            namedArgs: {'max': formatBytes(_maxBeamBytes)},
+          ),
+        );
         return;
       }
       final Uint8List bytes;
@@ -61,9 +62,11 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
         return;
       }
       if (bytes.length > _maxBeamBytes) {
-        setState(() => _error = 'qr_beam.err_too_large'.tr(
-              namedArgs: {'max': formatBytes(_maxBeamBytes)},
-            ));
+        setState(
+          () => _error = 'qr_beam.err_too_large'.tr(
+            namedArgs: {'max': formatBytes(_maxBeamBytes)},
+          ),
+        );
         return;
       }
       final ext = (f.extension ?? '').toLowerCase();
@@ -95,10 +98,11 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final beam = _beam;
 
     return Scaffold(
+      backgroundColor: t.bg,
       body: SafeArea(
         child: AppResponsivePane(
           maxWidth: 560,
@@ -110,9 +114,7 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
                 onBack: () => Navigator.of(context).maybePop(),
               ),
               Expanded(
-                child: beam == null
-                    ? _pickPrompt(cs)
-                    : _beaming(cs, beam),
+                child: beam == null ? _pickPrompt(t) : _beaming(t, beam),
               ),
             ],
           ),
@@ -121,7 +123,7 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
     );
   }
 
-  Widget _pickPrompt(ShadColorScheme cs) {
+  Widget _pickPrompt(AppTokens t) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -151,7 +153,7 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
             child: Text(
               _error!,
               textAlign: TextAlign.center,
-              style: TextStyle(color: cs.destructive, fontSize: 13, height: 1.4),
+              style: AppType.secondary.copyWith(color: t.danger),
             ),
           ),
         ],
@@ -159,7 +161,7 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
     );
   }
 
-  Widget _beaming(ShadColorScheme cs, EncodedBeam beam) {
+  Widget _beaming(AppTokens t, EncodedBeam beam) {
     final meta = beam.meta;
     final big = meta.size > _warnBeamBytes;
     return SingleChildScrollView(
@@ -175,27 +177,28 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: beam.frames.length <= 1 ? 1 : (_idx + 1) / beam.frames.length,
+              value: beam.frames.length <= 1
+                  ? 1
+                  : (_idx + 1) / beam.frames.length,
               minHeight: 5,
-              backgroundColor: cs.muted,
-              valueColor: AlwaysStoppedAnimation(cs.primary),
+              backgroundColor: t.line,
+              color: t.accent,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'qr_beam.frame_of'.tr(namedArgs: {
-              'i': '${_idx + 1}',
-              'n': '${beam.frames.length}',
-            }),
+            'qr_beam.frame_of'.tr(
+              namedArgs: {'i': '${_idx + 1}', 'n': '${beam.frames.length}'},
+            ),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12.5, color: cs.mutedForeground),
+            style: AppType.secondary.copyWith(color: t.text2),
           ),
           const SizedBox(height: 18),
           AppCard(
             margin: EdgeInsets.zero,
             child: Row(
               children: [
-                AppSvgIcon(AppIcons.fileDocument, size: 20, color: cs.primary),
+                AppSvgIcon(AppIcons.fileDocument, size: 20, color: t.accent),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -205,12 +208,12 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
                         meta.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
+                        style: AppType.rowStrong.copyWith(color: t.text),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '${formatBytes(meta.size)} · ${'qr_beam.chunks'.tr(namedArgs: {'n': '${meta.total}'})}',
-                        style: TextStyle(fontSize: 12.5, color: cs.mutedForeground),
+                        style: AppType.secondary.copyWith(color: t.text2),
                       ),
                     ],
                   ),
@@ -222,19 +225,19 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
           Text(
             'qr_beam.keep_steady'.tr(),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12.5, height: 1.5, color: cs.mutedForeground),
+            style: AppType.secondary.copyWith(color: t.text2),
           ),
           if (big) ...[
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                AppSvgIcon(AppIcons.circleAlert, size: 15, color: cs.primary),
+                AppSvgIcon(AppIcons.circleAlert, size: 15, color: t.accent),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
                     'qr_beam.large_warn'.tr(),
-                    style: TextStyle(fontSize: 12, color: cs.mutedForeground),
+                    style: AppType.secondary.copyWith(color: t.text2),
                   ),
                 ),
               ],
@@ -244,8 +247,10 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
           // Speed control.
           Row(
             children: [
-              Text('qr_beam.speed'.tr(),
-                  style: TextStyle(fontSize: 12.5, color: cs.mutedForeground)),
+              Text(
+                'qr_beam.speed'.tr(),
+                style: AppType.secondary.copyWith(color: t.text2),
+              ),
               Expanded(
                 child: Slider(
                   value: _fps,
@@ -253,16 +258,18 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
                   max: 12,
                   divisions: 9,
                   label: '${_fps.round()} fps',
-                  activeColor: cs.primary,
+                  activeColor: t.accent,
                   onChanged: (v) => setState(() => _fps = v),
                   onChangeEnd: (_) => _start(),
                 ),
               ),
               SizedBox(
                 width: 44,
-                child: Text('${_fps.round()} fps',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(fontSize: 12.5, color: cs.mutedForeground)),
+                child: Text(
+                  '${_fps.round()} fps',
+                  textAlign: TextAlign.right,
+                  style: AppType.secondary.copyWith(color: t.text2),
+                ),
               ),
             ],
           ),
@@ -292,23 +299,16 @@ class _BeamQr extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [cs.primary, cs.primary.withValues(alpha: 0.3)],
+          colors: [t.accent, t.accent.withValues(alpha: 0.3)],
         ),
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: cs.primary.withValues(alpha: 0.22),
-            blurRadius: 34,
-            offset: const Offset(0, 14),
-          ),
-        ],
       ),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -322,10 +322,7 @@ class _BeamQr extends StatelessWidget {
           size: 250,
           backgroundColor: Colors.white,
           errorCorrectionLevel: QrErrorCorrectLevel.M,
-          eyeStyle: QrEyeStyle(
-            eyeShape: QrEyeShape.square,
-            color: cs.primary,
-          ),
+          eyeStyle: QrEyeStyle(eyeShape: QrEyeShape.square, color: t.accent),
           dataModuleStyle: const QrDataModuleStyle(
             dataModuleShape: QrDataModuleShape.square,
             color: Color(0xFF0A0A0A),

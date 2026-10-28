@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:mime/mime.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/crypto/bse2.dart';
 import '../../../core/di/locator.dart';
@@ -208,9 +207,8 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: context.tokens.bg,
       body: SafeArea(
         child: AppResponsivePane(
           maxWidth: 520,

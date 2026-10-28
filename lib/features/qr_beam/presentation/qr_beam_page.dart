@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/desktop/desktop_service.dart';
 import '../../../core/ui/app_ui.dart';
@@ -14,88 +13,60 @@ class QrBeamPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+    final t = context.tokens;
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 360,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topCenter,
-                  radius: 0.9,
-                  colors: [
-                    cs.primary.withValues(alpha: isDark ? 0.18 : 0.10),
-                    cs.primary.withValues(alpha: 0),
+      backgroundColor: t.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            AppScreenHeader(
+              title: 'qr_beam.title'.tr(),
+              subtitle: 'qr_beam.subtitle'.tr(),
+              onBack: () => Navigator.of(context).maybePop(),
+            ),
+            Expanded(
+              child: AppResponsivePane(
+                maxWidth: 560,
+                child: ListView(
+                  children: [
+                    _Choice(
+                      icon: AppIcons.qrShare,
+                      title: 'qr_beam.send_title'.tr(),
+                      subtitle: 'qr_beam.send_desc'.tr(),
+                      onTap: () => context.push('/qr-beam/send'),
+                    ),
+                    // Receiving needs a camera to scan the QR stream:
+                    // mobile-only (supportsCameraScan), send-only on desktop.
+                    if (supportsCameraScan) ...[
+                      const AppRowDivider(indent: 70),
+                      _Choice(
+                        icon: AppIcons.scanDocument,
+                        title: 'qr_beam.receive_title'.tr(),
+                        subtitle: 'qr_beam.receive_desc'.tr(),
+                        onTap: () => context.push('/qr-beam/receive'),
+                      ),
+                    ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 20, 18, 16),
+                      child: Text(
+                        'qr_beam.hint'.tr(),
+                        style: AppType.secondary.copyWith(color: t.text2),
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
-          ),
-          SafeArea(
-            child: AppResponsivePane(
-              maxWidth: 640,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AppScreenHeader(
-                    title: 'qr_beam.title'.tr(),
-                    subtitle: 'qr_beam.subtitle'.tr(),
-                    onBack: () => Navigator.of(context).maybePop(),
-                  ),
-                  const SizedBox(height: 8),
-                  _OptionCard(
-                    icon: AppIcons.qrShare,
-                    title: 'qr_beam.send_title'.tr(),
-                    subtitle: 'qr_beam.send_desc'.tr(),
-                    onTap: () {
-                      tapHaptic();
-                      context.push('/qr-beam/send');
-                    },
-                  ),
-                  // Receiving needs a camera to scan the QR stream — mobile-only
-                  // (see supportsCameraScan). QR Beam is send-only on desktop.
-                  if (supportsCameraScan)
-                    _OptionCard(
-                      icon: AppIcons.scanDocument,
-                      title: 'qr_beam.receive_title'.tr(),
-                      subtitle: 'qr_beam.receive_desc'.tr(),
-                      onTap: () {
-                        tapHaptic();
-                        context.push('/qr-beam/receive');
-                      },
-                    ),
-                  const Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                    child: Text(
-                      'qr_beam.hint'.tr(),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        height: 1.5,
-                        color: cs.mutedForeground,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _OptionCard extends StatelessWidget {
-  const _OptionCard({
+/// A direction: a round icon, what it does, a chevron.
+class _Choice extends StatelessWidget {
+  const _Choice({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -109,39 +80,52 @@ class _OptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    return AppCard(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: cs.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Center(child: AppSvgIcon(icon, size: 22, color: cs.primary)),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final t = context.tokens;
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: () {
+          tapHaptic();
+          onTap();
+        },
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 68),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 12, 10),
+            child: Row(
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600),
+                Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: t.accentSoft,
+                    shape: BoxShape.circle,
+                  ),
+                  child: AppSvgIcon(icon, size: 21, color: t.accent),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 13, height: 1.35, color: cs.mutedForeground),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppType.rowStrong.copyWith(color: t.text),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: AppType.secondary.copyWith(color: t.text2),
+                      ),
+                    ],
+                  ),
                 ),
+                AppSvgIcon(AppIcons.chevronRight, size: 18, color: t.text3),
               ],
             ),
           ),
-          AppSvgIcon(AppIcons.chevronRight, size: 18, color: cs.mutedForeground),
-        ],
+        ),
       ),
     );
   }

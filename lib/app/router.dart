@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,6 +7,7 @@ import '../core/desktop/desktop_service.dart';
 import '../core/di/locator.dart';
 import '../core/platform/tv.dart';
 import '../core/storage/app_database.dart';
+import '../core/ui/app_ui.dart';
 import '../features/clipboard/presentation/clipboard_history_page.dart';
 import '../features/devices/presentation/devices_page.dart';
 import '../features/file_manager/presentation/file_manager_page.dart';
@@ -27,6 +28,15 @@ import 'main_shell.dart';
 
 /// Arguments for the image gallery route (passed via `extra`).
 typedef GalleryArgs = ({List<TransferRecord> images, int startIndex});
+
+/// A page pushed over the shell: beside the side rail on a computer, with no
+/// slide (the rail stays put); the platform's own transition on a phone.
+Page<void> _pushed(BuildContext context, GoRouterState state, Widget child) {
+  final page = ShellPushedPage(child: child);
+  return context.isWideLayout
+      ? NoTransitionPage<void>(key: state.pageKey, child: page)
+      : MaterialPage<void>(key: state.pageKey, child: page);
+}
 
 /// Drive pages open only while the Drive is shown (audit P15).
 String? _driveGate(BuildContext context, GoRouterState state) =>
@@ -71,58 +81,78 @@ final GoRouter appRouter = GoRouter(
       routes: [
         GoRoute(
           path: 'files',
-          builder: (context, state) => const FileManagerPage(),
+          pageBuilder: (context, state) =>
+              _pushed(context, state, const FileManagerPage()),
         ),
         GoRoute(
           path: 'gallery',
-          builder: (context, state) {
-            final args = state.extra! as GalleryArgs;
-            return ImageGalleryPage(
-              images: args.images,
-              startIndex: args.startIndex,
-            );
-          },
+          pageBuilder: (context, state) => _pushed(
+            context,
+            state,
+            Builder(
+              builder: (context) {
+                final args = state.extra! as GalleryArgs;
+                return ImageGalleryPage(
+                  images: args.images,
+                  startIndex: args.startIndex,
+                );
+              },
+            ),
+          ),
         ),
         GoRoute(
           path: 'scan',
           // Camera QR scanning is mobile-only — never build the scanner on
           // desktop, where the camera plugin has no implementation.
           redirect: (context, state) => supportsCameraScan ? null : '/',
-          builder: (context, state) => const ScannerPage(),
+          pageBuilder: (context, state) =>
+              _pushed(context, state, const ScannerPage()),
         ),
         GoRoute(
           path: 'remote',
-          builder: (context, state) => RemoteSharePage(
-            initialPath: state.extra is String ? state.extra! as String : null,
+          pageBuilder: (context, state) => _pushed(
+            context,
+            state,
+            RemoteSharePage(
+              initialPath: state.extra is String
+                  ? state.extra! as String
+                  : null,
+            ),
           ),
         ),
         GoRoute(
           path: 'nearby',
-          builder: (context, state) => const NearbyPage(),
+          pageBuilder: (context, state) =>
+              _pushed(context, state, const NearbyPage()),
         ),
         GoRoute(
           path: 'qr-beam',
-          builder: (context, state) => const QrBeamPage(),
+          pageBuilder: (context, state) =>
+              _pushed(context, state, const QrBeamPage()),
           routes: [
             GoRoute(
               path: 'send',
-              builder: (context, state) => const QrBeamSendPage(),
+              pageBuilder: (context, state) =>
+                  _pushed(context, state, const QrBeamSendPage()),
             ),
             GoRoute(
               path: 'receive',
               // QR Beam receive needs a camera — mobile-only.
               redirect: (context, state) => supportsCameraScan ? null : '/',
-              builder: (context, state) => const QrBeamReceivePage(),
+              pageBuilder: (context, state) =>
+                  _pushed(context, state, const QrBeamReceivePage()),
             ),
           ],
         ),
         GoRoute(
           path: 'devices',
-          builder: (context, state) => const DevicesPage(),
+          pageBuilder: (context, state) =>
+              _pushed(context, state, const DevicesPage()),
         ),
         GoRoute(
           path: 'clipboard',
-          builder: (context, state) => const ClipboardHistoryPage(),
+          pageBuilder: (context, state) =>
+              _pushed(context, state, const ClipboardHistoryPage()),
         ),
         // BIShare Drive (drive-plan.md phase 3); reachable only from the Drive
         // group in Settings, which shows only while vault_enabled allows it.
@@ -130,26 +160,31 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: 'drive-transfers',
           redirect: _driveGate,
-          builder: (context, state) => const DriveTransfersPage(),
+          pageBuilder: (context, state) =>
+              _pushed(context, state, const DriveTransfersPage()),
         ),
         GoRoute(
           path: 'drive-storage',
           redirect: _driveGate,
-          builder: (context, state) => const DriveStoragePage(),
+          pageBuilder: (context, state) =>
+              _pushed(context, state, const DriveStoragePage()),
         ),
         GoRoute(
           path: 'drive-plans',
           redirect: _driveGate,
-          builder: (context, state) => const DrivePlansPage(),
+          pageBuilder: (context, state) =>
+              _pushed(context, state, const DrivePlansPage()),
         ),
         GoRoute(
           path: 'drive-account',
           redirect: _driveGate,
-          builder: (context, state) => const VaultAccountPage(),
+          pageBuilder: (context, state) =>
+              _pushed(context, state, const VaultAccountPage()),
           routes: [
             GoRoute(
               path: 'scan',
-              builder: (context, state) => const VaultPairScanPage(),
+              pageBuilder: (context, state) =>
+                  _pushed(context, state, const VaultPairScanPage()),
             ),
           ],
         ),

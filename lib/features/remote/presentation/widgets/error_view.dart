@@ -1,8 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../../../core/ui/app_svg_icon.dart';
+import '../../../../core/ui/app_ui.dart';
 
 class ErrorView extends StatelessWidget {
   const ErrorView({super.key, required this.message, required this.onRetry});
@@ -12,26 +11,26 @@ class ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppSvgIcon(AppIcons.circleAlert, size: 44, color: cs.destructive),
+            AppSvgIcon(AppIcons.circleAlert, size: 44, color: t.danger),
             const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15, color: cs.foreground),
+              style: AppType.body.copyWith(color: t.text),
             ),
             const SizedBox(height: 20),
-            ShadButton(
-              size: ShadButtonSize.lg,
-              leading: const AppSvgIcon(AppIcons.refreshSync, size: 18),
+            AppButton(
+              label: 'common.try_again'.tr(),
+              icon: AppIcons.refreshSync,
+              size: AppButtonSize.large,
               onPressed: onRetry,
-              child: Text('common.try_again'.tr()),
             ),
           ],
         ),

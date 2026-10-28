@@ -1,8 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
-import '../../../../core/ui/app_svg_icon.dart';
+import '../../../../core/ui/app_ui.dart';
 
 class PickView extends StatelessWidget {
   const PickView({
@@ -35,221 +34,101 @@ class PickView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-      child: Column(
-        children: [
-          Container(
-            width: 92,
-            height: 92,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  cs.primary,
-                  Color.lerp(cs.primary, Colors.black, 0.22)!,
-                ],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: cs.primary.withValues(alpha: 0.35),
-                  blurRadius: 24,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: AppSvgIcon(
-              AppIcons.send,
-              size: 38,
-              color: cs.primaryForeground,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'remote.send_to_anyone'.tr(),
-            style: TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
-              color: cs.foreground,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
+    final t = context.tokens;
+    final preset = presetName != null && onPreset != null;
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 32),
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+          child: Text(
             'remote.send_subtitle'.tr(),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.35,
-              color: cs.mutedForeground,
-            ),
+            style: AppType.body.copyWith(color: t.text2),
           ),
-          const SizedBox(height: 22),
-          Container(
-            decoration: BoxDecoration(
-              color: cs.card,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: cs.border.withValues(alpha: 0.8)),
-            ),
-            child: Column(
-              children: [
-                _OptionRow(
-                  icon: AppIcons.globePublic,
-                  iconColor: const Color(0xFF2563EB),
-                  title: 'remote.share_via_web'.tr(),
-                  subtitle: shareViaWeb
-                      ? 'remote.share_via_web_on_subtitle'.tr()
-                      : 'remote.share_via_web_off_subtitle'.tr(),
-                  trailing: ShadSwitch(
-                    value: shareViaWeb,
-                    onChanged: onShareViaWeb,
-                  ),
-                ),
-                Divider(height: 1, indent: 56, color: cs.border),
-                _OptionRow(
-                  icon: AppIcons.passwordLock,
-                  iconColor: const Color(0xFF16A34A),
-                  title: 'remote.e2e_encrypt'.tr(),
-                  subtitle: e2e
-                      ? 'remote.e2e_encrypt_on_subtitle'.tr()
-                      : 'remote.e2e_encrypt_off_subtitle'.tr(),
-                  trailing: ShadSwitch(value: e2e, onChanged: onE2e),
-                ),
-                if (shareViaWeb) ...[
-                  Divider(height: 1, indent: 56, color: cs.border),
-                  _OptionRow(
-                    icon: AppIcons.flame,
-                    iconColor: const Color(0xFFEA580C),
-                    title: 'remote.one_time_download'.tr(),
-                    subtitle: 'remote.one_time_download_subtitle'.tr(),
-                    trailing: ShadSwitch(value: oneTime, onChanged: onOneTime),
-                  ),
-                  Divider(height: 1, indent: 56, color: cs.border),
-                  _OptionRow(
-                    icon: AppIcons.clock,
-                    iconColor: cs.primary,
-                    title: 'remote.expires_24h'.tr(),
-                    subtitle: 'remote.expires_24h_subtitle'.tr(),
-                  ),
-                ],
-              ],
-            ),
+        ),
+        AppSwitchRow(
+          icon: AppIcons.globePublic,
+          title: 'remote.share_via_web'.tr(),
+          subtitle: shareViaWeb
+              ? 'remote.share_via_web_on_subtitle'.tr()
+              : 'remote.share_via_web_off_subtitle'.tr(),
+          value: shareViaWeb,
+          onChanged: onShareViaWeb,
+        ),
+        AppSwitchRow(
+          icon: AppIcons.passwordLock,
+          title: 'remote.e2e_encrypt'.tr(),
+          subtitle: e2e
+              ? 'remote.e2e_encrypt_on_subtitle'.tr()
+              : 'remote.e2e_encrypt_off_subtitle'.tr(),
+          value: e2e,
+          onChanged: onE2e,
+        ),
+        if (shareViaWeb) ...[
+          AppSwitchRow(
+            icon: AppIcons.flame,
+            title: 'remote.one_time_download'.tr(),
+            subtitle: 'remote.one_time_download_subtitle'.tr(),
+            value: oneTime,
+            onChanged: onOneTime,
           ),
-          const SizedBox(height: 22),
-          if (presetName != null && onPreset != null) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AppSvgIcon(
-                  AppIcons.fileDocument,
-                  size: 16,
-                  color: cs.mutedForeground,
+          AppValueRow(
+            icon: AppIcons.clock,
+            title: 'remote.expires_24h'.tr(),
+            subtitle: 'remote.expires_24h_subtitle'.tr(),
+            chevron: false,
+          ),
+        ],
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 20, 14, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (preset) ...[
+                Row(
+                  children: [
+                    AppSvgIcon(AppIcons.fileDocument, size: 16, color: t.text2),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        presetName!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppType.secondary.copyWith(color: t.text2),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    presetName!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13.5, color: cs.mutedForeground),
-                  ),
+                const SizedBox(height: 10),
+                AppButton(
+                  label: 'remote.create_link'.tr(),
+                  icon: AppIcons.send,
+                  size: AppButtonSize.large,
+                  onPressed: onPreset,
                 ),
+                const SizedBox(height: 10),
               ],
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: ShadButton(
-                size: ShadButtonSize.lg,
-                leading: const AppSvgIcon(AppIcons.send, size: 18),
-                onPressed: onPreset,
-                child: Text('remote.create_link'.tr()),
+              AppButton(
+                label: 'remote.choose_photo_video'.tr(),
+                icon: AppIcons.image,
+                size: AppButtonSize.large,
+                variant: preset
+                    ? AppButtonVariant.secondary
+                    : AppButtonVariant.primary,
+                onPressed: onMedia,
               ),
-            ),
-            const SizedBox(height: 10),
-          ],
-          SizedBox(
-            width: double.infinity,
-            child: presetName != null && onPreset != null
-                ? ShadButton.outline(
-                    size: ShadButtonSize.lg,
-                    leading: const AppSvgIcon(AppIcons.image, size: 18),
-                    onPressed: onMedia,
-                    child: Text('remote.choose_photo_video'.tr()),
-                  )
-                : ShadButton(
-                    size: ShadButtonSize.lg,
-                    leading: const AppSvgIcon(AppIcons.image, size: 18),
-                    onPressed: onMedia,
-                    child: Text('remote.choose_photo_video'.tr()),
-                  ),
+              const SizedBox(height: 10),
+              AppButton(
+                label: 'remote.choose_file'.tr(),
+                icon: AppIcons.fileDocument,
+                size: AppButtonSize.large,
+                variant: AppButtonVariant.secondary,
+                onPressed: onFile,
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: ShadButton.outline(
-              size: ShadButtonSize.lg,
-              leading: const AppSvgIcon(AppIcons.fileDocument, size: 18),
-              onPressed: onFile,
-              child: Text('remote.choose_file'.tr()),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OptionRow extends StatelessWidget {
-  const _OptionRow({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    this.trailing,
-  });
-
-  final String icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          AppSvgIcon(icon, size: 20, color: iconColor),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w600,
-                    color: cs.foreground,
-                  ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 12.5, color: cs.mutedForeground),
-                ),
-              ],
-            ),
-          ),
-          ?trailing,
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

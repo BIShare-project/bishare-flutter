@@ -338,35 +338,9 @@ class _MainShellState extends State<MainShell> {
   /// error) must surface instead of triggering the stream attempt.
   static bool _isMissingTransfer(Object e) => e is TransferNotFoundException;
 
-  List<AppNavItem> _items(int inboxCount) => [
-    for (final t in _tabs)
-      switch (t) {
-        ShellTabId.send => AppNavItem(
-          icon: AppIcons.send,
-          label: 'nav.tab_share'.tr(),
-        ),
-        ShellTabId.inbox => AppNavItem(
-          icon: AppIcons.notification,
-          label: 'nav.tab_inbox'.tr(),
-          badge: inboxCount,
-        ),
-        ShellTabId.drive => AppNavItem(
-          icon: AppIcons.cloudSync,
-          label: 'vault.title'.tr(),
-        ),
-        ShellTabId.rooms => AppNavItem(
-          icon: AppIcons.teamGroup,
-          label: 'nav.tab_rooms'.tr(),
-        ),
-        ShellTabId.settings => AppNavItem(
-          icon: AppIcons.settings,
-          label: 'nav.tab_settings'.tr(),
-        ),
-      },
-  ];
-
   void _select(ShellTabId tab) {
     setState(() => _tab = tab);
+    shellTabCurrent.value = tab;
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeTour(tab));
   }
 
@@ -383,6 +357,7 @@ class _MainShellState extends State<MainShell> {
     setState(() {
       if (!_tabs.contains(_tab)) _tab = ShellTabId.inbox;
     });
+    shellTabCurrent.value = _tab;
   }
 
   @override
@@ -420,27 +395,13 @@ class _MainShellState extends State<MainShell> {
       ],
     );
 
-    // Only the bar reads the inbox count, so a new file rebuilds the bar and
-    // not the whole shell.
-    Widget nav(Widget Function(List<AppNavItem> items) build) =>
-        // The count is what arrived since the Inbox was last left, and none
-        // while it is open.
-        ValueListenableBuilder<DateTime>(
-          valueListenable: context.read<InboxCubit>().seenAt,
-          builder: (context, seenAt, _) =>
-              BlocSelector<InboxCubit, List<TransferRecord>, int>(
-                selector: (items) => _tab == ShellTabId.inbox
-                    ? 0
-                    : items.where((r) => r.timestamp.isAfter(seenAt)).length,
-                builder: (context, count) => AppShowcase(
-                  showcaseKey: ShowcaseKeys.homeNav,
-                  title: 'showcase.home_nav_title'.tr(),
-                  description: 'showcase.home_nav_body'.tr(),
-                  targetRadius: 0,
-                  child: build(_items(count)),
-                ),
-              ),
-        );
+    Widget nav(Widget Function(List<AppNavItem> items) build) => AppShowcase(
+      showcaseKey: ShowcaseKeys.homeNav,
+      title: 'showcase.home_nav_title'.tr(),
+      description: 'showcase.home_nav_body'.tr(),
+      targetRadius: 0,
+      child: ShellNavItems(tabs: tabs, current: _tab, builder: build),
+    );
 
     // Wide (desktop / tablet-landscape): a side rail + content pane. Narrow
     // (phone): a bottom tab bar. The nav showcase key is shared by the two
@@ -471,6 +432,104 @@ class _MainShellState extends State<MainShell> {
           currentIndex: index,
           onTap: (i) => _select(tabs[i]),
         ),
+      ),
+    );
+  }
+}
+
+
+/// The bar's items for [tabs], with the Inbox count: what arrived since the
+/// Inbox was last left, none while it is open. Only this rebuilds when a
+/// file arrives, not the whole shell.
+class ShellNavItems extends StatelessWidget {
+  const ShellNavItems({
+    super.key,
+    required this.tabs,
+    required this.current,
+    required this.builder,
+  });
+
+  final List<ShellTabId> tabs;
+  final ShellTabId current;
+  final Widget Function(List<AppNavItem> items) builder;
+
+  /// The tabs on the bar now: Drive only while the flag shows it.
+  static List<ShellTabId> visibleTabs() => [
+    for (final t in ShellTabId.values)
+      if (t != ShellTabId.drive || getIt<FeatureFlags>().vaultVisible) t,
+  ];
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<DateTime>(
+    valueListenable: context.read<InboxCubit>().seenAt,
+    builder: (context, seenAt, _) =>
+        BlocSelector<InboxCubit, List<TransferRecord>, int>(
+          selector: (items) => current == ShellTabId.inbox
+              ? 0
+              : items.where((r) => r.timestamp.isAfter(seenAt)).length,
+          builder: (context, count) => builder([
+            for (final t in tabs)
+              switch (t) {
+                ShellTabId.send => AppNavItem(
+                  icon: AppIcons.send,
+                  label: 'nav.tab_share'.tr(),
+                ),
+                ShellTabId.inbox => AppNavItem(
+                  icon: AppIcons.notification,
+                  label: 'nav.tab_inbox'.tr(),
+                  badge: count,
+                ),
+                ShellTabId.drive => AppNavItem(
+                  icon: AppIcons.cloudSync,
+                  label: 'vault.title'.tr(),
+                ),
+                ShellTabId.rooms => AppNavItem(
+                  icon: AppIcons.teamGroup,
+                  label: 'nav.tab_rooms'.tr(),
+                ),
+                ShellTabId.settings => AppNavItem(
+                  icon: AppIcons.settings,
+                  label: 'nav.tab_settings'.tr(),
+                ),
+              },
+          ]),
+        ),
+  );
+}
+
+/// A page pushed over the shell, on a computer: the shell's side rail
+/// (the tab it came from selected) and the page beside it, so a page like
+/// Secure Link sits where the tabs do. Choosing a tab closes the page.
+/// On a phone, the page alone.
+class ShellPushedPage extends StatelessWidget {
+  const ShellPushedPage({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!context.isWideLayout) return child;
+    final tabs = ShellNavItems.visibleTabs();
+    final current = shellTabCurrent.value;
+    return Scaffold(
+      backgroundColor: context.tokens.bg,
+      body: Row(
+        children: [
+          ShellNavItems(
+            tabs: tabs,
+            current: current,
+            builder: (items) => AppNavRail(
+              items: items,
+              currentIndex: tabs.indexOf(current).clamp(0, tabs.length - 1),
+              onTap: (i) {
+                final nav = Navigator.of(context, rootNavigator: true);
+                nav.popUntil((r) => r.isFirst);
+                shellTabRequest.value = tabs[i];
+              },
+            ),
+          ),
+          Expanded(child: child),
+        ],
       ),
     );
   }
