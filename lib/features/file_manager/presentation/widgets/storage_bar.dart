@@ -1,9 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/ui/app_ui.dart';
 import '../../domain/managed_file.dart';
 
+/// How the received files split by kind: the count and size, one bar, and a
+/// legend with each kind's share.
 class StorageBar extends StatelessWidget {
   const StorageBar({super.key, required this.files, required this.totalBytes});
   final List<ManagedFile> files;
@@ -20,40 +22,31 @@ class StorageBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final byCat = <String, int>{};
     for (final f in files) {
       byCat[f.category] = (byCat[f.category] ?? 0) + f.size;
     }
     final total = totalBytes == 0 ? 1 : totalBytes;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(14, 6, 14, 2),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cs.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.border.withValues(alpha: 0.8)),
-      ),
+    final percent = NumberFormat.percentPattern(context.locale.toLanguageTag());
+    return AppCard(
+      margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(
-                '${files.length} file${files.length == 1 ? '' : 's'}',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: cs.foreground,
+              Expanded(
+                child: Text(
+                  'inbox.n_files'.plural(files.length),
+                  style: AppType.label.copyWith(fontSize: 14, color: t.text),
                 ),
               ),
-              const Spacer(),
               Text(
                 formatBytes(totalBytes),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: cs.mutedForeground,
+                style: AppType.secondary.copyWith(
+                  color: t.text2,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ],
@@ -74,7 +67,7 @@ class StorageBar extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Wrap(
-            spacing: 12,
+            spacing: 14,
             runSpacing: 6,
             children: [
               for (final (cat, color) in _order)
@@ -90,12 +83,13 @@ class StorageBar extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: 6),
                       Text(
-                        '$cat · ${((byCat[cat]! / total) * 100).round()}%',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: cs.mutedForeground,
+                        '${categoryLabel(cat)} · '
+                        '${percent.format(byCat[cat]! / total)}',
+                        style: AppType.secondary.copyWith(
+                          fontSize: 12.5,
+                          color: t.text2,
                         ),
                       ),
                     ],

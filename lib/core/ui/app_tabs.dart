@@ -142,8 +142,10 @@ class AppSegmented<T> extends StatelessWidget {
                 child: Semantics(
                   button: true,
                   selected: v == value,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
+                  // InkWell, not a bare gesture: it takes keyboard focus
+                  // and Enter/Space on desktop.
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(9),
                     onTap: () {
                       if (v == value) return;
                       tapHaptic();
@@ -155,7 +157,9 @@ class AppSegmented<T> extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       decoration: v == value
                           ? BoxDecoration(
-                              color: t.isDark ? t.raised : t.surface,
+                              // Raised alone sits too close to the sunken
+                              // track in dark; the line colour reads as lifted.
+                              color: t.isDark ? t.line : t.surface,
                               borderRadius: BorderRadius.circular(9),
                               boxShadow: const [
                                 BoxShadow(

@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:mime/mime.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/di/locator.dart';
 import '../../../../core/io/picked_mtime.dart';
@@ -87,29 +86,24 @@ class _WebAccessCloudTabState extends State<WebAccessCloudTab> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return switch (_phase) {
       _Phase.pick => Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'inbox.web_cloud_hint'.tr(),
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13.5,
-              height: 1.4,
-              color: cs.mutedForeground,
-            ),
+            style: AppType.body.copyWith(color: t.text2),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ShadButton(
-              size: ShadButtonSize.lg,
-              leading: const AppSvgIcon(AppIcons.uploadFile, size: 18),
-              onPressed: _pickAndUpload,
-              child: Text('inbox.web_cloud_pick'.tr()),
-            ),
+          AppButton(
+            label: 'inbox.web_cloud_pick'.tr(),
+            icon: AppIcons.uploadFile,
+            size: AppButtonSize.large,
+            fullWidth: true,
+            onPressed: _pickAndUpload,
           ),
         ],
       ),

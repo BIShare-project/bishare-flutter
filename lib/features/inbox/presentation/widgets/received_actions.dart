@@ -91,9 +91,10 @@ Future<void> showReceivedDetail(BuildContext context, TransferRecord r) {
       final t = ctx.tokens;
       final has = onDisk(r);
       void close() => Navigator.of(ctx).pop();
-      Widget kv(String k, String v) => Padding(
+      Widget kv(String k, String v, {int lines = 1}) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(k, style: AppType.body.copyWith(color: t.text2)),
             const SizedBox(width: 16),
@@ -101,7 +102,7 @@ Future<void> showReceivedDetail(BuildContext context, TransferRecord r) {
               child: Text(
                 v,
                 textAlign: TextAlign.end,
-                maxLines: 1,
+                maxLines: lines,
                 overflow: TextOverflow.ellipsis,
                 style: AppType.body.copyWith(
                   color: t.text,
@@ -119,7 +120,7 @@ Future<void> showReceivedDetail(BuildContext context, TransferRecord r) {
         children: [
           kv('inbox.detail_from'.tr(), r.deviceAlias),
           if (shownName(r) != r.fileName)
-            kv('inbox.detail_saved_as'.tr(), r.fileName),
+            kv('inbox.detail_saved_as'.tr(), r.fileName, lines: 2),
           kv('inbox.detail_received'.tr(), when),
           kv('inbox.detail_encrypted'.tr(), r.encrypted ? yes : no),
           kv('inbox.detail_verified'.tr(), r.verified ? yes : no),

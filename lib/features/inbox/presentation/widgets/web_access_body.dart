@@ -3,13 +3,12 @@ import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/ui/app_ui.dart';
 import 'web_access_cloud_tab.dart';
 
-/// The Browser-access sheet body: a segmented two-tab switcher between the
-/// LAN QR/URL and the "Cloud link" flow (feature #11).
+/// The Browser-access sheet body: LAN (QR and address) or Cloud link
+/// (feature #11), switched by a segmented control.
 class WebAccessBody extends StatefulWidget {
   const WebAccessBody({super.key, required this.url});
 
@@ -27,85 +26,25 @@ class _WebAccessBodyState extends State<WebAccessBody> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _WebAccessTabBar(
-          index: _tab,
-          labels: ['inbox.web_tab_lan'.tr(), 'inbox.web_tab_cloud'.tr()],
+        AppSegmented<int>(
+          value: _tab,
+          options: [
+            (0, 'inbox.web_tab_lan'.tr()),
+            (1, 'inbox.web_tab_cloud'.tr()),
+          ],
           onChanged: (i) => setState(() => _tab = i),
+          margin: EdgeInsets.zero,
         ),
         const SizedBox(height: 18),
-        if (_tab == 0)
-          _LanTab(url: widget.url)
-        else
-          const WebAccessCloudTab(),
+        if (_tab == 0) _LanTab(url: widget.url) else const WebAccessCloudTab(),
       ],
     );
   }
 }
 
-/// Segmented pill tab bar — the same style as the History filter / Devices
-/// sort bars.
-class _WebAccessTabBar extends StatelessWidget {
-  const _WebAccessTabBar({
-    required this.index,
-    required this.labels,
-    required this.onChanged,
-  });
-
-  final int index;
-  final List<String> labels;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: cs.muted,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          for (var i = 0; i < labels.length; i++)
-            Expanded(
-              child: GestureDetector(
-                onTap: () => onChanged(i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  padding: const EdgeInsets.symmetric(vertical: 7),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: index == i ? cs.card : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: index == i
-                        ? [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Text(
-                    labels[i],
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: index == i ? FontWeight.w700 : FontWeight.w500,
-                      color: index == i ? cs.foreground : cs.mutedForeground,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The LAN tab: QR + copyable URL (the pre-#11 sheet content), plus the iOS
-/// foreground caveat — the local server stops when the app is backgrounded.
+/// The LAN tab: QR and the copyable address, and what to do with it. On iOS
+/// the local server stops when the app goes to the background, so the hint
+/// says to keep it open.
 class _LanTab extends StatelessWidget {
   const _LanTab({required this.url});
 
@@ -113,16 +52,17 @@ class _LanTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         BiShareQr(data: url),
         const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+          constraints: const BoxConstraints(minHeight: 52),
+          padding: const EdgeInsetsDirectional.fromSTEB(14, 4, 4, 4),
           decoration: BoxDecoration(
-            color: cs.muted,
+            color: t.sunken,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -132,15 +72,15 @@ class _LanTab extends StatelessWidget {
                   url,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w600,
-                    color: cs.foreground,
+                  style: AppType.row.copyWith(
+                    color: t.text,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ),
-              ShadIconButton.ghost(
-                icon: const AppSvgIcon(AppIcons.copyDuplicate, size: 18),
+              AppIconButton(
+                icon: AppIcons.copyDuplicate,
+                tooltip: 'common.copy'.tr(),
                 onPressed: () async {
                   await Clipboard.setData(ClipboardData(text: url));
                   if (context.mounted) {
@@ -155,14 +95,12 @@ class _LanTab extends StatelessWidget {
             ],
           ),
         ),
-        if (Platform.isIOS) ...[
-          const SizedBox(height: 12),
-          Text(
-            'inbox.web_ios_note'.tr(),
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: cs.mutedForeground),
-          ),
-        ],
+        const SizedBox(height: 12),
+        Text(
+          (Platform.isIOS ? 'inbox.web_ios_note' : 'inbox.web_lan_hint').tr(),
+          textAlign: TextAlign.center,
+          style: AppType.secondary.copyWith(color: t.text2),
+        ),
       ],
     );
   }

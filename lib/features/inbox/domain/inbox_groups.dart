@@ -57,11 +57,14 @@ final _datePrefix = RegExp(r'^\d{4}-\d{2}-\d{2}_');
 /// `{yyyy-MM-dd}_{sender}_{name}` (ReceiveNaming); lists show `{name}`, and
 /// the detail sheet keeps the full saved name. A name that does not carry
 /// exactly this sender's prefix is shown whole.
-String shownName(TransferRecord r) {
-  final name = r.fileName;
+String shownName(TransferRecord r) => shownFileName(r.fileName, r.deviceAlias);
+
+/// [shownName] for a bare saved name and the sender's alias (the File
+/// manager works from files on disk, not records).
+String shownFileName(String name, String alias) {
   if (!_datePrefix.hasMatch(name)) return name;
   final rest = name.substring(11);
-  final alias = r.deviceAlias.trim();
+  alias = alias.trim();
   for (final variant in {
     alias.replaceAll(' ', '-'),
     alias.replaceAll(' ', '_'),

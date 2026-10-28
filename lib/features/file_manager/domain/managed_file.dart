@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 
 /// A file on disk in the receive directory, enriched with drift metadata.
 class ManagedFile {
@@ -33,9 +34,9 @@ enum GroupMode {
   date;
 
   String get label => switch (this) {
-    GroupMode.category => 'Category',
-    GroupMode.sender => 'Sender',
-    GroupMode.date => 'Date',
+    GroupMode.category => 'files.by_folder'.tr(),
+    GroupMode.sender => 'files.by_sender'.tr(),
+    GroupMode.date => 'files.by_date'.tr(),
   };
 }
 
@@ -47,9 +48,20 @@ enum SortMode {
   name;
 
   String get label => switch (this) {
-    SortMode.newest => 'Newest',
-    SortMode.oldest => 'Oldest',
-    SortMode.largest => 'Largest',
-    SortMode.name => 'Name',
+    SortMode.newest => 'files.sort_newest'.tr(),
+    SortMode.oldest => 'files.sort_oldest'.tr(),
+    SortMode.largest => 'files.sort_largest'.tr(),
+    SortMode.name => 'files.sort_name'.tr(),
   };
 }
+
+/// The shown name of a [ManagedFile.category] (the receiver's English
+/// subfolder names).
+String categoryLabel(String category) => switch (category) {
+  'Images' => 'files.cat_images'.tr(),
+  'Videos' => 'files.cat_videos'.tr(),
+  'Audio' => 'files.cat_audio'.tr(),
+  'Documents' => 'files.cat_documents'.tr(),
+  'Archives' => 'files.cat_archives'.tr(),
+  _ => 'files.cat_other'.tr(),
+};

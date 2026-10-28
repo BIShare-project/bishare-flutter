@@ -49,9 +49,8 @@ class FileScanner {
           size: st.size,
           modified: st.modified,
           category: _category(entity.path, name, rec?.fileType),
-          sender: (rec?.deviceAlias.isNotEmpty ?? false)
-              ? rec!.deviceAlias
-              : 'Unknown',
+          // Empty when no record names the sender; the page says so.
+          sender: rec?.deviceAlias ?? '',
           fileType: rec?.fileType ?? lookupMimeType(name),
           encrypted: rec?.encrypted ?? false,
           recordId: rec?.id,

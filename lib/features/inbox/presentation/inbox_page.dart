@@ -161,23 +161,6 @@ class _InboxPageState extends State<InboxPage> {
                                 formatBytes(bytes),
                               ].join(' · '),
                         actions: [
-                          if (_selecting && items.isNotEmpty)
-                            AppButton(
-                              label: picked.length == items.length
-                                  ? 'inbox.select_none'.tr()
-                                  : 'inbox.select_all'.tr(),
-                              variant: AppButtonVariant.ghost,
-                              size: AppButtonSize.small,
-                              onPressed: () => setState(() {
-                                if (picked.length == items.length) {
-                                  _selected.clear();
-                                } else {
-                                  _selected
-                                    ..clear()
-                                    ..addAll(items.map((r) => r.id));
-                                }
-                              }),
-                            ),
                           if (items.isNotEmpty)
                             AppButton(
                               label: _selecting
@@ -189,17 +172,20 @@ class _InboxPageState extends State<InboxPage> {
                                   ? _stopSelecting
                                   : () => setState(() => _selecting = true),
                             ),
-                          AppShowcase(
-                            showcaseKey: ShowcaseKeys.inboxFiles,
-                            title: 'showcase.inbox_files_title'.tr(),
-                            description: 'showcase.inbox_files_body'.tr(),
-                            targetRadius: 22,
-                            child: AppIconButton(
-                              icon: AppIcons.moreMenu,
-                              tooltip: 'inbox.more'.tr(),
-                              onPressed: () => _menu(context, items),
+                          // The menu is for the whole Inbox, not the
+                          // selection; Done brings it back.
+                          if (!_selecting)
+                            AppShowcase(
+                              showcaseKey: ShowcaseKeys.inboxFiles,
+                              title: 'showcase.inbox_files_title'.tr(),
+                              description: 'showcase.inbox_files_body'.tr(),
+                              targetRadius: 22,
+                              child: AppIconButton(
+                                icon: AppIcons.moreMenu,
+                                tooltip: 'inbox.more'.tr(),
+                                onPressed: () => _menu(context, items),
+                              ),
                             ),
-                          ),
                         ],
                       ),
                       ?widget.segment,
@@ -218,12 +204,26 @@ class _InboxPageState extends State<InboxPage> {
                   child: AppSelectionBar(
                     visible: _selecting,
                     onClear: _stopSelecting,
+                    // Select all lives here, not in the header, so the
+                    // header keeps one height in every language.
+                    onSummaryTap: () => setState(() {
+                      if (picked.length == items.length) {
+                        _selected.clear();
+                      } else {
+                        _selected
+                          ..clear()
+                          ..addAll(items.map((r) => r.id));
+                      }
+                    }),
                     summary: AppSelectionSummary(
                       title: picked.isEmpty
                           ? 'inbox.select_files'.tr()
                           : 'inbox.n_selected'.tr(
                               namedArgs: {'count': '${picked.length}'},
                             ),
+                      subtitle: picked.length == items.length
+                          ? 'inbox.select_none'.tr()
+                          : 'inbox.select_all'.tr(),
                     ),
                     actions: [
                       if (InboxCubit.canSaveToPhotos)

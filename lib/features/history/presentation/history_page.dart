@@ -83,12 +83,7 @@ class HistoryPage extends StatelessWidget {
                             title: 'history.empty_no_matches_title'.tr(),
                             message: 'history.empty_no_matches_message'.tr(),
                           )
-                        : _List(
-                            rows: rows,
-                            narrowed:
-                                state.filter != HistoryFilter.all ||
-                                state.query.trim().isNotEmpty,
-                          ),
+                        : _List(rows: rows),
                   ),
                 ],
               ),
@@ -153,12 +148,9 @@ final class _Item extends _Line {
 }
 
 class _List extends StatelessWidget {
-  const _List({required this.rows, required this.narrowed});
+  const _List({required this.rows});
 
   final List<TransferRecord> rows;
-
-  /// A filter or a search is on: the summary then says how many match.
-  final bool narrowed;
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +173,7 @@ class _List extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
             child: Text(
               [
-                if (narrowed) 'history.transfers_count'.plural(rows.length),
+                'history.transfers_count'.plural(rows.length),
                 'history.total_size'.tr(
                   namedArgs: {'size': formatBytes(total)},
                 ),
@@ -294,9 +286,10 @@ class _Row extends StatelessWidget {
       subtitle: (sent ? 'history.sent' : 'history.received').tr(),
       builder: (ctx) {
         final t = ctx.tokens;
-        Widget kv(String k, String v) => Padding(
+        Widget kv(String k, String v, {int lines = 1}) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 5),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(k, style: AppType.body.copyWith(color: t.text2)),
               const SizedBox(width: 16),
@@ -304,7 +297,7 @@ class _Row extends StatelessWidget {
                 child: Text(
                   v,
                   textAlign: TextAlign.end,
-                  maxLines: 1,
+                  maxLines: lines,
                   overflow: TextOverflow.ellipsis,
                   style: AppType.body.copyWith(
                     color: t.text,
@@ -321,7 +314,7 @@ class _Row extends StatelessWidget {
           children: [
             kv('history.csv_device'.tr(), r.deviceAlias),
             if (shownName(r) != r.fileName)
-              kv('inbox.detail_saved_as'.tr(), r.fileName),
+              kv('inbox.detail_saved_as'.tr(), r.fileName, lines: 2),
             kv('history.csv_size'.tr(), formatBytes(r.fileSize)),
             kv('history.csv_date'.tr(), when),
             kv(
@@ -329,9 +322,9 @@ class _Row extends StatelessWidget {
               (r.verified ? 'history.yes' : 'history.no').tr(),
             ),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                if (has) ...[
+            if (has) ...[
+              Row(
+                children: [
                   Expanded(
                     child: AppButton(
                       label: 'history.share'.tr(),
@@ -346,7 +339,6 @@ class _Row extends StatelessWidget {
                   Expanded(
                     child: AppButton(
                       label: 'history.open'.tr(),
-                      variant: AppButtonVariant.secondary,
                       size: AppButtonSize.large,
                       onPressed: () {
                         Navigator.pop(ctx);
@@ -363,30 +355,28 @@ class _Row extends StatelessWidget {
                       },
                     ),
                   ),
-                  const SizedBox(width: 10),
                 ],
-                Expanded(
-                  child: AppButton(
-                    label: 'history.remove'.tr(),
-                    variant: AppButtonVariant.secondary,
-                    size: AppButtonSize.large,
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      final yes = await showAppConfirm(
-                        context,
-                        title: 'history.remove_title'.tr(),
-                        message:
-                            (has
-                                    ? 'history.remove_body_file'
-                                    : 'history.remove_body')
-                                .tr(),
-                        confirmLabel: 'history.remove'.tr(),
-                      );
-                      if (yes) await cubit.deleteEntry(r);
-                    },
-                  ),
-                ),
-              ],
+              ),
+              const SizedBox(height: 6),
+            ],
+            // Red like the Inbox detail sheet's delete row.
+            AppValueRow(
+              icon: AppIcons.trashDelete,
+              title: 'history.remove'.tr(),
+              destructive: true,
+              chevron: false,
+              onTap: () async {
+                Navigator.pop(ctx);
+                final yes = await showAppConfirm(
+                  context,
+                  title: 'history.remove_title'.tr(),
+                  message:
+                      (has ? 'history.remove_body_file' : 'history.remove_body')
+                          .tr(),
+                  confirmLabel: 'history.remove'.tr(),
+                );
+                if (yes) await cubit.deleteEntry(r);
+              },
             ),
           ],
         );
