@@ -865,6 +865,8 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
                   dao: _dao,
                   onOpen: (o) => unawaited(_act.open(o)),
                   onMore: _more,
+                  onLink: (o) => unawaited(_act.shareLink(o)),
+                  onSend: (path) => unawaited(_act.sendToDevice(path)),
                 )
               : _content(),
         ),

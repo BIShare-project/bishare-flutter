@@ -12,6 +12,7 @@ import 'package:universal_file_viewer/universal_file_viewer.dart' as ufv;
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
+import '../theme/app_type.dart';
 import 'app_format.dart';
 import 'app_sheet.dart';
 import 'app_svg_icon.dart';
@@ -31,12 +32,26 @@ import 'file_open.dart';
 ///
 /// Reusable across the compose tray, inbox, history, file manager and rooms —
 /// anywhere a file row is tapped.
+/// One action under a full-screen preview (Drive: Link, Send, Back up now).
+class PreviewAction {
+  const PreviewAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final String icon;
+  final String label;
+  final VoidCallback onTap;
+}
+
 Future<void> showFilePreview(
   BuildContext context, {
   required String path,
   required String name,
   required String mimeType,
   int? size,
+  List<PreviewAction> actions = const [],
 }) {
   final kind = File(path).existsSync()
       ? _previewKind(path: path, name: name, mimeType: mimeType)
@@ -49,7 +64,7 @@ Future<void> showFilePreview(
         barrierColor: Colors.black,
         transitionDuration: const Duration(milliseconds: 220),
         pageBuilder: (_, _, _) =>
-            _PreviewPage(path: path, name: name, kind: kind),
+            _PreviewPage(path: path, name: name, kind: kind, actions: actions),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
@@ -124,11 +139,13 @@ class _PreviewPage extends StatelessWidget {
     required this.path,
     required this.name,
     required this.kind,
+    this.actions = const [],
   });
 
   final String path;
   final String name;
   final _PreviewKind kind;
+  final List<PreviewAction> actions;
 
   @override
   Widget build(BuildContext context) {
@@ -188,17 +205,74 @@ class _PreviewPage extends StatelessWidget {
                 children: [
                   Positioned.fill(child: body),
                   Positioned(top: 0, left: 0, right: 0, child: bar),
+                  if (actions.isNotEmpty)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: _ActionBar(actions: actions),
+                    ),
                 ],
               )
             : Column(
                 children: [
                   bar,
                   Expanded(child: body),
+                  if (actions.isNotEmpty) _ActionBar(actions: actions),
                 ],
               ),
       ),
     );
   }
+}
+
+/// The actions under the preview, white on a dark band, as in the Inbox
+/// viewer.
+class _ActionBar extends StatelessWidget {
+  const _ActionBar({required this.actions});
+
+  final List<PreviewAction> actions;
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+    color: Colors.black.withValues(alpha: 0.55),
+    child: SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          children: [
+            for (final a in actions)
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    tapHaptic();
+                    a.onTap();
+                  },
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 56),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AppSvgIcon(a.icon, size: 22, color: Colors.white),
+                        const SizedBox(height: 4),
+                        Text(
+                          a.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppType.small.copyWith(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _TopBar extends StatelessWidget {

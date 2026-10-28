@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gal/gal.dart';
 import 'package:mime/mime.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -19,6 +20,8 @@ import '../../../../core/server/transfer_server.dart';
 import '../../../../core/storage/app_database.dart';
 import '../../../../core/storage/vault_tables.dart';
 import '../../../../core/ui/app_ui.dart';
+import '../../../../core/ui/shell_tab.dart';
+import '../../../send/presentation/tray_cubit.dart';
 import '../../data/vault_account.dart';
 import '../../data/vault_api.dart';
 import '../../data/vault_downloads.dart';
@@ -252,7 +255,27 @@ class DriveActions {
       name: o.name,
       mimeType: o.mime ?? lookupMimeType(o.name) ?? 'application/octet-stream',
       size: o.size,
+      actions: [
+        PreviewAction(
+          icon: AppIcons.linkCopy,
+          label: 'vault.share_link'.tr(),
+          onTap: () => unawaited(shareLink(o)),
+        ),
+        PreviewAction(
+          icon: AppIcons.send,
+          label: 'home.send'.tr(),
+          onTap: () => unawaited(sendToDevice(f.path)),
+        ),
+      ],
     );
+  }
+
+  /// Puts [path] on the Send tab and goes there, to choose a device.
+  Future<void> sendToDevice(String path) async {
+    final tray = context.read<TrayCubit>();
+    Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
+    await tray.addDropped([path]);
+    shellTabRequest.value = ShellTabId.send;
   }
 
   /// [o] in a cache folder (reused while it is there), with a progress sheet

@@ -46,6 +46,8 @@ class DriveGalleryView extends StatefulWidget {
     required this.dao,
     required this.onOpen,
     required this.onMore,
+    required this.onLink,
+    required this.onSend,
   });
 
   final VaultPhotoBackup backup;
@@ -54,6 +56,11 @@ class DriveGalleryView extends StatefulWidget {
   /// A photo that is only in the Drive: open it, or its actions.
   final void Function(VaultObject) onOpen;
   final void Function(VaultObject) onMore;
+
+  /// From the viewer of a phone photo: its Drive copy as a link, or the
+  /// photo to the Send tab.
+  final void Function(VaultObject) onLink;
+  final void Function(String path) onSend;
 
   @override
   State<DriveGalleryView> createState() => _DriveGalleryViewState();
@@ -225,14 +232,52 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
   Future<void> _view(PhotoAsset a) async {
     final got = await _library.original(a);
     if (got == null || !mounted) return;
+    // Backed up: its Drive copy can go out as a link. Not yet: back it up now.
+    final hash = _backedHashes[a.id];
+    final copy = hash == null ? null : await widget.dao.liveFileWithHash(hash);
+    if (!mounted) return;
     await showFilePreview(
       context,
       path: got.file.path,
       name: got.name,
       mimeType:
           lookupMimeType(got.name) ?? (a.video ? 'video/mp4' : 'image/jpeg'),
+      actions: [
+        if (copy != null)
+          PreviewAction(
+            icon: AppIcons.linkCopy,
+            label: 'vault.share_link'.tr(),
+            onTap: () => widget.onLink(copy),
+          )
+        else
+          PreviewAction(
+            icon: AppIcons.cloudSync,
+            label: 'vault.backup_now'.tr(),
+            onTap: () => unawaited(_backUpOne(a)),
+          ),
+        PreviewAction(
+          icon: AppIcons.send,
+          label: 'home.send'.tr(),
+          onTap: () => widget.onSend(got.file.path),
+        ),
+      ],
     );
   }
+
+  Future<void> _backUpOne(PhotoAsset a) async {
+    try {
+      await _backup.backUp([a]);
+      if (mounted) toast(context, 'vault.backup_added_n'.plural(1));
+    } on Object catch (e) {
+      debugPrint('[vault] back up one: $e');
+      if (mounted) {
+        toast(context, 'vault.error_failed'.tr(), type: ToastType.error);
+      }
+    }
+  }
+
+  /// Asset id to content hash of what is backed up (from the latest build).
+  Map<String, String> _backedHashes = const {};
 
   Future<void> _backUpChosen(Set<String> backed) async {
     final chosen = [
@@ -272,6 +317,7 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
           stream: _drive,
           builder: (context, driveSnap) {
             final backed = backedSnap.data ?? const <String, String>{};
+            _backedHashes = backed;
             final uploads = uploadsSnap.data ?? const <String, String>{};
             final ids = backed.keys.toSet();
             final items = _timeline(
