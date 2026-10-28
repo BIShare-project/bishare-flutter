@@ -30,51 +30,58 @@ class AppTabBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: t.line)),
-      ),
-      child: TabBar(
-        controller: controller,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        padding: const EdgeInsetsDirectional.only(start: 8, end: 8),
-        labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-        dividerHeight: 0,
-        overlayColor: WidgetStatePropertyAll(t.accent.withValues(alpha: 0.06)),
-        splashBorderRadius: BorderRadius.circular(10),
-        indicatorSize: TabBarIndicatorSize.label,
-        // The line sits just under the word, not on the bar's hairline
-        // (owner 2026-10-28: it read as too far from the label).
-        indicator: UnderlineTabIndicator(
-          borderSide: BorderSide(color: t.accent, width: 2),
-          borderRadius: BorderRadius.circular(2),
-          insets: const EdgeInsets.only(bottom: 4),
+    // Full width, so the tabs start at the screen's edge even inside a
+    // wrapper that sizes to its child (the coach mark on Send centred them).
+    return SizedBox(
+      width: double.infinity,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: t.line)),
         ),
-        labelColor: t.text,
-        unselectedLabelColor: t.text2,
-        labelStyle: AppType.row.copyWith(fontWeight: FontWeight.w600),
-        unselectedLabelStyle: AppType.row,
-        onTap: (i) {
-          tapHaptic();
-          onTap?.call(i);
-        },
-        tabs: [
-          for (final tab in tabs)
-            Tab(
-              height: 42,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(tab.label),
-                  if (tab.count > 0) ...[
-                    const SizedBox(width: 6),
-                    _Count(tab.count),
+        child: TabBar(
+          controller: controller,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          padding: const EdgeInsetsDirectional.only(start: 8, end: 8),
+          labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+          dividerHeight: 0,
+          overlayColor: WidgetStatePropertyAll(
+            t.accent.withValues(alpha: 0.06),
+          ),
+          splashBorderRadius: BorderRadius.circular(10),
+          indicatorSize: TabBarIndicatorSize.label,
+          // The line sits just under the word, not on the bar's hairline
+          // (owner 2026-10-28: it read as too far from the label).
+          indicator: UnderlineTabIndicator(
+            borderSide: BorderSide(color: t.accent, width: 2),
+            borderRadius: BorderRadius.circular(2),
+            insets: const EdgeInsets.only(bottom: 4),
+          ),
+          labelColor: t.text,
+          unselectedLabelColor: t.text2,
+          labelStyle: AppType.row.copyWith(fontWeight: FontWeight.w600),
+          unselectedLabelStyle: AppType.row,
+          onTap: (i) {
+            tapHaptic();
+            onTap?.call(i);
+          },
+          tabs: [
+            for (final tab in tabs)
+              Tab(
+                height: 42,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(tab.label),
+                    if (tab.count > 0) ...[
+                      const SizedBox(width: 6),
+                      _Count(tab.count),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
