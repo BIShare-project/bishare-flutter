@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/di/locator.dart';
 import '../../../core/notifications/notification_service.dart';
+import '../../../core/storage/all_files_access.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../discovery/data/discovery_service.dart';
 import 'widgets/onboarding_slide.dart';
@@ -98,8 +99,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
     var camera = false;
     if (_isMobile) {
       try {
-        final p = await Permission.photos.status;
-        photos = p.isGranted || p.isLimited;
+        if (AllFilesAccess.applies) {
+          photos = await AllFilesAccess.granted();
+        } else {
+          final p = await Permission.photos.status;
+          photos = p.isGranted || p.isLimited;
+        }
         camera = (await Permission.camera.status).isGranted;
       } on Object {
         // best-effort: rows stay "Continue"
@@ -169,7 +174,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
     if (mounted) setState(() => _notifications = ok);
   }
 
+  /// Android: the one All files access permission the Send tab uses
+  /// (AllFilesAccess). iOS: the photo library.
   Future<void> _askPhotos() async {
+    if (AllFilesAccess.applies) {
+      final ok = await AllFilesAccess.request();
+      if (mounted) setState(() => _photos = ok);
+      return;
+    }
     final ok = await Permission.photos.request();
     if (mounted) setState(() => _photos = ok.isGranted || ok.isLimited);
   }
@@ -392,8 +404,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
             const SizedBox(height: 10),
             PermissionRow(
               icon: AppIcons.image,
-              title: 'onboarding.perm_photos'.tr(),
-              subtitle: 'onboarding.perm_photos_sub'.tr(),
+              title: AllFilesAccess.applies
+                  ? 'onboarding.perm_files'.tr()
+                  : 'onboarding.perm_photos'.tr(),
+              subtitle: AllFilesAccess.applies
+                  ? 'onboarding.perm_files_sub'.tr()
+                  : 'onboarding.perm_photos_sub'.tr(),
               granted: _photos,
               onAllow: _askPhotos,
             ),

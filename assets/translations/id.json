@@ -613,6 +613,8 @@
     "perm_notifications_sub": "Dapatkan pemberitahuan saat file tiba.",
     "perm_photos": "Foto",
     "perm_photos_sub": "Simpan media yang diterima & pilih foto untuk dikirim.",
+    "perm_files": "Semua file",
+    "perm_files_sub": "Kirim foto, video, audio, dan dokumen dari ponsel ini.",
     "perm_subtitle": "BIShare bekerja paling baik dengan ini. Anda dapat mengubahnya kapan saja di pengaturan sistem.",
     "perm_title": "Beberapa Izin",
     "skip": "Lewati",

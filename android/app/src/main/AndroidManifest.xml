@@ -18,15 +18,18 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="29"
         tools:replace="android:maxSdkVersion" />
-    <!-- Media read access (onboarding's Photos permission). These came from
-         open_filex's manifest until open_file replaced it; declared here so the
-         permission set the store knows stays the same. -->
+    <!-- Media read access for Drive's automatic photo backup (the approved
+         Play declaration). Sending reads files with All files access. -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!-- Audio is read with All files access (below); a plugin must not bring
+         READ_MEDIA_AUDIO back. -->
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_AUDIO"
+        tools:node="remove" />
     <!-- The Send tab's Documents list: every document on the phone, as file
          sharing apps do (owner 2026-10-28). Asked only from that tab; the
          Play declaration is in play-declarations-2.8.0.md. -->

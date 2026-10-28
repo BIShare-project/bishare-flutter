@@ -613,6 +613,8 @@
     "perm_notifications_sub": "Recibe alertas en el momento en que llega un archivo.",
     "perm_photos": "Fotos",
     "perm_photos_sub": "Guarda medios recibidos y selecciona fotos para enviar.",
+    "perm_files": "Todos los archivos",
+    "perm_files_sub": "Envía fotos, vídeos, audio y documentos desde este teléfono.",
     "perm_subtitle": "BIShare funciona mejor con estos permisos. Puedes cambiarlos en cualquier momento en los ajustes del sistema.",
     "perm_title": "Algunos permisos",
     "skip": "Saltar",

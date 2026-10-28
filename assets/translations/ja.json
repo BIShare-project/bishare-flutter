@@ -613,6 +613,8 @@
     "perm_notifications_sub": "ファイル到着時にすぐに通知。",
     "perm_photos": "写真",
     "perm_photos_sub": "受信したメディアを保存し、送信する写真を選択。",
+    "perm_files": "すべてのファイル",
+    "perm_files_sub": "このスマートフォンの写真、ビデオ、オーディオ、書類を送信できます。",
     "perm_subtitle": "BIShareはこれらの権限で最適に動作します。システム設定からいつでも変更できます。",
     "perm_title": "権限について",
     "skip": "スキップ",

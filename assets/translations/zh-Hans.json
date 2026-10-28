@@ -613,6 +613,8 @@
     "perm_notifications_sub": "文件到达时立即通知您。",
     "perm_photos": "照片",
     "perm_photos_sub": "保存接收的媒体并选择要发送的照片。",
+    "perm_files": "所有文件",
+    "perm_files_sub": "从这部手机发送照片、视频、音频和文档。",
     "perm_subtitle": "BIShare 在这些权限下运行最佳。您可以随时在系统设置中更改。",
     "perm_title": "部分权限",
     "skip": "跳过",
