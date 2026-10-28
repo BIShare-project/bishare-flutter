@@ -328,7 +328,7 @@ def device(raw: Image.Image, kind: str, dw: int) -> tuple[Image.Image, int]:
 # about: the first beside this device's card or the first row, the second
 # beside a list
 CHIP_Y = {
-    "share": (0.165, 0.47),
+    "share": (0.3, 0.5),
     "inbox": (0.2, 0.52),
     "link": (0.2, 0.46),
     "qr_beam": (0.19, 0.36),
