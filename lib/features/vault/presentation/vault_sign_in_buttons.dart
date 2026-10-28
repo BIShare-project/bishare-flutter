@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/di/locator.dart';
 import '../../../core/ui/app_ui.dart';
@@ -59,7 +58,8 @@ class _VaultSignInButtonsState extends State<VaultSignInButtons> {
 
   @override
   Widget build(BuildContext context) {
-    final muted = ShadTheme.of(context).textTheme.muted.copyWith(fontSize: 12);
+    final t = context.tokens;
+    final muted = AppType.secondary.copyWith(color: t.text2);
     if (VaultSignin.byApproval) {
       return Padding(
         padding: const EdgeInsets.only(top: 8),
@@ -80,7 +80,9 @@ class _VaultSignInButtonsState extends State<VaultSignInButtons> {
             padding: const EdgeInsets.only(top: 8),
             child: AppButton(
               label: 'vault.sign_in_google'.tr(),
-              variant: AppButtonVariant.outline,
+              // Equal to Apple's: App Store rule 4.8.
+              variant: AppButtonVariant.secondary,
+              size: AppButtonSize.large,
               fullWidth: true,
               loading: _busy,
               onPressed: _busy ? null : () => _signIn('google'),
@@ -91,7 +93,8 @@ class _VaultSignInButtonsState extends State<VaultSignInButtons> {
             padding: const EdgeInsets.only(top: 8),
             child: AppButton(
               label: 'vault.sign_in_apple'.tr(),
-              variant: AppButtonVariant.outline,
+              variant: AppButtonVariant.secondary,
+              size: AppButtonSize.large,
               fullWidth: true,
               loading: _busy,
               onPressed: _busy ? null : () => _signIn('apple'),

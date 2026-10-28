@@ -14,7 +14,6 @@ import '../../../../core/storage/app_database.dart';
 import '../../../../core/storage/vault_tables.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../../../../core/ui/shell_tab.dart';
-import '../../../settings/presentation/widgets/glyph.dart';
 import '../../data/vault_account.dart';
 import '../../data/vault_background.dart';
 import '../../data/vault_api.dart';
@@ -1314,34 +1313,12 @@ class _Intro extends StatelessWidget {
   const _Intro();
 
   @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
-      children: [
-        const Center(child: Glyph(AppIcons.passwordLock)),
-        const SizedBox(height: 16),
-        Text(
-          'vault.intro_title'.tr(),
-          textAlign: TextAlign.center,
-          style: theme.textTheme.h4,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'vault.intro_body'.tr(),
-          textAlign: TextAlign.center,
-          style: theme.textTheme.muted,
-        ),
-        const SizedBox(height: 18),
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: const VaultSignInButtons(),
-          ),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => _DriveGate(
+    icon: AppIcons.cloudDone,
+    title: 'vault.intro_title'.tr(),
+    body: 'vault.intro_body'.tr(),
+    action: const VaultSignInButtons(),
+  );
 }
 
 /// Signed in, but the key is not on this device yet.
@@ -1349,30 +1326,80 @@ class _WaitingForKey extends StatelessWidget {
   const _WaitingForKey();
 
   @override
+  Widget build(BuildContext context) => _DriveGate(
+    icon: AppIcons.passwordLock,
+    body: 'vault.needs_key'.tr(),
+    action: AppButton(
+      label: 'vault.get_key'.tr(),
+      fullWidth: true,
+      size: AppButtonSize.large,
+      onPressed: () => context.push('/drive-account'),
+    ),
+  );
+}
+
+/// The shape of Drive before its files show (signed out, waiting for the
+/// key): one column in the middle, at most 420 wide, a soft accent circle,
+/// the words, then what to do.
+class _DriveGate extends StatelessWidget {
+  const _DriveGate({
+    required this.icon,
+    required this.body,
+    required this.action,
+    this.title,
+  });
+
+  final String icon;
+  final String? title;
+  final String body;
+  final Widget action;
+
+  @override
   Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
-      children: [
-        const Center(child: Glyph(AppIcons.passwordLock)),
-        const SizedBox(height: 16),
-        Text(
-          'vault.needs_key'.tr(),
-          textAlign: TextAlign.center,
-          style: theme.textTheme.muted,
-        ),
-        const SizedBox(height: 18),
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: AppButton(
-              label: 'vault.get_key'.tr(),
-              fullWidth: true,
-              onPressed: () => context.push('/drive-account'),
+    final t = context.tokens;
+    return LayoutBuilder(
+      builder: (context, box) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: box.maxHeight - 48),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: t.accentSoft,
+                      shape: BoxShape.circle,
+                    ),
+                    child: AppSvgIcon(icon, size: 32, color: t.accent),
+                  ),
+                  const SizedBox(height: 20),
+                  if (title != null) ...[
+                    Text(
+                      title!,
+                      textAlign: TextAlign.center,
+                      style: AppType.pageTitle.copyWith(color: t.text),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Text(
+                    body,
+                    textAlign: TextAlign.center,
+                    style: AppType.body.copyWith(color: t.text2),
+                  ),
+                  const SizedBox(height: 24),
+                  action,
+                ],
+              ),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
