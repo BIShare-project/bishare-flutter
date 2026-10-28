@@ -141,6 +141,14 @@ class AppTokens extends ThemeExtension<AppTokens> {
 
   bool get isDark => brightness == Brightness.dark;
 
+  /// A sheet's own background, a step below its cards ([sheetCard]), so the
+  /// grouped rows read as cards (iOS inset grouped).
+  Color get sheetBg => isDark ? surface : bg;
+
+  /// The cards in a sheet: rows, facts, the quick actions.
+  Color get sheetCard =>
+      isDark ? Color.lerp(raised, const Color(0xFFFFFFFF), 0.035)! : raised;
+
   @override
   AppTokens copyWith() => this;
 

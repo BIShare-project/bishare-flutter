@@ -698,51 +698,58 @@ Future<void> showInboxMenu(BuildContext context) {
       void close() => Navigator.of(ctx).pop();
       return Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppValueRow(
-            icon: AppIcons.folder,
-            title: 'inbox.browse_files'.tr(),
-            subtitle: 'inbox.browse_files_hint'.tr(),
-            onTap: () {
-              close();
-              context.push('/files');
-            },
+          AppSheetGroup(
+            children: [
+              AppSheetAction(
+                icon: AppIcons.folder,
+                label: 'inbox.browse_files'.tr(),
+                subtitle: 'inbox.browse_files_hint'.tr(),
+                onTap: () {
+                  close();
+                  context.push('/files');
+                },
+              ),
+              AppSheetAction(
+                icon: AppIcons.globePublic,
+                label: 'inbox.browser_access'.tr(),
+                subtitle: 'inbox.browser_access_subtitle'.tr(),
+                onTap: () {
+                  close();
+                  showWebAccess(context);
+                },
+              ),
+              if (InboxCubit.canSaveToPhotos && items.any(isMedia))
+                AppSheetAction(
+                  icon: AppIcons.imageDown,
+                  label: 'inbox.save_all_media'.tr(),
+                  onTap: () {
+                    close();
+                    savePhotos(context, items);
+                  },
+                ),
+            ],
           ),
-          AppValueRow(
-            icon: AppIcons.globePublic,
-            title: 'inbox.browser_access'.tr(),
-            subtitle: 'inbox.browser_access_subtitle'.tr(),
-            onTap: () {
-              close();
-              showWebAccess(context);
-            },
-          ),
-          if (InboxCubit.canSaveToPhotos && items.any(isMedia))
-            AppValueRow(
-              icon: AppIcons.imageDown,
-              title: 'inbox.save_all_media'.tr(),
-              chevron: false,
-              onTap: () {
-                close();
-                savePhotos(context, items);
-              },
-            ),
           if (items.isNotEmpty)
-            AppValueRow(
-              icon: AppIcons.trashDelete,
-              title: 'inbox.clear_inbox'.tr(),
-              destructive: true,
-              chevron: false,
-              onTap: () async {
-                close();
-                final yes = await showAppConfirm(
-                  context,
-                  title: 'inbox.clear_title'.tr(),
-                  message: 'inbox.clear_body'.tr(),
-                  confirmLabel: 'inbox.clear'.tr(),
-                );
-                if (yes) await cubit.deleteMany(List.of(items));
-              },
+            AppSheetGroup(
+              children: [
+                AppSheetAction(
+                  icon: AppIcons.trashDelete,
+                  label: 'inbox.clear_inbox'.tr(),
+                  destructive: true,
+                  onTap: () async {
+                    close();
+                    final yes = await showAppConfirm(
+                      context,
+                      title: 'inbox.clear_title'.tr(),
+                      message: 'inbox.clear_body'.tr(),
+                      confirmLabel: 'inbox.clear'.tr(),
+                    );
+                    if (yes) await cubit.deleteMany(List.of(items));
+                  },
+                ),
+              ],
             ),
         ],
       );

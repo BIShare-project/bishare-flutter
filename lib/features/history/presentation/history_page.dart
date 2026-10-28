@@ -165,12 +165,16 @@ class _Toolbar extends StatelessWidget {
       context,
       icon: AppIcons.filter,
       title: 'history.filter_title'.tr(),
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
+      builder: (ctx) => AppSheetGroup(
         children: [
           for (final f in HistoryFilter.values)
             AppSheetAction(
-              icon: f == filter ? AppIcons.check : AppIcons.circle,
+              icon: switch (f) {
+                HistoryFilter.all => AppIcons.history,
+                HistoryFilter.sent => AppIcons.arrowUp,
+                HistoryFilter.received => AppIcons.arrowDown,
+              },
+              selected: f == filter,
               label: f.label,
               onTap: () => Navigator.pop(ctx, f),
             ),
@@ -395,103 +399,74 @@ class _Row extends StatelessWidget {
       context,
       title: shownName(r),
       subtitle: (sent ? 'history.sent' : 'history.received').tr(),
-      builder: (ctx) {
-        final t = ctx.tokens;
-        Widget kv(String k, String v, {int lines = 1}) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(k, style: AppType.body.copyWith(color: t.text2)),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  v,
-                  textAlign: TextAlign.end,
-                  maxLines: lines,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppType.body.copyWith(
-                    color: t.text,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+      leading: _DirectionGlyph(record: r, sent: sent),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (has)
+            AppSheetQuickRow(
+              actions: [
+                AppSheetQuick(
+                  icon: AppIcons.eyePreview,
+                  label: 'history.open'.tr(),
+                  primary: true,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _open(context, r);
+                  },
+                ),
+                AppSheetQuick(
+                  icon: AppIcons.shareLink,
+                  label: 'history.share'.tr(),
+                  onTap: () => SharePlus.instance.share(
+                    ShareParams(files: [XFile(r.savedPath!)]),
                   ),
                 ),
+              ],
+            ),
+          AppSheetGroup(
+            children: [
+              AppSheetInfo('history.csv_device'.tr(), r.deviceAlias),
+              if (shownName(r) != r.fileName)
+                AppSheetInfo(
+                  'inbox.detail_saved_as'.tr(),
+                  r.fileName,
+                  lines: 2,
+                ),
+              AppSheetInfo('history.csv_size'.tr(), formatBytes(r.fileSize)),
+              AppSheetInfo('history.csv_date'.tr(), when),
+              AppSheetInfo(
+                'history.csv_verified'.tr(),
+                (r.verified ? 'history.yes' : 'history.no').tr(),
               ),
             ],
           ),
-        );
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            kv('history.csv_device'.tr(), r.deviceAlias),
-            if (shownName(r) != r.fileName)
-              kv('inbox.detail_saved_as'.tr(), r.fileName, lines: 2),
-            kv('history.csv_size'.tr(), formatBytes(r.fileSize)),
-            kv('history.csv_date'.tr(), when),
-            kv(
-              'history.csv_verified'.tr(),
-              (r.verified ? 'history.yes' : 'history.no').tr(),
-            ),
-            const SizedBox(height: 14),
-            if (has) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      label: 'history.share'.tr(),
-                      variant: AppButtonVariant.secondary,
-                      size: AppButtonSize.large,
-                      onPressed: () => SharePlus.instance.share(
-                        ShareParams(files: [XFile(r.savedPath!)]),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: AppButton(
-                      label: 'history.open'.tr(),
-                      size: AppButtonSize.large,
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        showFilePreview(
-                          context,
-                          path: r.savedPath!,
-                          name: r.fileName,
-                          mimeType:
-                              r.fileType ??
-                              lookupMimeType(r.fileName) ??
-                              'application/octet-stream',
-                          size: r.fileSize,
-                        );
-                      },
-                    ),
-                  ),
-                ],
+          AppSheetGroup(
+            children: [
+              AppSheetAction(
+                icon: AppIcons.trashDelete,
+                label: 'history.remove'.tr(),
+                destructive: true,
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final yes = await showAppConfirm(
+                    context,
+                    title: 'history.remove_title'.tr(),
+                    message:
+                        (has
+                                ? 'history.remove_body_file'
+                                : 'history.remove_body')
+                            .tr(),
+                    confirmLabel: 'history.remove'.tr(),
+                  );
+                  if (yes) await cubit.deleteEntry(r);
+                },
               ),
-              const SizedBox(height: 6),
             ],
-            // Red like the Inbox detail sheet's delete row.
-            AppValueRow(
-              icon: AppIcons.trashDelete,
-              title: 'history.remove'.tr(),
-              destructive: true,
-              chevron: false,
-              onTap: () async {
-                Navigator.pop(ctx);
-                final yes = await showAppConfirm(
-                  context,
-                  title: 'history.remove_title'.tr(),
-                  message:
-                      (has ? 'history.remove_body_file' : 'history.remove_body')
-                          .tr(),
-                  confirmLabel: 'history.remove'.tr(),
-                );
-                if (yes) await cubit.deleteEntry(r);
-              },
-            ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -587,32 +562,41 @@ Future<void> showHistoryMenu(BuildContext context) {
     title: 'history.title'.tr(),
     builder: (ctx) => Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppValueRow(
-          icon: AppIcons.downloadFile,
-          title: 'history.export_csv'.tr(),
-          chevron: false,
-          onTap: () async {
-            Navigator.pop(ctx);
-            final path = await cubit.exportCsv();
-            await SharePlus.instance.share(ShareParams(files: [XFile(path)]));
-          },
+        AppSheetGroup(
+          children: [
+            AppSheetAction(
+              icon: AppIcons.downloadFile,
+              label: 'history.export_csv'.tr(),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final path = await cubit.exportCsv();
+                await SharePlus.instance.share(
+                  ShareParams(files: [XFile(path)]),
+                );
+              },
+            ),
+          ],
         ),
-        AppValueRow(
-          icon: AppIcons.trashDelete,
-          title: 'history.clear_history'.tr(),
-          destructive: true,
-          chevron: false,
-          onTap: () async {
-            Navigator.pop(ctx);
-            final yes = await showAppConfirm(
-              context,
-              title: 'history.clear_title'.tr(),
-              message: 'history.clear_body'.tr(),
-              confirmLabel: 'inbox.clear'.tr(),
-            );
-            if (yes) await cubit.clearAll();
-          },
+        AppSheetGroup(
+          children: [
+            AppSheetAction(
+              icon: AppIcons.trashDelete,
+              label: 'history.clear_history'.tr(),
+              destructive: true,
+              onTap: () async {
+                Navigator.pop(ctx);
+                final yes = await showAppConfirm(
+                  context,
+                  title: 'history.clear_title'.tr(),
+                  message: 'history.clear_body'.tr(),
+                  confirmLabel: 'inbox.clear'.tr(),
+                );
+                if (yes) await cubit.clearAll();
+              },
+            ),
+          ],
         ),
       ],
     ),

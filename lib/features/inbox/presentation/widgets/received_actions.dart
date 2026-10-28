@@ -79,139 +79,125 @@ Future<bool> deleteReceived(
   return true;
 }
 
-/// A received file: where it came from, when, and what to do with it.
+/// A received file: what to do with it first (open, share, more ways to
+/// keep or pass it on), then where it came from and when, then delete.
 Future<void> showReceivedDetail(BuildContext context, TransferRecord r) {
   final locale = context.locale.toLanguageTag();
   final when = DateFormat.yMMMd(locale).add_Hm().format(r.timestamp);
+  final mime =
+      r.fileType ?? lookupMimeType(r.fileName) ?? 'application/octet-stream';
   return showAppSheet<void>(
     context,
     title: shownName(r),
     subtitle: formatBytes(r.fileSize),
+    leading: MediaThumb(path: r.savedPath, mime: mime, size: 48, radius: 12),
     builder: (ctx) {
       final t = ctx.tokens;
       final has = onDisk(r);
       void close() => Navigator.of(ctx).pop();
-      Widget kv(String k, String v, {int lines = 1}) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(k, style: AppType.body.copyWith(color: t.text2)),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                v,
-                textAlign: TextAlign.end,
-                maxLines: lines,
-                overflow: TextOverflow.ellipsis,
-                style: AppType.body.copyWith(
-                  color: t.text,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
       final yes = 'history.yes'.tr(), no = 'history.no'.tr();
       return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          kv('inbox.detail_from'.tr(), r.deviceAlias),
-          if (shownName(r) != r.fileName)
-            kv('inbox.detail_saved_as'.tr(), r.fileName, lines: 2),
-          kv('inbox.detail_received'.tr(), when),
-          kv('inbox.detail_encrypted'.tr(), r.encrypted ? yes : no),
-          kv('inbox.detail_verified'.tr(), r.verified ? yes : no),
+          if (has)
+            AppSheetQuickRow(
+              actions: [
+                AppSheetQuick(
+                  icon: AppIcons.eyePreview,
+                  label: 'inbox.open'.tr(),
+                  primary: true,
+                  onTap: () {
+                    close();
+                    showFilePreview(
+                      context,
+                      path: r.savedPath!,
+                      name: r.fileName,
+                      mimeType: mime,
+                      size: r.fileSize,
+                    );
+                  },
+                ),
+                AppSheetQuick(
+                  icon: AppIcons.shareLink,
+                  label: 'inbox.share'.tr(),
+                  onTap: () => shareReceived([r]),
+                ),
+                AppSheetQuick(
+                  icon: AppIcons.qrShare,
+                  label: 'inbox.qr_short'.tr(),
+                  onTap: () {
+                    close();
+                    showInstantShare(
+                      context,
+                      path: r.savedPath!,
+                      fileName: r.fileName,
+                      mimeType: r.fileType ?? 'application/octet-stream',
+                    );
+                  },
+                ),
+              ],
+            ),
+          if (has && (InboxCubit.canSaveToPhotos && isMedia(r) || driveReady))
+            AppSheetGroup(
+              children: [
+                if (InboxCubit.canSaveToPhotos && isMedia(r))
+                  AppSheetAction(
+                    icon: AppIcons.imageDown,
+                    label: 'inbox.save_to_photos'.tr(),
+                    onTap: () {
+                      close();
+                      savePhotos(context, [r]);
+                    },
+                  ),
+                if (driveReady)
+                  AppSheetAction(
+                    icon: AppIcons.cloudSync,
+                    label: 'vault.save_to_drive'.tr(),
+                    onTap: () {
+                      close();
+                      saveToDrive(context, [r.savedPath!]);
+                    },
+                  ),
+              ],
+            ),
+          AppSheetGroup(
+            children: [
+              AppSheetInfo('inbox.detail_from'.tr(), r.deviceAlias),
+              if (shownName(r) != r.fileName)
+                AppSheetInfo(
+                  'inbox.detail_saved_as'.tr(),
+                  r.fileName,
+                  lines: 2,
+                ),
+              AppSheetInfo('inbox.detail_received'.tr(), when),
+              AppSheetInfo(
+                'inbox.detail_encrypted'.tr(),
+                r.encrypted ? yes : no,
+              ),
+              AppSheetInfo('inbox.detail_verified'.tr(), r.verified ? yes : no),
+            ],
+          ),
           if (!has)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.fromLTRB(4, 0, 4, 10),
               child: Text(
                 'inbox.not_stored'.tr(),
                 style: AppType.secondary.copyWith(color: t.danger),
               ),
             ),
-          const SizedBox(height: 14),
-          if (has)
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    label: 'inbox.share'.tr(),
-                    icon: AppIcons.shareLink,
-                    variant: AppButtonVariant.secondary,
-                    size: AppButtonSize.large,
-                    onPressed: () => shareReceived([r]),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: AppButton(
-                    label: 'inbox.open'.tr(),
-                    size: AppButtonSize.large,
-                    onPressed: () {
-                      close();
-                      showFilePreview(
-                        context,
-                        path: r.savedPath!,
-                        name: r.fileName,
-                        mimeType:
-                            r.fileType ??
-                            lookupMimeType(r.fileName) ??
-                            'application/octet-stream',
-                        size: r.fileSize,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          const SizedBox(height: 6),
-          if (has && InboxCubit.canSaveToPhotos && isMedia(r))
-            AppValueRow(
-              icon: AppIcons.imageDown,
-              title: 'inbox.save_to_photos'.tr(),
-              chevron: false,
-              onTap: () {
-                close();
-                savePhotos(context, [r]);
-              },
-            ),
-          if (has && driveReady)
-            AppValueRow(
-              icon: AppIcons.cloudSync,
-              title: 'vault.save_to_drive'.tr(),
-              chevron: false,
-              onTap: () {
-                close();
-                saveToDrive(context, [r.savedPath!]);
-              },
-            ),
-          if (has)
-            AppValueRow(
-              icon: AppIcons.qrShare,
-              title: 'inbox.share_via_qr'.tr(),
-              chevron: false,
-              onTap: () {
-                close();
-                showInstantShare(
-                  context,
-                  path: r.savedPath!,
-                  fileName: r.fileName,
-                  mimeType: r.fileType ?? 'application/octet-stream',
-                );
-              },
-            ),
-          AppValueRow(
-            icon: AppIcons.trashDelete,
-            title: 'inbox.delete'.tr(),
-            destructive: true,
-            chevron: false,
-            onTap: () async {
-              close();
-              await deleteReceived(context, [r]);
-            },
+          AppSheetGroup(
+            children: [
+              AppSheetAction(
+                icon: AppIcons.trashDelete,
+                label: 'inbox.delete'.tr(),
+                destructive: true,
+                onTap: () async {
+                  close();
+                  await deleteReceived(context, [r]);
+                },
+              ),
+            ],
           ),
         ],
       );

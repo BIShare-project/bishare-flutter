@@ -234,7 +234,8 @@
     "via_qr": "Par QR",
     "select_all": "Tout sélectionner",
     "select_none": "Tout désélectionner",
-    "detail_saved_as": "Enregistré sous"
+    "detail_saved_as": "Enregistré sous",
+    "qr_short": "Code QR"
   },
   "history": {
     "all": "Tous",

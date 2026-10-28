@@ -81,32 +81,49 @@ class AppRowMenu extends StatelessWidget {
   }
 }
 
-/// Imperatively show [actions] as a glass sheet (the touch fallback / any
-/// explicit "more" affordance).
+/// Imperatively show [actions] as a sheet (the touch fallback / any
+/// explicit "more" affordance): the actions on one card, the destructive
+/// ones on a card of their own below. [leading] is the item's picture.
 Future<void> showActionSheet(
   BuildContext context, {
   required String title,
   String? subtitle,
+  Widget? leading,
   required List<AppMenuAction> actions,
 }) {
   return showAppSheet<void>(
     context,
     title: title,
     subtitle: subtitle,
-    builder: (ctx) => Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final a in actions)
-          AppSheetAction(
-            icon: a.icon,
-            label: a.label,
-            destructive: a.destructive,
-            onTap: () {
-              Navigator.pop(ctx);
-              a.onTap();
-            },
+    leading: leading,
+    builder: (ctx) {
+      Widget row(AppMenuAction a) => AppSheetAction(
+        icon: a.icon,
+        label: a.label,
+        destructive: a.destructive,
+        onTap: () {
+          Navigator.pop(ctx);
+          a.onTap();
+        },
+      );
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppSheetGroup(
+            children: [
+              for (final a in actions)
+                if (!a.destructive) row(a),
+            ],
           ),
-      ],
-    ),
+          AppSheetGroup(
+            children: [
+              for (final a in actions)
+                if (a.destructive) row(a),
+            ],
+          ),
+        ],
+      );
+    },
   );
 }

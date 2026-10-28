@@ -430,6 +430,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
     context,
     title: o.name,
     subtitle: o.kind == 'dir' ? 'vault.folder'.tr() : kindLabel(o),
+    leading: DriveThumb(object: o, size: 48, radius: 12),
     actions: _itemActions(o),
   );
 
