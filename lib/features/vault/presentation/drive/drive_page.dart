@@ -169,7 +169,16 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
     unawaited(_account.load().then((_) => _onAccount()));
     _usage = _account.followUsage();
     _ctrl.addListener(_onCtrl);
+    _tabs.addListener(_onTabs);
     _searchFocus.addListener(_onSearchFocus);
+  }
+
+  /// A swipe settled on another tab: show its view.
+  void _onTabs() {
+    if (_tabs.indexIsChanging) return;
+    if (_tabOf(_ctrl.view) != _tabs.index) {
+      _ctrl.setView(_tabViews[_tabs.index]);
+    }
   }
 
   @override
@@ -762,7 +771,19 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
         Expanded(
           child: NotificationListener<ScrollUpdateNotification>(
             onNotification: _onScroll,
-            child: _queueAndContent(),
+            // The tabs swipe like Send and Inbox. One controller feeds every
+            // tab, so only the tab on screen builds the content; a neighbour
+            // shows the page background while it slides in.
+            child: TabBarView(
+              controller: _tabs,
+              physics: _ctrl.selecting
+                  ? const NeverScrollableScrollPhysics()
+                  : null,
+              children: [
+                for (var i = 0; i < _tabViews.length; i++)
+                  i == tab ? _queueAndContent() : const SizedBox.expand(),
+              ],
+            ),
           ),
         ),
         if (_ctrl.selecting)
