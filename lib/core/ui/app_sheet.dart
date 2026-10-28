@@ -69,6 +69,19 @@ Future<T?> showGlassModal<T>(
     backgroundColor: Colors.transparent,
     elevation: 0,
     barrierColor: t.scrim,
+    // Up with a soft overshoot-free ease (redesign-plan.md "Motion"); at
+    // once under reduced motion.
+    sheetAnimationStyle: AnimationStyle(
+      duration: AppMotion.of(
+        MediaQuery.disableAnimationsOf(context),
+        AppMotion.sheet,
+      ),
+      reverseDuration: AppMotion.of(
+        MediaQuery.disableAnimationsOf(context),
+        AppMotion.bar,
+      ),
+      curve: AppMotion.enter,
+    ),
     builder: (ctx) => _Sheet(child: builder(ctx)),
   );
 }
