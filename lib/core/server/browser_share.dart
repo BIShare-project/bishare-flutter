@@ -322,7 +322,7 @@ String browserPageHtml({
       if(r.status===409){var j=await r.json();off=Math.min(j.expected||0,f.size);setFrac(q,f.size?off/f.size:0);continue;}
       if(r.status===413){try{localStorage.removeItem(key);}catch(e){}throw new Error('File too large');}
       if(r.status===403){throw new Error('Uploads not allowed');}
-      if(r.status===507){throw new Error('Server storage full — try again later');}
+      if(r.status===507){throw new Error('Server storage full. Try again later.');}
       off=end;setFrac(q,f.size?off/f.size:1);
       if(last){try{localStorage.removeItem(key);}catch(e){}return;}
     }
@@ -338,7 +338,7 @@ String browserPageHtml({
     }
     queue=queue.filter(function(q){return !q.done;});
     renderQueue();
-    toast(fail?('Uploaded '+ok+', failed '+fail+' — press Upload to retry'):('Uploaded '+ok+' file(s)'));
+    toast(fail?('Uploaded '+ok+', failed '+fail+'. Press Upload to retry.'):('Uploaded '+ok+' file(s)'));
     loadFiles();browse(cur);
   }
 

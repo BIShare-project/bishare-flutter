@@ -353,7 +353,7 @@
     "save_failed": "この項目を保存できませんでした",
     "saved": "受信ファイルに保存しました",
     "sync_active": "近くのデバイスと同期中",
-    "sync_paused": "一時停止中 — 何も共有されていません",
+    "sync_paused": "一時停止中、何も共有されていません",
     "title": "クリップボード",
     "you": "自分"
   },
@@ -363,7 +363,7 @@
       "other": "{} 台の近くのデバイス · タップして送信"
     },
     "pick_files": "送信するファイルを選択",
-    "pick_to_share": "共有するものを選択 — 直接・オフラインで送信",
+    "pick_to_share": "共有するものを選択、直接・オフラインで送信",
     "receiving": "受信中",
     "searching": "検索中",
     "send_n": {
@@ -513,7 +513,7 @@
     "browser_upload_unlimited": "無制限",
     "choose_folder": "フォルダを選択…",
     "clipboard_cloud": "クラウド経由のクリップボード",
-    "clipboard_cloud_soon": "近日公開 — 異なるネットワーク間で同期",
+    "clipboard_cloud_soon": "近日公開、異なるネットワーク間で同期",
     "clipboard_cloud_subtitle": "異なるネットワーク上のデバイス間でクリップボードを中継します",
     "clipboard_history": "クリップボード履歴",
     "clipboard_history_subtitle": "最近同期した項目",
@@ -656,17 +656,17 @@
     "show": "BIShareを表示"
   },
   "sync": {
-    "cloud_needs_pro": "Sync over the cloud needs Pro — LAN sync stays free",
+    "cloud_needs_pro": "Sync over the cloud needs Pro、LAN sync stays free",
     "cloud_off": "Cloud: OFF",
     "cloud_on": "Cloud: ON",
-    "conflicts_button": "{count} conflict(s) — resolve",
+    "conflicts_button": "{count} conflict(s)、resolve",
     "conflicts_empty_message": "Everything here agreed on a single version.",
     "conflicts_empty_title": "No conflicts",
     "conflicts_explain": "This file was edited on both devices. The newer version won; your version was preserved.",
     "conflicts_title": "Sync conflicts",
-    "delete_message": "Files stay on both devices — only the sync link is removed.",
+    "delete_message": "Files stay on both devices、only the sync link is removed.",
     "delete_title": "Remove sync pair?",
-    "empty_message": "Pick a folder and a device — changes you make are mirrored over your local network, end-to-end encrypted.",
+    "empty_message": "Pick a folder and a device、changes you make are mirrored over your local network, end-to-end encrypted.",
     "empty_title": "No sync pairs yet",
     "error_declined": "The other device declined",
     "error_invite_failed": "Couldn't reach the device. Check you're on the same network.",
@@ -702,7 +702,7 @@
     "title": "Folder Sync",
     "up_to_date": "Up to date",
     "via_cloud": "via cloud",
-    "warn_empty_scan": "The folder is empty or unreadable — 0 files scanned",
+    "warn_empty_scan": "The folder is empty or unreadable、0 files scanned",
     "working": "Syncing…"
   },
   "tv": {
@@ -784,11 +784,11 @@
     "inbox_files_title": "このメニューにはほかにも",
     "inbox_files_body": "フォルダ・送信者・日付でファイルを表示したり、ブラウザで開いたり、すべてのメディアを保存したりできます。",
     "inbox_web_title": "ブラウザで開く",
-    "inbox_web_body": "受信ファイルをどのPCからでも取得 — 同じネットワーク経由か、24時間有効のリンクで。",
+    "inbox_web_body": "受信ファイルをどのPCからでも取得、同じネットワーク経由か、24時間有効のリンクで。",
     "room_create_title": "ルームを作成",
     "room_create_body": "ローカルはWi-Fi内だけ、リモートはインターネット越しに。ルームの全員がファイルを共有できます。",
     "room_join_title": "コードで参加",
-    "room_join_body": "他のデバイスに表示された短いコードを入力 — ブラウザのbishare.app/roomsからでも。"
+    "room_join_body": "他のデバイスに表示された短いコードを入力、ブラウザのbishare.app/roomsからでも。"
   },
   "review": {
     "windows_ask": "BIShareは役に立っていますか？Microsoft Storeで評価すると、ほかの人が見つけやすくなります。",

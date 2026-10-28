@@ -102,9 +102,9 @@ class E2ECrypto {
   /// Visual fingerprint of a peer's base64 public key, e.g. "A1 B2 C3 …" (8 bytes).
   static Future<String> peerFingerprint(String base64Key) async {
     final decoded = _tryBase64(base64Key);
-    if (decoded == null) return '—';
+    if (decoded == null) return '-';
     final raw = normalizeRawKey(decoded);
-    if (raw == null) return '—';
+    if (raw == null) return '-';
     return _fingerprintOf(raw);
   }
 

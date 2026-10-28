@@ -22,7 +22,7 @@
     "apps_empty": "未找到应用",
     "apps_search": "搜索应用",
     "apps_split": "拆分 APK",
-    "apps_split_hint": "标有“拆分 APK”的应用会打包成一个包含全部分包的 .apks 文件发送。接收方需用 SAI 之类的 split APK 安装器安装——仅靠文件管理器无法安装。",
+    "apps_split_hint": "标有“拆分 APK”的应用会打包成一个包含全部分包的 .apks 文件发送。接收方需用 SAI 之类的 split APK 安装器安装，仅靠文件管理器无法安装。",
     "apps_subtitle": "以 APK 文件形式分享已安装的应用",
     "ask_device_files": "向 {alias} 请求文件",
     "auto_accept_on": "自动接受已开启",
@@ -363,7 +363,7 @@
       "other": "附近 {} 台设备 · 点击发送"
     },
     "pick_files": "选择要发送的文件",
-    "pick_to_share": "选择要分享的内容 — 直接离线发送。",
+    "pick_to_share": "选择要分享的内容，直接离线发送。",
     "receiving": "接收中",
     "searching": "搜索中",
     "send_n": {
@@ -656,17 +656,17 @@
     "show": "显示 BIShare"
   },
   "sync": {
-    "cloud_needs_pro": "Sync over the cloud needs Pro — LAN sync stays free",
+    "cloud_needs_pro": "Sync over the cloud needs Pro，LAN sync stays free",
     "cloud_off": "Cloud: OFF",
     "cloud_on": "Cloud: ON",
-    "conflicts_button": "{count} conflict(s) — resolve",
+    "conflicts_button": "{count} conflict(s)，resolve",
     "conflicts_empty_message": "Everything here agreed on a single version.",
     "conflicts_empty_title": "No conflicts",
     "conflicts_explain": "This file was edited on both devices. The newer version won; your version was preserved.",
     "conflicts_title": "Sync conflicts",
-    "delete_message": "Files stay on both devices — only the sync link is removed.",
+    "delete_message": "Files stay on both devices，only the sync link is removed.",
     "delete_title": "Remove sync pair?",
-    "empty_message": "Pick a folder and a device — changes you make are mirrored over your local network, end-to-end encrypted.",
+    "empty_message": "Pick a folder and a device，changes you make are mirrored over your local network, end-to-end encrypted.",
     "empty_title": "No sync pairs yet",
     "error_declined": "The other device declined",
     "error_invite_failed": "Couldn't reach the device. Check you're on the same network.",
@@ -702,7 +702,7 @@
     "title": "Folder Sync",
     "up_to_date": "Up to date",
     "via_cloud": "via cloud",
-    "warn_empty_scan": "The folder is empty or unreadable — 0 files scanned",
+    "warn_empty_scan": "The folder is empty or unreadable，0 files scanned",
     "working": "Syncing…"
   },
   "tv": {
@@ -784,11 +784,11 @@
     "inbox_files_title": "此菜单中还有更多",
     "inbox_files_body": "按文件夹、发送者或日期浏览文件，在浏览器中打开，或保存全部媒体。",
     "inbox_web_title": "在浏览器中打开",
-    "inbox_web_body": "在任何电脑上获取你收到的文件——通过局域网或 24 小时云链接。",
+    "inbox_web_body": "在任何电脑上获取你收到的文件，通过局域网或 24 小时云链接。",
     "room_create_title": "创建房间",
     "room_create_body": "本地房间不出你的 Wi-Fi；远程房间跨互联网。房间里的每个人都能分享文件。",
     "room_join_title": "用代码加入",
-    "room_join_body": "输入另一台设备上的短代码——或在浏览器打开 bishare.app/rooms。"
+    "room_join_body": "输入另一台设备上的短代码，或在浏览器打开 bishare.app/rooms。"
   },
   "review": {
     "windows_ask": "BIShare 对你有帮助吗？在 Microsoft Store 评分，能让更多人找到它。",

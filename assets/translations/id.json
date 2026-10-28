@@ -22,7 +22,7 @@
     "apps_empty": "Aplikasi tidak ditemukan",
     "apps_search": "Cari aplikasi",
     "apps_split": "APK Split",
-    "apps_split_hint": "Aplikasi bertanda “APK Split” dikirim sebagai satu file .apks berisi semua bagiannya. Penerima memasangnya dengan pemasang split APK seperti SAI — pengelola file saja tidak bisa.",
+    "apps_split_hint": "Aplikasi bertanda “APK Split” dikirim sebagai satu file .apks berisi semua bagiannya. Penerima memasangnya dengan pemasang split APK seperti SAI, pengelola file saja tidak bisa.",
     "apps_subtitle": "Bagikan aplikasi terinstal sebagai file APK",
     "ask_device_files": "Minta file dari {alias}",
     "auto_accept_on": "Terima otomatis aktif",
@@ -353,7 +353,7 @@
     "save_failed": "Tidak dapat menyimpan item ini",
     "saved": "Disimpan ke file diterima",
     "sync_active": "Menyinkron dengan perangkat terdekat",
-    "sync_paused": "Dijeda — tidak ada yang dibagikan",
+    "sync_paused": "Dijeda, tidak ada yang dibagikan",
     "title": "Papan klip",
     "you": "Anda"
   },
@@ -363,7 +363,7 @@
       "other": "{} perangkat terdekat · ketuk untuk mengirim"
     },
     "pick_files": "Pilih file untuk dikirim",
-    "pick_to_share": "Pilih apa yang ingin dibagikan — dikirim langsung, offline.",
+    "pick_to_share": "Pilih apa yang ingin dibagikan, dikirim langsung, offline.",
     "receiving": "Menerima",
     "searching": "Mencari",
     "send_n": {
@@ -475,7 +475,7 @@
     "title": "Ruangan",
     "uploading": "Mengunggah {label}…",
     "web_room_title": "Ruang browser",
-    "web_room_body": "Ruang ini dibuat di browser. File dikirim langsung antar-browser (P2P) — aplikasi belum bisa gabung. Buka bishare.app/rooms di browser untuk gabung, atau minta host membuat Cloud room agar bisa lewat aplikasi.",
+    "web_room_body": "Ruang ini dibuat di browser. File dikirim langsung antar-browser (P2P), aplikasi belum bisa gabung. Buka bishare.app/rooms di browser untuk gabung, atau minta host membuat Cloud room agar bisa lewat aplikasi.",
     "web_room_ok": "Mengerti",
     "web_room_open": "Buka di browser & gabung",
     "e2e_on": "Terenkripsi end-to-end",
@@ -513,7 +513,7 @@
     "browser_upload_unlimited": "Tanpa batas",
     "choose_folder": "Pilih folder…",
     "clipboard_cloud": "Clipboard lewat cloud",
-    "clipboard_cloud_soon": "Segera hadir — sinkron lintas jaringan berbeda",
+    "clipboard_cloud_soon": "Segera hadir, sinkron lintas jaringan berbeda",
     "clipboard_cloud_subtitle": "Teruskan papan klip antar perangkat di jaringan berbeda",
     "clipboard_history": "Riwayat papan klip",
     "clipboard_history_subtitle": "Item tersinkron terbaru",
@@ -656,17 +656,17 @@
     "show": "Tampilkan BIShare"
   },
   "sync": {
-    "cloud_needs_pro": "Sync lewat cloud butuh Pro — sync LAN tetap gratis",
+    "cloud_needs_pro": "Sync lewat cloud butuh Pro, sync LAN tetap gratis",
     "cloud_off": "Cloud: MATI",
     "cloud_on": "Cloud: AKTIF",
-    "conflicts_button": "{count} konflik — selesaikan",
+    "conflicts_button": "{count} konflik, selesaikan",
     "conflicts_empty_message": "Semua file di sini sepakat pada satu versi.",
     "conflicts_empty_title": "Tidak ada konflik",
     "conflicts_explain": "File ini diedit di dua perangkat. Versi lebih baru menang; versimu tetap disimpan.",
     "conflicts_title": "Konflik sync",
-    "delete_message": "File tetap ada di kedua perangkat — hanya tautan sync yang dihapus.",
+    "delete_message": "File tetap ada di kedua perangkat, hanya tautan sync yang dihapus.",
     "delete_title": "Hapus pasangan sync?",
-    "empty_message": "Pilih folder dan perangkat — perubahanmu dicerminkan lewat jaringan lokal, terenkripsi ujung-ke-ujung.",
+    "empty_message": "Pilih folder dan perangkat, perubahanmu dicerminkan lewat jaringan lokal, terenkripsi ujung-ke-ujung.",
     "empty_title": "Belum ada pasangan sync",
     "error_declined": "Perangkat lain menolak",
     "error_invite_failed": "Tidak bisa menghubungi perangkat. Pastikan berada di jaringan yang sama.",
@@ -702,7 +702,7 @@
     "title": "Folder Sync",
     "up_to_date": "Terbaru",
     "via_cloud": "via cloud",
-    "warn_empty_scan": "Folder kosong atau tidak terbaca — 0 file dipindai",
+    "warn_empty_scan": "Folder kosong atau tidak terbaca, 0 file dipindai",
     "working": "Menyinkronkan…"
   },
   "tv": {
@@ -784,11 +784,11 @@
     "inbox_files_title": "Lainnya di menu ini",
     "inbox_files_body": "Telusuri file per folder, pengirim, atau tanggal, buka dari browser, atau simpan semua media.",
     "inbox_web_title": "Buka dari browser",
-    "inbox_web_body": "Akses file yang diterima dari komputer mana pun — lewat jaringan atau tautan cloud 24 jam.",
+    "inbox_web_body": "Akses file yang diterima dari komputer mana pun, lewat jaringan atau tautan cloud 24 jam.",
     "room_create_title": "Buat room",
     "room_create_body": "Local tetap di Wi-Fi Anda; Remote lintas internet. Semua anggota room bisa berbagi file.",
     "room_join_title": "Gabung dengan kode",
-    "room_join_body": "Masukkan kode singkat dari perangkat lain — atau dari bishare.app/rooms di browser."
+    "room_join_body": "Masukkan kode singkat dari perangkat lain, atau dari bishare.app/rooms di browser."
   },
   "review": {
     "windows_ask": "BIShare membantu? Rating di Microsoft Store membantu orang lain menemukannya.",

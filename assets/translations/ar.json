@@ -22,7 +22,7 @@
     "apps_empty": "لم يتم العثور على تطبيقات",
     "apps_search": "البحث عن التطبيقات",
     "apps_split": "APK مقسّم",
-    "apps_split_hint": "التطبيقات الموسومة بـ «APK مقسّم» تُرسل كملف .apks واحد يضم كل أجزائها. يثبّته المستلم بمثبّت split APK مثل SAI — فمدير الملفات وحده لا يستطيع.",
+    "apps_split_hint": "التطبيقات الموسومة بـ «APK مقسّم» تُرسل كملف .apks واحد يضم كل أجزائها. يثبّته المستلم بمثبّت split APK مثل SAI، فمدير الملفات وحده لا يستطيع.",
     "apps_subtitle": "شارك التطبيقات المثبتة كملفات APK",
     "ask_device_files": "اطلب ملفات من {alias}",
     "auto_accept_on": "القبول التلقائي مفعل",
@@ -365,7 +365,7 @@
     "save_failed": "تعذّر حفظ هذا العنصر",
     "saved": "تم الحفظ في الملفات المُستلمة",
     "sync_active": "جارٍ المزامنة مع الأجهزة القريبة",
-    "sync_paused": "متوقف مؤقتًا — لا تتم مشاركة أي شيء",
+    "sync_paused": "متوقف مؤقتًا، لا تتم مشاركة أي شيء",
     "title": "الحافظة",
     "you": "أنت"
   },
@@ -375,7 +375,7 @@
       "other": "{} أجهزة قريبة · اضغط للإرسال"
     },
     "pick_files": "اختر الملفات للإرسال",
-    "pick_to_share": "اختر ما تريد مشاركته — يُرسل مباشرة وبدون إنترنت.",
+    "pick_to_share": "اختر ما تريد مشاركته، يُرسل مباشرة وبدون إنترنت.",
     "receiving": "جاري الاستلام",
     "searching": "جاري البحث",
     "send_n": {
@@ -525,7 +525,7 @@
     "browser_upload_unlimited": "غير محدود",
     "choose_folder": "اختر مجلد…",
     "clipboard_cloud": "الحافظة عبر السحابة",
-    "clipboard_cloud_soon": "قريبًا — المزامنة عبر شبكات مختلفة",
+    "clipboard_cloud_soon": "قريبًا، المزامنة عبر شبكات مختلفة",
     "clipboard_cloud_subtitle": "نقل الحافظة بين الأجهزة على شبكات مختلفة",
     "clipboard_history": "سجل الحافظة",
     "clipboard_history_subtitle": "العناصر المتزامنة الأخيرة",
@@ -668,17 +668,17 @@
     "show": "إظهار BIShare"
   },
   "sync": {
-    "cloud_needs_pro": "Sync over the cloud needs Pro — LAN sync stays free",
+    "cloud_needs_pro": "Sync over the cloud needs Pro، LAN sync stays free",
     "cloud_off": "Cloud: OFF",
     "cloud_on": "Cloud: ON",
-    "conflicts_button": "{count} conflict(s) — resolve",
+    "conflicts_button": "{count} conflict(s)، resolve",
     "conflicts_empty_message": "Everything here agreed on a single version.",
     "conflicts_empty_title": "No conflicts",
     "conflicts_explain": "This file was edited on both devices. The newer version won; your version was preserved.",
     "conflicts_title": "Sync conflicts",
-    "delete_message": "Files stay on both devices — only the sync link is removed.",
+    "delete_message": "Files stay on both devices، only the sync link is removed.",
     "delete_title": "Remove sync pair?",
-    "empty_message": "Pick a folder and a device — changes you make are mirrored over your local network, end-to-end encrypted.",
+    "empty_message": "Pick a folder and a device، changes you make are mirrored over your local network, end-to-end encrypted.",
     "empty_title": "No sync pairs yet",
     "error_declined": "The other device declined",
     "error_invite_failed": "Couldn't reach the device. Check you're on the same network.",
@@ -714,7 +714,7 @@
     "title": "Folder Sync",
     "up_to_date": "Up to date",
     "via_cloud": "via cloud",
-    "warn_empty_scan": "The folder is empty or unreadable — 0 files scanned",
+    "warn_empty_scan": "The folder is empty or unreadable، 0 files scanned",
     "working": "Syncing…"
   },
   "tv": {
@@ -796,11 +796,11 @@
     "inbox_files_title": "المزيد في هذه القائمة",
     "inbox_files_body": "تصفّح ملفاتك حسب المجلد أو المرسل أو التاريخ، أو افتحها من متصفح، أو احفظ كل الوسائط.",
     "inbox_web_title": "افتح من المتصفح",
-    "inbox_web_body": "احصل على ملفاتك المستلمة على أي حاسوب — عبر شبكتك أو برابط سحابي لمدة 24 ساعة.",
+    "inbox_web_body": "احصل على ملفاتك المستلمة على أي حاسوب، عبر شبكتك أو برابط سحابي لمدة 24 ساعة.",
     "room_create_title": "أنشئ غرفة",
     "room_create_body": "المحلية تبقى على شبكتك؛ والبعيدة تعمل عبر الإنترنت. يمكن للجميع في الغرفة مشاركة الملفات.",
     "room_join_title": "انضم برمز",
-    "room_join_body": "أدخل الرمز القصير من جهاز آخر — أو من bishare.app/rooms في المتصفح."
+    "room_join_body": "أدخل الرمز القصير من جهاز آخر، أو من bishare.app/rooms في المتصفح."
   },
   "review": {
     "windows_ask": "هل BIShare مفيد لك؟ تقييمك في Microsoft Store يساعد الآخرين على العثور عليه.",

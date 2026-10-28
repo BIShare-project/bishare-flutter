@@ -353,7 +353,7 @@
     "save_failed": "Element konnte nicht gespeichert werden",
     "saved": "In empfangenen Dateien gespeichert",
     "sync_active": "Synchronisierung mit Geräten in der Nähe",
-    "sync_paused": "Pausiert — nichts wird geteilt",
+    "sync_paused": "Pausiert, nichts wird geteilt",
     "title": "Zwischenablage",
     "you": "Sie"
   },
@@ -475,7 +475,7 @@
     "title": "Räume",
     "uploading": "Lade {label} hoch…",
     "web_room_title": "Browser-Raum",
-    "web_room_body": "Dieser Raum wurde in einem Browser erstellt. Dateien gehen direkt von Browser zu Browser (P2P) — die App kann noch nicht beitreten. Öffne bishare.app/rooms im Browser, oder bitte den Host, einen Cloud-Raum zu erstellen.",
+    "web_room_body": "Dieser Raum wurde in einem Browser erstellt. Dateien gehen direkt von Browser zu Browser (P2P), die App kann noch nicht beitreten. Öffne bishare.app/rooms im Browser, oder bitte den Host, einen Cloud-Raum zu erstellen.",
     "web_room_ok": "Verstanden",
     "web_room_open": "Im Browser öffnen & beitreten",
     "e2e_on": "Ende-zu-Ende verschlüsselt",
@@ -513,7 +513,7 @@
     "browser_upload_unlimited": "Unbegrenzt",
     "choose_folder": "Ordner auswählen…",
     "clipboard_cloud": "Zwischenablage über die Cloud",
-    "clipboard_cloud_soon": "Demnächst verfügbar — Synchronisierung über verschiedene Netzwerke",
+    "clipboard_cloud_soon": "Demnächst verfügbar, Synchronisierung über verschiedene Netzwerke",
     "clipboard_cloud_subtitle": "Übertragen Sie Ihre Zwischenablage zwischen Geräten in verschiedenen Netzwerken",
     "clipboard_history": "Verlauf der Zwischenablage",
     "clipboard_history_subtitle": "Kürzlich synchronisierte Elemente",
@@ -656,17 +656,17 @@
     "show": "BIShare anzeigen"
   },
   "sync": {
-    "cloud_needs_pro": "Sync over the cloud needs Pro — LAN sync stays free",
+    "cloud_needs_pro": "Sync over the cloud needs Pro, LAN sync stays free",
     "cloud_off": "Cloud: OFF",
     "cloud_on": "Cloud: ON",
-    "conflicts_button": "{count} conflict(s) — resolve",
+    "conflicts_button": "{count} conflict(s), resolve",
     "conflicts_empty_message": "Everything here agreed on a single version.",
     "conflicts_empty_title": "No conflicts",
     "conflicts_explain": "This file was edited on both devices. The newer version won; your version was preserved.",
     "conflicts_title": "Sync conflicts",
-    "delete_message": "Files stay on both devices — only the sync link is removed.",
+    "delete_message": "Files stay on both devices, only the sync link is removed.",
     "delete_title": "Remove sync pair?",
-    "empty_message": "Pick a folder and a device — changes you make are mirrored over your local network, end-to-end encrypted.",
+    "empty_message": "Pick a folder and a device, changes you make are mirrored over your local network, end-to-end encrypted.",
     "empty_title": "No sync pairs yet",
     "error_declined": "The other device declined",
     "error_invite_failed": "Couldn't reach the device. Check you're on the same network.",
@@ -702,7 +702,7 @@
     "title": "Folder Sync",
     "up_to_date": "Up to date",
     "via_cloud": "via cloud",
-    "warn_empty_scan": "The folder is empty or unreadable — 0 files scanned",
+    "warn_empty_scan": "The folder is empty or unreadable, 0 files scanned",
     "working": "Syncing…"
   },
   "tv": {
@@ -784,11 +784,11 @@
     "inbox_files_title": "Mehr in diesem Menü",
     "inbox_files_body": "Durchsuche deine Dateien nach Ordner, Absender oder Datum, öffne sie im Browser oder speichere alle Medien.",
     "inbox_web_title": "Im Browser öffnen",
-    "inbox_web_body": "Hole empfangene Dateien auf jeden Rechner — über dein Netzwerk oder einen 24-Stunden-Link.",
+    "inbox_web_body": "Hole empfangene Dateien auf jeden Rechner, über dein Netzwerk oder einen 24-Stunden-Link.",
     "room_create_title": "Raum erstellen",
     "room_create_body": "Lokal bleibt in deinem WLAN; Remote geht übers Internet. Alle im Raum können Dateien teilen.",
     "room_join_title": "Mit Code beitreten",
-    "room_join_body": "Gib den kurzen Code eines anderen Geräts ein — oder über bishare.app/rooms im Browser."
+    "room_join_body": "Gib den kurzen Code eines anderen Geräts ein, oder über bishare.app/rooms im Browser."
   },
   "review": {
     "windows_ask": "Ist BIShare nützlich? Eine Bewertung im Microsoft Store hilft anderen, die App zu finden.",

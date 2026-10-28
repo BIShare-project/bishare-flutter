@@ -22,7 +22,7 @@
     "apps_empty": "Aucune appli trouvée",
     "apps_search": "Rechercher des applis",
     "apps_split": "APK fractionné",
-    "apps_split_hint": "Les apps marquées « APK fractionné » sont envoyées en un seul fichier .apks contenant toutes leurs parties. Le destinataire l’installe avec un installateur de split APK comme SAI — un gestionnaire de fichiers seul n’y arrive pas.",
+    "apps_split_hint": "Les apps marquées « APK fractionné » sont envoyées en un seul fichier .apks contenant toutes leurs parties. Le destinataire l’installe avec un installateur de split APK comme SAI, un gestionnaire de fichiers seul n’y arrive pas.",
     "apps_subtitle": "Partager les applis installées en fichiers APK",
     "ask_device_files": "Demander des fichiers à {alias}",
     "auto_accept_on": "Acceptation automatique activée",
@@ -353,7 +353,7 @@
     "save_failed": "Impossible d’enregistrer cet élément",
     "saved": "Enregistré dans les fichiers reçus",
     "sync_active": "Synchronisation avec les appareils à proximité",
-    "sync_paused": "En pause — rien n’est partagé",
+    "sync_paused": "En pause, rien n’est partagé",
     "title": "Presse-papiers",
     "you": "Vous"
   },
@@ -363,7 +363,7 @@
       "other": "{} appareils à proximité · appuyez pour envoyer"
     },
     "pick_files": "Choisir des fichiers à envoyer",
-    "pick_to_share": "Choisissez ce que vous voulez partager — envoyé directement, hors ligne.",
+    "pick_to_share": "Choisissez ce que vous voulez partager, envoyé directement, hors ligne.",
     "receiving": "Réception",
     "searching": "Recherche",
     "send_n": {
@@ -513,7 +513,7 @@
     "browser_upload_unlimited": "Illimitée",
     "choose_folder": "Choisir un dossier…",
     "clipboard_cloud": "Presse-papiers via le cloud",
-    "clipboard_cloud_soon": "Bientôt disponible — synchronisation entre réseaux différents",
+    "clipboard_cloud_soon": "Bientôt disponible, synchronisation entre réseaux différents",
     "clipboard_cloud_subtitle": "Relayez votre presse-papiers entre appareils sur des réseaux différents",
     "clipboard_history": "Historique du presse-papiers",
     "clipboard_history_subtitle": "Éléments synchronisés récemment",
@@ -656,17 +656,17 @@
     "show": "Afficher BIShare"
   },
   "sync": {
-    "cloud_needs_pro": "Sync over the cloud needs Pro — LAN sync stays free",
+    "cloud_needs_pro": "Sync over the cloud needs Pro, LAN sync stays free",
     "cloud_off": "Cloud: OFF",
     "cloud_on": "Cloud: ON",
-    "conflicts_button": "{count} conflict(s) — resolve",
+    "conflicts_button": "{count} conflict(s), resolve",
     "conflicts_empty_message": "Everything here agreed on a single version.",
     "conflicts_empty_title": "No conflicts",
     "conflicts_explain": "This file was edited on both devices. The newer version won; your version was preserved.",
     "conflicts_title": "Sync conflicts",
-    "delete_message": "Files stay on both devices — only the sync link is removed.",
+    "delete_message": "Files stay on both devices, only the sync link is removed.",
     "delete_title": "Remove sync pair?",
-    "empty_message": "Pick a folder and a device — changes you make are mirrored over your local network, end-to-end encrypted.",
+    "empty_message": "Pick a folder and a device, changes you make are mirrored over your local network, end-to-end encrypted.",
     "empty_title": "No sync pairs yet",
     "error_declined": "The other device declined",
     "error_invite_failed": "Couldn't reach the device. Check you're on the same network.",
@@ -702,7 +702,7 @@
     "title": "Folder Sync",
     "up_to_date": "Up to date",
     "via_cloud": "via cloud",
-    "warn_empty_scan": "The folder is empty or unreadable — 0 files scanned",
+    "warn_empty_scan": "The folder is empty or unreadable, 0 files scanned",
     "working": "Syncing…"
   },
   "tv": {
@@ -784,11 +784,11 @@
     "inbox_files_title": "Plus dans ce menu",
     "inbox_files_body": "Parcourez vos fichiers par dossier, expéditeur ou date, ouvrez-les depuis un navigateur ou enregistrez tous les médias.",
     "inbox_web_title": "Ouvrir depuis un navigateur",
-    "inbox_web_body": "Récupérez vos fichiers reçus sur n'importe quel ordinateur — via votre réseau ou un lien cloud de 24 h.",
+    "inbox_web_body": "Récupérez vos fichiers reçus sur n'importe quel ordinateur, via votre réseau ou un lien cloud de 24 h.",
     "room_create_title": "Créer un salon",
     "room_create_body": "Local reste sur votre Wi-Fi ; Distant passe par internet. Tous les membres peuvent partager des fichiers.",
     "room_join_title": "Rejoindre avec un code",
-    "room_join_body": "Saisissez le code court d'un autre appareil — ou depuis bishare.app/rooms dans un navigateur."
+    "room_join_body": "Saisissez le code court d'un autre appareil, ou depuis bishare.app/rooms dans un navigateur."
   },
   "review": {
     "windows_ask": "BIShare vous est utile ? Une note dans le Microsoft Store aide d'autres personnes à le trouver.",

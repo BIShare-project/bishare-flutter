@@ -22,7 +22,7 @@
     "apps_empty": "Nenhum app encontrado",
     "apps_search": "Buscar apps",
     "apps_split": "APK dividido",
-    "apps_split_hint": "Apps marcados como “APK dividido” são enviados como um único arquivo .apks com todas as partes. Quem recebe instala com um instalador de split APK como o SAI — um gerenciador de arquivos sozinho não consegue.",
+    "apps_split_hint": "Apps marcados como “APK dividido” são enviados como um único arquivo .apks com todas as partes. Quem recebe instala com um instalador de split APK como o SAI, um gerenciador de arquivos sozinho não consegue.",
     "apps_subtitle": "Compartilhe apps instalados como arquivos APK",
     "ask_device_files": "Pedir arquivos a {alias}",
     "auto_accept_on": "Aceitação automática ativada",
@@ -353,7 +353,7 @@
     "save_failed": "Não foi possível salvar este item",
     "saved": "Salvo nos arquivos recebidos",
     "sync_active": "Sincronizando com dispositivos próximos",
-    "sync_paused": "Pausado — nada está sendo compartilhado",
+    "sync_paused": "Pausado, nada está sendo compartilhado",
     "title": "Área de transferência",
     "you": "Você"
   },
@@ -363,7 +363,7 @@
       "other": "{} dispositivos próximos · toque para enviar"
     },
     "pick_files": "Escolha arquivos para enviar",
-    "pick_to_share": "Escolha o que compartilhar — enviado direto, offline.",
+    "pick_to_share": "Escolha o que compartilhar, enviado direto, offline.",
     "receiving": "Recebendo",
     "searching": "Procurando",
     "send_n": {
@@ -513,7 +513,7 @@
     "browser_upload_unlimited": "Ilimitado",
     "choose_folder": "Escolher pasta…",
     "clipboard_cloud": "Área de transferência pela nuvem",
-    "clipboard_cloud_soon": "Em breve — sincronize entre redes diferentes",
+    "clipboard_cloud_soon": "Em breve, sincronize entre redes diferentes",
     "clipboard_cloud_subtitle": "Transmita sua área de transferência entre dispositivos em redes diferentes",
     "clipboard_history": "Histórico da área de transferência",
     "clipboard_history_subtitle": "Itens sincronizados recentemente",
@@ -656,17 +656,17 @@
     "show": "Mostrar BIShare"
   },
   "sync": {
-    "cloud_needs_pro": "Sync over the cloud needs Pro — LAN sync stays free",
+    "cloud_needs_pro": "Sync over the cloud needs Pro, LAN sync stays free",
     "cloud_off": "Cloud: OFF",
     "cloud_on": "Cloud: ON",
-    "conflicts_button": "{count} conflict(s) — resolve",
+    "conflicts_button": "{count} conflict(s), resolve",
     "conflicts_empty_message": "Everything here agreed on a single version.",
     "conflicts_empty_title": "No conflicts",
     "conflicts_explain": "This file was edited on both devices. The newer version won; your version was preserved.",
     "conflicts_title": "Sync conflicts",
-    "delete_message": "Files stay on both devices — only the sync link is removed.",
+    "delete_message": "Files stay on both devices, only the sync link is removed.",
     "delete_title": "Remove sync pair?",
-    "empty_message": "Pick a folder and a device — changes you make are mirrored over your local network, end-to-end encrypted.",
+    "empty_message": "Pick a folder and a device, changes you make are mirrored over your local network, end-to-end encrypted.",
     "empty_title": "No sync pairs yet",
     "error_declined": "The other device declined",
     "error_invite_failed": "Couldn't reach the device. Check you're on the same network.",
@@ -702,7 +702,7 @@
     "title": "Folder Sync",
     "up_to_date": "Up to date",
     "via_cloud": "via cloud",
-    "warn_empty_scan": "The folder is empty or unreadable — 0 files scanned",
+    "warn_empty_scan": "The folder is empty or unreadable, 0 files scanned",
     "working": "Syncing…"
   },
   "tv": {
@@ -784,11 +784,11 @@
     "inbox_files_title": "Mais neste menu",
     "inbox_files_body": "Navegue pelos arquivos por pasta, remetente ou data, abra pelo navegador ou salve todas as mídias.",
     "inbox_web_title": "Abra no navegador",
-    "inbox_web_body": "Acesse seus arquivos recebidos de qualquer computador — pela sua rede ou com um link de 24 horas.",
+    "inbox_web_body": "Acesse seus arquivos recebidos de qualquer computador, pela sua rede ou com um link de 24 horas.",
     "room_create_title": "Crie uma sala",
     "room_create_body": "Local fica no seu Wi-Fi; Remota atravessa a internet. Todos na sala podem compartilhar arquivos.",
     "room_join_title": "Entre com um código",
-    "room_join_body": "Digite o código curto de outro aparelho — ou de bishare.app/rooms no navegador."
+    "room_join_body": "Digite o código curto de outro aparelho, ou de bishare.app/rooms no navegador."
   },
   "review": {
     "windows_ask": "O BIShare está sendo útil? Uma avaliação na Microsoft Store ajuda outras pessoas a encontrá-lo.",

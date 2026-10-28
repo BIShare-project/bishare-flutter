@@ -22,7 +22,7 @@
     "apps_empty": "No apps found",
     "apps_search": "Search apps",
     "apps_split": "Split APK",
-    "apps_split_hint": "Apps marked Split APK are sent as one .apks file holding every part. The receiver installs it with a split-APK installer such as SAI — a file manager alone cannot.",
+    "apps_split_hint": "Apps marked Split APK are sent as one .apks file holding every part. The receiver installs it with a split-APK installer such as SAI; a file manager alone cannot.",
     "apps_subtitle": "Share installed apps as APK files",
     "ask_device_files": "Ask {alias} for files",
     "auto_accept_on": "Auto-accept is on",
@@ -353,7 +353,7 @@
     "save_failed": "Couldn't save this item",
     "saved": "Saved to received files",
     "sync_active": "Syncing with nearby devices",
-    "sync_paused": "Paused — nothing is shared",
+    "sync_paused": "Paused, nothing is shared",
     "title": "Clipboard",
     "you": "You"
   },
@@ -363,7 +363,7 @@
       "other": "{} devices nearby · tap to send"
     },
     "pick_files": "Pick files to send",
-    "pick_to_share": "Pick what to share — sent directly, offline.",
+    "pick_to_share": "Pick what to share. It goes directly, offline.",
     "receiving": "Receiving",
     "searching": "Searching",
     "send_n": {
@@ -475,7 +475,7 @@
     "title": "Rooms",
     "uploading": "Uploading {label}…",
     "web_room_title": "Browser room",
-    "web_room_body": "This room was created in a browser. Files go directly browser-to-browser (P2P), which the app can't join yet. Open bishare.app/rooms in a browser to join — or ask the host to make a Cloud room to use the app.",
+    "web_room_body": "This room was created in a browser. Files go directly browser-to-browser (P2P), which the app can't join yet. Open bishare.app/rooms in a browser to join, or ask the host to make a Cloud room to use the app.",
     "web_room_ok": "Got it",
     "web_room_open": "Open in browser & join",
     "e2e_on": "End-to-end encrypted",
@@ -513,7 +513,7 @@
     "browser_upload_unlimited": "Unlimited",
     "choose_folder": "Choose folder…",
     "clipboard_cloud": "Clipboard via cloud",
-    "clipboard_cloud_soon": "Coming soon — sync across different networks",
+    "clipboard_cloud_soon": "Coming soon: sync across different networks",
     "clipboard_cloud_subtitle": "Relay your clipboard between devices on different networks",
     "clipboard_history": "Clipboard history",
     "clipboard_history_subtitle": "Recent synced items",
@@ -656,17 +656,17 @@
     "show": "Show BIShare"
   },
   "sync": {
-    "cloud_needs_pro": "Sync over the cloud needs Pro — LAN sync stays free",
+    "cloud_needs_pro": "Sync over the cloud needs Pro. LAN sync stays free.",
     "cloud_off": "Cloud: OFF",
     "cloud_on": "Cloud: ON",
-    "conflicts_button": "{count} conflict(s) — resolve",
+    "conflicts_button": "{count} conflict(s): resolve",
     "conflicts_empty_message": "Everything here agreed on a single version.",
     "conflicts_empty_title": "No conflicts",
     "conflicts_explain": "This file was edited on both devices. The newer version won; your version was preserved.",
     "conflicts_title": "Sync conflicts",
-    "delete_message": "Files stay on both devices — only the sync link is removed.",
+    "delete_message": "Files stay on both devices. Only the sync link is removed.",
     "delete_title": "Remove sync pair?",
-    "empty_message": "Pick a folder and a device — changes you make are mirrored over your local network, end-to-end encrypted.",
+    "empty_message": "Pick a folder and a device. Changes you make are mirrored over your local network, end-to-end encrypted.",
     "empty_title": "No sync pairs yet",
     "error_declined": "The other device declined",
     "error_invite_failed": "Couldn't reach the device. Check you're on the same network.",
@@ -702,7 +702,7 @@
     "title": "Folder Sync",
     "up_to_date": "Up to date",
     "via_cloud": "via cloud",
-    "warn_empty_scan": "The folder is empty or unreadable — 0 files scanned",
+    "warn_empty_scan": "The folder is empty or unreadable: 0 files scanned",
     "working": "Syncing…"
   },
   "tv": {
@@ -784,11 +784,11 @@
     "inbox_files_title": "More in this menu",
     "inbox_files_body": "Browse your files by folder, sender or date, open them from a browser, or save all media.",
     "inbox_web_title": "Open from a browser",
-    "inbox_web_body": "Get your received files on any computer — over your network or with a 24-hour cloud link.",
+    "inbox_web_body": "Get your received files on any computer, over your network or with a 24-hour cloud link.",
     "room_create_title": "Start a room",
     "room_create_body": "Local stays on your Wi-Fi; Remote works across the internet. Everyone in the room can share files.",
     "room_join_title": "Join with a code",
-    "room_join_body": "Enter the short code from another device — or from bishare.app/rooms in a browser."
+    "room_join_body": "Enter the short code from another device, or from bishare.app/rooms in a browser."
   },
   "review": {
     "windows_ask": "Finding BIShare useful? A rating in the Microsoft Store helps other people find it.",
