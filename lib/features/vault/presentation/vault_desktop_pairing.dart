@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../core/di/locator.dart';
 import '../../../core/ui/app_ui.dart';
@@ -149,11 +148,11 @@ class _VaultDesktopPairingPanelState extends State<VaultDesktopPairingPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final muted = TextStyle(
       fontSize: 13,
       height: 1.4,
-      color: cs.mutedForeground,
+      color: t.text2,
     );
     final p = _pairing;
     if (_error != null) {
@@ -216,7 +215,7 @@ class _VaultDesktopPairingPanelState extends State<VaultDesktopPairingPanel> {
             fontSize: 24,
             fontWeight: FontWeight.w700,
             letterSpacing: 3,
-            color: _expired ? cs.mutedForeground : cs.foreground,
+            color: _expired ? t.text2 : t.text,
           ),
         ),
         const SizedBox(height: 16),
@@ -240,7 +239,7 @@ class _VaultDesktopPairingPanelState extends State<VaultDesktopPairingPanel> {
                 dimension: 14,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: cs.mutedForeground,
+                  color: t.text2,
                 ),
               ),
               const SizedBox(width: 8),
@@ -260,11 +259,11 @@ class _Command extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
       decoration: BoxDecoration(
-        color: cs.muted,
+        color: t.sunken,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -275,7 +274,7 @@ class _Command extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 12,
-                color: cs.foreground,
+                color: t.text,
               ),
             ),
           ),

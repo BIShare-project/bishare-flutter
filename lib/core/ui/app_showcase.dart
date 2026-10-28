@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
+import '../theme/app_tokens.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:showcaseview/showcaseview.dart';
 
@@ -64,7 +64,7 @@ class AppShowcase extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Showcase(
       key: showcaseKey,
       scope: kShowcaseScope,
@@ -73,14 +73,14 @@ class AppShowcase extends StatelessWidget {
       titleTextStyle: TextStyle(
         fontSize: 15,
         fontWeight: FontWeight.w700,
-        color: cs.foreground,
+        color: t.text,
       ),
       descTextStyle: TextStyle(
         fontSize: 13,
         height: 1.35,
-        color: cs.mutedForeground,
+        color: t.text2,
       ),
-      tooltipBackgroundColor: cs.card,
+      tooltipBackgroundColor: t.surface,
       tooltipBorderRadius: BorderRadius.circular(14),
       tooltipPadding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       targetBorderRadius: BorderRadius.circular(targetRadius),
