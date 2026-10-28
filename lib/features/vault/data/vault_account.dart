@@ -383,6 +383,62 @@ class VaultAccount extends ChangeNotifier {
     }
     notifyListeners();
     await _nameThisDevice();
+    unawaited(_pruneDevices());
+  }
+
+  /// How long a device may stay unseen before the app removes it.
+  static const staleDevice = Duration(days: 30);
+
+  bool _pruned = false;
+
+  /// Removes devices left behind, once per run (owner 2026-10-28: "hapus
+  /// saja langsung ketika perangkat tidak aktif atau ada duplicate"): any
+  /// not seen for [staleDevice], and the earlier installs of this phone,
+  /// those with its name not seen since it was added. The server lets both
+  /// go without a fresh sign-in (VAULT-SPEC "Removing a device"); a device in
+  /// use is never touched, and anything the server refuses stays.
+  Future<void> _pruneDevices() async {
+    if (_pruned || status != VaultStatus.ready) return;
+    _pruned = true;
+    final vaultId = _vaultId;
+    if (vaultId == null) return;
+    final List<VaultDeviceView> all;
+    try {
+      all = await devices();
+    } on Object {
+      return;
+    }
+    final me = all.where((d) => d.thisDevice).firstOrNull;
+    if (me == null) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final gone = [
+      for (final d in all)
+        if (!d.thisDevice && !d.pending && leftBehind(d, me, now)) d.id,
+    ];
+    var removed = false;
+    for (final id in gone) {
+      try {
+        await _api.removeDevice(vaultId, id);
+        removed = true;
+      } on Object catch (e) {
+        debugPrint('[vault] prune $id: $e');
+      }
+    }
+    if (!removed) return;
+    try {
+      _info = await _api.info(vaultId);
+      notifyListeners();
+    } on Object {
+      // The list refreshes at the next look.
+    }
+  }
+
+  @visibleForTesting
+  static bool leftBehind(VaultDeviceView d, VaultDeviceView me, int now) {
+    final seen = d.lastSeenAt ?? d.addedAt;
+    if (now - seen >= staleDevice.inMilliseconds) return true;
+    // The same name, not seen since this install joined: this phone before.
+    return !me.web && d.name != null && d.name == me.name && seen < me.addedAt;
   }
 
   /// While a screen shows the storage: the server's count ([usedBytes], what

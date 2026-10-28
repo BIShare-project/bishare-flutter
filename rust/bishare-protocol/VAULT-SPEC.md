@@ -260,6 +260,13 @@ sign-in in the body (`provider`, `idToken`); without one the server answers
 403 `VAULT_SIGNIN_REQUIRED`. So a stolen browser can never remove the phones
 and computers that are able to remove it.
 
+Left-behind `app` devices go without that sign-in (added 2026-10-28): one not
+seen for 30 days (its last request, else when it was added), and, asked by an
+`app` device, one not seen since the asking device was added (the earlier
+install of the same phone after a reinstall). The apps remove both by
+themselves when they read the device list. A device in use still needs the
+fresh sign-in, and a `pending` device is never stale.
+
 ## Links from Drive (added 2026-10-22)
 
 A file, or a folder with the files under it, that anyone with the link opens
