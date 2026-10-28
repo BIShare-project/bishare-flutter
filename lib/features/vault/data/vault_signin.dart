@@ -62,6 +62,11 @@ class VaultSignin {
   static bool get appleAvailable =>
       (Platform.isIOS || Platform.isMacOS) && !byApproval;
 
+  /// A Mac offers both: approval by a phone first (no browser sign-in to get
+  /// through), then Apple and Google (owner 2026-10-28).
+  static bool get pairingOffered =>
+      byApproval || (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS);
+
   /// Windows and Linux: no Apple or Google sign-in. The computer shows a
   /// code and a device of the Drive approves it, as for a browser. Read from
   /// defaultTargetPlatform so the store screenshots can draw these screens

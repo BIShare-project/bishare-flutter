@@ -784,9 +784,11 @@ class VaultAccount extends ChangeNotifier {
     final boxPub = _b64(hand.public);
     var name = (_deviceName?.call() ?? '').trim();
     if (name.isEmpty) {
-      name = defaultTargetPlatform == TargetPlatform.windows
-          ? 'Windows'
-          : 'Linux';
+      name = switch (defaultTargetPlatform) {
+        TargetPlatform.windows => 'Windows',
+        TargetPlatform.macOS => 'Mac',
+        _ => 'Linux',
+      };
     }
     if (name.length > 80) name = name.substring(0, 80);
     final slot = await _api.openDesktopPair(

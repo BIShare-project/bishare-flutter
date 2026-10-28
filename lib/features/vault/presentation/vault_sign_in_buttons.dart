@@ -75,6 +75,18 @@ class _VaultSignInButtonsState extends State<VaultSignInButtons> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // A Mac: connect by scanning with a phone of the Drive, the quick
+        // way; signing in with Apple or Google stays below.
+        if (VaultSignin.pairingOffered) ...[
+          AppButton(
+            label: 'vault.pair_connect'.tr(),
+            icon: AppIcons.qrShare,
+            size: AppButtonSize.large,
+            fullWidth: true,
+            onPressed: () => unawaited(showVaultDesktopPairing(context)),
+          ),
+          const SizedBox(height: 4),
+        ],
         if (VaultSignin.googleAvailable)
           Padding(
             padding: const EdgeInsets.only(top: 8),
