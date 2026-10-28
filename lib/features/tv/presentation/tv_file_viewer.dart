@@ -4,14 +4,19 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../core/storage/app_database.dart';
-import 'tv_received_grid.dart' show isImageRecord;
+import '../../../core/storage/app_database.dart';
+import '../../../core/ui/app_ui.dart';
+import 'tv_shell.dart' show isImageRecord, tvFileIcon;
 
 /// Full-screen viewer for a received file on the big screen. The D-pad
 /// left/right pages through the received items; Back (or Esc) closes. Images
-/// fill the screen; other file types show a centered card.
+/// fill the screen; other file types show their glyph and name.
 class TvFileViewer extends StatefulWidget {
-  const TvFileViewer({super.key, required this.items, required this.startIndex});
+  const TvFileViewer({
+    super.key,
+    required this.items,
+    required this.startIndex,
+  });
 
   final List<TransferRecord> items;
   final int startIndex;
@@ -21,8 +26,9 @@ class TvFileViewer extends StatefulWidget {
 }
 
 class _TvFileViewerState extends State<TvFileViewer> {
-  late final PageController _controller =
-      PageController(initialPage: widget.startIndex);
+  late final PageController _controller = PageController(
+    initialPage: widget.startIndex,
+  );
   late int _index = widget.startIndex;
 
   void _go(int delta) {
@@ -153,17 +159,11 @@ class _NonImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final type = record.fileType ?? '';
-    final icon = type.startsWith('video/')
-        ? Icons.movie_outlined
-        : type.startsWith('audio/')
-            ? Icons.music_note_outlined
-            : Icons.insert_drive_file_outlined;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 96, color: Colors.white70),
+          AppSvgIcon(tvFileIcon(record), size: 96, color: Colors.white70),
           const SizedBox(height: 24),
           Text(
             record.fileName,

@@ -5,7 +5,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/di/locator.dart';
@@ -13,13 +12,11 @@ import '../../../core/notifications/notification_service.dart';
 import '../../../core/storage/all_files_access.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../discovery/data/discovery_service.dart';
-import 'widgets/onboarding_slide.dart';
-import 'widgets/permission_row.dart';
 
 /// Preferences key gating first-run onboarding (see the router redirect).
 const kOnboardingDone = 'onboardingDone';
 
-typedef _Slide = ({String icon, String title, String body, Color color});
+typedef _Slide = ({String icon, String title, String body});
 
 /// First-run walkthrough: feature slides (5 on Apple, 4 elsewhere) + a permission-priming page. Mirrors
 /// the native `OnboardingView`. Reached via the router redirect while
@@ -46,13 +43,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
       icon: AppIcons.send,
       title: 'onboarding.slide1_title'.tr(),
       body: 'onboarding.slide1_body'.tr(),
-      color: const Color(0xFF2563EB),
     ),
     (
       icon: AppIcons.wifi,
       title: 'onboarding.slide2_title'.tr(),
       body: 'onboarding.slide2_body'.tr(),
-      color: const Color(0xFF16A34A),
     ),
     // Nearby Mode (MultipeerConnectivity) exists only on Apple devices.
     if (_isApple)
@@ -60,19 +55,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
         icon: AppIcons.transferP2p,
         title: 'onboarding.slide3_title'.tr(),
         body: 'onboarding.slide3_body'.tr(),
-        color: const Color(0xFFEA580C),
       ),
     (
       icon: AppIcons.permissionShield,
       title: 'onboarding.slide4_title'.tr(),
       body: 'onboarding.slide4_body'.tr(),
-      color: const Color(0xFF7C3AED),
     ),
     (
       icon: AppIcons.globePublic,
       title: 'onboarding.slide5_title'.tr(),
       body: 'onboarding.slide5_body'.tr(),
-      color: const Color(0xFF0891B2),
     ),
   ];
 
@@ -117,9 +109,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
       _camera = _camera || camera;
     });
   }
-
-  Color get _accent =>
-      _onPermission ? const Color(0xFF4F46E5) : _slides[_page].color;
 
   @override
   void dispose() {
@@ -193,91 +182,71 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Scaffold(
-      backgroundColor: cs.background,
-      body: Stack(
-        children: [
-          // Ambient glow that shifts to the active page's color.
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
-            height: 380,
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.topCenter,
-                radius: 0.85,
-                colors: [
-                  _accent.withValues(alpha: 0.14),
-                  _accent.withValues(alpha: 0),
-                ],
+      backgroundColor: t.bg,
+      body: SafeArea(
+        child: AppResponsivePane(
+          maxWidth: 560,
+          child: Column(
+            children: [
+              Expanded(
+                child: PageView(
+                  controller: _controller,
+                  onPageChanged: (i) => setState(() => _page = i),
+                  children: [
+                    for (final s in _slides)
+                      _SlideView(icon: s.icon, title: s.title, body: s.body),
+                    _permissionPage(),
+                  ],
+                ),
               ),
-            ),
-          ),
-          SafeArea(
-            child: AppResponsivePane(
-              maxWidth: 560,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: PageView(
-                      controller: _controller,
-                      onPageChanged: (i) => setState(() => _page = i),
-                      children: [
-                        for (final s in _slides)
-                          OnboardingSlide(
-                            icon: s.icon,
-                            title: s.title,
-                            description: s.body,
-                            color: s.color,
-                          ),
-                        _permissionPage(),
-                      ],
-                    ),
-                  ),
-                  _dots(cs),
-                  const SizedBox(height: 24),
-                  _cta(),
-                  SizedBox(
-                    height: 48,
-                    child: _onPermission
-                        ? null
-                        : Center(
-                            child: GestureDetector(
-                              onTap: _skip,
-                              child: Text(
-                                'onboarding.skip'.tr(),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: cs.mutedForeground,
-                                ),
-                              ),
-                            ),
-                          ),
-                  ),
-                ],
+              _dots(t),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: AppButton(
+                  label: _onPermission
+                      ? 'onboarding.get_started'.tr()
+                      : 'onboarding.next'.tr(),
+                  variant: AppButtonVariant.brand,
+                  size: AppButtonSize.large,
+                  fullWidth: true,
+                  onPressed: _next,
+                ),
               ),
-            ),
+              SizedBox(
+                height: 52,
+                child: _onPermission
+                    ? null
+                    : Center(
+                        child: AppButton(
+                          label: 'onboarding.skip'.tr(),
+                          variant: AppButtonVariant.ghost,
+                          size: AppButtonSize.small,
+                          onPressed: _skip,
+                        ),
+                      ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _dots(ShadColorScheme cs) {
+  Widget _dots(AppTokens t) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         for (var i = 0; i < _total; i++)
           AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
+            duration: AppMotion.select,
             margin: const EdgeInsets.symmetric(horizontal: 4),
             width: i == _page ? 22 : 7,
             height: 7,
             decoration: BoxDecoration(
-              color: i == _page
-                  ? _accent
-                  : cs.mutedForeground.withValues(alpha: 0.3),
+              color: i == _page ? t.accent : t.line,
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -285,146 +254,177 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  Widget _cta() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: SizedBox(
-        width: double.infinity,
-        height: 54,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: _next,
-            child: Ink(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color.lerp(_accent, Colors.white, 0.12)!, _accent],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _accent.withValues(alpha: 0.4),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  _onPermission
-                      ? 'onboarding.get_started'.tr()
-                      : 'onboarding.next'.tr(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _permissionPage() {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
+    final rows = <Widget>[
+      if (_isApple)
+        _PermissionRow(
+          icon: AppIcons.wifi,
+          title: 'onboarding.perm_local_network'.tr(),
+          subtitle: 'onboarding.perm_local_network_sub'.tr(),
+          granted: _network,
+          onAllow: _askNetwork,
+        ),
+      _PermissionRow(
+        icon: AppIcons.notification,
+        title: 'onboarding.perm_notifications'.tr(),
+        subtitle: 'onboarding.perm_notifications_sub'.tr(),
+        granted: _notifications,
+        onAllow: _askNotifications,
+      ),
+      if (_isMobile) ...[
+        _PermissionRow(
+          icon: AppIcons.image,
+          title: AllFilesAccess.applies
+              ? 'onboarding.perm_files'.tr()
+              : 'onboarding.perm_photos'.tr(),
+          subtitle: AllFilesAccess.applies
+              ? 'onboarding.perm_files_sub'.tr()
+              : 'onboarding.perm_photos_sub'.tr(),
+          granted: _photos,
+          onAllow: _askPhotos,
+        ),
+        _PermissionRow(
+          icon: AppIcons.qrShare,
+          title: 'onboarding.perm_camera'.tr(),
+          subtitle: 'onboarding.perm_camera_sub'.tr(),
+          granted: _camera,
+          onAllow: _askCamera,
+        ),
+      ],
+    ];
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Column(
         children: [
-          const SizedBox(height: 12),
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color.lerp(_accent, Colors.white, 0.16)!, _accent],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _accent.withValues(alpha: 0.35),
-                  blurRadius: 24,
+          const SizedBox(height: 24),
+          const _Emblem(icon: AppIcons.hand, size: 88),
+          const SizedBox(height: 22),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                Text(
+                  'onboarding.perm_title'.tr(),
+                  textAlign: TextAlign.center,
+                  style: AppType.title.copyWith(color: t.text),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'onboarding.perm_subtitle'.tr(),
+                  textAlign: TextAlign.center,
+                  style: AppType.body.copyWith(color: t.text2),
                 ),
               ],
             ),
-            child: const AppSvgIcon(
-              AppIcons.hand,
-              size: 42,
-              color: Colors.white,
-            ),
           ),
-          const SizedBox(height: 22),
-          Text(
-            'onboarding.perm_title'.tr(),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: cs.foreground,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'onboarding.perm_subtitle'.tr(),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13.5,
-              height: 1.4,
-              color: cs.mutedForeground,
-            ),
-          ),
-          const SizedBox(height: 22),
-          if (_isApple) ...[
-            PermissionRow(
-              icon: AppIcons.wifi,
-              title: 'onboarding.perm_local_network'.tr(),
-              subtitle: 'onboarding.perm_local_network_sub'.tr(),
-              granted: _network,
-              onAllow: _askNetwork,
-            ),
-            const SizedBox(height: 10),
-          ],
-          PermissionRow(
-            icon: AppIcons.notification,
-            title: 'onboarding.perm_notifications'.tr(),
-            subtitle: 'onboarding.perm_notifications_sub'.tr(),
-            granted: _notifications,
-            onAllow: _askNotifications,
-          ),
-          if (_isMobile) ...[
-            const SizedBox(height: 10),
-            PermissionRow(
-              icon: AppIcons.image,
-              title: AllFilesAccess.applies
-                  ? 'onboarding.perm_files'.tr()
-                  : 'onboarding.perm_photos'.tr(),
-              subtitle: AllFilesAccess.applies
-                  ? 'onboarding.perm_files_sub'.tr()
-                  : 'onboarding.perm_photos_sub'.tr(),
-              granted: _photos,
-              onAllow: _askPhotos,
-            ),
-            const SizedBox(height: 10),
-            PermissionRow(
-              icon: AppIcons.qrShare,
-              title: 'onboarding.perm_camera'.tr(),
-              subtitle: 'onboarding.perm_camera_sub'.tr(),
-              granted: _camera,
-              onAllow: _askCamera,
-            ),
+          const SizedBox(height: 18),
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0) const AppRowDivider(indent: 52),
+            rows[i],
           ],
           const SizedBox(height: 8),
         ],
       ),
+    );
+  }
+}
+
+/// The app's glyph on a soft accent disc: the one picture on a slide.
+class _Emblem extends StatelessWidget {
+  const _Emblem({required this.icon, this.size = 112});
+
+  final String icon;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: t.accentSoft, shape: BoxShape.circle),
+      child: AppSvgIcon(icon, size: size * 0.44, color: t.accent),
+    );
+  }
+}
+
+/// One slide: the emblem, the title and one sentence.
+class _SlideView extends StatelessWidget {
+  const _SlideView({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  final String icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _Emblem(icon: icon),
+          const SizedBox(height: 32),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: AppType.title.copyWith(fontSize: 26, color: t.text),
+          ),
+          const SizedBox(height: 12),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 340),
+            child: Text(
+              body,
+              textAlign: TextAlign.center,
+              style: AppType.body.copyWith(height: 1.45, color: t.text2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A permission row, flat: the glyph, the name and why, then "Continue"
+/// until granted, a check after. The button deliberately does NOT say
+/// "Allow": App Review (guideline 5.1.1(iv)) rejects pre-permission UI whose
+/// button mirrors the system prompt's consent wording.
+class _PermissionRow extends StatelessWidget {
+  const _PermissionRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.granted,
+    required this.onAllow,
+  });
+
+  final String icon;
+  final String title;
+  final String subtitle;
+  final bool granted;
+  final VoidCallback onAllow;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return AppListTile(
+      leading: AppGlyph(icon, color: granted ? t.ok : null),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: granted
+          ? AppSvgIcon(AppIcons.verifiedCheck, size: 24, color: t.ok)
+          : AppButton(
+              label: 'onboarding.perm_continue'.tr(),
+              variant: AppButtonVariant.secondary,
+              size: AppButtonSize.small,
+              onPressed: onAllow,
+            ),
     );
   }
 }

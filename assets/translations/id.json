@@ -637,16 +637,16 @@
     "perm_subtitle": "BIShare bekerja paling baik dengan ini. Anda dapat mengubahnya kapan saja di pengaturan sistem.",
     "perm_title": "Beberapa Izin",
     "skip": "Lewati",
-    "slide1_body": "Kirim foto, video, dan dokumen ke perangkat terdekat — tanpa internet, tanpa cloud, tanpa akun.",
-    "slide1_title": "Bagikan File Secara Instan",
-    "slide2_body": "BIShare bekerja melalui Wi-Fi lokal Anda. File Anda tidak pernah meninggalkan jaringan — terenkripsi ujung ke ujung.",
-    "slide2_title": "Tidak Perlu Internet",
+    "slide1_body": "Kirim foto, video, dan dokumen ke perangkat terdekat. Tanpa internet, tanpa cloud, tanpa akun.",
+    "slide1_title": "Bagikan file secara instan",
+    "slide2_body": "BIShare bekerja melalui Wi-Fi lokal Anda. File Anda tidak pernah meninggalkan jaringan dan terenkripsi ujung ke ujung.",
+    "slide2_title": "Tidak perlu internet",
     "slide3_body": "Di perangkat Apple, transfer melalui Bluetooth + Wi-Fi peer-to-peer bahkan tanpa jaringan sama sekali.",
     "slide3_title": "Mode Terdekat",
     "slide4_body": "Setiap bagian diautentikasi. Atur PIN untuk mengontrol siapa yang boleh mengirim file kepada Anda.",
-    "slide4_title": "Pribadi & Aman",
+    "slide4_title": "Pribadi dan aman",
     "slide5_body": "Terima dari browser apa pun di jaringan yang sama, atau pindai QR untuk terhubung dengan sekali ketuk.",
-    "slide5_title": "Browser & QR"
+    "slide5_title": "Browser dan QR"
   },
   "tray": {
     "pause": "Jeda penerimaan",

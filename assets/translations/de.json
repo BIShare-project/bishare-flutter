@@ -637,16 +637,16 @@
     "perm_subtitle": "BIShare funktioniert am besten mit diesen Berechtigungen. Du kannst sie jederzeit in den Systemeinstellungen ändern.",
     "perm_title": "Ein paar Berechtigungen",
     "skip": "Überspringen",
-    "slide1_body": "Fotos, Videos und Dokumente an Geräte in der Nähe senden – ohne Internet, ohne Cloud, ohne Accounts.",
+    "slide1_body": "Fotos, Videos und Dokumente an Geräte in der Nähe senden. Ohne Internet, ohne Cloud, ohne Accounts.",
     "slide1_title": "Dateien sofort teilen",
-    "slide2_body": "BIShare funktioniert über dein lokales Wi-Fi. Deine Dateien verlassen nie dein Netzwerk – Ende-zu-Ende verschlüsselt.",
+    "slide2_body": "BIShare funktioniert über dein lokales Wi-Fi. Deine Dateien verlassen nie dein Netzwerk und sind Ende-zu-Ende verschlüsselt.",
     "slide2_title": "Kein Internet nötig",
     "slide3_body": "Auf Apple-Geräten über Bluetooth + Peer-to-Peer-Wi-Fi übertragen, auch ohne Netzwerk.",
     "slide3_title": "Nähe-Modus",
     "slide4_body": "Jeder Block wird authentifiziert. Lege eine PIN fest, um genau zu steuern, wer dir Dateien senden darf.",
-    "slide4_title": "Privat & Sicher",
+    "slide4_title": "Privat und sicher",
     "slide5_body": "Von jedem Browser im selben Netzwerk empfangen oder QR-Code scannen, um mit einem Tippen zu verbinden.",
-    "slide5_title": "Browser & QR"
+    "slide5_title": "Browser und QR"
   },
   "tray": {
     "pause": "Empfang pausieren",
