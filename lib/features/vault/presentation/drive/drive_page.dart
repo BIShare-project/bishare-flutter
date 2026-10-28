@@ -483,7 +483,14 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
         () => _act.moveOrCopy(items, copy: true),
         false,
       ),
-      (AppIcons.trashDelete, 'vault.trash'.tr(), () => _act.trash(items), true),
+      (
+        AppIcons.trashDelete,
+        // Short on the bar (four actions share it); the item sheet says
+        // "Move to trash" in full.
+        driveViewLabel(DriveView.trash),
+        () => _act.trash(items),
+        true,
+      ),
     ];
   }
 
