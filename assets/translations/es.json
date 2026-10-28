@@ -478,7 +478,16 @@
     "e2e_off": "Sin cifrado de extremo a extremo (creada con una app anterior)",
     "encrypted_file": "Archivo cifrado",
     "error_update_required": "Esta sala tiene cifrado de extremo a extremo. Actualiza BIShare para unirte.",
-    "start_room": "Crear una sala"
+    "start_room": "Crear una sala",
+    "members": "Miembros",
+    "no_files_hint": "Comparte el código para que otros se unan y añadan archivos.",
+    "leave_title": "¿Salir de la sala?",
+    "leave_body": "Dejarás de ver sus archivos. Los que guardaste se quedan en este dispositivo.",
+    "code_label": "Código de la sala",
+    "code_copied": "Código copiado",
+    "show_qr": "Mostrar código QR",
+    "qr_hint": "Escanea para unirte desde un navegador",
+    "yours": "Compartido por ti"
   },
   "settings": {
     "about": "Acerca de",

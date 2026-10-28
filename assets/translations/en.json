@@ -478,7 +478,16 @@
     "e2e_off": "Not end-to-end encrypted (made with an older app)",
     "encrypted_file": "Encrypted file",
     "error_update_required": "This room is end-to-end encrypted. Update BIShare to join it.",
-    "start_room": "Start a room"
+    "start_room": "Start a room",
+    "members": "Members",
+    "no_files_hint": "Share the code so others can join and add files.",
+    "leave_title": "Leave the room?",
+    "leave_body": "You stop seeing its files. Files you saved stay on this device.",
+    "code_label": "Room code",
+    "code_copied": "Code copied",
+    "show_qr": "Show QR code",
+    "qr_hint": "Scan to join from a browser",
+    "yours": "Shared by you"
   },
   "settings": {
     "about": "About",

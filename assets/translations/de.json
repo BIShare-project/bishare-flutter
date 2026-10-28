@@ -478,7 +478,16 @@
     "e2e_off": "Nicht Ende-zu-Ende verschlüsselt (mit einer älteren App erstellt)",
     "encrypted_file": "Verschlüsselte Datei",
     "error_update_required": "Dieser Raum ist Ende-zu-Ende verschlüsselt. Aktualisiere BIShare, um beizutreten.",
-    "start_room": "Raum erstellen"
+    "start_room": "Raum erstellen",
+    "members": "Mitglieder",
+    "no_files_hint": "Teile den Code, damit andere beitreten und Dateien hinzufügen können.",
+    "leave_title": "Raum verlassen?",
+    "leave_body": "Du siehst seine Dateien dann nicht mehr. Gespeicherte Dateien bleiben auf diesem Gerät.",
+    "code_label": "Raumcode",
+    "code_copied": "Code kopiert",
+    "show_qr": "QR-Code zeigen",
+    "qr_hint": "Scannen, um im Browser beizutreten",
+    "yours": "Von dir geteilt"
   },
   "settings": {
     "about": "Über",

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
-/// The room "connecting" state: a spinner and the label (e.g. "Looking for a
-/// local room"). The spinner is the only motion; the label no longer animates
-/// an ellipsis, which rebuilt the text four times a second.
+import '../../../../core/ui/app_ui.dart';
+
+/// The room "connecting" state (redesign-plan.md 7.2): a spinner inside a
+/// soft circle and the label (e.g. "Looking for a room"). The spinner is the
+/// only motion.
 class ConnectingView extends StatelessWidget {
   const ConnectingView({super.key, required this.label});
 
@@ -11,27 +12,26 @@ class ConnectingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: 40,
-            height: 40,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              valueColor: AlwaysStoppedAnimation(cs.primary),
+          Container(
+            width: 72,
+            height: 72,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: t.accentSoft,
+              shape: BoxShape.circle,
             ),
+            child: CircularProgressIndicator(strokeWidth: 3, color: t.accent),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           Text(
             '$label…',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: cs.foreground,
-            ),
+            textAlign: TextAlign.center,
+            style: AppType.rowStrong.copyWith(color: t.text),
           ),
         ],
       ),

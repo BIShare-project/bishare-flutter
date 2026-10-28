@@ -478,7 +478,16 @@
     "e2e_off": "Sem criptografia de ponta a ponta (criada com um app antigo)",
     "encrypted_file": "Arquivo criptografado",
     "error_update_required": "Esta sala tem criptografia de ponta a ponta. Atualize o BIShare para entrar.",
-    "start_room": "Criar uma sala"
+    "start_room": "Criar uma sala",
+    "members": "Membros",
+    "no_files_hint": "Compartilhe o código para que outras pessoas entrem e adicionem arquivos.",
+    "leave_title": "Sair da sala?",
+    "leave_body": "Você deixa de ver os arquivos dela. Os que você salvou ficam neste dispositivo.",
+    "code_label": "Código da sala",
+    "code_copied": "Código copiado",
+    "show_qr": "Mostrar QR code",
+    "qr_hint": "Escaneie para entrar pelo navegador",
+    "yours": "Compartilhado por você"
   },
   "settings": {
     "about": "Sobre",

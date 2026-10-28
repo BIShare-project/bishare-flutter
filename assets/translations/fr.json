@@ -478,7 +478,16 @@
     "e2e_off": "Non chiffré de bout en bout (créé avec une ancienne app)",
     "encrypted_file": "Fichier chiffré",
     "error_update_required": "Ce salon est chiffré de bout en bout. Mettez BIShare à jour pour le rejoindre.",
-    "start_room": "Créer un salon"
+    "start_room": "Créer un salon",
+    "members": "Membres",
+    "no_files_hint": "Partagez le code pour que d’autres rejoignent le salon et ajoutent des fichiers.",
+    "leave_title": "Quitter le salon ?",
+    "leave_body": "Vous ne verrez plus ses fichiers. Ceux que vous avez enregistrés restent sur cet appareil.",
+    "code_label": "Code du salon",
+    "code_copied": "Code copié",
+    "show_qr": "Afficher le QR code",
+    "qr_hint": "Scannez pour rejoindre depuis un navigateur",
+    "yours": "Partagé par vous"
   },
   "settings": {
     "about": "À propos",

@@ -478,7 +478,16 @@
     "e2e_off": "未端對端加密（由舊版 App 建立）",
     "encrypted_file": "加密檔案",
     "error_update_required": "此房間已端對端加密。請更新 BIShare 後加入。",
-    "start_room": "建立房間"
+    "start_room": "建立房間",
+    "members": "成員",
+    "no_files_hint": "分享代碼，其他人就能加入並新增檔案。",
+    "leave_title": "離開房間？",
+    "leave_body": "你將不再看到其中的檔案。已儲存的檔案會留在此裝置上。",
+    "code_label": "房間代碼",
+    "code_copied": "代碼已複製",
+    "show_qr": "顯示 QR 碼",
+    "qr_hint": "掃描即可從瀏覽器加入",
+    "yours": "由你分享"
   },
   "settings": {
     "about": "關於",

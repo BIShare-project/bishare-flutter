@@ -478,7 +478,16 @@
     "e2e_off": "未端到端加密（由旧版应用创建）",
     "encrypted_file": "加密文件",
     "error_update_required": "该房间已端到端加密。请更新 BIShare 后加入。",
-    "start_room": "创建房间"
+    "start_room": "创建房间",
+    "members": "成员",
+    "no_files_hint": "分享代码，其他人就能加入并添加文件。",
+    "leave_title": "离开房间？",
+    "leave_body": "你将不再看到其中的文件。已保存的文件会留在此设备上。",
+    "code_label": "房间代码",
+    "code_copied": "代码已复制",
+    "show_qr": "显示二维码",
+    "qr_hint": "扫描即可从浏览器加入",
+    "yours": "由你分享"
   },
   "settings": {
     "about": "关于",

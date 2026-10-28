@@ -478,7 +478,16 @@
     "e2e_off": "Tidak terenkripsi end-to-end (dibuat dengan app versi lama)",
     "encrypted_file": "File terenkripsi",
     "error_update_required": "Room ini terenkripsi end-to-end. Perbarui BIShare untuk bergabung.",
-    "start_room": "Buat ruangan"
+    "start_room": "Buat ruangan",
+    "members": "Anggota",
+    "no_files_hint": "Bagikan kodenya supaya orang lain bisa bergabung dan menambahkan file.",
+    "leave_title": "Keluar dari ruangan?",
+    "leave_body": "Anda tidak lagi melihat file di ruangan ini. File yang sudah disimpan tetap ada di perangkat ini.",
+    "code_label": "Kode ruangan",
+    "code_copied": "Kode disalin",
+    "show_qr": "Tampilkan kode QR",
+    "qr_hint": "Pindai untuk bergabung dari browser",
+    "yours": "Dibagikan oleh Anda"
   },
   "settings": {
     "about": "Tentang",
