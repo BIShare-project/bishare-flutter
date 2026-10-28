@@ -132,8 +132,15 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: 'send',
-              pageBuilder: (context, state) =>
-                  _pushed(context, state, const QrBeamSendPage()),
+              pageBuilder: (context, state) => _pushed(
+                context,
+                state,
+                QrBeamSendPage(
+                  initialPath: state.extra is String
+                      ? state.extra! as String
+                      : null,
+                ),
+              ),
             ),
             GoRoute(
               path: 'receive',

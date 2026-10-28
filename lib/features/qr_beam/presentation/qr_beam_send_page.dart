@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/ui/app_ui.dart';
@@ -15,7 +17,10 @@ const int _maxBeamBytes = 100 * 1024;
 const int _warnBeamBytes = 30 * 1024;
 
 class QrBeamSendPage extends StatefulWidget {
-  const QrBeamSendPage({super.key});
+  const QrBeamSendPage({super.key, this.initialPath});
+
+  /// A file already chosen on the Send tab: it beams at once, no second pick.
+  final String? initialPath;
 
   @override
   State<QrBeamSendPage> createState() => _QrBeamSendPageState();
@@ -30,9 +35,33 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
   bool _picking = false;
 
   @override
+  void initState() {
+    super.initState();
+    final path = widget.initialPath;
+    if (path != null) unawaited(_beamFile(File(path)));
+  }
+
+  @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  /// A file handed over from the Send tab.
+  Future<void> _beamFile(File f) async {
+    final int size;
+    try {
+      size = await f.length();
+    } on Object {
+      setState(() => _error = 'qr_beam.err_read'.tr());
+      return;
+    }
+    await _encode(
+      name: p.basename(f.path),
+      ext: p.extension(f.path).replaceFirst('.', ''),
+      size: size,
+      read: f.readAsBytes,
+    );
   }
 
   Future<void> _pick() async {
@@ -44,46 +73,62 @@ class _QrBeamSendPageState extends State<QrBeamSendPage> {
     try {
       final f = await FilePicker.pickFile();
       if (f == null) return;
-      // Size first: a beam carries a few KB, so never load a big pick whole.
-      final size = f.lengthSync() ?? await f.length();
-      if (size != null && size > _maxBeamBytes) {
-        setState(
-          () => _error = 'qr_beam.err_too_large'.tr(
-            namedArgs: {'max': formatBytes(_maxBeamBytes)},
-          ),
-        );
-        return;
-      }
-      final Uint8List bytes;
-      try {
-        bytes = await f.readAsBytes();
-      } on Object {
-        setState(() => _error = 'qr_beam.err_read'.tr());
-        return;
-      }
-      if (bytes.length > _maxBeamBytes) {
-        setState(
-          () => _error = 'qr_beam.err_too_large'.tr(
-            namedArgs: {'max': formatBytes(_maxBeamBytes)},
-          ),
-        );
-        return;
-      }
-      final ext = (f.extension ?? '').toLowerCase();
-      final enc = encodeBeam(
-        Uint8List.fromList(bytes),
+      await _encode(
         name: f.name,
-        mime: ext.isEmpty ? 'application/octet-stream' : ext,
+        ext: f.extension ?? '',
+        size: f.lengthSync() ?? await f.length(),
+        read: f.readAsBytes,
       );
-      _timer?.cancel();
-      setState(() {
-        _beam = enc;
-        _idx = 0;
-      });
-      _start();
     } finally {
       if (mounted) setState(() => _picking = false);
     }
+  }
+
+  /// Checks the size before reading (a beam carries a few KB, so a big file
+  /// is never loaded whole), then turns the bytes into the looping frames.
+  Future<void> _encode({
+    required String name,
+    required String ext,
+    required int? size,
+    required Future<Uint8List> Function() read,
+  }) async {
+    if (size != null && size > _maxBeamBytes) {
+      setState(
+        () => _error = 'qr_beam.err_too_large'.tr(
+          namedArgs: {'max': formatBytes(_maxBeamBytes)},
+        ),
+      );
+      return;
+    }
+    final Uint8List bytes;
+    try {
+      bytes = await read();
+    } on Object {
+      setState(() => _error = 'qr_beam.err_read'.tr());
+      return;
+    }
+    if (!mounted) return;
+    if (bytes.length > _maxBeamBytes) {
+      setState(
+        () => _error = 'qr_beam.err_too_large'.tr(
+          namedArgs: {'max': formatBytes(_maxBeamBytes)},
+        ),
+      );
+      return;
+    }
+    final lower = ext.toLowerCase();
+    final enc = encodeBeam(
+      Uint8List.fromList(bytes),
+      name: name,
+      mime: lower.isEmpty ? 'application/octet-stream' : lower,
+    );
+    _timer?.cancel();
+    setState(() {
+      _beam = enc;
+      _idx = 0;
+      _error = null;
+    });
+    _start();
   }
 
   void _start() {

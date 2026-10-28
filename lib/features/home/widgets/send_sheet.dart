@@ -519,6 +519,20 @@ class SendWays extends StatelessWidget {
     );
   }
 
+  /// Like the link: one chosen file beams at once; none or several, the page
+  /// asks for one (a beam carries a single small file).
+  Future<void> _beam(BuildContext context) async {
+    final batch = await context.read<SendSelectionCubit>().materialize();
+    if (!context.mounted) return;
+    if (inSheet) Navigator.of(context).maybePop();
+    unawaited(
+      context.push(
+        '/qr-beam/send',
+        extra: batch.length == 1 ? batch.first.path : null,
+      ),
+    );
+  }
+
   Future<void> _drive(BuildContext context) async {
     final selection = context.read<SendSelectionCubit>();
     final batch = await selection.materialize();
@@ -544,10 +558,7 @@ class SendWays extends StatelessWidget {
         AppIcons.qrShare,
         'qr_beam.title'.tr(),
         'compose.way_qr_sub'.tr(),
-        () {
-          if (inSheet) Navigator.of(context).maybePop();
-          context.push('/qr-beam/send');
-        },
+        () => _beam(context),
       ),
       (
         AppIcons.teamGroup,
