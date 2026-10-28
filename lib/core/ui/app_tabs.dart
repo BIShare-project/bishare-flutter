@@ -25,7 +25,7 @@ class AppTabBar extends StatelessWidget implements PreferredSizeWidget {
   final ValueChanged<int>? onTap;
 
   @override
-  Size get preferredSize => const Size.fromHeight(42);
+  Size get preferredSize => const Size.fromHeight(38);
 
   @override
   Widget build(BuildContext context) {

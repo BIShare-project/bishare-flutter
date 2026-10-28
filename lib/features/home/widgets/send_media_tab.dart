@@ -13,12 +13,12 @@ import '../../../core/ui/app_ui.dart';
 import '../../send/data/send_media_library.dart';
 import '../../send/presentation/send_selection_cubit.dart';
 import '../../send/presentation/tray_cubit.dart';
-import 'asset_peek.dart';
 
 /// The Photos and Videos tabs of the Send tab (redesign-plan.md 3.3): the library as a
 /// lazy grid, grouped by day for photos, with an album sheet, the permission
-/// and limited-access states, and selecting by tap, a day's "Select", or a
-/// long press dragged across the grid.
+/// and limited-access states, selecting by tap or a day's "Select", and a
+/// long press that opens the photo or video whole (owner 2026-10-28: a peek
+/// under the finger hid what it showed).
 ///
 /// Performance: one [SliverList] builder of rows (a day header, or one row of
 /// tiles), thumbnails through the image cache at display size, pages of 120
@@ -71,17 +71,6 @@ class _SendMediaTabState extends State<SendMediaTab>
   /// Access can change in the system settings while the app is away.
   AppLifecycleListener? _life;
 
-  // drag-to-select
-  bool? _dragOn;
-
-  /// Hold still on a tile: a bigger look at it (AssetPeek). Moving the
-  /// finger closes it and starts choosing by drag instead.
-  AssetPeek? _peek;
-  AssetEntity? _held;
-  Offset _heldAt = Offset.zero;
-
-  /// The grid's thumbnail size, for the peek's first frame.
-  int _thumbPx = 240;
   final _gridKey = GlobalKey();
 
   bool get _photos => widget.kind == SendMediaKind.photo;
@@ -110,7 +99,6 @@ class _SendMediaTabState extends State<SendMediaTab>
 
   @override
   void dispose() {
-    _peek?.close();
     _life?.dispose();
     _changes?.cancel();
     super.dispose();
@@ -201,7 +189,7 @@ class _SendMediaTabState extends State<SendMediaTab>
   static bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  // ---- drag to select -------------------------------------------------------
+  // ---- long press: the whole photo or video ---------------------------------
 
   AssetEntity? _assetAt(Offset global) {
     final box = _gridKey.currentContext?.findRenderObject() as RenderBox?;
@@ -217,46 +205,33 @@ class _SendMediaTabState extends State<SendMediaTab>
     return null;
   }
 
-  void _dragStart(LongPressStartDetails d) {
+  /// Long press: the photo or video in the full-screen viewer (zoom, the
+  /// video with its controls), with Select or Unselect under it.
+  Future<void> _preview(LongPressStartDetails d) async {
     final a = _assetAt(d.globalPosition);
     if (a == null) return;
-    _held = a;
-    _heldAt = d.globalPosition;
-    _peek = AssetPeek.show(context, a, _thumbPx);
     tapHaptic();
-  }
-
-  void _dragMove(LongPressMoveUpdateDetails d) {
-    final held = _held;
-    if (held != null) {
-      // Still a look, until the finger really moves.
-      if ((d.globalPosition - _heldAt).distance < 14) return;
-      _closePeek();
-      final sel = context.read<SendSelectionCubit>();
-      _dragOn = !sel.state.contains('a:${held.id}');
-      sel.setAssets([held], _sendKind, _dragOn!);
-      tapHaptic();
-    }
-    final on = _dragOn;
-    if (on == null) return;
-    final a = _assetAt(d.globalPosition);
-    if (a == null) return;
+    final file = await a.file;
+    final name = await _lib.name(a);
+    if (file == null || !mounted) return;
     final sel = context.read<SendSelectionCubit>();
-    if (sel.state.contains('a:${a.id}') != on) {
-      sel.setAssets([a], _sendKind, on);
-      tapHaptic();
-    }
-  }
-
-  void _dragEnd() {
-    _closePeek();
-    _dragOn = null;
-  }
-
-  void _closePeek() {
-    _peek?.close();
-    _peek = null;
-    _held = null;
+    final chosen = sel.state.contains('a:${a.id}');
+    await showFilePreview(
+      context,
+      path: file.path,
+      name: name,
+      mimeType: a.type == AssetType.video ? 'video/mp4' : 'image/jpeg',
+      actions: [
+        PreviewAction(
+          icon: chosen ? AppIcons.close : AppIcons.check,
+          label: (chosen ? 'inbox.select_none' : 'compose.select').tr(),
+          onTap: () {
+            sel.setAssets([a], _sendKind, !chosen);
+            Navigator.of(context, rootNavigator: true).maybePop();
+          },
+        ),
+      ],
+    );
   }
 
   // ---- UI -------------------------------------------------------------------
@@ -296,7 +271,6 @@ class _SendMediaTabState extends State<SendMediaTab>
         final px = (tile * MediaQuery.devicePixelRatioOf(context))
             .round()
             .clamp(120, 360);
-        _thumbPx = px;
         final rows = _rows(columns);
         return NotificationListener<ScrollNotification>(
           onNotification: (n) {
@@ -304,10 +278,7 @@ class _SendMediaTabState extends State<SendMediaTab>
             return false;
           },
           child: GestureDetector(
-            onLongPressStart: _dragStart,
-            onLongPressMoveUpdate: _dragMove,
-            onLongPressEnd: (_) => _dragEnd(),
-            onLongPressCancel: _dragEnd,
+            onLongPressStart: _preview,
             child: CustomScrollView(
               key: _gridKey,
               scrollCacheExtent: const ScrollCacheExtent.pixels(800),

@@ -201,17 +201,19 @@ class _PreviewPage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.black,
         body: fullBleed
-            ? Stack(
+            ? Column(
                 children: [
-                  Positioned.fill(child: body),
-                  Positioned(top: 0, left: 0, right: 0, child: bar),
-                  if (actions.isNotEmpty)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: _ActionBar(actions: actions),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Positioned.fill(child: body),
+                        Positioned(top: 0, left: 0, right: 0, child: bar),
+                      ],
                     ),
+                  ),
+                  // Under the picture, not over it: a video's own controls
+                  // sit at its bottom edge.
+                  if (actions.isNotEmpty) _ActionBar(actions: actions),
                 ],
               )
             : Column(
@@ -235,7 +237,7 @@ class _ActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ColoredBox(
-    color: Colors.black.withValues(alpha: 0.55),
+    color: Colors.black,
     child: SafeArea(
       top: false,
       child: Padding(
