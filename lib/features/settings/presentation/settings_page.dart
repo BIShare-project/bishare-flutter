@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -396,7 +395,8 @@ class SettingsPage extends StatelessWidget {
     if (name != null && name.trim().isNotEmpty) await cubit.setAlias(name);
   }
 
-  /// A PIN is 4 to 8 digits; shorter is refused in the sheet.
+  /// A PIN is six digits, entered in code boxes; the sheet closes on the
+  /// sixth.
   Future<void> _editPin(BuildContext context, SettingsCubit cubit) async {
     final controller = TextEditingController();
     String? error;
@@ -408,8 +408,8 @@ class SettingsPage extends StatelessWidget {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) {
           void submit() {
-            if (controller.text.length < 4) {
-              setState(() => error = 'settings.pin_too_short'.tr());
+            if (controller.text.length < 6) {
+              setState(() => error = 'settings.pin_six_digits'.tr());
               return;
             }
             Navigator.pop(ctx, controller.text);
@@ -418,21 +418,27 @@ class SettingsPage extends StatelessWidget {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AppTextField(
+              AppCodeBoxes(
                 controller: controller,
-                autofocus: true,
+                length: 6,
+                digits: true,
                 obscure: true,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                maxLength: 8,
-                hint: 'settings.pin_hint'.tr(),
-                error: error,
-                onChanged: (_) {
-                  if (error != null) setState(() => error = null);
-                },
+                error: error != null,
+                onComplete: (_) => submit(),
                 onSubmitted: (_) => submit(),
               ),
-              const SizedBox(height: 14),
+              SizedBox(
+                height: 28,
+                child: Center(
+                  child: Text(
+                    error ?? '',
+                    style: AppType.secondary.copyWith(
+                      fontSize: 13,
+                      color: context.tokens.danger,
+                    ),
+                  ),
+                ),
+              ),
               AppButton(
                 label: 'settings.enable'.tr(),
                 fullWidth: true,

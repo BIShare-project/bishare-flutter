@@ -6,7 +6,8 @@ import '../theme/app_type.dart';
 
 /// Letter-and-digit code boxes over one hidden input, so typing, deleting and
 /// pasting a whole code all work. Used for a room code (4), a transfer code
-/// (6) and a Drive browser code (8). Always left to right, even in Arabic: a
+/// (6), a Drive browser code (8) and a receive PIN ([digits], [obscure]).
+/// Always left to right, even in Arabic: a
 /// Latin code must not read reversed.
 class AppCodeBoxes extends StatefulWidget {
   const AppCodeBoxes({
@@ -18,6 +19,8 @@ class AppCodeBoxes extends StatefulWidget {
     this.onSubmitted,
     this.autofocus = true,
     this.error = false,
+    this.digits = false,
+    this.obscure = false,
   });
 
   final TextEditingController controller;
@@ -37,6 +40,12 @@ class AppCodeBoxes extends StatefulWidget {
 
   /// Draws every box in the danger colour (a wrong code).
   final bool error;
+
+  /// Digits only, on the number pad (a PIN).
+  final bool digits;
+
+  /// A dot in each filled box instead of the character (a PIN).
+  final bool obscure;
 
   @override
   State<AppCodeBoxes> createState() => _AppCodeBoxesState();
@@ -106,7 +115,7 @@ class _AppCodeBoxesState extends State<AppCodeBoxes> {
                     border: Border.all(color: border, width: active ? 2 : 1),
                   ),
                   child: Text(
-                    filled ? code[i] : '•',
+                    filled ? (widget.obscure ? '●' : code[i]) : '•',
                     style: AppType.sheetTitle.copyWith(
                       fontSize: count > 6 ? 18 : 21,
                       color: filled ? t.text : t.text3.withValues(alpha: 0.6),
@@ -129,11 +138,17 @@ class _AppCodeBoxesState extends State<AppCodeBoxes> {
                   autocorrect: false,
                   enableSuggestions: false,
                   textCapitalization: TextCapitalization.characters,
-                  keyboardType: TextInputType.visiblePassword,
+                  keyboardType: widget.digits
+                      ? TextInputType.number
+                      : TextInputType.visiblePassword,
                   textInputAction: TextInputAction.done,
                   inputFormatters: [
-                    _UpperCase(),
-                    FilteringTextInputFormatter.allow(RegExp('[A-Z0-9]')),
+                    if (widget.digits)
+                      FilteringTextInputFormatter.digitsOnly
+                    else ...[
+                      _UpperCase(),
+                      FilteringTextInputFormatter.allow(RegExp('[A-Z0-9]')),
+                    ],
                   ],
                   decoration: const InputDecoration(
                     counterText: '',

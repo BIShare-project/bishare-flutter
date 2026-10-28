@@ -151,12 +151,15 @@ class HomePage extends StatelessWidget {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ShadInput(
+            // Six boxes for the PIN Settings sets now; up to 8 still go in
+            // for a PIN set by an older version.
+            AppCodeBoxes(
               controller: controller,
-              placeholder: Text('home.enter_pin'.tr()),
-              obscureText: true,
-              autofocus: true,
-              keyboardType: TextInputType.number,
+              length: 6,
+              maxLength: 8,
+              digits: true,
+              obscure: true,
+              error: message.isNotEmpty,
               onSubmitted: (_) => submit(),
             ),
             const SizedBox(height: 14),

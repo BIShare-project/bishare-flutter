@@ -580,9 +580,9 @@
     "share_app_message": "جرّب BIShare. يرسل الملفات بين أجهزتك دون الحاجة إلى الإنترنت. مجاني ومفتوح المصدر: {url}",
     "privacy": "الخصوصية",
     "devices_sync": "الأجهزة والمزامنة",
-    "pin_too_short": "استخدم من 4 إلى 8 أرقام",
     "version": "الإصدار {version}",
-    "license_line": "مفتوح المصدر، ترخيص Apache 2.0"
+    "license_line": "مفتوح المصدر، ترخيص Apache 2.0",
+    "pin_six_digits": "أدخل الأرقام الستة كلها"
   },
   "notification": {
     "clipboard_from": "تم النسخ من {sender}",

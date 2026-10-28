@@ -568,9 +568,9 @@
     "share_app_message": "BIShareを使ってみてください。インターネットなしで端末間にファイルを送れます。無料・オープンソース：{url}",
     "privacy": "プライバシー",
     "devices_sync": "デバイスと同期",
-    "pin_too_short": "4〜8桁の数字にしてください",
     "version": "バージョン {version}",
-    "license_line": "オープンソース、Apache License 2.0"
+    "license_line": "オープンソース、Apache License 2.0",
+    "pin_six_digits": "6桁すべて入力してください"
   },
   "notification": {
     "clipboard_from": "{sender}からコピーしました",

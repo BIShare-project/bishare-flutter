@@ -568,9 +568,9 @@
     "share_app_message": "BIShare आज़माएँ। यह बिना इंटरनेट के आपके डिवाइसों के बीच फ़ाइलें भेजता है। मुफ़्त और ओपन सोर्स: {url}",
     "privacy": "निजता",
     "devices_sync": "डिवाइस और सिंक",
-    "pin_too_short": "4 से 8 अंक इस्तेमाल करें",
     "version": "संस्करण {version}",
-    "license_line": "ओपन सोर्स, Apache लाइसेंस 2.0"
+    "license_line": "ओपन सोर्स, Apache लाइसेंस 2.0",
+    "pin_six_digits": "सभी 6 अंक डालें"
   },
   "notification": {
     "clipboard_from": "{sender} से कॉपी किया गया",

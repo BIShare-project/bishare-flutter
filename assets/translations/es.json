@@ -568,9 +568,9 @@
     "share_app_message": "Prueba BIShare. Envía archivos entre tus dispositivos sin necesidad de internet. Gratis y de código abierto: {url}",
     "privacy": "Privacidad",
     "devices_sync": "Dispositivos y sincronización",
-    "pin_too_short": "Usa de 4 a 8 dígitos",
     "version": "Versión {version}",
-    "license_line": "Código abierto, licencia Apache 2.0"
+    "license_line": "Código abierto, licencia Apache 2.0",
+    "pin_six_digits": "Introduce los 6 dígitos"
   },
   "notification": {
     "clipboard_from": "Copiado desde {sender}",

@@ -574,9 +574,9 @@
     "share_app_message": "Попробуйте BIShare. Он передаёт файлы между вашими устройствами без интернета. Бесплатно и с открытым кодом: {url}",
     "privacy": "Конфиденциальность",
     "devices_sync": "Устройства и синхронизация",
-    "pin_too_short": "Используйте от 4 до 8 цифр",
     "version": "Версия {version}",
-    "license_line": "Открытый код, лицензия Apache 2.0"
+    "license_line": "Открытый код, лицензия Apache 2.0",
+    "pin_six_digits": "Введите все 6 цифр"
   },
   "notification": {
     "clipboard_from": "Скопировано с {sender}",

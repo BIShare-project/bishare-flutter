@@ -568,9 +568,9 @@
     "share_app_message": "Coba BIShare. Kirim file antar perangkatmu tanpa perlu internet. Gratis dan open source: {url}",
     "privacy": "Privasi",
     "devices_sync": "Perangkat dan sinkron",
-    "pin_too_short": "Gunakan 4 sampai 8 angka",
     "version": "Versi {version}",
-    "license_line": "Sumber terbuka, Lisensi Apache 2.0"
+    "license_line": "Sumber terbuka, Lisensi Apache 2.0",
+    "pin_six_digits": "Isi keenam angka"
   },
   "notification": {
     "clipboard_from": "Disalin dari {sender}",

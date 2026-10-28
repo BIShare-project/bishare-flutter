@@ -568,9 +568,9 @@
     "share_app_message": "試試 BIShare。不必連網，就能在你的裝置之間傳檔案。免費開源：{url}",
     "privacy": "隱私",
     "devices_sync": "裝置與同步",
-    "pin_too_short": "請使用 4 到 8 位數字",
     "version": "版本 {version}",
-    "license_line": "開源，Apache License 2.0"
+    "license_line": "開源，Apache License 2.0",
+    "pin_six_digits": "請輸入全部 6 位數字"
   },
   "notification": {
     "clipboard_from": "從 {sender} 複製",
