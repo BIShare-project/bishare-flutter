@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/di/locator.dart';
 import '../../../../core/storage/app_database.dart';
@@ -119,18 +118,15 @@ class _Check extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 140),
       width: 22,
       height: 22,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: on ? cs.primary : cs.background.withValues(alpha: 0.85),
-        border: Border.all(
-          color: on ? cs.primary : cs.mutedForeground,
-          width: 1.6,
-        ),
+        color: on ? t.accent : t.bg.withValues(alpha: 0.85),
+        border: Border.all(color: on ? t.accent : t.text2, width: 1.6),
       ),
       child: on
           ? const Icon(Icons.check_rounded, size: 15, color: Colors.white)
@@ -250,7 +246,7 @@ class DriveGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final o = object;
     final picture = o.kind == 'file' && o.hasThumb;
     return Material(
@@ -262,10 +258,10 @@ class DriveGridCard extends StatelessWidget {
         child: Container(
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: selected ? cs.primary.withValues(alpha: 0.10) : cs.card,
+            color: selected ? t.accent.withValues(alpha: 0.10) : t.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: selected ? cs.primary : cs.border.withValues(alpha: 0.8),
+              color: selected ? t.accent : t.line.withValues(alpha: 0.8),
               width: selected ? 1.6 : 1,
             ),
           ),
@@ -289,7 +285,7 @@ class DriveGridCard extends StatelessWidget {
                               ),
                             )
                           : ColoredBox(
-                              color: cs.muted.withValues(alpha: 0.35),
+                              color: t.sunken.withValues(alpha: 0.35),
                               child: Center(
                                 child: DriveThumb(
                                   object: o,
@@ -319,7 +315,7 @@ class DriveGridCard extends StatelessWidget {
                           icon: AppSvgIcon(
                             AppIcons.moreMenu,
                             size: 16,
-                            color: picture ? Colors.white : cs.mutedForeground,
+                            color: picture ? Colors.white : t.text2,
                           ),
                         ),
                       ),
@@ -338,7 +334,7 @@ class DriveGridCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: cs.foreground,
+                        color: t.text,
                       ),
                     ),
                     Text(
@@ -348,10 +344,7 @@ class DriveGridCard extends StatelessWidget {
                                 : 'vault.items_n'.plural(items!))
                           : decimalBytes(o.size ?? 0),
                       maxLines: 1,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: cs.mutedForeground,
-                      ),
+                      style: TextStyle(fontSize: 11.5, color: t.text2),
                     ),
                   ],
                 ),
@@ -397,7 +390,7 @@ class DriveMediaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Semantics(
       label: label,
       selected: selected,
@@ -410,7 +403,7 @@ class DriveMediaTile extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              ColoredBox(color: cs.muted, child: image),
+              ColoredBox(color: t.sunken, child: image),
               if (video)
                 Positioned(
                   left: 0,
@@ -445,8 +438,7 @@ class DriveMediaTile extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (selected)
-                ColoredBox(color: cs.primary.withValues(alpha: 0.28)),
+              if (selected) ColoredBox(color: t.accent.withValues(alpha: 0.28)),
               // Check at the start, badge at the end: the video length
               // (a row from the start) stays clear in right-to-left too.
               if (selecting)
@@ -750,7 +742,7 @@ class DriveSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     Widget item(
       String label,
       String icon,
@@ -759,34 +751,37 @@ class DriveSidebar extends StatelessWidget {
       Widget? trailing,
     }) => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
-      child: Material(
-        color: on ? cs.primary.withValues(alpha: 0.12) : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
+      child: Semantics(
+        selected: on,
+        button: true,
+        child: Material(
+          color: on ? t.accentSoft : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            child: Row(
-              children: [
-                AppSvgIcon(
-                  icon,
-                  size: 17,
-                  color: on ? cs.primary : cs.mutedForeground,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: on ? FontWeight.w600 : FontWeight.w500,
-                      color: on ? cs.primary : cs.foreground,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: onTap,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 40),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    AppSvgIcon(icon, size: 18, color: on ? t.accent : t.text2),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: AppType.row.copyWith(
+                          fontSize: 14,
+                          fontWeight: on ? FontWeight.w600 : FontWeight.w400,
+                          color: on ? t.accent : t.text,
+                        ),
+                      ),
                     ),
-                  ),
+                    ?trailing,
+                  ],
                 ),
-                ?trailing,
-              ],
+              ),
             ),
           ),
         ),
@@ -806,7 +801,8 @@ class DriveSidebar extends StatelessWidget {
               () => ctrl.setView(v),
             ),
           const SizedBox(height: 10),
-          Divider(color: cs.border, indent: 18, endIndent: 18),
+          const AppRowDivider(indent: 18),
+          const SizedBox(height: 6),
           item(
             'vault.transfers'.tr(),
             AppIcons.transferP2p,
@@ -856,42 +852,33 @@ class DriveStorageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final q = quota ?? 0;
     final u = used ?? byKind.values.fold<int>(0, (a, b) => a + b);
-    return InkWell(
+    return AppCard(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      padding: const EdgeInsets.all(12),
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: cs.card,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: cs.border.withValues(alpha: 0.8)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              q > 0
-                  ? 'vault.quota_line'.tr(
-                      namedArgs: {
-                        'used': decimalBytes(u),
-                        'quota': decimalBytes(q),
-                      },
-                    )
-                  : decimalBytes(u),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: cs.foreground,
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            q > 0
+                ? 'vault.quota_line'.tr(
+                    namedArgs: {
+                      'used': decimalBytes(u),
+                      'quota': decimalBytes(q),
+                    },
+                  )
+                : decimalBytes(u),
+            style: AppType.secondary.copyWith(
+              color: t.text,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: 8),
-            DriveStorageBar(used: used, quota: quota, byKind: byKind),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          DriveStorageBar(used: used, quota: quota, byKind: byKind),
+        ],
       ),
     );
   }

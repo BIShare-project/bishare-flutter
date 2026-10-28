@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:mime/mime.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../../core/storage/app_database.dart';
 import '../../../../core/storage/vault_tables.dart';
@@ -586,12 +585,12 @@ class PhotoBackupBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     final Widget icon = switch (state) {
       PhotoBackupState.backedUp => AppSvgIcon(
         AppIcons.cloudDone,
         size: 14,
-        color: cs.primary,
+        color: t.accent,
       ),
       PhotoBackupState.notBackedUp => const AppSvgIcon(
         AppIcons.cloudOff,
@@ -611,7 +610,7 @@ class PhotoBackupBadge extends StatelessWidget {
       PhotoBackupState.failed => AppSvgIcon(
         AppIcons.circleAlert,
         size: 14,
-        color: cs.destructive,
+        color: t.danger,
       ),
     };
     return Container(

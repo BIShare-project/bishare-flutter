@@ -6,7 +6,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/di/locator.dart';
@@ -540,15 +539,14 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
     final ready = _account.status == VaultStatus.ready;
     return LayoutBuilder(
       builder: (context, box) =>
-          _page(cs, ready, wide: box.maxWidth >= _sidebarMinWidth),
+          _page(ready, wide: box.maxWidth >= _sidebarMinWidth),
     );
   }
 
-  Widget _page(ShadColorScheme cs, bool ready, {required bool wide}) {
+  Widget _page(bool ready, {required bool wide}) {
     Widget body;
     if (!ready) {
       body = Column(
@@ -563,9 +561,9 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
         ],
       );
     } else if (wide) {
-      body = _wide(cs);
+      body = _wide();
     } else {
-      body = _narrow(cs);
+      body = _narrow();
     }
     if (_desktop) {
       // A click anywhere on the page gives the shortcuts the keyboard back
@@ -590,7 +588,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
         if (!didPop) _ctrl.up();
       },
       child: Scaffold(
-        backgroundColor: cs.background,
+        backgroundColor: context.tokens.bg,
         body: SafeArea(
           bottom: false,
           child: CallbackShortcuts(
@@ -659,7 +657,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
     ];
   }
 
-  Widget _narrow(ShadColorScheme cs) {
+  Widget _narrow() {
     final tab = _tabOf(_ctrl.view);
     return Column(
       children: [
@@ -768,7 +766,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _wide(ShadColorScheme cs) {
+  Widget _wide() {
     return Column(
       children: [
         ?widget.segment,
@@ -786,7 +784,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
                   onAccount: () => context.push('/drive-account'),
                 ),
               ),
-              VerticalDivider(width: 1, color: cs.border),
+              VerticalDivider(width: 1, color: context.tokens.line),
               Expanded(
                 child: Column(
                   children: [
@@ -795,25 +793,19 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
                       subtitle: _subtitle,
                       actions: [
                         if (_ctrl.canAdd && !_ctrl.selecting) ...[
-                          ShadButton.outline(
-                            size: ShadButtonSize.sm,
+                          AppButton(
+                            label: 'vault.new_folder'.tr(),
+                            icon: AppIcons.newFolder,
+                            variant: AppButtonVariant.secondary,
+                            size: AppButtonSize.small,
                             onPressed: () => _act.newFolder(),
-                            leading: const AppSvgIcon(
-                              AppIcons.newFolder,
-                              size: 15,
-                            ),
-                            child: Text('vault.new_folder'.tr()),
                           ),
                           const SizedBox(width: 8),
-                          ShadButton(
-                            size: ShadButtonSize.sm,
+                          AppButton(
+                            label: 'vault.upload'.tr(),
+                            icon: AppIcons.uploadFile,
+                            size: AppButtonSize.small,
                             onPressed: () => _act.addMenu(),
-                            leading: const AppSvgIcon(
-                              AppIcons.uploadFile,
-                              size: 15,
-                              color: Colors.white,
-                            ),
-                            child: Text('vault.upload'.tr()),
                           ),
                           const SizedBox(width: 4),
                         ],
@@ -1130,18 +1122,22 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        SizedBox(
-          height: 360,
-          child: AppEmptyState(icon: icon, title: title, message: body),
-        ),
-        if (_ctrl.canAdd)
-          Center(
-            child: ShadButton.outline(
-              onPressed: () => _act.addMenu(),
-              leading: const AppSvgIcon(AppIcons.uploadFile, size: 15),
-              child: Text('vault.upload'.tr()),
-            ),
+        Padding(
+          padding: const EdgeInsets.only(top: 48),
+          child: AppEmptyState(
+            icon: icon,
+            title: title,
+            message: body,
+            action: _ctrl.canAdd
+                ? AppButton(
+                    label: 'vault.upload'.tr(),
+                    icon: AppIcons.uploadFile,
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () => _act.addMenu(),
+                  )
+                : null,
           ),
+        ),
       ],
     );
   }
@@ -1198,7 +1194,6 @@ class _UploadStripState extends State<_UploadStrip> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
     return StreamBuilder<List<VaultTransfer>>(
       stream: widget.transfers,
       builder: (context, snap) {
@@ -1215,56 +1210,66 @@ class _UploadStripState extends State<_UploadStrip> {
             final label = running.isEmpty
                 ? 'vault.uploads_stopped'.plural(failed)
                 : 'vault.uploading_n'.plural(running.length);
-            return InkWell(
-              onTap: () => context.push('/drive-transfers'),
-              child: Container(
-                margin: const EdgeInsets.fromLTRB(14, 2, 14, 8),
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                decoration: BoxDecoration(
-                  color: cs.card,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: failed > 0 && running.isEmpty
-                        ? cs.destructive
-                        : cs.border,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    AppSvgIcon(
-                      AppIcons.uploadFile,
-                      size: 18,
-                      color: cs.primary,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            now == null ? label : '$label · ${now.name}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: cs.foreground,
-                            ),
-                          ),
-                          if (running.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            LinearProgressIndicator(value: bar, minHeight: 3),
-                          ],
-                        ],
+            final stopped = failed > 0 && running.isEmpty;
+            final t = context.tokens;
+            return Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                onTap: () => context.push('/drive-transfers'),
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 12, 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: t.sunken,
+                          shape: BoxShape.circle,
+                        ),
+                        child: AppSvgIcon(
+                          stopped ? AppIcons.circleAlert : AppIcons.uploadFile,
+                          size: 18,
+                          color: stopped ? t.danger : t.accent,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    AppSvgIcon(
-                      AppIcons.chevronRight,
-                      size: 16,
-                      color: cs.mutedForeground,
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              now == null ? label : '$label · ${now.name}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppType.rowStrong.copyWith(
+                                color: stopped ? t.danger : t.text,
+                              ),
+                            ),
+                            if (running.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(2),
+                                child: LinearProgressIndicator(
+                                  value: bar,
+                                  minHeight: 3,
+                                  color: t.accent,
+                                  backgroundColor: t.line,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      AppSvgIcon(
+                        AppIcons.chevronRight,
+                        size: 18,
+                        color: t.text3,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -1281,26 +1286,29 @@ class _DropHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = ShadTheme.of(context).colorScheme;
+    final t = context.tokens;
     return Positioned.fill(
       child: IgnorePointer(
         child: Container(
           margin: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: cs.primary.withValues(alpha: 0.08),
+            color: t.accentSoft,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: cs.primary, width: 2),
+            border: Border.all(color: t.accent, width: 2),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(24),
-          child: Text(
-            text,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: cs.primary,
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppSvgIcon(AppIcons.uploadFile, size: 32, color: t.accent),
+              const SizedBox(height: 10),
+              Text(
+                text,
+                textAlign: TextAlign.center,
+                style: AppType.rowStrong.copyWith(color: t.accent),
+              ),
+            ],
           ),
         ),
       ),
