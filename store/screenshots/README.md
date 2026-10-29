@@ -1,5 +1,13 @@
 # Store screenshots
 
+`app/` (not in git, 1.2 GB, listed in `.git/info/exclude`) holds the 2.8.0 set
+for the App Store and Play: `app/<lang>/<target>/` for ios_phone (6.9"),
+ios_phone_61 (6.1", required), ios_ipad, ios_duo_outer, ios_duo_inner (upload by
+hand), mac, play_phone, play_tablet, and `app/<lang>/creative/` for the App
+Store search results image (3:2) and product page header (21:9). Rebuild:
+`store/screens/shoot.sh`, `frame.py --raw app/_raw --out app`, `creative.py`.
+
+
 `windows/` holds the 1920×1080 PNGs for the Microsoft Store listing, plus the
 2160×2160 product logo and a 16:9 promotional image. `raw/` holds the
 untouched app captures they are built from; `compose.py` rebuilds the composed
