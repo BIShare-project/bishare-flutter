@@ -1013,6 +1013,9 @@
     "link_copy": "リンクをコピー",
     "link_copied": "リンクをコピーしました。",
     "link_share": "リンクを共有",
+    "link_share_files": "いくつかのファイル",
+    "link_share_message_until": "{name}を共有しました。アプリ不要で、どのブラウザでも開けます。リンクは{when}まで有効です。BIShareで送信（無料・オープンソース）：{url}",
+    "link_share_message_open": "{name}を共有しました。アプリ不要で、どのブラウザでも開けます。BIShareで送信（無料・オープンソース）：{url}",
     "link_new": "新しいリンク",
     "link_days": {
       "one": "{} 日",

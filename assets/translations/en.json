@@ -1013,6 +1013,9 @@
     "link_copy": "Copy link",
     "link_copied": "Link copied.",
     "link_share": "Share link",
+    "link_share_files": "a few files",
+    "link_share_message_until": "Shared with you: {name}. Open it in any browser, no app needed. The link works until {when}. Sent with BIShare, free and open source: {url}",
+    "link_share_message_open": "Shared with you: {name}. Open it in any browser, no app needed. Sent with BIShare, free and open source: {url}",
     "link_new": "New link",
     "link_days": {
       "one": "{} day",

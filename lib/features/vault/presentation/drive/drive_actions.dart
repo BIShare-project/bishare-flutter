@@ -697,6 +697,23 @@ class DriveActions {
           },
         );
 
+  /// What Share link sends: what it is, that it opens in a browser, how long
+  /// it works, a line saying what BIShare is, then the link. Like the transfer
+  /// link's message (remote.share_message); Copy still copies the bare link.
+  String _shareMessage(VaultLink l, String url) {
+    final args = {
+      'name': l.name ?? 'vault.link_share_files'.tr(),
+      'url': url,
+      if (l.expiresAt != null)
+        'when': DateFormat.MMMd(
+          context.locale.toLanguageTag(),
+        ).add_jm().format(l.expiresAt!.toLocal()),
+    };
+    return l.expiresAt == null
+        ? 'vault.link_share_message_open'.tr(namedArgs: args)
+        : 'vault.link_share_message_until'.tr(namedArgs: args);
+  }
+
   String _linkSummary(VaultLink l) =>
       '${_ends(l)} · ${'vault.link_opens'.plural(l.opens)}';
 
@@ -732,7 +749,10 @@ class DriveActions {
                 Navigator.pop(ctx);
                 unawaited(
                   _shareSheet(
-                    ShareParams(text: url, sharePositionOrigin: _origin()),
+                    ShareParams(
+                      text: _shareMessage(link, url),
+                      sharePositionOrigin: _origin(),
+                    ),
                   ),
                 );
               },

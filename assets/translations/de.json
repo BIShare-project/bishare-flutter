@@ -1013,6 +1013,9 @@
     "link_copy": "Link kopieren",
     "link_copied": "Link kopiert.",
     "link_share": "Link teilen",
+    "link_share_files": "ein paar Dateien",
+    "link_share_message_until": "Für dich freigegeben: {name}. Öffne es in jedem Browser, ganz ohne App. Der Link gilt bis {when}. Gesendet mit BIShare, kostenlos und Open Source: {url}",
+    "link_share_message_open": "Für dich freigegeben: {name}. Öffne es in jedem Browser, ganz ohne App. Gesendet mit BIShare, kostenlos und Open Source: {url}",
     "link_new": "Neuer Link",
     "link_days": {
       "one": "{} Tag",

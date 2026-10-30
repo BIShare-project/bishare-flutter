@@ -1013,6 +1013,9 @@
     "link_copy": "拷貝連結",
     "link_copied": "連結已拷貝。",
     "link_share": "分享連結",
+    "link_share_files": "幾個檔案",
+    "link_share_message_until": "分享給你 {name}。用任何瀏覽器即可開啟，無需安裝 App。連結在 {when} 前有效。透過 BIShare 傳送，免費開源：{url}",
+    "link_share_message_open": "分享給你 {name}。用任何瀏覽器即可開啟，無需安裝 App。透過 BIShare 傳送，免費開源：{url}",
     "link_new": "新連結",
     "link_days": {
       "one": "{} 天",

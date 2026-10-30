@@ -1013,6 +1013,9 @@
     "link_copy": "Salin tautan",
     "link_copied": "Tautan disalin.",
     "link_share": "Bagikan tautan",
+    "link_share_files": "beberapa file",
+    "link_share_message_until": "Dibagikan untukmu: {name}. Buka di browser apa saja, tanpa aplikasi. Tautan berlaku sampai {when}. Dikirim lewat BIShare, gratis dan open source: {url}",
+    "link_share_message_open": "Dibagikan untukmu: {name}. Buka di browser apa saja, tanpa aplikasi. Dikirim lewat BIShare, gratis dan open source: {url}",
     "link_new": "Tautan baru",
     "link_days": {
       "one": "{} hari",

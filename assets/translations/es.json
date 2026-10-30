@@ -1013,6 +1013,9 @@
     "link_copy": "Copiar enlace",
     "link_copied": "Enlace copiado.",
     "link_share": "Compartir enlace",
+    "link_share_files": "algunos archivos",
+    "link_share_message_until": "Compartido contigo: {name}. Ábrelo en cualquier navegador, sin app. El enlace funciona hasta el {when}. Enviado con BIShare, gratis y de código abierto: {url}",
+    "link_share_message_open": "Compartido contigo: {name}. Ábrelo en cualquier navegador, sin app. Enviado con BIShare, gratis y de código abierto: {url}",
     "link_new": "Enlace nuevo",
     "link_days": {
       "one": "{} día",

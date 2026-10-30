@@ -1013,6 +1013,9 @@
     "link_copy": "링크 복사",
     "link_copied": "링크를 복사했습니다.",
     "link_share": "링크 공유",
+    "link_share_files": "파일 몇 개",
+    "link_share_message_until": "{name} 공유했어요. 앱 없이 어떤 브라우저에서든 열 수 있어요. 링크는 {when}까지 유효해요. BIShare로 보냄, 무료 오픈 소스: {url}",
+    "link_share_message_open": "{name} 공유했어요. 앱 없이 어떤 브라우저에서든 열 수 있어요. BIShare로 보냄, 무료 오픈 소스: {url}",
     "link_new": "새 링크",
     "link_days": {
       "one": "{}일",

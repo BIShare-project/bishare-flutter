@@ -1028,6 +1028,9 @@
     "link_copy": "نسخ الرابط",
     "link_copied": "تم نسخ الرابط.",
     "link_share": "مشاركة الرابط",
+    "link_share_files": "بعض الملفات",
+    "link_share_message_until": "تمت مشاركته معك: {name}. افتحه في أي متصفح دون تطبيق. يعمل الرابط حتى {when}. أُرسل عبر BIShare، مجاني ومفتوح المصدر: {url}",
+    "link_share_message_open": "تمت مشاركته معك: {name}. افتحه في أي متصفح دون تطبيق. أُرسل عبر BIShare، مجاني ومفتوح المصدر: {url}",
     "link_new": "رابط جديد",
     "link_days": {
       "zero": "{} يوم",
