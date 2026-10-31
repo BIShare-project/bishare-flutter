@@ -13,7 +13,9 @@ import 'package:web_socket_channel/status.dart' as ws_status;
 import '../../../core/constants/cloud.dart';
 import '../../../core/crypto/bse2.dart';
 import '../../../core/identity/device_identity.dart';
+import '../../../core/io/file_thumbnail.dart';
 import '../../../core/io/scratch_dir.dart';
+import '../../../core/network/header_text.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/server/transfer_types.dart';
 import '../../history/data/history_repository.dart';
@@ -325,8 +327,8 @@ class RoomService {
       case 'upload_start':
         _events.add(
           RoomUploadStartEvent(
-            map['alias'] as String? ?? '',
-            map['fileName'] as String? ?? '',
+            decodeHeaderText(map['alias'] as String?) ?? '',
+            decodeHeaderText(map['fileName'] as String?) ?? '',
           ),
         );
       case 'upload_done':
@@ -527,6 +529,7 @@ class RoomService {
     void Function(int sent, int total)? onProgress,
     CancelToken? cancel,
   }) async {
+    thumbnailBase64 = await fitRoomThumbnail(thumbnailBase64);
     if (_kid != null) {
       return _uploadSealed(
         code,
@@ -540,10 +543,10 @@ class RoomService {
     }
     final length = await file.length();
     final headers = <String, dynamic>{
-      'X-File-Name': fileName,
+      'X-File-Name': headerText(fileName),
       'X-File-Type': mimeType,
       'X-Owner-Fingerprint': _identity.fingerprint,
-      'X-Owner-Alias': _identity.alias,
+      'X-Owner-Alias': headerText(_identity.alias),
       Headers.contentLengthHeader: length,
     };
     if (thumbnailBase64 != null) headers['X-Thumbnail'] = thumbnailBase64;
@@ -596,7 +599,7 @@ class RoomService {
             'X-Enc-Salt': sealed.salt,
             'X-Enc-Meta': sealed.meta,
             'X-Owner-Fingerprint': _identity.fingerprint,
-            'X-Owner-Alias': _identity.alias,
+            'X-Owner-Alias': headerText(_identity.alias),
             Headers.contentLengthHeader: await body.length(),
           },
           contentType: 'application/octet-stream',

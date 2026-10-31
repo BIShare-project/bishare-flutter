@@ -191,6 +191,90 @@ void main() {
     await ge2.dispose();
   }, skip: !_live, timeout: const Timeout(Duration(minutes: 5)));
 
+  // A Mac's default name has a curly apostrophe ("cakra’s Mac mini"), which a
+  // raw HTTP header refuses before the request leaves; file names can be any
+  // script. Both must reach the other side as they were typed.
+  const macName = 'cakra’s Mac mini';
+  const oddName = '写真 50%.txt';
+
+  test(
+    'names: a non-ASCII device and file name go through an encrypted room',
+    () async {
+      final host = service('names-host-fp', macName);
+      final guest = service('names-guest-fp', 'Gäst 東京');
+      final ge = _Events(guest.events);
+      final session = await host.createRemote();
+      await forgetStoredKeys();
+      await guest.joinRemote(session.code);
+      await ge.waitFor<RoomSecurityEvent>(
+        (e) => e.security == RoomSecurity.encrypted,
+      );
+
+      final f = File('${tmp.path}/names-sealed.txt')
+        ..writeAsStringSync('sealed ${DateTime.now()}');
+      await host.uploadFile(
+        session.code,
+        f,
+        fileName: oddName,
+        mimeType: 'text/plain',
+      );
+      final added = await ge.waitFor<RoomFileAddedEvent>(
+        (e) => e.file.fileName == oddName,
+      );
+      expect(added.file.ownerAlias, macName);
+      expect(
+        (await guest.downloadFile(session.code, added.file)).readAsStringSync(),
+        f.readAsStringSync(),
+      );
+
+      await host.close(session.code, session.hostToken!);
+      await ge.dispose();
+    },
+    skip: !_live,
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
+
+  test(
+    'names: a non-ASCII device and file name go through a plain room',
+    () async {
+      // A room made without a key, as an older web client makes one.
+      final made = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/rooms',
+        data: {'alias': 'Web', 'fingerprint': 'names-web-fp'},
+      );
+      final code = (made.data!['data'] as Map)['code'] as String;
+      final app = service('names-app-fp', macName);
+      final watcher = service('names-watch-fp', 'Watcher');
+      final ae = _Events(app.events);
+      final we = _Events(watcher.events);
+      await app.joinRemote(code);
+      await watcher.joinRemote(code);
+      await ae.waitFor<RoomSyncEvent>();
+      await we.waitFor<RoomSyncEvent>();
+      expect(app.security, isNot(RoomSecurity.encrypted));
+
+      final f = File('${tmp.path}/names-plain.txt')
+        ..writeAsStringSync('plain ${DateTime.now()}');
+      await app.uploadFile(code, f, fileName: oddName, mimeType: 'text/plain');
+      final start = await we.waitFor<RoomUploadStartEvent>();
+      expect(start.alias, macName);
+      expect(start.fileName, oddName);
+      final added = await we.waitFor<RoomFileAddedEvent>(
+        (e) => e.file.fileName == oddName,
+      );
+      expect(added.file.ownerAlias, macName);
+      expect(
+        (await watcher.downloadFile(code, added.file)).readAsStringSync(),
+        f.readAsStringSync(),
+      );
+
+      await ae.dispose();
+      await we.dispose();
+    },
+    skip: !_live,
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
+
   test('rooms: survives an API outage, then a room that died meanwhile ends the session', () async {
     final host = service('outage-host-fp', 'Host');
     final guest = service('outage-guest-fp', 'Guest');

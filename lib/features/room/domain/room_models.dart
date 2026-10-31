@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import '../../../core/network/header_text.dart';
+
 /// A member of a transfer room. Remote rooms carry only fingerprint/alias/type;
 /// LOCAL (Bonjour) rooms also carry the member's host+port so peers can reach
 /// it directly for fan-out and file download.
@@ -72,11 +74,11 @@ class RoomFile {
     final enc = j['enc'];
     return RoomFile(
       id: (j['id'] as String?) ?? '',
-      fileName: (j['fileName'] as String?) ?? 'file',
+      fileName: decodeHeaderText(j['fileName'] as String?) ?? 'file',
       fileType: (j['fileType'] as String?) ?? 'application/octet-stream',
       size: (j['size'] as num?)?.toInt() ?? 0,
       ownerFingerprint: (j['ownerFingerprint'] as String?) ?? '',
-      ownerAlias: _headerAlias(j['ownerAlias'] as String?) ?? 'Device',
+      ownerAlias: decodeHeaderText(j['ownerAlias'] as String?) ?? 'Device',
       thumbnail: j['thumbnail'] as String?,
       enc: enc is Map && enc['salt'] is String && enc['meta'] is String
           ? RoomFileEnc(salt: enc['salt'] as String, meta: enc['meta'] as String)
@@ -193,19 +195,4 @@ class RoomSession {
 
   /// True for relay rooms (vs. local Bonjour rooms).
   final bool remote;
-}
-
-/// The uploader's alias travels in the X-Owner-Alias header, which the web
-/// client percent-encodes (a header can't carry most non-ASCII names) and the
-/// server stores as sent — so "Web Tester" arrives as "Web%20Tester". Decode
-/// it; an alias that merely contains a stray '%' is kept as it is.
-String? _headerAlias(String? raw) {
-  if (raw == null || raw.isEmpty || !raw.contains('%')) return raw;
-  try {
-    return Uri.decodeComponent(raw);
-  } on ArgumentError {
-    return raw;
-  } on FormatException {
-    return raw;
-  }
 }

@@ -8,6 +8,7 @@ import '../../../core/constants/cloud.dart';
 import '../../../core/crypto/bse2.dart';
 import '../../../core/io/preserve_mtime.dart';
 import '../../../core/io/scratch_dir.dart';
+import '../../../core/network/header_text.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/server/transfer_types.dart';
 import '../../history/data/history_repository.dart';
@@ -592,9 +593,9 @@ class CloudTransferService {
       data: file.openRead(),
       options: Options(
         headers: {
-          'X-File-Name': fileName,
+          'X-File-Name': headerText(fileName),
           'X-File-Type': mimeType,
-          'X-Sender-Alias': senderAlias,
+          'X-Sender-Alias': headerText(senderAlias),
           if (oneTime) 'X-One-Time': 'true',
           if (mtimeMs != null) 'X-File-Mtime': '$mtimeMs',
           Headers.contentLengthHeader: length,
