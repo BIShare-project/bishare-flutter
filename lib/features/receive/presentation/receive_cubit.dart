@@ -40,6 +40,7 @@ class ReceiveState extends Equatable {
     this.lastReceived,
     this.outcome,
     this.speed = 0,
+    this.paused = false,
   });
 
   final PendingTransfer? pending;
@@ -53,6 +54,10 @@ class ReceiveState extends Equatable {
   /// Live receive throughput in bytes/sec (0 until measurable). Mirrors the
   /// sender's live speed so the receive card shows the same "speed · ETA" line.
   final double speed;
+
+  /// No byte has arrived for a few seconds mid-transfer (the sender's phone
+  /// is locked or out of reach): the card says to open BIShare there.
+  final bool paused;
 
   /// Estimated seconds remaining, derived from [speed] and the current progress.
   double? get etaSeconds {
@@ -68,6 +73,7 @@ class ReceiveState extends Equatable {
     ReceivedFile? lastReceived,
     ReceiveOutcome? outcome,
     double? speed,
+    bool? paused,
     bool clearPending = false,
     bool clearRequest = false,
     bool clearProgress = false,
@@ -80,6 +86,7 @@ class ReceiveState extends Equatable {
     lastReceived: lastReceived ?? this.lastReceived,
     outcome: outcome ?? this.outcome,
     speed: speed ?? this.speed,
+    paused: paused ?? this.paused,
   );
 
   @override
@@ -91,6 +98,7 @@ class ReceiveState extends Equatable {
     lastReceived?.savedPath,
     outcome?.sessionId,
     speed,
+    paused,
   ];
 }
 
@@ -134,8 +142,20 @@ class ReceiveCubit extends Cubit<ReceiveState> {
         // Only the first end of a session that was on screen leaves a card.
         // An orphan terminal (QUIC, session already gone) has no sender and
         // no files: it only clears the card.
+        // A transfer that stopped (its sender's phone locked) and was then
+        // picked up and finished under a new session: the finished card
+        // replaces the "stopped" one, even if no live progress came first.
+        final before = state.outcome;
+        final picksUp =
+            state.progress == null &&
+            before != null &&
+            !before.complete &&
+            before.senderAlias == pr.senderAlias;
         final ended =
-            !firstEnd || !shown || pr.senderAlias.isEmpty || pr.totalBytes == 0
+            !firstEnd ||
+                !(shown || picksUp) ||
+                pr.senderAlias.isEmpty ||
+                pr.totalBytes == 0
             ? null
             : ReceiveOutcome(
                 sessionId: pr.sessionId,
@@ -144,7 +164,15 @@ class ReceiveCubit extends Cubit<ReceiveState> {
                 total: pr.totalFiles,
                 bytes: pr.totalBytes,
               );
-        emit(state.copyWith(clearProgress: true, speed: 0, outcome: ended));
+        _lastByteAt = null;
+        emit(
+          state.copyWith(
+            clearProgress: true,
+            speed: 0,
+            outcome: ended,
+            paused: false,
+          ),
+        );
         return;
       }
       // Safety net: a LIVE (non-terminal) progress event for a session that has
@@ -166,8 +194,12 @@ class ReceiveCubit extends Cubit<ReceiveState> {
       }
       final secs = _sw.elapsedMilliseconds / 1000;
       final speed = secs > 0.2 ? pr.bytesReceived / secs : state.speed;
-      emit(state.copyWith(progress: pr, speed: speed));
+      if (pr.bytesReceived > (state.progress?.bytesReceived ?? -1)) {
+        _lastByteAt = DateTime.now();
+      }
+      emit(state.copyWith(progress: pr, speed: speed, paused: false));
     });
+    _stallWatch; // starts the 1 s check
     _recv = _server.received.listen((f) {
       emit(state.copyWith(lastReceived: f));
       // Anonymous, opt-out telemetry: a LAN receive is a "download" the relay
@@ -201,6 +233,21 @@ class ReceiveCubit extends Cubit<ReceiveState> {
     }
   }
 
+  /// When the last byte arrived, for [ReceiveState.paused].
+  DateTime? _lastByteAt;
+  late final Timer _stallWatch = Timer.periodic(const Duration(seconds: 1), (
+    _,
+  ) {
+    final last = _lastByteAt;
+    final p = state.progress;
+    if (isClosed || last == null || p == null || p.isComplete || state.paused) {
+      return;
+    }
+    if (DateTime.now().difference(last) >= const Duration(seconds: 4)) {
+      emit(state.copyWith(paused: true));
+    }
+  });
+
   late final StreamSubscription<PendingTransfer> _incoming;
   late final StreamSubscription<PendingFileRequest> _incomingReq;
   late final StreamSubscription<ReceiveProgress> _prog;
@@ -224,6 +271,7 @@ class ReceiveCubit extends Cubit<ReceiveState> {
 
   @override
   Future<void> close() async {
+    _stallWatch.cancel();
     await _incoming.cancel();
     await _incomingReq.cancel();
     await _prog.cancel();

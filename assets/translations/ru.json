@@ -1439,6 +1439,13 @@
   "transfer_notice": {
     "channel": "Передачи",
     "sending": "Отправка на {device}",
-    "receiving": "Получение с {device}"
+    "receiving": "Получение с {device}",
+    "paused_title": "Передача приостановлена",
+    "paused_body": "Откройте BIShare, чтобы продолжить"
+  },
+  "transfer_status": {
+    "paused": "Пауза · откройте BIShare на {device}, чтобы продолжить",
+    "resuming": "Продолжаем…",
+    "paused_short": "Пауза"
   }
 }

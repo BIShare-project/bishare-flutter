@@ -1401,6 +1401,13 @@
   "transfer_notice": {
     "channel": "传输",
     "sending": "正在发送到 {device}",
-    "receiving": "正在从 {device} 接收"
+    "receiving": "正在从 {device} 接收",
+    "paused_title": "传输已暂停",
+    "paused_body": "打开 BIShare 以继续"
+  },
+  "transfer_status": {
+    "paused": "已暂停 · 在 {device} 上打开 BIShare 以继续",
+    "resuming": "正在继续…",
+    "paused_short": "已暂停"
   }
 }

@@ -166,23 +166,51 @@ class TransferClient {
     void Function(String sessionId)? onSession,
     void Function(String transport)? onTransport,
     void Function(int done)? onFilesDone,
+    void Function()? onRetry,
     String? syncPairId,
     Map<String, String>? syncRelPaths,
   }) async {
     _activeSends++;
     try {
-      await _send(
-        files,
-        device,
-        pin: pin,
-        onProgress: onProgress,
-        cancelToken: cancelToken,
-        onSession: onSession,
-        onTransport: onTransport,
-        onFilesDone: onFilesDone,
-        syncPairId: syncPairId,
-        syncRelPaths: syncRelPaths,
-      );
+      // A receiver that dropped the session keeps what arrived; a new offer
+      // continues from there (accepted without a second prompt). Until it
+      // answers again (BIShare reopened there), keep trying for a while.
+      DateTime? until;
+      for (var restarted = false; ; restarted = true) {
+        try {
+          await _send(
+            files,
+            device,
+            pin: pin,
+            onProgress: onProgress,
+            cancelToken: cancelToken,
+            onSession: onSession,
+            onTransport: onTransport,
+            onFilesDone: onFilesDone,
+            onRetry: onRetry,
+            syncPairId: syncPairId,
+            syncRelPaths: syncRelPaths,
+          );
+          return;
+        } on _SessionGone {
+          until ??= DateTime.now().add(_resumeWindow);
+          if (DateTime.now().isAfter(until)) {
+            throw const TransferHttpException(BIShareStatus.notFound);
+          }
+        } on TransferHttpException catch (e) {
+          // Not there yet (connection refused) while picking up again.
+          final waiting = restarted && e.statusCode == 0;
+          if (!waiting || DateTime.now().isAfter(until!)) rethrow;
+        }
+        onRetry?.call();
+        await Future<void>.delayed(const Duration(seconds: 2));
+        if (cancelToken?.isCancelled ?? false) {
+          throw DioException.requestCancelled(
+            requestOptions: RequestOptions(),
+            reason: 'cancelled',
+          );
+        }
+      }
     } finally {
       _activeSends--;
     }
@@ -203,6 +231,7 @@ class TransferClient {
     void Function(String sessionId)? onSession,
     void Function(String transport)? onTransport,
     void Function(int done)? onFilesDone,
+    void Function()? onRetry,
     String? syncPairId,
     Map<String, String>? syncRelPaths,
   }) async {
@@ -548,6 +577,15 @@ class TransferClient {
         final canResume = resumeFrom != null;
         var offset = resumeFrom?[f.id] ?? 0;
         final attempts = canResume ? _maxResumeAttempts : _maxUploadAttempts;
+        // A receiver that resumes is waited for: its phone may be locked or
+        // BIShare in the background there, and the bytes it holds are kept.
+        DateTime? waitUntil;
+        bool again(int attempt) {
+          if (!canResume) return attempt < attempts;
+          waitUntil ??= DateTime.now().add(_resumeWindow);
+          return DateTime.now().isBefore(waitUntil!);
+        }
+
         for (var attempt = 1; ; attempt++) {
           final Stream<List<int>> body;
           final headers = <String, dynamic>{};
@@ -593,11 +631,18 @@ class TransferClient {
               },
             );
             final status = res.statusCode ?? 0;
-            if (status == BIShareStatus.offsetMismatch && attempt < attempts) {
+            if (status == BIShareStatus.offsetMismatch && again(attempt)) {
               offset = 0; // the receiver lost the start: send it all
               continue;
             }
-            if (status >= 500 && attempt < attempts) {
+            // The receiver dropped this session (idle too long while its
+            // phone was locked) and parked what arrived: a new offer picks
+            // it up (see [send]).
+            if (status == BIShareStatus.notFound && canResume && attempt > 1) {
+              throw const _SessionGone();
+            }
+            if (status >= 500 && again(attempt)) {
+              onRetry?.call();
               await _backoff(attempt);
               if (canResume) offset = await _heldOffset(dio, prepare, f, token);
               continue; // retryable server error
@@ -608,7 +653,8 @@ class TransferClient {
             break; // uploaded
           } on DioException catch (e) {
             if (CancelToken.isCancel(e)) rethrow;
-            if (attempt < attempts) {
+            if (again(attempt)) {
+              onRetry?.call();
               await _backoff(attempt); // transport error — retryable
               if (canResume) offset = await _heldOffset(dio, prepare, f, token);
               continue;
@@ -710,8 +756,12 @@ class TransferClient {
   /// How long the offer waits for those thumbnails.
   static const Duration _previewWait = Duration(milliseconds: 500);
 
-  Future<void> _backoff(int attempt) =>
-      Future<void>.delayed(Duration(milliseconds: 500 * attempt));
+  Future<void> _backoff(int attempt) => Future<void>.delayed(
+    Duration(milliseconds: (500 * attempt).clamp(500, 5000)),
+  );
+
+  /// How long a send waits for a receiver that can resume to come back.
+  static const _resumeWindow = Duration(minutes: 2);
 
   /// Upload one file over QUIC, forwarding the Rust send stream's byte progress.
   /// Throws on any failure so [send] can fall back to the HTTP/TCP path.
@@ -838,4 +888,9 @@ class TransferClient {
     final digest = await sha256.bind(f.file.openRead()).first;
     return digest.toString();
   }
+}
+
+/// The receiver no longer has the session a resumable upload belongs to.
+class _SessionGone implements Exception {
+  const _SessionGone();
 }

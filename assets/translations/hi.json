@@ -1401,6 +1401,13 @@
   "transfer_notice": {
     "channel": "ट्रांसफ़र",
     "sending": "{device} को भेजा जा रहा है",
-    "receiving": "{device} से प्राप्त हो रहा है"
+    "receiving": "{device} से प्राप्त हो रहा है",
+    "paused_title": "ट्रांसफ़र रुका",
+    "paused_body": "जारी रखने के लिए BIShare खोलें"
+  },
+  "transfer_status": {
+    "paused": "रुका हुआ · जारी रखने के लिए {device} पर BIShare खोलें",
+    "resuming": "फिर से शुरू हो रहा है…",
+    "paused_short": "रुका हुआ"
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:equatable/equatable.dart';
@@ -26,6 +28,8 @@ class SendState extends Equatable {
     this.transport = 'TCP',
     this.filesDone = 0,
     this.filesTotal = 0,
+    this.paused = false,
+    this.resuming = false,
   });
 
   final SendStatus status;
@@ -40,6 +44,14 @@ class SendState extends Equatable {
   /// Files fully sent, of [filesTotal].
   final int filesDone;
   final int filesTotal;
+
+  /// No byte has moved for a few seconds (the other device is locked or
+  /// out of reach): the card says to open BIShare there.
+  final bool paused;
+
+  /// The connection dropped and the send is trying again from where the
+  /// receiver stopped.
+  final bool resuming;
 
   double get fraction => total == 0 ? 0 : sent / total;
 
@@ -58,6 +70,8 @@ class SendState extends Equatable {
     String? transport,
     int? filesDone,
     int? filesTotal,
+    bool? paused,
+    bool? resuming,
   }) => SendState(
     status: status ?? this.status,
     deviceAlias: deviceAlias ?? this.deviceAlias,
@@ -69,6 +83,8 @@ class SendState extends Equatable {
     transport: transport ?? this.transport,
     filesDone: filesDone ?? this.filesDone,
     filesTotal: filesTotal ?? this.filesTotal,
+    paused: paused ?? this.paused,
+    resuming: resuming ?? this.resuming,
   );
 
   @override
@@ -83,6 +99,8 @@ class SendState extends Equatable {
     transport,
     filesDone,
     filesTotal,
+    paused,
+    resuming,
   ];
 }
 
@@ -106,6 +124,31 @@ class SendCubit extends Cubit<SendState> {
   DiscoveredDevice? _device;
   String? _sessionId;
   final _sw = Stopwatch();
+
+  /// When the last byte moved; null until the first one (an offer waiting
+  /// to be accepted is not "paused").
+  DateTime? _lastByteAt;
+  Timer? _stallWatch;
+  static const _stallAfter = Duration(seconds: 4);
+
+  void _watchStall() {
+    _lastByteAt = null;
+    _stallWatch?.cancel();
+    _stallWatch = Timer.periodic(const Duration(seconds: 1), (_) {
+      final last = _lastByteAt;
+      if (isClosed ||
+          state.status != SendStatus.sending ||
+          last == null ||
+          state.paused) {
+        return;
+      }
+      // Still nothing after a few seconds, even while retrying: the other
+      // device is away (locked, BIShare closed). Say where to look.
+      if (DateTime.now().difference(last) >= _stallAfter) {
+        emit(state.copyWith(paused: true, resuming: false));
+      }
+    });
+  }
 
   // Remembered for retry.
   List<SendableFile>? _lastFiles;
@@ -134,6 +177,7 @@ class SendCubit extends Cubit<SendState> {
         filesTotal: files.length,
       ),
     );
+    _watchStall();
     try {
       await _client.send(
         files,
@@ -143,10 +187,19 @@ class SendCubit extends Cubit<SendState> {
         onSession: (sid) => _sessionId = sid,
         onTransport: (t) => emit(state.copyWith(transport: t)),
         onFilesDone: (n) => emit(state.copyWith(filesDone: n)),
+        // A retry while already shown as paused stays "paused" (no flicker).
+        onRetry: () {
+          if (!state.paused) emit(state.copyWith(resuming: true));
+        },
         onProgress: (i, count, name, overallSent, overallTotal) {
           final secs = _sw.elapsedMilliseconds / 1000;
+          if (overallSent > state.sent || _lastByteAt == null) {
+            _lastByteAt = DateTime.now();
+          }
           emit(
             state.copyWith(
+              paused: false,
+              resuming: false,
               fileName: name,
               sent: overallSent,
               total: overallTotal,
@@ -225,6 +278,7 @@ class SendCubit extends Cubit<SendState> {
       }
     } finally {
       _sw.stop();
+      _stallWatch?.cancel();
     }
   }
 
@@ -262,6 +316,12 @@ class SendCubit extends Cubit<SendState> {
   Future<bool> requestFiles(DiscoveredDevice device, String? message) async {
     final res = await _client.sendFileRequest(device, message);
     return res.accepted;
+  }
+
+  @override
+  Future<void> close() {
+    _stallWatch?.cancel();
+    return super.close();
   }
 
   String _describe(int status) => switch (status) {

@@ -898,6 +898,12 @@ class TransferServer {
     // Per-device auto-accept (a favorite marked "auto-accept") always wins —
     // but only when the pinned key still matches.
     if (auto && keyOk && (favoriteAutoAccepts?.call(fp) ?? false)) return true;
+    // The same sender picking up a transfer that was already accepted here
+    // and cut off (its bytes are parked for it): no second prompt.
+    if (auto && keyOk && session.tcpResume && _continuesLeftover(session)) {
+      debugPrint('[Server] continuing an accepted transfer from "$fp"');
+      return true;
+    }
     // "Favorites only" auto-accepts known favorites; everyone else is prompted.
     if (auto &&
         keyOk &&
@@ -1011,6 +1017,7 @@ class TransferServer {
     // sender's socket times out, so its bytes can be kept for a resume.
     final body = request.read().timeout(_uploadStall);
 
+    session.activeUploads++;
     try {
       if (hasher != null && offset > 0) {
         await for (final c in tmp.openRead(0, offset)) {
@@ -1157,6 +1164,8 @@ class TransferServer {
       _dropSession(sessionId);
       _emitProgress(session, '', 0, complete: true);
       return _error('Upload failed', BIShareStatus.serverError);
+    } finally {
+      session.activeUploads--;
     }
 
     final digest = digestCapture.value;
@@ -1803,7 +1812,12 @@ class TransferServer {
     final now = DateTime.now();
     final stale = _sessions.values
         .where(
-          (s) => now.difference(s.lastActivity) > const Duration(seconds: 30),
+          // A body still being read is not idle (after a freeze, timers can
+          // fire before the socket catches up); its own 20 s stall timeout
+          // ends it when the sender is really gone.
+          (s) =>
+              s.activeUploads == 0 &&
+              now.difference(s.lastActivity) > const Duration(seconds: 30),
         )
         .toList();
     for (final s in stale) {
@@ -1857,6 +1871,19 @@ class TransferServer {
   /// Match a new offer against what its sender's interrupted transfer left:
   /// whole files are marked done, cut-off ones continue from their offset.
   /// Returns the `resumeFrom` answer (empty when nothing matches).
+  /// Whether [session] offers a file this sender left cut off or finished
+  /// in an interrupted transfer still parked here.
+  bool _continuesLeftover(TransferSession session) {
+    final l = _leftovers[session.sender.fingerprint];
+    if (l == null || DateTime.now().difference(l.at) > _leftoverTtl) {
+      return false;
+    }
+    return session.files.values.any((m) {
+      final key = resumeKey(m);
+      return l.done.contains(key) || l.partials.containsKey(key);
+    });
+  }
+
   Map<String, int> _claimLeftover(TransferSession session) {
     final resumeFrom = <String, int>{};
     final l = _leftovers.remove(session.sender.fingerprint);

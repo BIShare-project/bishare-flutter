@@ -1401,6 +1401,13 @@
   "transfer_notice": {
     "channel": "전송",
     "sending": "{device}(으)로 보내는 중",
-    "receiving": "{device}에서 받는 중"
+    "receiving": "{device}에서 받는 중",
+    "paused_title": "전송이 일시 정지됨",
+    "paused_body": "계속하려면 BIShare를 여세요"
+  },
+  "transfer_status": {
+    "paused": "일시 정지됨 · 계속하려면 {device}에서 BIShare를 여세요",
+    "resuming": "다시 시작하는 중…",
+    "paused_short": "일시 정지됨"
   }
 }

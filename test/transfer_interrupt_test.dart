@@ -253,6 +253,56 @@ void main() {
     );
   });
 
+  test('picking up a cut-off transfer does not ask again', () async {
+    if (!rust) {
+      markTestSkipped('native library not built');
+      return;
+    }
+    final src = File('${srcDir.path}/VID_0002.MOV')
+      ..writeAsBytesSync(List<int>.generate(2 << 20, (i) => (i * 5) & 0xff));
+    final f = SendableFile.fromPath(src.path, id: 'f1');
+    final prep = await _rawPrepare([f]);
+    await _cutUpload(prep, f, 1 << 20);
+
+    // From here the receiver asks before every offer: the pick-up must not.
+    server.autoAccept = AutoAcceptMode.alwaysAsk;
+    var prompts = 0;
+    final asks = server.incoming.listen((p) {
+      prompts++;
+      p.reject();
+    });
+    await Future<void>.delayed(const Duration(seconds: 4));
+    final received = server.received.first;
+    final client = TransferClient(_Identity('send-fp', 'Phone'))
+      ..preferredTransport = TransportMode.tcp;
+    await client.send([f], _receiver);
+    final got = await received.timeout(const Duration(seconds: 20));
+    await asks.cancel();
+    expect(prompts, 0);
+    expect(
+      sha256.convert(File(got.savedPath).readAsBytesSync()),
+      sha256.convert(src.readAsBytesSync()),
+    );
+  });
+
+  test('a new transfer from the same sender still asks', () async {
+    if (!rust) {
+      markTestSkipped('native library not built');
+      return;
+    }
+    server.autoAccept = AutoAcceptMode.alwaysAsk;
+    var prompts = 0;
+    final asks = server.incoming.listen((p) {
+      prompts++;
+      p.accept();
+    });
+    final client = TransferClient(_Identity('send-fp', 'Phone'))
+      ..preferredTransport = TransportMode.tcp;
+    await client.send([photo()], _receiver);
+    await asks.cancel();
+    expect(prompts, 1);
+  });
+
   test('files that already arrived are not sent twice', () async {
     if (!rust) {
       markTestSkipped('native library not built');

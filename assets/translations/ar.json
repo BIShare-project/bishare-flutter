@@ -1446,6 +1446,13 @@
   "transfer_notice": {
     "channel": "عمليات النقل",
     "sending": "جارٍ الإرسال إلى {device}",
-    "receiving": "جارٍ الاستلام من {device}"
+    "receiving": "جارٍ الاستلام من {device}",
+    "paused_title": "توقف النقل مؤقتًا",
+    "paused_body": "افتح BIShare للمتابعة"
+  },
+  "transfer_status": {
+    "paused": "متوقف مؤقتًا · افتح BIShare على {device} للمتابعة",
+    "resuming": "جارٍ الاستئناف…",
+    "paused_short": "متوقف مؤقتًا"
   }
 }

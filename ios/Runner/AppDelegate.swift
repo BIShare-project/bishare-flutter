@@ -49,11 +49,45 @@ import workmanager_apple
   /// and continues from where it stopped when BIShare is opened again.
   private var transferTime: UIBackgroundTaskIdentifier = .invalid
 
+  /// Localized "Transfer paused" / "Open BIShare to continue", from Dart.
+  private var pausedNotice: (title: String, body: String)?
+
+  /// A transfer is running (between transferStart and transferEnd).
+  private var transferActive = false
+  private var foregroundObserver: NSObjectProtocol?
+
+  /// Back on screen mid-transfer: a fresh grant of background time for the
+  /// next lock, and the "paused" notice is no longer true.
+  private func watchForeground() {
+    guard foregroundObserver == nil else { return }
+    foregroundObserver = NotificationCenter.default.addObserver(
+      forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main
+    ) { [weak self] _ in
+      guard let self, self.transferActive else { return }
+      UNUserNotificationCenter.current().removeDeliveredNotifications(
+        withIdentifiers: ["bishare.transfer.paused"])
+      self.beginTransferTime()
+    }
+  }
+
   private func beginTransferTime() {
     guard transferTime == .invalid else { return }
     transferTime = UIApplication.shared.beginBackgroundTask(withName: "LAN transfer") { [weak self] in
+      // iOS's time is up with the transfer still running: say it paused,
+      // so the user knows to open BIShare (it continues from where it was).
+      self?.postPausedNotice()
       self?.endTransferTime()
     }
+  }
+
+  private func postPausedNotice() {
+    guard let notice = pausedNotice else { return }
+    let content = UNMutableNotificationContent()
+    content.title = notice.title
+    content.body = notice.body
+    let request = UNNotificationRequest(
+      identifier: "bishare.transfer.paused", content: content, trigger: nil)
+    UNUserNotificationCenter.current().add(request)
   }
 
   private func endTransferTime() {
@@ -81,11 +115,23 @@ import workmanager_apple
           // A transfer is running: the screen does not dim and lock by
           // itself, and a manual lock still gets iOS's extra time.
           UIApplication.shared.isIdleTimerDisabled = true
+          if let args = call.arguments as? [String: Any],
+            let title = args["pausedTitle"] as? String,
+            let body = args["pausedBody"] as? String
+          {
+            self?.pausedNotice = (title, body)
+          }
+          self?.transferActive = true
+          self?.watchForeground()
           self?.beginTransferTime()
           result(nil)
         case "transferEnd":
           UIApplication.shared.isIdleTimerDisabled = false
+          self?.transferActive = false
           self?.endTransferTime()
+          // Done (or back on screen): the "paused" notice is no longer true.
+          UNUserNotificationCenter.current().removeDeliveredNotifications(
+            withIdentifiers: ["bishare.transfer.paused"])
           result(nil)
         case "excludeFromBackup":
           // Drive's work folder: plain copies of files being uploaded.

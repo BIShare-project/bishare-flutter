@@ -1401,6 +1401,13 @@
   "transfer_notice": {
     "channel": "転送",
     "sending": "{device} に送信中",
-    "receiving": "{device} から受信中"
+    "receiving": "{device} から受信中",
+    "paused_title": "転送が一時停止しました",
+    "paused_body": "続けるには BIShare を開いてください"
+  },
+  "transfer_status": {
+    "paused": "一時停止中 · 続けるには {device} で BIShare を開いてください",
+    "resuming": "再開しています…",
+    "paused_short": "一時停止中"
   }
 }

@@ -108,7 +108,10 @@ class _TransferKeepAliveState extends State<TransferKeepAlive> {
     if (_iOS) {
       if (!first) return;
       try {
-        await _ios.invokeMethod<void>('transferStart');
+        await _ios.invokeMethod<void>('transferStart', {
+          'pausedTitle': 'transfer_notice.paused_title'.tr(),
+          'pausedBody': 'transfer_notice.paused_body'.tr(),
+        });
       } on Object catch (e) {
         debugPrint('[KeepAlive] start: $e');
       }

@@ -54,6 +54,7 @@ class _SendSheet extends StatefulWidget {
 }
 
 class _SendSheetState extends State<_SendSheet> {
+  bool _held = false;
   String? _target;
 
   /// The device being sent to. Kept on the radar while it is briefly off
@@ -121,7 +122,10 @@ class _SendSheetState extends State<_SendSheet> {
     if (_target == null || !_target!.startsWith('d:')) return;
     switch (s.status) {
       case SendStatus.sending:
-        if (s.total > 0) setState(() => _progress = s.sent / s.total);
+        setState(() {
+          if (s.total > 0) _progress = s.sent / s.total;
+          _held = s.paused || s.resuming;
+        });
       case SendStatus.done:
         if (_phase == _Phase.sending) _finish();
       case SendStatus.error:
@@ -181,6 +185,7 @@ class _SendSheetState extends State<_SendSheet> {
             pinned: _pinned,
             phase: _phase,
             progress: _progress,
+            held: _held,
             onTap: _send,
           ),
           AppSectionHeader('compose.ways'.tr()),
@@ -201,6 +206,7 @@ class _Radar extends StatelessWidget {
     required this.pinned,
     required this.phase,
     required this.progress,
+    this.held = false,
     required this.onTap,
   });
 
@@ -208,6 +214,9 @@ class _Radar extends StatelessWidget {
   final _Target? pinned;
   final _Phase phase;
   final double progress;
+
+  /// The send is waiting on the other device (paused or resuming).
+  final bool held;
   final void Function(_Target) onTap;
 
   @override
@@ -281,7 +290,10 @@ class _Radar extends StatelessWidget {
               ? x.os
               : switch (phase) {
                   _Phase.preparing => 'home.preparing'.tr(),
-                  _Phase.sending => '${(progress * 100).round()}%',
+                  _Phase.sending =>
+                    held
+                        ? 'transfer_status.paused_short'.tr()
+                        : '${(progress * 100).round()}%',
                   _Phase.done => 'history.sent'.tr(),
                   _Phase.failed => 'compose.failed_tap'.tr(),
                   _Phase.idle => x.os,

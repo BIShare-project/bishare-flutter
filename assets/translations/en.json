@@ -1401,6 +1401,13 @@
   "transfer_notice": {
     "channel": "Transfers",
     "sending": "Sending to {device}",
-    "receiving": "Receiving from {device}"
+    "receiving": "Receiving from {device}",
+    "paused_title": "Transfer paused",
+    "paused_body": "Open BIShare to continue"
+  },
+  "transfer_status": {
+    "paused": "Paused · open BIShare on {device} to continue",
+    "resuming": "Resuming…",
+    "paused_short": "Paused"
   }
 }

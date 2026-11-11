@@ -132,23 +132,27 @@ class _ReceiveCardState extends State<_ReceiveCard> {
             title: 'home.receiving_from'.tr(
               namedArgs: {'alias': p.senderAlias},
             ),
-            subtitle: _progressLine(
-              first: p.totalFiles > 1
-                  ? 'receive.files_of'.tr(
-                      namedArgs: {
-                        'done': '${p.completedFiles}',
-                        'total': '${p.totalFiles}',
-                      },
-                    )
-                  : (p.currentFileName.isEmpty
-                        ? 'home.starting'.tr()
-                        : p.currentFileName),
-              fraction: p.fraction,
-              speed: s.speed,
-              eta: s.etaSeconds,
-              doneBytes: p.bytesReceived,
-              totalBytes: p.totalBytes,
-            ),
+            subtitle: s.paused
+                ? 'transfer_status.paused'.tr(
+                    namedArgs: {'device': p.senderAlias},
+                  )
+                : _progressLine(
+                    first: p.totalFiles > 1
+                        ? 'receive.files_of'.tr(
+                            namedArgs: {
+                              'done': '${p.completedFiles}',
+                              'total': '${p.totalFiles}',
+                            },
+                          )
+                        : (p.currentFileName.isEmpty
+                              ? 'home.starting'.tr()
+                              : p.currentFileName),
+                    fraction: p.fraction,
+                    speed: s.speed,
+                    eta: s.etaSeconds,
+                    doneBytes: p.bytesReceived,
+                    totalBytes: p.totalBytes,
+                  ),
             badge: p.transport,
             fraction: p.fraction,
           );
@@ -212,23 +216,29 @@ class _SendCard extends StatelessWidget {
           return TransferCard(
             icon: AppIcons.uploadFile,
             title: 'home.sending_to'.tr(namedArgs: {'alias': s.deviceAlias}),
-            subtitle: _progressLine(
-              first: s.fileName.isEmpty
-                  ? 'home.preparing'.tr()
-                  : s.filesTotal > 1
-                  ? 'receive.files_of'.tr(
-                      namedArgs: {
-                        'done': '${s.filesDone}',
-                        'total': '${s.filesTotal}',
-                      },
-                    )
-                  : s.fileName,
-              fraction: s.fraction,
-              speed: s.speed,
-              eta: s.etaSeconds,
-              doneBytes: s.sent,
-              totalBytes: s.total,
-            ),
+            subtitle: s.paused
+                ? 'transfer_status.paused'.tr(
+                    namedArgs: {'device': s.deviceAlias},
+                  )
+                : s.resuming
+                ? 'transfer_status.resuming'.tr()
+                : _progressLine(
+                    first: s.fileName.isEmpty
+                        ? 'home.preparing'.tr()
+                        : s.filesTotal > 1
+                        ? 'receive.files_of'.tr(
+                            namedArgs: {
+                              'done': '${s.filesDone}',
+                              'total': '${s.filesTotal}',
+                            },
+                          )
+                        : s.fileName,
+                    fraction: s.fraction,
+                    speed: s.speed,
+                    eta: s.etaSeconds,
+                    doneBytes: s.sent,
+                    totalBytes: s.total,
+                  ),
             badge: s.transport,
             fraction: s.fraction,
             onClose: cubit.cancel,

@@ -213,6 +213,65 @@ void main() {
       expect(cubit.state.pending, isNull);
     },
   );
+
+  test(
+    'a receive with no byte for 4 s is paused, and un-pauses on the next byte',
+    () async {
+      server.progressCtrl.add(_p('s1', bytes: 10));
+      await _tick();
+      expect(cubit.state.paused, isFalse);
+      await Future<void>.delayed(const Duration(milliseconds: 5200));
+      expect(cubit.state.paused, isTrue);
+      server.progressCtrl.add(_p('s1', bytes: 20));
+      await _tick();
+      expect(cubit.state.paused, isFalse);
+    },
+  );
+
+  test('a finished receive is never paused', () async {
+    server.progressCtrl.add(_p('s2', bytes: 10));
+    await _tick();
+    server.progressCtrl.add(_p('s2', bytes: 100, complete: true));
+    await _tick();
+    await Future<void>.delayed(const Duration(milliseconds: 5200));
+    expect(cubit.state.paused, isFalse);
+  });
+
+  test('a stopped receive picked up and finished shows as finished', () async {
+    server.progressCtrl.add(_p('old', bytes: 30));
+    await _tick();
+    // The receiver gave up on the first session (sender's phone locked)...
+    server.progressCtrl.add(
+      const ReceiveProgress(
+        sessionId: 'old',
+        senderAlias: 'iPhone',
+        totalFiles: 1,
+        completedFiles: 0,
+        currentFileName: '',
+        bytesReceived: 30,
+        totalBytes: 100,
+        isComplete: true,
+      ),
+    );
+    await _tick();
+    expect(cubit.state.outcome?.complete, isFalse);
+    // ...and the sender came back under a new session that ends at once.
+    server.progressCtrl.add(
+      ReceiveProgress(
+        sessionId: 'new',
+        senderAlias: 'iPhone',
+        totalFiles: 1,
+        completedFiles: 1,
+        currentFileName: 'photo.jpg',
+        bytesReceived: 100,
+        totalBytes: 100,
+        isComplete: true,
+      ),
+    );
+    await _tick();
+    expect(cubit.state.outcome?.sessionId, 'new');
+    expect(cubit.state.outcome?.complete, isTrue);
+  });
 }
 
 extension on ReceiveProgress {

@@ -49,6 +49,9 @@ class TransferSession {
   /// The same for TCP files in flight (a sender uploads several at once).
   final Map<String, int> tcpInFlight = {};
 
+  /// Upload requests whose body is being read right now.
+  int activeUploads = 0;
+
   bool get isComplete => completedFileIds.length >= files.length;
 
   /// The sender can continue a cut-off TCP upload from where it stopped

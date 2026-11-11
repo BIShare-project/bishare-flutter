@@ -1401,6 +1401,13 @@
   "transfer_notice": {
     "channel": "Transfer",
     "sending": "Mengirim ke {device}",
-    "receiving": "Menerima dari {device}"
+    "receiving": "Menerima dari {device}",
+    "paused_title": "Transfer dijeda",
+    "paused_body": "Buka BIShare untuk melanjutkan"
+  },
+  "transfer_status": {
+    "paused": "Dijeda · buka BIShare di {device} untuk melanjutkan",
+    "resuming": "Melanjutkan…",
+    "paused_short": "Dijeda"
   }
 }
