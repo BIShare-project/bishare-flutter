@@ -501,9 +501,45 @@ Future<Directory> _resolveSaveDirectory() async {
     }
     // Fallback to app Documents if channel unavailable
   }
-  // iOS, macOS (default), Windows, Linux
+  final visible = await _visibleSaveBase();
+  if (visible != null) return visible;
+  // iOS, Windows, Linux (and the fallback for the rest)
   final base = await getApplicationDocumentsDirectory();
   final dir = Directory('${base.path}${Platform.pathSeparator}BIShare');
   if (!dir.existsSync()) dir.createSync(recursive: true);
   return dir;
+}
+
+/// The default save folder where the user can find it, on the desktops whose
+/// app Documents folder is hidden:
+///
+/// * macOS: the sandbox's Documents is `~/Library/Containers/com.bishare.app/
+///   Data/Documents`, out of sight. The sandbox may write to `~/Downloads`
+///   (the `files.downloads.read-write` entitlement), so files go to
+///   `~/Downloads/BIShare`, as AirDrop does.
+/// * Linux Snap: `$HOME` is `~/snap/bishare/<rev>`; the `home` plug lets the
+///   app write to the real home, so files go to `~/Documents/BIShare`.
+///
+/// Null elsewhere, or when that folder cannot be made: the caller falls back
+/// to the app Documents folder.
+Future<Directory?> _visibleSaveBase() async {
+  try {
+    String? base;
+    if (Platform.isMacOS) {
+      final downloads = await getDownloadsDirectory();
+      // Inside the sandbox this is the container's Downloads link to the real
+      // ~/Downloads; resolve it so the app shows the path the user knows.
+      if (downloads != null) base = downloads.resolveSymbolicLinksSync();
+    } else if (Platform.isLinux) {
+      final realHome = Platform.environment['SNAP_REAL_HOME'];
+      if (realHome != null && realHome.isNotEmpty) base = '$realHome/Documents';
+    }
+    if (base == null) return null;
+    final dir = Directory('$base${Platform.pathSeparator}BIShare');
+    if (!dir.existsSync()) dir.createSync(recursive: true);
+    return dir;
+  } on Object catch (e) {
+    debugPrint('[locator] visible save folder unavailable: $e');
+    return null;
+  }
 }
