@@ -247,7 +247,8 @@
     "select_all": "تحديد الكل",
     "select_none": "إلغاء التحديد",
     "detail_saved_as": "حُفظ باسم",
-    "open_in_browser": "افتح في المتصفح"
+    "open_in_browser": "افتح في المتصفح",
+    "live": "مباشر"
   },
   "history": {
     "all": "الكل",
@@ -588,7 +589,9 @@
     "devices_sync": "الأجهزة والمزامنة",
     "version": "الإصدار {version}",
     "license_line": "مفتوح المصدر، ترخيص Apache 2.0",
-    "pin_six_digits": "أدخل الأرقام الستة كلها"
+    "pin_six_digits": "أدخل الأرقام الستة كلها",
+    "live_photos": "الصور الحية",
+    "live_photos_subtitle": "أرسل الصورة مع حركتها. عند الإيقاف: الصورة فقط."
   },
   "notification": {
     "clipboard_from": "تم النسخ من {sender}",
@@ -1427,5 +1430,10 @@
     "zinc": "زنكي",
     "neutral": "محايد",
     "stone": "حجري"
+  },
+  "transfer_notice": {
+    "channel": "عمليات النقل",
+    "sending": "جارٍ الإرسال إلى {device}",
+    "receiving": "جارٍ الاستلام من {device}"
   }
 }

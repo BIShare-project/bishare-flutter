@@ -69,6 +69,10 @@ class _SendMediaTabState extends State<SendMediaTab>
   bool _end = false;
   StreamSubscription<void>? _changes;
 
+  /// Library changes arrive in bursts (a received batch, a camera burst):
+  /// one reload after they settle, not one per change.
+  Timer? _settle;
+
   /// Access can change in the system settings while the app is away.
   AppLifecycleListener? _life;
 
@@ -103,6 +107,7 @@ class _SendMediaTabState extends State<SendMediaTab>
   void dispose() {
     _life?.dispose();
     _changes?.cancel();
+    _settle?.cancel();
     super.dispose();
   }
 
@@ -112,7 +117,10 @@ class _SendMediaTabState extends State<SendMediaTab>
     setState(() => _access = a);
     if (a == SendMediaAccess.full || a == SendMediaAccess.limited) {
       await _loadAlbums();
-      _changes ??= _lib.changes.listen((_) => _reload());
+      _changes ??= _lib.changes.listen((_) {
+        _settle?.cancel();
+        _settle = Timer(const Duration(milliseconds: 800), _reload);
+      });
     }
   }
 

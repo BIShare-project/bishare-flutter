@@ -55,6 +55,11 @@ class _SendSheet extends StatefulWidget {
 
 class _SendSheetState extends State<_SendSheet> {
   String? _target;
+
+  /// The device being sent to. Kept on the radar while it is briefly off
+  /// the network (Wi-Fi dropped mid-transfer), so "Interrupted. Tap again"
+  /// stays where the user can tap it.
+  _Target? _pinned;
   _Phase _phase = _Phase.idle;
   double _progress = 0;
   int _count = 0;
@@ -79,6 +84,7 @@ class _SendSheetState extends State<_SendSheet> {
     }
     setState(() {
       _target = t.key;
+      _pinned = t;
       _phase = _Phase.preparing;
       _progress = 0;
     });
@@ -172,6 +178,7 @@ class _SendSheetState extends State<_SendSheet> {
           AppSectionHeader('home.nearby_devices'.tr()),
           _Radar(
             target: _target,
+            pinned: _pinned,
             phase: _phase,
             progress: _progress,
             onTap: _send,
@@ -191,29 +198,57 @@ class _SendSheetState extends State<_SendSheet> {
 class _Radar extends StatelessWidget {
   const _Radar({
     required this.target,
+    required this.pinned,
     required this.phase,
     required this.progress,
     required this.onTap,
   });
 
   final String? target;
+  final _Target? pinned;
   final _Phase phase;
   final double progress;
   final void Function(_Target) onTap;
 
   @override
   Widget build(BuildContext context) {
-    final t = context.tokens;
     final devices = context.watch<DiscoveryCubit>().state;
     final web = context.watch<WebNearbyCubit>().state;
-    final favs = context.watch<FavoritesCubit>();
-    final me = context.select<SettingsCubit, Settings>((c) => c.state);
     final targets = [
       for (final d in devices) _Target.device(d),
       for (final p in web.peers) _Target.web(p),
     ];
+    final keep = pinned;
+    if (keep != null &&
+        phase != _Phase.idle &&
+        phase != _Phase.done &&
+        !targets.any((x) => x.key == keep.key)) {
+      targets.add(keep);
+    }
     if (targets.isEmpty) return const _NoDevices();
 
+    // The fill glides between progress updates (they arrive in steps), and
+    // snaps when the system asks for less motion.
+    final shown = switch (phase) {
+      _Phase.preparing => 0.04,
+      _Phase.done => 1.0,
+      _Phase.sending || _Phase.failed => progress.clamp(0.0, 1.0),
+      _Phase.idle => 0.0,
+    };
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: shown),
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+      builder: (context, fill, _) => _layout(context, targets, fill),
+    );
+  }
+
+  Widget _layout(BuildContext context, List<_Target> targets, double fill) {
+    final t = context.tokens;
+    final favs = context.watch<FavoritesCubit>();
+    final me = context.select<SettingsCubit, Settings>((c) => c.state);
     return LayoutBuilder(
       builder: (context, box) {
         final w = box.maxWidth;
@@ -274,7 +309,7 @@ class _Radar extends StatelessWidget {
                         icon: x.icon,
                         size: 56,
                         ring: ring,
-                        progress: phase == _Phase.preparing ? 0.04 : progress,
+                        progress: fill,
                         favourite:
                             x.device != null &&
                             favs.isFavorite(x.device!.fingerprint),
@@ -318,6 +353,13 @@ class _Radar extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               Positioned.fill(
+                child: _RadarPulse(
+                  me: Offset(w / 2, meY),
+                  rx: w * 0.2,
+                  color: t.accent,
+                ),
+              ),
+              Positioned.fill(
                 child: RepaintBoundary(
                   child: CustomPaint(
                     painter: _RadarPainter(
@@ -327,6 +369,8 @@ class _Radar extends StatelessWidget {
                       beamTo: beamTo,
                       beam: phase == _Phase.failed ? null : t.brandLine,
                       failed: phase == _Phase.failed ? t.danger : null,
+                      track: t.text3.withValues(alpha: 0.22),
+                      fill: fill,
                     ),
                   ),
                 ),
@@ -390,6 +434,8 @@ class _RadarPainter extends CustomPainter {
     this.beamTo,
     this.beam,
     this.failed,
+    required this.track,
+    this.fill = 0,
   });
 
   final Offset me;
@@ -398,6 +444,12 @@ class _RadarPainter extends CustomPainter {
   final Offset? beamTo;
   final Gradient? beam;
   final Color? failed;
+
+  /// The whole beam, faint: where the fill is going.
+  final Color track;
+
+  /// How much of the beam is filled, 0–1: the transfer's progress.
+  final double fill;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -429,19 +481,142 @@ class _RadarPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     if (failed != null) {
       p.color = failed!;
-    } else {
-      p.shader = beam!.createShader(Rect.fromPoints(from, end));
+      canvas.drawPath(path, p);
+      return;
     }
-    canvas.drawPath(path, p);
+    // The track, then the part sent so far filled from this device outwards,
+    // with a soft glow at its head.
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round
+        ..color = track,
+    );
+    final metric = path.computeMetrics().first;
+    final at = metric.length * fill.clamp(0.0, 1.0);
+    if (at <= 0) return;
+    p.shader = beam!.createShader(Rect.fromPoints(from, end));
+    canvas.drawPath(metric.extractPath(0, at), p);
+    if (fill >= 1) return;
+    final head = metric.getTangentForOffset(at)?.position;
+    if (head == null) return;
+    final glow = beam!.colors.last;
+    canvas
+      ..drawCircle(
+        head,
+        7,
+        Paint()
+          ..color = glow.withValues(alpha: 0.28)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+      )
+      ..drawCircle(head, 3.2, Paint()..color = glow);
   }
 
   @override
   bool shouldRepaint(_RadarPainter old) =>
       old.beamTo != beamTo ||
+      old.fill != fill ||
+      old.track != track ||
       old.failed != failed ||
       old.ring != ring ||
       old.me != me ||
       old.rx != rx;
+}
+
+/// Soft sonar waves rolling out from this device across the radar's rings,
+/// so the radar reads as searching. One controller repaints only this layer
+/// (no widget rebuilds); still when the system asks for less motion.
+class _RadarPulse extends StatefulWidget {
+  const _RadarPulse({required this.me, required this.rx, required this.color});
+
+  final Offset me;
+  final double rx;
+  final Color color;
+
+  @override
+  State<_RadarPulse> createState() => _RadarPulseState();
+}
+
+class _RadarPulseState extends State<_RadarPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _wave = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 3200),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _wave.stop();
+    } else if (!_wave.isAnimating) {
+      _wave.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _wave.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => RepaintBoundary(
+    child: CustomPaint(
+      painter: _PulsePainter(
+        wave: _wave,
+        me: widget.me,
+        rx: widget.rx,
+        color: widget.color,
+      ),
+    ),
+  );
+}
+
+class _PulsePainter extends CustomPainter {
+  _PulsePainter({
+    required this.wave,
+    required this.me,
+    required this.rx,
+    required this.color,
+  }) : super(repaint: wave);
+
+  final Animation<double> wave;
+  final Offset me;
+  final double rx;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Two waves half a period apart, each growing from the device to the
+    // outer ring and fading as it goes.
+    for (final shift in const [0.0, 0.5]) {
+      final v = (wave.value + shift) % 1.0;
+      final k = Curves.easeOutSine.transform(v) * 3;
+      if (k < 0.15) continue;
+      final fade = (1 - v) * (1 - v);
+      final rect = Rect.fromCenter(
+        center: me,
+        width: rx * 2 * k,
+        height: 158.0 * k,
+      );
+      canvas
+        ..drawOval(rect, Paint()..color = color.withValues(alpha: 0.07 * fade))
+        ..drawOval(
+          rect,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5
+            ..color = color.withValues(alpha: 0.45 * fade),
+        );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PulsePainter old) =>
+      old.me != me || old.rx != rx || old.color != color || old.wave != wave;
 }
 
 /// No device on this network yet: invite one, search again.

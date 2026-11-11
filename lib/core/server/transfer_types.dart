@@ -47,7 +47,41 @@ class TransferSession {
   final Map<String, int> quicInFlight = {};
 
   bool get isComplete => completedFileIds.length >= files.length;
+
+  /// The sender can continue a cut-off TCP upload from where it stopped
+  /// (`PrepareRequest.tcpResume`).
+  bool tcpResume = false;
+
+  /// The sender cancelled: nothing is kept for a resume.
+  bool cancelled = false;
+
+  /// Files whose TCP upload was cut off: what arrived so far (fileId →).
+  final Map<String, PartialUpload> partials = {};
 }
+
+/// The start of a file whose upload was cut off, kept so the sender can send
+/// only the rest. [bytes] is plaintext, already decrypted.
+class PartialUpload {
+  const PartialUpload(this.path, this.bytes);
+
+  final String path;
+  final int bytes;
+}
+
+/// What an interrupted transfer left behind for its sender: the files that
+/// arrived whole and the ones cut off, keyed by [resumeKey], so the next
+/// offer from the same sender skips the first and continues the second.
+class ResumeLeftover {
+  ResumeLeftover(this.at);
+
+  DateTime at;
+  final Set<String> done = {};
+  final Map<String, PartialUpload> partials = {};
+}
+
+/// Identifies "the same file" across two offers from one sender.
+String resumeKey(FileMetadata f) =>
+    '${f.fileName}|${f.size}|${f.mtimeMs ?? ''}|${f.sha256 ?? ''}';
 
 /// An incoming transfer awaiting the user's accept/reject decision. The prepare
 /// HTTP handler blocks on [decision] until the UI resolves it (or it times out).
@@ -138,6 +172,7 @@ class ReceivedFile {
     this.fileType,
     this.senderFingerprint,
     this.encrypted = false,
+    this.liveGroup,
   });
 
   final String fileName;
@@ -149,6 +184,9 @@ class ReceivedFile {
   final String? fileType;
   final String? senderFingerprint;
   final bool encrypted;
+
+  /// Half of a Live Photo ([FileMetadata.liveGroup]).
+  final String? liveGroup;
 }
 
 /// Auto-accept policy (mirrors native `AutoAcceptMode`).

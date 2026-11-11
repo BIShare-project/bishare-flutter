@@ -13,6 +13,7 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -104,6 +105,26 @@ class MainActivity : FlutterActivity() {
                     val uri = call.argument<String>("uri")?.let { Uri.parse(it) }
                     result.success(uri?.let { lastModifiedOf(it) })
                 }
+                // Received photos and videos into MediaStore, so the gallery
+                // and the Send tab's Photos list show them where they were
+                // saved (no copy). A path that no longer exists is taken out.
+                "scanMedia" -> {
+                    val paths = call.argument<List<String>>("paths").orEmpty()
+                    if (paths.isEmpty()) {
+                        result.success(0)
+                    } else {
+                        val main = Handler(Looper.getMainLooper())
+                        var left = paths.size
+                        var indexed = 0
+                        MediaScannerConnection.scanFile(applicationContext, paths.toTypedArray(), null) { _, uri ->
+                            main.post {
+                                if (uri != null) indexed++
+                                left--
+                                if (left == 0) result.success(indexed)
+                            }
+                        }
+                    }
+                }
                 else -> result.notImplemented()
             }
         }
@@ -182,6 +203,26 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+        // A LAN transfer in progress: foreground service + wake/Wi-Fi locks.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "app.bishare/transfer_keepalive")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "show" -> result.success(
+                        TransferKeepAliveService.show(
+                            applicationContext,
+                            call.argument<String>("channel") ?: "Transfers",
+                            call.argument<String>("title") ?: "",
+                            call.argument<String>("body") ?: "",
+                            call.argument<Int>("progress") ?: -1,
+                        ),
+                    )
+                    "stop" -> {
+                        TransferKeepAliveService.stop(applicationContext)
+                        result.success(null)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
         // The intent that launched us (cold start) may be a share.
         handleShareIntent(intent, initial = true)
     }

@@ -18,17 +18,35 @@ import 'preserve_mtime.dart';
 /// to the original file. See [pickedPaths].
 Future<List<String>> pickFilePaths({bool multiple = true}) async {
   const android = FilePickerAndroidOptions();
+  void loading(FilePickerStatus s) =>
+      filePickerBusy.value = s == FilePickerStatus.picking;
   try {
     final files = multiple
-        ? await FilePicker.pickFiles(androidOptions: android)
-        : [?await FilePicker.pickFile(androidOptions: android)];
+        ? await FilePicker.pickFiles(
+            androidOptions: android,
+            onFileLoading: loading,
+          )
+        : [
+            ?await FilePicker.pickFile(
+              androidOptions: android,
+              onFileLoading: loading,
+            ),
+          ];
     return await pickedPaths(files);
   } on PlatformException catch (e) {
     // As file_picker 10 did: a failed or overlapping pick picks nothing.
     debugPrint('[picker] pick failed: ${e.code} ${e.message}');
     return const [];
+  } finally {
+    filePickerBusy.value = false;
   }
 }
+
+/// True while the system picker hands the chosen files over. On Android it
+/// copies each one into the app's cache first, which takes seconds for a
+/// large file; the app shows "Preparing…" meanwhile (PickingOverlay) instead
+/// of looking stuck.
+final ValueNotifier<bool> filePickerBusy = ValueNotifier(false);
 
 /// The paths of picked files, with the original "Date modified" restored on
 /// Android.

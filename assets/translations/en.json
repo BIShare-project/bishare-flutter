@@ -235,7 +235,8 @@
     "select_all": "Select all",
     "select_none": "Select none",
     "detail_saved_as": "Saved as",
-    "open_in_browser": "Open in browser"
+    "open_in_browser": "Open in browser",
+    "live": "LIVE"
   },
   "history": {
     "all": "All",
@@ -576,7 +577,9 @@
     "devices_sync": "Devices and sync",
     "version": "Version {version}",
     "license_line": "Open source, Apache License 2.0",
-    "pin_six_digits": "Enter all 6 digits"
+    "pin_six_digits": "Enter all 6 digits",
+    "live_photos": "Live Photos",
+    "live_photos_subtitle": "Send the photo and its motion. Off: the photo only."
   },
   "notification": {
     "clipboard_from": "Copied from {sender}",
@@ -1382,5 +1385,10 @@
     "zinc": "Zinc",
     "neutral": "Neutral",
     "stone": "Stone"
+  },
+  "transfer_notice": {
+    "channel": "Transfers",
+    "sending": "Sending to {device}",
+    "receiving": "Receiving from {device}"
   }
 }

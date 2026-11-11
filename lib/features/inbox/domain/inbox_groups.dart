@@ -11,8 +11,11 @@ class InboxGroup {
 
   DateTime get newest => records.first.timestamp;
 
-  /// Photos and videos, shown as a grid.
-  List<TransferRecord> get media => records.where(isMedia).toList();
+  /// Photos and videos, shown as a grid. A Live Photo shows once, as its
+  /// photo: its motion half is not a tile of its own.
+  List<TransferRecord> get media => records
+      .where((r) => isMedia(r) && !isLiveMotion(r, records))
+      .toList();
 
   /// Everything else, shown as rows.
   List<TransferRecord> get files => records.where((r) => !isMedia(r)).toList();
@@ -21,6 +24,20 @@ class InboxGroup {
 }
 
 bool isImage(TransferRecord r) => (r.fileType ?? '').startsWith('image/');
+
+bool isVideo(TransferRecord r) => (r.fileType ?? '').startsWith('video/');
+
+/// The photo of a received Live Photo whose motion is in [all] too.
+bool isLiveStill(TransferRecord r, Iterable<TransferRecord> all) =>
+    r.liveGroup != null &&
+    isImage(r) &&
+    all.any((x) => x.id != r.id && x.liveGroup == r.liveGroup && isVideo(x));
+
+/// The motion of a received Live Photo whose photo is in [all] too.
+bool isLiveMotion(TransferRecord r, Iterable<TransferRecord> all) =>
+    r.liveGroup != null &&
+    isVideo(r) &&
+    all.any((x) => x.id != r.id && x.liveGroup == r.liveGroup && isImage(x));
 
 bool isMedia(TransferRecord r) {
   final t = r.fileType ?? '';

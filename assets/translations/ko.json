@@ -235,7 +235,8 @@
     "select_all": "모두 선택",
     "select_none": "선택 해제",
     "detail_saved_as": "저장된 이름",
-    "open_in_browser": "브라우저에서 열기"
+    "open_in_browser": "브라우저에서 열기",
+    "live": "라이브"
   },
   "history": {
     "all": "전체",
@@ -576,7 +577,9 @@
     "devices_sync": "기기 및 동기화",
     "version": "버전 {version}",
     "license_line": "오픈 소스, Apache License 2.0",
-    "pin_six_digits": "6자리를 모두 입력하세요"
+    "pin_six_digits": "6자리를 모두 입력하세요",
+    "live_photos": "Live Photo",
+    "live_photos_subtitle": "사진과 움직임을 함께 보냅니다. 끄면 사진만 보냅니다."
   },
   "notification": {
     "clipboard_from": "{sender}에서 복사됨",
@@ -1382,5 +1385,10 @@
     "zinc": "징크",
     "neutral": "뉴트럴",
     "stone": "스톤"
+  },
+  "transfer_notice": {
+    "channel": "전송",
+    "sending": "{device}(으)로 보내는 중",
+    "receiving": "{device}에서 받는 중"
   }
 }

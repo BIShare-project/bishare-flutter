@@ -480,8 +480,9 @@ void main() {
 
     // Back to v5: the column did not exist then.
     final db = AppDatabase(NativeDatabase(file, setup: (raw) {
-      if (raw.userVersion != 6) return;
+      if (raw.userVersion != 7) return;
       raw.execute('ALTER TABLE vault_transfers DROP COLUMN asset_id;');
+      raw.execute('ALTER TABLE transfer_records DROP COLUMN live_group;');
       raw.userVersion = 5;
     }));
 
@@ -500,6 +501,45 @@ void main() {
       assetId: const Value('asset-2'),
     ));
     expect((await db.vaultDao.pendingTransfers()).map((t) => t.assetId), [null, 'asset-2']);
+    await db.close();
+  });
+
+  test('migration v6→v7: received files learn their Live Photo pair', () async {
+    final dir = await Directory.systemTemp.createTemp('bishare_db_test');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/app.db');
+
+    final first = AppDatabase(NativeDatabase(file));
+    await first.insertRecord(TransferRecordsCompanion.insert(
+      fileName: 'old.jpg',
+      fileSize: 1,
+      direction: 'received',
+      deviceAlias: 'Phone',
+      timestamp: DateTime(2026),
+    ));
+    await first.close();
+
+    // Back to v6: the column did not exist then.
+    final db = AppDatabase(NativeDatabase(file, setup: (raw) {
+      if (raw.userVersion != 7) return;
+      raw.execute('ALTER TABLE transfer_records DROP COLUMN live_group;');
+      raw.userVersion = 6;
+    }));
+
+    await db.insertRecord(TransferRecordsCompanion.insert(
+      fileName: 'IMG_1.HEIC',
+      fileSize: 2,
+      direction: 'received',
+      deviceAlias: 'Phone',
+      timestamp: DateTime(2026, 2),
+      liveGroup: const Value('g1'),
+    ));
+    final rows = await db.watchReceived().first;
+    expect(
+      {for (final r in rows) r.fileName: r.liveGroup},
+      {'old.jpg': null, 'IMG_1.HEIC': 'g1'},
+      reason: 'v6 rows survive; new rows keep the pair id',
+    );
     await db.close();
   });
 }

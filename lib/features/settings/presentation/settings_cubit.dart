@@ -56,6 +56,7 @@ class SettingsCubit extends Cubit<Settings> {
   static const _kBrowserUpload = 'browserUpload';
   static const _kBrowserUploadMaxGb = 'browserUploadMaxGb';
   static const _kNameWithSender = 'nameWithSender';
+  static const kSendLivePhotos = 'sendLivePhotos';
   static const _kTelemetry = 'telemetryEnabled';
   static const _kClipboardSync = 'clipboardSync';
   static const _kClipboardImages = 'clipboardImages';
@@ -87,6 +88,7 @@ class SettingsCubit extends Cubit<Settings> {
     browserUpload: p.getBool(_kBrowserUpload) ?? true,
     browserUploadMaxGb: p.getInt(_kBrowserUploadMaxGb) ?? 0,
     nameWithSender: p.getBool(_kNameWithSender) ?? false,
+    sendLivePhotos: p.getBool(kSendLivePhotos) ?? true,
     telemetryEnabled: p.getBool(_kTelemetry) ?? true,
     clipboardSync: p.getBool(_kClipboardSync) ?? false,
     folderCloudSync: p.getBool(_kFolderCloudSync) ?? false,
@@ -180,6 +182,11 @@ class SettingsCubit extends Cubit<Settings> {
     await _prefs.setBool(_kNameWithSender, on);
     _server.nameWithSender = on;
     emit(state.copyWith(nameWithSender: on));
+  }
+
+  Future<void> setSendLivePhotos(bool on) async {
+    await _prefs.setBool(kSendLivePhotos, on);
+    emit(state.copyWith(sendLivePhotos: on));
   }
 
   Future<void> setBrowserUpload(bool on) async {

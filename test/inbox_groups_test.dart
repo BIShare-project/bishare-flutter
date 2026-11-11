@@ -4,7 +4,12 @@ import 'package:bishare/features/inbox/domain/inbox_groups.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 var _id = 0;
-TransferRecord _r(String alias, DateTime at, {String type = 'image/jpeg'}) =>
+TransferRecord _r(
+  String alias,
+  DateTime at, {
+  String type = 'image/jpeg',
+  String? live,
+}) =>
     TransferRecord(
       id: ++_id,
       fileName: 'f$_id',
@@ -16,6 +21,7 @@ TransferRecord _r(String alias, DateTime at, {String type = 'image/jpeg'}) =>
       encrypted: true,
       verified: true,
       timestamp: at,
+      liveGroup: live,
     );
 
 void main() {
@@ -81,5 +87,19 @@ void main() {
     ]).single;
     expect(g.media.single.fileType, 'video/mp4');
     expect(g.files.single.fileType, 'audio/mpeg');
+  });
+
+  test('a Live Photo is one tile: the photo, marked; its motion hidden', () {
+    final still = _r('iPhone', t0, live: 'g1');
+    final motion = _r('iPhone', t0, type: 'video/quicktime', live: 'g1');
+    final clip = _r('iPhone', t0, type: 'video/mp4');
+    final lone = _r('iPhone', t0, type: 'video/quicktime', live: 'g2');
+    final g = groupReceived([still, motion, clip, lone]).single;
+    expect(g.media.map((r) => r.id).toSet(), {still.id, clip.id, lone.id});
+    expect(isLiveStill(still, g.records), isTrue);
+    expect(isLiveMotion(motion, g.records), isTrue);
+    expect(isLiveMotion(lone, g.records), isFalse,
+        reason: 'a motion whose photo is gone still shows');
+    expect(g.records, hasLength(4), reason: 'counts keep every file');
   });
 }

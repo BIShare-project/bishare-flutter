@@ -235,7 +235,8 @@
     "select_all": "Selecionar tudo",
     "select_none": "Limpar seleção",
     "detail_saved_as": "Salvo como",
-    "open_in_browser": "Abrir no navegador"
+    "open_in_browser": "Abrir no navegador",
+    "live": "LIVE"
   },
   "history": {
     "all": "Tudo",
@@ -576,7 +577,9 @@
     "devices_sync": "Dispositivos e sincronização",
     "version": "Versão {version}",
     "license_line": "Código aberto, licença Apache 2.0",
-    "pin_six_digits": "Digite os 6 dígitos"
+    "pin_six_digits": "Digite os 6 dígitos",
+    "live_photos": "Live Photos",
+    "live_photos_subtitle": "Envia a foto com o movimento. Desligado: só a foto."
   },
   "notification": {
     "clipboard_from": "Copiado de {sender}",
@@ -1382,5 +1385,10 @@
     "zinc": "Zinco",
     "neutral": "Neutro",
     "stone": "Pedra"
+  },
+  "transfer_notice": {
+    "channel": "Transferências",
+    "sending": "Enviando para {device}",
+    "receiving": "Recebendo de {device}"
   }
 }

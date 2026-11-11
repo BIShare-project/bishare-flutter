@@ -66,6 +66,33 @@ void main() {
     expect(_name(b), 'IMG_0001 (1).HEIC');
   });
 
+  test('an iPhone photo export name arrives as the photo\'s own name', () {
+    if (!rust) return markTestSkipped(rustUnavailableReason);
+    // What iOS senders before 2.8.2 sent (photo_manager's export file name).
+    final f = ReceiveNaming.targetFile(
+      dir,
+      _meta(
+        '6E5438ED-9A8C-4ED0-9DEA-AB2D8F8A9360_L0_001_1762851000.123456_o_IMG_4821.HEIC',
+      ),
+      'iPhone',
+    );
+    expect(_name(f), 'IMG_4821.HEIC');
+  });
+
+  test('unwrapPhotoExport leaves ordinary names alone', () {
+    expect(ReceiveNaming.unwrapPhotoExport('IMG_4821.HEIC'), 'IMG_4821.HEIC');
+    expect(
+      ReceiveNaming.unwrapPhotoExport('2026-11-11_Leo_IMG_1.jpg'),
+      '2026-11-11_Leo_IMG_1.jpg',
+    );
+    expect(
+      ReceiveNaming.unwrapPhotoExport(
+        '6E5438ED-9A8C-4ED0-9DEA-AB2D8F8A9360_L0_001_1762851000.5_IMG_9.MOV',
+      ),
+      'IMG_9.MOV',
+    );
+  });
+
   test('an opaque photo-library token still gets a readable name', () {
     if (!rust) return markTestSkipped(rustUnavailableReason);
     final f = ReceiveNaming.targetFile(

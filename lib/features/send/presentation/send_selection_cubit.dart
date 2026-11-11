@@ -7,6 +7,7 @@ import 'package:photo_manager/photo_manager.dart';
 import '../../../core/apps/installed_apps_channel.dart';
 import '../data/send_media_library.dart';
 import '../domain/sendable_file.dart';
+import '../data/send_timing.dart';
 import 'tray_cubit.dart';
 
 /// The Send tab a selected item counts under.
@@ -108,15 +109,24 @@ class SendSelection {
 /// apps are held as references and turned into files only when sending, so
 /// selecting never copies anything.
 class SendSelectionCubit extends Cubit<SendSelection> {
-  SendSelectionCubit(this._tray, {SendMediaLibrary? library})
-    : _library = library ?? SendMediaLibrary.instance,
-      super(const SendSelection()) {
+  SendSelectionCubit(
+    this._tray, {
+    SendMediaLibrary? library,
+    Future<String?> Function(String path)? livePartnerOf,
+  }) : _library = library ?? SendMediaLibrary.instance,
+       _livePartnerOf = livePartnerOf,
+       super(const SendSelection()) {
     _sub = _tray.stream.listen(_syncTray);
     _syncTray(_tray.state);
   }
 
   final TrayCubit _tray;
   final SendMediaLibrary _library;
+
+  /// A gallery file that is half of a Live Photo received earlier: the
+  /// other half's path (Android keeps both as plain files), so passing it
+  /// on keeps the pair.
+  final Future<String?> Function(String path)? _livePartnerOf;
   late final StreamSubscription<List<SendableFile>> _sub;
   SendKind? _hint;
   bool _materializing = false;
@@ -234,6 +244,9 @@ class SendSelectionCubit extends Cubit<SendSelection> {
     void Function(int done, int total)? onProgress,
   }) async {
     _materializing = true;
+    final sw = Stopwatch()..start();
+    var exportMs = 0;
+    var exported = 0;
     try {
       final out = <SendableFile>[];
       final entries = state.entries;
@@ -242,19 +255,61 @@ class SendSelectionCubit extends Cubit<SendSelection> {
           case FileEntry(:final file):
             out.add(file);
           case AssetEntry(:final asset):
+            final ex = Stopwatch()..start();
             final f = await _library.original(asset);
-            if (f != null) out.addAll(await _tray.stageMedia([f.path]));
+            exportMs += ex.elapsedMilliseconds;
+            exported++;
+            if (f != null) {
+              // Send the library's own name (IMG_4821.HEIC), not the export's
+              // `<asset id>_<time>_o_IMG_4821.HEIC`.
+              final name = await _library.originalName(asset);
+              final pair = await _livePair(asset, f.path);
+              out.addAll(
+                pair == null
+                    ? await _tray.stageMedia([f.path], names: [name])
+                    : await _tray.stageLivePhoto(
+                        pair.photo,
+                        pair.motion,
+                        name: name,
+                      ),
+              );
+            }
           case AppEntry(:final app):
             out.addAll(await _tray.stageApks([app]));
         }
         onProgress?.call(i + 1, entries.length);
       }
+      // Both halves of one received Live Photo picked: staged once.
+      final seen = <String>{};
+      out.retainWhere((f) => seen.add(f.id));
       _tray.reorder([for (final f in out) f.id]);
       emit(SendSelection([for (final f in out) FileEntry(f, kindOfFile(f))]));
+      SendTiming.log(
+        'materialize ${entries.length} item(s) → ${out.length} file(s): '
+        '${sw.elapsedMilliseconds} ms (Photos export $exported in $exportMs ms)',
+      );
       return out;
     } finally {
       _materializing = false;
     }
+  }
+
+  /// The photo and motion to send together for [asset] (exported at
+  /// [path]), or null for an ordinary photo or video: an Apple Live Photo,
+  /// or either half of one received earlier.
+  Future<({String photo, String motion})?> _livePair(
+    AssetEntity asset,
+    String path,
+  ) async {
+    if (!_tray.sendLivePhotos) return null;
+    final motion = await _library.livePhotoVideo(asset);
+    if (motion != null) return (photo: path, motion: motion.path);
+    final other = await _livePartnerOf?.call(path);
+    if (other == null) return null;
+    final isVideo = (lookupMimeType(path) ?? '').startsWith('video/');
+    return isVideo
+        ? (photo: other, motion: path)
+        : (photo: path, motion: other);
   }
 
   @override

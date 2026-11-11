@@ -13,6 +13,7 @@ PrepareRequest _$PrepareRequestFromJson(Map<String, dynamic> json) =>
         (k, e) => MapEntry(k, FileMetadata.fromJson(e as Map<String, dynamic>)),
       ),
       syncPairId: json['syncPairId'] as String?,
+      tcpResume: json['tcpResume'] as bool?,
     );
 
 Map<String, dynamic> _$PrepareRequestToJson(PrepareRequest instance) =>
@@ -20,6 +21,7 @@ Map<String, dynamic> _$PrepareRequestToJson(PrepareRequest instance) =>
       'info': instance.info.toJson(),
       'files': instance.files.map((k, e) => MapEntry(k, e.toJson())),
       'syncPairId': ?instance.syncPairId,
+      'tcpResume': ?instance.tcpResume,
     };
 
 PrepareResponse _$PrepareResponseFromJson(Map<String, dynamic> json) =>
@@ -34,6 +36,9 @@ PrepareResponse _$PrepareResponseFromJson(Map<String, dynamic> json) =>
       keepAlive: json['keepAlive'] as bool?,
       streamsPerFile: (json['streamsPerFile'] as num?)?.toInt(),
       supportsResume: json['supportsResume'] as bool?,
+      resumeFrom: (json['resumeFrom'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, (e as num).toInt()),
+      ),
     );
 
 Map<String, dynamic> _$PrepareResponseToJson(PrepareResponse instance) =>
@@ -48,4 +53,5 @@ Map<String, dynamic> _$PrepareResponseToJson(PrepareResponse instance) =>
       'keepAlive': ?instance.keepAlive,
       'streamsPerFile': ?instance.streamsPerFile,
       'supportsResume': ?instance.supportsResume,
+      'resumeFrom': ?instance.resumeFrom,
     };

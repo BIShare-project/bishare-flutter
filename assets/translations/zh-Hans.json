@@ -235,7 +235,8 @@
     "select_all": "全选",
     "select_none": "取消全选",
     "detail_saved_as": "保存为",
-    "open_in_browser": "在浏览器中打开"
+    "open_in_browser": "在浏览器中打开",
+    "live": "实况"
   },
   "history": {
     "all": "全部",
@@ -576,7 +577,9 @@
     "devices_sync": "设备与同步",
     "version": "版本 {version}",
     "license_line": "开源，Apache License 2.0",
-    "pin_six_digits": "请输入全部 6 位数字"
+    "pin_six_digits": "请输入全部 6 位数字",
+    "live_photos": "实况照片",
+    "live_photos_subtitle": "连同动态一起发送照片。关闭：仅发送照片。"
   },
   "notification": {
     "clipboard_from": "已从 {sender} 复制",
@@ -1382,5 +1385,10 @@
     "zinc": "锌色",
     "neutral": "中性",
     "stone": "石色"
+  },
+  "transfer_notice": {
+    "channel": "传输",
+    "sending": "正在发送到 {device}",
+    "receiving": "正在从 {device} 接收"
   }
 }

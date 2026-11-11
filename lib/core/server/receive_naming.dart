@@ -26,7 +26,7 @@ class ReceiveNaming {
     bool addSender = false,
   }) {
     final category = Rust.categoryName(meta.fileType); // Images/Videos/…
-    final base = Rust.sanitizeFilename(meta.fileName);
+    final base = unwrapPhotoExport(Rust.sanitizeFilename(meta.fileName));
     final name = _isJunkName(_stem(base))
         ? _friendlyName(category, _ext(base), senderAlias)
         : addSender
@@ -36,6 +36,21 @@ class ReceiveNaming {
     final dir = Directory('${saveDir.path}${Platform.pathSeparator}$category');
     if (!dir.existsSync()) dir.createSync(recursive: true);
     return _deduped(dir, name);
+  }
+
+  /// iOS senders before 2.8.2 sent the photo library's export file name,
+  /// `<asset id>_<time>[_o]_<name>` (photo_manager), e.g.
+  /// `6E5438ED-9A8C-4ED0-9DEA-AB2D8F8A9360_L0_001_1762851000.123456_o_IMG_4821.HEIC`.
+  /// Keep only the photo's own name, IMG_4821.HEIC.
+  static final _photoExport = RegExp(
+    r'^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-'
+    r'[0-9A-Fa-f]{12}(?:_L\d+_\d+)?_\d+(?:\.\d+)?(?:_o)?_(.+)$',
+  );
+
+  static String unwrapPhotoExport(String name) {
+    final m = _photoExport.firstMatch(name);
+    final inner = m?.group(1);
+    return inner == null || inner.isEmpty ? name : inner;
   }
 
   /// A name is "junk" if its stem is a long, dot-free, base64/hex-ish token with

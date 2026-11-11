@@ -235,7 +235,8 @@
     "select_all": "すべて選択",
     "select_none": "選択を解除",
     "detail_saved_as": "保存名",
-    "open_in_browser": "ブラウザで開く"
+    "open_in_browser": "ブラウザで開く",
+    "live": "ライブ"
   },
   "history": {
     "all": "すべて",
@@ -576,7 +577,9 @@
     "devices_sync": "デバイスと同期",
     "version": "バージョン {version}",
     "license_line": "オープンソース、Apache License 2.0",
-    "pin_six_digits": "6桁すべて入力してください"
+    "pin_six_digits": "6桁すべて入力してください",
+    "live_photos": "Live Photos",
+    "live_photos_subtitle": "写真と動きを一緒に送信します。オフ: 写真のみ。"
   },
   "notification": {
     "clipboard_from": "{sender}からコピーしました",
@@ -1382,5 +1385,10 @@
     "zinc": "ジンク",
     "neutral": "ニュートラル",
     "stone": "ストーン"
+  },
+  "transfer_notice": {
+    "channel": "転送",
+    "sending": "{device} に送信中",
+    "receiving": "{device} から受信中"
   }
 }

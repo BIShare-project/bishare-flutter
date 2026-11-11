@@ -6,13 +6,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../core/di/locator.dart';
+import '../core/server/transfer_server.dart';
 import '../core/l10n/app_locales.dart';
 import '../core/theme/app_theme.dart';
+import '../core/ui/picking_overlay.dart';
 import '../features/clipboard/presentation/clipboard_cubit.dart';
 import '../features/devices/presentation/devices_cubit.dart';
 import '../features/discovery/data/discovery_service.dart';
 import '../features/discovery/presentation/discovery_cubit.dart';
 import '../features/favorites/presentation/favorites_cubit.dart';
+import '../features/history/data/history_repository.dart';
 import '../features/history/presentation/history_cubit.dart';
 import '../features/inbox/presentation/inbox_cubit.dart';
 import '../features/nearby/presentation/nearby_cubit.dart';
@@ -23,6 +26,7 @@ import '../features/send/data/transfer_client.dart';
 import '../features/send/presentation/send_cubit.dart';
 import '../features/send/presentation/send_selection_cubit.dart';
 import '../features/send/presentation/tray_cubit.dart';
+import '../features/send/presentation/transfer_keep_alive.dart';
 import '../features/settings/domain/settings.dart';
 import '../features/settings/presentation/settings_cubit.dart';
 import '../features/web_nearby/presentation/web_nearby_cubit.dart';
@@ -55,13 +59,37 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
+        _background = false;
         unawaited(getIt<DiscoveryService>().restart());
       case AppLifecycleState.paused:
+        _background = true;
+        unawaited(_goodbyeWhenIdle());
       case AppLifecycleState.detached:
         _announceGoodbye();
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
         break;
+    }
+  }
+
+  bool _background = false;
+  bool _waitingToLeave = false;
+
+  /// Going to the background mid-transfer must not tell the peer we left:
+  /// its device list would drop us and the transfer would look broken. Wait
+  /// for the transfer to end, then say goodbye if we are still away.
+  Future<void> _goodbyeWhenIdle() async {
+    if (_waitingToLeave) return;
+    _waitingToLeave = true;
+    try {
+      final client = getIt<TransferClient>();
+      final server = getIt<TransferServer>();
+      while (_background && (client.isSending || server.isReceiving)) {
+        await Future<void>.delayed(const Duration(seconds: 2));
+      }
+      if (_background) _announceGoodbye();
+    } finally {
+      _waitingToLeave = false;
     }
   }
 
@@ -85,7 +113,10 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
         ),
         BlocProvider(create: (_) => TrayCubit(getIt())),
         BlocProvider(
-          create: (context) => SendSelectionCubit(context.read<TrayCubit>()),
+          create: (context) => SendSelectionCubit(
+            context.read<TrayCubit>(),
+            livePartnerOf: getIt<HistoryRepository>().livePartnerPath,
+          ),
         ),
         BlocProvider(create: (_) => FavoritesCubit(getIt())),
         BlocProvider(create: (_) => DevicesCubit(getIt(), getIt(), getIt())),
@@ -143,7 +174,11 @@ class _BIShareAppState extends State<BIShareApp> with WidgetsBindingObserver {
                 value: dark
                     ? SystemUiOverlayStyle.light
                     : SystemUiOverlayStyle.dark,
-                child: child ?? const SizedBox.shrink(),
+                child: TransferKeepAlive(
+                  child: PickingOverlay(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                ),
               );
             },
           );

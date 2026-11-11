@@ -235,7 +235,8 @@
     "select_all": "सभी चुनें",
     "select_none": "चयन हटाएँ",
     "detail_saved_as": "इस नाम से सेव",
-    "open_in_browser": "ब्राउज़र में खोलें"
+    "open_in_browser": "ब्राउज़र में खोलें",
+    "live": "लाइव"
   },
   "history": {
     "all": "सभी",
@@ -576,7 +577,9 @@
     "devices_sync": "डिवाइस और सिंक",
     "version": "संस्करण {version}",
     "license_line": "ओपन सोर्स, Apache लाइसेंस 2.0",
-    "pin_six_digits": "सभी 6 अंक डालें"
+    "pin_six_digits": "सभी 6 अंक डालें",
+    "live_photos": "लाइव फ़ोटो",
+    "live_photos_subtitle": "फ़ोटो को उसकी गति के साथ भेजें। बंद: केवल फ़ोटो।"
   },
   "notification": {
     "clipboard_from": "{sender} से कॉपी किया गया",
@@ -1382,5 +1385,10 @@
     "zinc": "ज़िंक",
     "neutral": "न्यूट्रल",
     "stone": "पत्थर"
+  },
+  "transfer_notice": {
+    "channel": "ट्रांसफ़र",
+    "sending": "{device} को भेजा जा रहा है",
+    "receiving": "{device} से प्राप्त हो रहा है"
   }
 }

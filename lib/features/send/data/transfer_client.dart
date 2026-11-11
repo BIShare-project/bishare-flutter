@@ -22,6 +22,7 @@ import '../../../core/protocol/prepare.dart';
 import '../../../core/rust/rust_facade.dart';
 import '../../discovery/domain/discovered_device.dart';
 import '../domain/sendable_file.dart';
+import 'send_timing.dart';
 import 'send_api_service.dart';
 
 /// Progress callback: overall + per-file byte counters.
@@ -167,8 +168,44 @@ class TransferClient {
     String? syncPairId,
     Map<String, String>? syncRelPaths,
   }) async {
+    _activeSends++;
+    try {
+      await _send(
+        files,
+        device,
+        pin: pin,
+        onProgress: onProgress,
+        cancelToken: cancelToken,
+        onSession: onSession,
+        onTransport: onTransport,
+        syncPairId: syncPairId,
+        syncRelPaths: syncRelPaths,
+      );
+    } finally {
+      _activeSends--;
+    }
+  }
+
+  /// Sends running right now. The app keeps quiet (no goodbye) while one
+  /// runs, so going to the background does not drop us from the peer's list
+  /// mid-transfer.
+  int _activeSends = 0;
+  bool get isSending => _activeSends > 0;
+
+  Future<void> _send(
+    List<SendableFile> files,
+    DiscoveredDevice device, {
+    String? pin,
+    SendProgress? onProgress,
+    CancelToken? cancelToken,
+    void Function(String sessionId)? onSession,
+    void Function(String transport)? onTransport,
+    String? syncPairId,
+    Map<String, String>? syncRelPaths,
+  }) async {
     final dio = _dioFor(device.host, device.port);
     final info = await _identity.makeDeviceInfo();
+    final sendWatch = Stopwatch()..start();
 
     // The first few photos and videos travel with a small thumbnail, so the
     // receiver sees what is coming before accepting. Not for a folder sync,
@@ -183,9 +220,12 @@ class TransferClient {
           )
           .take(_previewCount)
           .toList();
-      final thumbs = await Future.wait([
-        for (final f in shown) generateThumbnail(f.path, f.mimeType),
-      ]);
+      final thumbs = await SendTiming.time(
+        'thumbnails ${shown.length}',
+        () => Future.wait([
+          for (final f in shown) generateThumbnail(f.path, f.mimeType),
+        ]),
+      );
       for (var i = 0; i < shown.length; i++) {
         final t = thumbs[i];
         if (t != null) previews[shown[i].id] = t;
@@ -194,7 +234,10 @@ class TransferClient {
 
     // Build file metadata (streaming SHA-256, no whole-file buffering).
     final metas = <String, FileMetadata>{};
+    final hashWatch = Stopwatch()..start();
+    var hashed = 0;
     for (final f in files) {
+      if (f.size <= _hashSizeLimit) hashed++;
       metas[f.id] = FileMetadata(
         id: f.id,
         fileName: f.name,
@@ -207,8 +250,15 @@ class TransferClient {
         preview: previews[f.id],
         relPath: syncRelPaths?[f.id],
         mtimeMs: f.mtimeMs,
+        liveGroup: f.liveGroup,
       );
     }
+
+    final totalSize = files.fold<int>(0, (s, f) => s + f.size);
+    SendTiming.log(
+      'hash $hashed/${files.length} file(s): ${hashWatch.elapsedMilliseconds} ms',
+    );
+    final prepareWatch = Stopwatch()..start();
 
     // Step 1: prepare. A fresh install's FIRST outbound LAN connection can be
     // silently dropped by iOS/macOS until the Local Network permission grant
@@ -229,6 +279,7 @@ class TransferClient {
             info: info,
             files: metas,
             syncPairId: syncPairId,
+            tcpResume: true,
           ).toJson(),
           cancelToken: cancelToken,
           options: Options(
@@ -268,6 +319,11 @@ class TransferClient {
     }
     final prepare = PrepareResponse.fromJson(prepareRes.data!);
     onSession?.call(prepare.sessionId);
+    SendTiming.log(
+      'prepare (incl. accept on the receiver): '
+      '${prepareWatch.elapsedMilliseconds} ms',
+    );
+    final uploadWatch = Stopwatch()..start();
     // Cancelling the transfer also aborts any in-flight QUIC send (the Rust send
     // loop polls this cancel id and resets the stream so the receiver discards it).
     cancelToken?.whenCancel.then(
@@ -286,9 +342,17 @@ class TransferClient {
     // (finally honoring the negotiation instead of ignoring it); failures and
     // QUIC-ineligible files then run sequentially over TCP.
     final totalBytes = files.fold<int>(0, (s, f) => s + f.size);
+    // Files (or their starts) the receiver kept from an interrupted transfer
+    // of ours. Null: an older receiver, which cannot resume.
+    final resumeFrom = prepare.resumeFrom;
+    bool arrived(SendableFile f) {
+      final held = resumeFrom?[f.id];
+      return held != null && held >= f.size;
+    }
+
     // Per-file byte counters — with concurrent sends the overall progress is the
     // SUM across files, not a running scalar.
-    final sentPerFile = List<int>.filled(files.length, 0);
+    final sentPerFile = [for (final f in files) arrived(f) ? f.size : 0];
     void emitOverall(int i) {
       var sum = 0;
       for (final s in sentPerFile) {
@@ -345,6 +409,7 @@ class TransferClient {
       if (quicReady) {
         final quicIdx = <int>[];
         for (var i = 0; i < files.length; i++) {
+          if (arrived(files[i])) continue;
           (files[i].size > 0 ? quicIdx : tcpQueue).add(i);
         }
         // Clamp to the Rust-side MAX_STREAMS (8) so the envelope math below is
@@ -385,6 +450,7 @@ class TransferClient {
             }
             final i = quicIdx[next++];
             final f = files[i];
+            final fileWatch = Stopwatch()..start();
             try {
               await _uploadViaQuic(
                 f,
@@ -403,6 +469,7 @@ class TransferClient {
               );
               sentPerFile[i] = f.size;
               emitOverall(i);
+              _logFile('QUIC', f, fileWatch.elapsedMilliseconds);
             } on Object catch (e) {
               // A USER cancel surfaces here too (the Rust send errors
               // "cancelled") — abort everything, don't re-send over TCP.
@@ -427,7 +494,10 @@ class TransferClient {
         await Future.wait([for (var k = 0; k < concurrency; k++) worker()]);
         tcpQueue.sort(); // keep the TCP pass in the user's file order
       } else {
-        tcpQueue.addAll([for (var i = 0; i < files.length; i++) i]);
+        tcpQueue.addAll([
+          for (var i = 0; i < files.length; i++)
+            if (!arrived(files[i])) i,
+        ]);
       }
 
       // ── Phase B: sequential TCP (fallbacks + zero-size files) ───────────────
@@ -437,27 +507,38 @@ class TransferClient {
       for (final i in tcpQueue) {
         final f = files[i];
         final token = prepare.files[f.id]!; // pre-validated above
+        final fileWatch = Stopwatch()..start();
 
-        // Upload with bounded retry/backoff. A retry re-uploads the whole file (no
-        // Range resume — the receiver Range gap is deferred), and each attempt calls
-        // _encryptedBody fresh so it gets a NEW baseNonce — reusing a nonce across
-        // attempts would be catastrophic for AES-GCM. 5xx / transport errors are
-        // retryable; 4xx (bad token, rejected) is terminal and fails immediately.
+        // Upload with bounded retry/backoff. Each attempt calls _encryptedBody
+        // fresh so it gets a NEW baseNonce — reusing a nonce across attempts
+        // would be catastrophic for AES-GCM. 5xx / transport errors are
+        // retryable; 4xx (bad token, rejected) is terminal. A receiver that
+        // can resume ([resumeFrom] not null) keeps what arrived, so a retry
+        // asks how much it holds and sends only the rest.
+        final canResume = resumeFrom != null;
+        var offset = resumeFrom?[f.id] ?? 0;
+        final attempts = canResume ? _maxResumeAttempts : _maxUploadAttempts;
         for (var attempt = 1; ; attempt++) {
           final Stream<List<int>> body;
           final headers = <String, dynamic>{};
+          final rest = f.size - offset;
           if (key != null) {
-            final chunkCount = f.size == 0
+            final chunkCount = rest == 0
                 ? 0
-                : (f.size + _chunkSize - 1) ~/ _chunkSize;
+                : (rest + _chunkSize - 1) ~/ _chunkSize;
             headers[Headers.contentLengthHeader] =
-                f.size + chunkCount * (4 + BIShareCrypto.gcmOverheadPerChunk);
+                rest + chunkCount * (4 + BIShareCrypto.gcmOverheadPerChunk);
             headers['X-Encrypted'] = 'chunked';
-            body = _encryptedBody(f, key); // fresh baseNonce per attempt
+            body = _encryptedBody(f, key, start: offset); // fresh baseNonce
           } else {
-            headers[Headers.contentLengthHeader] = f.size;
-            body = f.file.openRead();
+            headers[Headers.contentLengthHeader] = rest;
+            body = f.file.openRead(offset);
           }
+          if (offset > 0) {
+            headers[BIShareApi.resumeOffsetHeader] = '$offset';
+            debugPrint('[Client] resuming "${f.name}" at $offset/${f.size}B');
+          }
+          final from = offset;
 
           try {
             final res = await dio.post<Map<String, dynamic>>(
@@ -476,13 +557,19 @@ class TransferClient {
               // `sent` counts wire bytes (encrypted ≈ plaintext); clamp per file
               // so overall progress stays monotonic against the plaintext total.
               onSendProgress: (sent, _) {
-                sentPerFile[i] = sent > f.size ? f.size : sent;
+                final at = from + sent;
+                sentPerFile[i] = at > f.size ? f.size : at;
                 emitOverall(i);
               },
             );
             final status = res.statusCode ?? 0;
-            if (status >= 500 && attempt < _maxUploadAttempts) {
+            if (status == BIShareStatus.offsetMismatch && attempt < attempts) {
+              offset = 0; // the receiver lost the start: send it all
+              continue;
+            }
+            if (status >= 500 && attempt < attempts) {
               await _backoff(attempt);
+              if (canResume) offset = await _heldOffset(dio, prepare, f, token);
               continue; // retryable server error
             }
             if (status != BIShareStatus.ok) {
@@ -491,8 +578,9 @@ class TransferClient {
             break; // uploaded
           } on DioException catch (e) {
             if (CancelToken.isCancel(e)) rethrow;
-            if (attempt < _maxUploadAttempts) {
+            if (attempt < attempts) {
               await _backoff(attempt); // transport error — retryable
+              if (canResume) offset = await _heldOffset(dio, prepare, f, token);
               continue;
             }
             throw TransferHttpException(0, e.message);
@@ -500,7 +588,14 @@ class TransferClient {
         }
         sentPerFile[i] = f.size;
         emitOverall(i);
+        _logFile('TCP', f, fileWatch.elapsedMilliseconds);
       }
+      final upMs = uploadWatch.elapsedMilliseconds;
+      SendTiming.log(
+        'upload ${files.length} file(s), $totalSize B: $upMs ms '
+        '(${SendTiming.rate(totalSize, upMs)}); whole send '
+        '${sendWatch.elapsedMilliseconds} ms',
+      );
     } finally {
       // Always tear down the session's QUIC connection (success, TCP-fallback, or
       // exception) so it can't leak the endpoint/socket in Rust.
@@ -513,6 +608,38 @@ class TransferClient {
   }
 
   static const int _maxUploadAttempts = 3;
+
+  void _logFile(String transport, SendableFile f, int ms) => SendTiming.log(
+    '$transport ${f.name} ${f.size} B: $ms ms (${SendTiming.rate(f.size, ms)})',
+  );
+
+  /// Retries when the receiver keeps what arrived: a retry costs only the
+  /// rest of the file, so a short Wi-Fi drop is worth waiting out.
+  static const int _maxResumeAttempts = 6;
+
+  /// How much of [f] the receiver holds after a cut-off upload. 0 when it
+  /// cannot tell (the retry then starts over, which is always correct).
+  Future<int> _heldOffset(
+    Dio dio,
+    PrepareResponse prepare,
+    SendableFile f,
+    String token,
+  ) async {
+    try {
+      final res = await dio.get<Map<String, dynamic>>(
+        BIShareApi.uploadOffset,
+        queryParameters: {
+          'sessionId': prepare.sessionId,
+          'fileId': f.id,
+          'token': token,
+        },
+      );
+      final held = (res.data?['offset'] as num?)?.toInt() ?? 0;
+      return held >= 0 && held < f.size ? held : 0;
+    } on Object {
+      return 0;
+    }
+  }
 
   /// Connect-retry budget for the initial `prepare` (fresh-install first-LAN-
   /// connection can be dropped until the OS Local Network grant lands).
@@ -531,7 +658,7 @@ class TransferClient {
   static const int _previewCount = 3;
 
   Future<void> _backoff(int attempt) =>
-      Future<void>.delayed(Duration(milliseconds: 300 * attempt));
+      Future<void>.delayed(Duration(milliseconds: 500 * attempt));
 
   /// Upload one file over QUIC, forwarding the Rust send stream's byte progress.
   /// Throws on any failure so [send] can fall back to the HTTP/TCP path.
@@ -591,7 +718,11 @@ class TransferClient {
   /// Uses [BytesBuilder] + `Uint8List` views throughout — never a boxed `List<int>`
   /// — so re-chunking is zero-copy and FFI marshalling is a fast memcpy (the boxed
   /// path measured ~2 MB/s; this clears the 40 MB/s gate).
-  Stream<List<int>> _encryptedBody(SendableFile f, List<int> key) async* {
+  Stream<List<int>> _encryptedBody(
+    SendableFile f,
+    List<int> key, {
+    int start = 0,
+  }) async* {
     final baseNonce = Rust.generateBaseNonce();
     var index = 0;
     final acc = BytesBuilder(copy: false);
@@ -599,7 +730,7 @@ class TransferClient {
     // loop is free *during the await* — dio drains the previously-yielded frame
     // to the socket while chunk N encrypts. That depth-1 network↔crypto overlap
     // is the fix for the ~17 MB/s wall (crypto was `frb(sync)` = main-isolate).
-    await for (final data in f.file.openRead()) {
+    await for (final data in f.file.openRead(start)) {
       acc.add(data);
       while (acc.length >= _chunkSize) {
         final buf = acc.takeBytes(); // Uint8List; drains the builder

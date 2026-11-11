@@ -40,4 +40,19 @@ class AndroidDownloadsPath {
       return null;
     }
   }
+
+  /// Puts received files into MediaStore (or takes deleted ones out), so the
+  /// gallery shows them where they were saved. Returns how many are indexed;
+  /// 0 on other platforms or when the channel fails.
+  static Future<int> scanMedia(List<String> paths) async {
+    if (!Platform.isAndroid || paths.isEmpty) return 0;
+    try {
+      return await _channel.invokeMethod<int>('scanMedia', {'paths': paths}) ??
+          0;
+    } on MissingPluginException {
+      return 0;
+    } on PlatformException {
+      return 0;
+    }
+  }
 }

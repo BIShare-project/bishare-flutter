@@ -38,8 +38,11 @@ final class _Head extends _Line {
 }
 
 final class _Tiles extends _Line {
-  _Tiles(this.records);
+  _Tiles(this.records, this.live);
   final List<TransferRecord> records;
+
+  /// Ids of the tiles that are Live Photos (photo + motion received).
+  final Set<int> live;
 }
 
 final class _FileLine extends _Line {
@@ -115,9 +118,16 @@ class _InboxPageState extends State<InboxPage> {
     for (final g in groups) {
       lines.add(_Head(g, fresh: g.newest.isAfter(_seenAt)));
       final media = g.media;
+      final live = {
+        for (final r in media)
+          if (isLiveStill(r, g.records)) r.id,
+      };
       for (var i = 0; i < media.length; i += _columns) {
         lines.add(
-          _Tiles(media.sublist(i, (i + _columns).clamp(0, media.length))),
+          _Tiles(
+            media.sublist(i, (i + _columns).clamp(0, media.length)),
+            live,
+          ),
         );
       }
       final files = g.files;
@@ -251,8 +261,9 @@ class _InboxPageState extends State<InboxPage> {
                 fresh: fresh,
                 locale: locale,
               ),
-              _Tiles(:final records) => _TilesRow(
+              _Tiles(:final records, :final live) => _TilesRow(
                 records: records,
+                live: live,
                 columns: _columns,
                 selecting: _selecting,
                 selected: _selected,
@@ -338,6 +349,7 @@ class _GroupHead extends StatelessWidget {
 class _TilesRow extends StatelessWidget {
   const _TilesRow({
     required this.records,
+    required this.live,
     required this.columns,
     required this.selecting,
     required this.selected,
@@ -346,6 +358,7 @@ class _TilesRow extends StatelessWidget {
   });
 
   final List<TransferRecord> records;
+  final Set<int> live;
   final int columns;
   final bool selecting;
   final Set<int> selected;
@@ -369,13 +382,24 @@ class _TilesRow extends StatelessWidget {
                 SizedBox.square(
                   dimension: side,
                   child: i < records.length
-                      ? AppMediaTile(
-                          image: _Thumb(record: records[i], px: px),
-                          semanticLabel: shownName(records[i]),
-                          selectable: selecting,
-                          selected: selected.contains(records[i].id),
-                          onTap: () => onTap(records[i]),
-                          onLongPress: () => onLongPress(records[i]),
+                      ? Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            AppMediaTile(
+                              image: _Thumb(record: records[i], px: px),
+                              semanticLabel: shownName(records[i]),
+                              selectable: selecting,
+                              selected: selected.contains(records[i].id),
+                              onTap: () => onTap(records[i]),
+                              onLongPress: () => onLongPress(records[i]),
+                            ),
+                            if (live.contains(records[i].id))
+                              const PositionedDirectional(
+                                top: 6,
+                                start: 6,
+                                child: IgnorePointer(child: LiveBadge()),
+                              ),
+                          ],
                         )
                       : ColoredBox(color: t.bg),
                 ),
@@ -793,6 +817,31 @@ class _Summary extends StatelessWidget {
             onPressed: onAction,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// "LIVE" over a received Live Photo, as the Photos app marks one.
+class LiveBadge extends StatelessWidget {
+  const LiveBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        'inbox.live'.tr(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.4,
+        ),
       ),
     );
   }

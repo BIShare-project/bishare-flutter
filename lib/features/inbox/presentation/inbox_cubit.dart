@@ -4,9 +4,12 @@ import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:gal/gal.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/android_downloads_channel.dart';
 import '../../../core/storage/app_database.dart';
 import '../../history/data/history_repository.dart';
 
@@ -57,10 +60,19 @@ class InboxCubit extends Cubit<List<TransferRecord>> {
   /// Save-to-Photos is only supported on mobile (gal). Elsewhere it's hidden.
   static bool get canSaveToPhotos => Platform.isIOS || Platform.isAndroid;
 
-  /// Remove from the inbox and delete the file on disk.
+  /// Remove from the inbox and delete the file on disk. A Live Photo goes
+  /// with its other half (the motion has no tile of its own to delete it).
   Future<void> deleteEntry(TransferRecord r) async {
     await _history.delete(r.id);
     await _unlink(r.savedPath);
+    final group = r.liveGroup;
+    if (group == null) return;
+    for (final x in [...state]) {
+      if (x.id != r.id && x.liveGroup == group) {
+        await _history.delete(x.id);
+        await _unlink(x.savedPath);
+      }
+    }
   }
 
   /// Delete several records + their files.
@@ -76,8 +88,24 @@ class InboxCubit extends Cubit<List<TransferRecord>> {
     if (!canSaveToPhotos) return false;
     final path = r.savedPath;
     if (path == null || !File(path).existsSync()) return false;
+    // Android: the file is already where it was saved; the gallery indexes
+    // it there (a copy would show twice, and lose a Live Photo's pair).
+    // A Live Photo's motion goes with its still.
+    if (Platform.isAndroid) {
+      final partner = livePartner(r)?.savedPath;
+      return await AndroidDownloadsPath.scanMedia([path, ?partner]) > 0;
+    }
     try {
       if (!await Gal.requestAccess(toAlbum: true)) return false;
+      // One half of a Live Photo, with the other half here too: Photos gets
+      // them back as one Live Photo (motion and sound).
+      final partner = Platform.isIOS ? livePartner(r) : null;
+      if (partner != null) {
+        if (await _saveLive(r, partner)) return true;
+        debugPrint(
+          '[Inbox] Live Photo save refused, saving ${r.fileName} alone',
+        );
+      }
       if ((r.fileType ?? '').startsWith('video/')) {
         await Gal.putVideo(path);
       } else {
@@ -90,15 +118,63 @@ class InboxCubit extends Cubit<List<TransferRecord>> {
   }
 
   /// Save every image/video record to the gallery; returns the saved count.
+  /// On iPhone/iPad a Live Photo's two halves are saved once, together.
   Future<int> saveAllMedia(List<TransferRecord> records) async {
     var saved = 0;
+    final liveDone = <String>{};
     for (final r in records) {
       final t = r.fileType ?? '';
       if (t.startsWith('image/') || t.startsWith('video/')) {
+        final group = r.liveGroup;
+        if (Platform.isIOS && group != null && livePartner(r) != null) {
+          if (!liveDone.add(group)) continue;
+        }
         if (await saveToPhotos(r)) saved++;
       }
     }
     return saved;
+  }
+
+  /// The other half of [r]'s Live Photo, when it was received too.
+  TransferRecord? livePartner(TransferRecord r) {
+    final group = r.liveGroup;
+    if (group == null) return null;
+    for (final x in state) {
+      if (x.id != r.id &&
+          x.liveGroup == group &&
+          x.savedPath != null &&
+          File(x.savedPath!).existsSync()) {
+        return x;
+      }
+    }
+    return null;
+  }
+
+  /// Saves the pair as one Live Photo. False when Photos refused it (the
+  /// caller then saves [r] on its own).
+  Future<bool> _saveLive(TransferRecord r, TransferRecord partner) async {
+    final rIsImage = (r.fileType ?? '').startsWith('image/');
+    final image = rIsImage ? r : partner;
+    final video = rIsImage ? partner : r;
+    try {
+      await PhotoManager.editor.darwin.saveLivePhoto(
+        imageFile: File(image.savedPath!),
+        videoFile: File(video.savedPath!),
+        title: image.fileName,
+      );
+      debugPrint('[Inbox] Live Photo saved: ${image.fileName}');
+      return true;
+    } on PlatformException catch (e) {
+      debugPrint('[Inbox] Live Photo save failed: ${e.code} ${e.message}');
+      return false;
+    } on ArgumentError catch (e) {
+      debugPrint('[Inbox] Live Photo save failed: $e');
+      return false;
+    } on Object catch (e) {
+      // Saved, but with add-only access the new asset cannot be read back.
+      debugPrint('[Inbox] Live Photo saved (no read-back: $e)');
+      return true;
+    }
   }
 
   Future<void> _unlink(String? path) async {
@@ -110,6 +186,8 @@ class InboxCubit extends Cubit<List<TransferRecord>> {
     } on FileSystemException {
       // best-effort; the record is already gone
     }
+    // Android: out of the gallery too.
+    unawaited(AndroidDownloadsPath.scanMedia([path]));
   }
 
   @override

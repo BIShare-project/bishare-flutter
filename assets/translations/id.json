@@ -235,7 +235,8 @@
     "select_all": "Pilih semua",
     "select_none": "Batal pilih",
     "detail_saved_as": "Disimpan sebagai",
-    "open_in_browser": "Buka di browser"
+    "open_in_browser": "Buka di browser",
+    "live": "LIVE"
   },
   "history": {
     "all": "Semua",
@@ -576,7 +577,9 @@
     "devices_sync": "Perangkat dan sinkron",
     "version": "Versi {version}",
     "license_line": "Sumber terbuka, Lisensi Apache 2.0",
-    "pin_six_digits": "Isi keenam angka"
+    "pin_six_digits": "Isi keenam angka",
+    "live_photos": "Live Photo",
+    "live_photos_subtitle": "Kirim foto beserta gerakannya. Mati: fotonya saja."
   },
   "notification": {
     "clipboard_from": "Disalin dari {sender}",
@@ -1382,5 +1385,10 @@
     "zinc": "Seng",
     "neutral": "Netral",
     "stone": "Batu"
+  },
+  "transfer_notice": {
+    "channel": "Transfer",
+    "sending": "Mengirim ke {device}",
+    "receiving": "Menerima dari {device}"
   }
 }

@@ -240,6 +240,16 @@ class TransferServer {
 
   final Map<String, TransferSession> _sessions = {};
 
+  /// What interrupted transfers left for their senders (fingerprint →), so a
+  /// resend continues instead of starting over. Kept [_leftoverTtl].
+  final Map<String, ResumeLeftover> _leftovers = {};
+  static const _leftoverTtl = Duration(minutes: 30);
+
+  /// A TCP upload that has not delivered a byte for this long is treated as
+  /// cut off (the sender's phone locked or left the Wi-Fi): what arrived is
+  /// kept for a resume. Shorter than the 30 s idle reaper.
+  static const _uploadStall = Duration(seconds: 20);
+
   final _incoming = StreamController<PendingTransfer>.broadcast();
   final _incomingRequests = StreamController<PendingFileRequest>.broadcast();
   final _progress = StreamController<ReceiveProgress>.broadcast();
@@ -279,6 +289,8 @@ class TransferServer {
     if (!_saveDir.existsSync()) _saveDir.createSync(recursive: true);
     // Drop chunked-upload staging files whose browser never came back.
     _uploads.pruneStale();
+    // Cut-off LAN uploads from an earlier run: their resume state is gone.
+    _sweepLanParts();
     debugPrint(
       '[Server] listening on :${BISharePort.main}, saving to ${_saveDir.path}',
     );
@@ -286,6 +298,7 @@ class TransferServer {
       ..get(BIShareApi.info, _handleInfo)
       ..post(BIShareApi.prepare, _handlePrepare)
       ..post(BIShareApi.upload, _handleUpload)
+      ..get(BIShareApi.uploadOffset, _handleUploadOffset)
       ..post(BIShareApi.cancel, _handleCancel)
       ..post(BIShareApi.goodbye, _handleGoodbye)
       ..post(BIShareApi.request, _handleFileRequest)
@@ -629,6 +642,7 @@ class TransferServer {
         // (it errors out + drops the `.part`), so this is effectively always
         // true today, but it now reflects an actual check rather than a hardcode.
         verified: verified,
+        liveGroup: meta.liveGroup,
       ),
     );
     if (session != null) {
@@ -739,6 +753,7 @@ class TransferServer {
     }
 
     _reapIdleSessions();
+    _dropStalledFrom(prepareReq.info.fingerprint);
     if (_sessions.isNotEmpty) {
       return _error('Device busy', BIShareStatus.busy);
     }
@@ -789,14 +804,22 @@ class TransferServer {
       syncRootPath: syncRootPath,
     );
 
+    session.tcpResume = prepareReq.tcpResume ?? false;
+
     // A pair was consented when it was created — a sync session never prompts.
     final accepted = session.isSync || await _decide(session);
     if (!accepted) {
       return _error('Transfer rejected', BIShareStatus.forbidden);
     }
 
+    final resumeFrom = session.tcpResume ? _claimLeftover(session) : null;
     _authorizeSession(sessionId, session);
-    _emitProgress(session, '', 0);
+    _emitProgress(session, '', _sessionBytes(session));
+    if (session.isComplete) {
+      // Everything arrived before the interruption: nothing left to send.
+      _dropSession(sessionId);
+      _emitProgress(session, '', _sessionBytes(session), complete: true);
+    }
 
     final response = PrepareResponse(
       sessionId: sessionId,
@@ -830,6 +853,7 @@ class TransferServer {
       )
           ? true
           : null,
+      resumeFrom: resumeFrom,
     );
     return _json(response.toJson());
   }
@@ -892,6 +916,21 @@ class TransferServer {
 
     session.lastActivity = DateTime.now();
 
+    // A resumed upload: the body starts at [offset]; the bytes before it are
+    // the partial kept from the cut-off attempt.
+    final offset =
+        int.tryParse(request.headers[BIShareApi.resumeOffsetHeader] ?? '') ??
+        0;
+    final held = session.partials.remove(fileId);
+    if (offset > 0 &&
+        (held == null ||
+            held.bytes != offset ||
+            !File(held.path).existsSync())) {
+      if (held != null) _deleteQuiet(held.path);
+      return _error('Resume offset mismatch', BIShareStatus.offsetMismatch);
+    }
+    if (offset == 0 && held != null) _deleteQuiet(held.path);
+
     // E2E: a `X-Encrypted: chunked` body is a stream of
     //   [uint32 BE length][ nonce(12) | ciphertext | tag(16) ]
     // frames (plaintext chunk ≤ 256 KB each). We decrypt each frame straight to
@@ -900,8 +939,12 @@ class TransferServer {
         session.encrypted && request.headers['x-encrypted'] == 'chunked';
 
     // Stream body → temp file while hashing (no full-file buffering).
-    final tmp = File('${_saveDir.path}/.${_uuid.v4()}.part');
-    final out = tmp.openWrite();
+    final tmp = offset > 0
+        ? File(held!.path)
+        : File('${_saveDir.path}/.lan-${_uuid.v4()}.part');
+    final out = tmp.openWrite(
+      mode: offset > 0 ? FileMode.append : FileMode.write,
+    );
     // Hash only the PLAINTEXT path (where the SHA is the sole integrity check).
     // For encrypted transfers the per-chunk AES-256-GCM tag already authenticates
     // every chunk (decrypt throws on tamper) and the index-bound nonce + TCP
@@ -914,7 +957,8 @@ class TransferServer {
     final hasher = needHash
         ? sha256.startChunkedConversion(digestCapture)
         : null;
-    var bytes = 0;
+    // Plaintext bytes written by this request (after [offset]).
+    var written = 0;
     // Throttle progress to ~12/s. Emitting per network read (hundreds/s) causes
     // a rebuild storm that janks the receiver UI (worst on a tab switch).
     var lastEmitMs = 0;
@@ -929,10 +973,23 @@ class TransferServer {
       final now = DateTime.now().millisecondsSinceEpoch;
       if (now - lastEmitMs < 80) return;
       lastEmitMs = now;
-      _emitProgress(session, meta.fileName, _sessionBytes(session) + bytes);
+      _emitProgress(
+        session,
+        meta.fileName,
+        _sessionBytes(session) + offset + written,
+      );
     }
 
+    // A body that stops arriving ends here instead of hanging until the
+    // sender's socket times out, so its bytes can be kept for a resume.
+    final body = request.read().timeout(_uploadStall);
+
     try {
+      if (hasher != null && offset > 0) {
+        await for (final c in tmp.openRead(0, offset)) {
+          hasher.add(c);
+        }
+      }
       if (isEncrypted) {
         final key = session.symmetricKey!;
         const maxFrame =
@@ -949,8 +1006,7 @@ class TransferServer {
         var readPos = 0; // bytes already consumed into frames
         var index = 0;
         Uint8List? baseNonce;
-        await for (final chunk in request.read()) {
-          bytes += chunk.length;
+        await for (final chunk in body) {
           // Make room: drop the consumed prefix, then grow only if a single
           // in-flight frame plus this read still won't fit (pathological).
           if (writePos + chunk.length > scratch.length) {
@@ -999,6 +1055,7 @@ class TransferServer {
             }
             out.add(dec);
             hasher?.add(dec);
+            written += dec.length;
             readPos += 4 + len;
             index++;
           }
@@ -1013,10 +1070,10 @@ class TransferServer {
           throw const FormatException('truncated encrypted upload');
         }
       } else {
-        await for (final chunk in request.read()) {
+        await for (final chunk in body) {
           out.add(chunk);
           hasher?.add(chunk);
-          bytes += chunk.length;
+          written += chunk.length;
           if (!_sessions.containsKey(sessionId)) {
             throw const _AbortedException();
           }
@@ -1024,9 +1081,41 @@ class TransferServer {
         }
       }
       await out.close();
+      if (session.tcpResume && offset + written != meta.size) {
+        throw const FormatException('upload ended early');
+      }
       hasher?.close();
-    } on Object {
-      await out.close();
+    } on Object catch (e) {
+      try {
+        await out.close();
+      } on Object {
+        // The write side failed too; the size check below decides.
+      }
+      final have = offset + written;
+      final keep =
+          session.tcpResume &&
+          !session.cancelled &&
+          e is! _AbortedException &&
+          have > 0 &&
+          have < meta.size &&
+          tmp.existsSync() &&
+          tmp.lengthSync() == have;
+      if (keep) {
+        final partial = PartialUpload(tmp.path, have);
+        debugPrint(
+          '[Server] "${meta.fileName}" cut off at $have/${meta.size}B '
+          '($e) — kept for resume',
+        );
+        if (_sessions.containsKey(sessionId)) {
+          session.partials[fileId] = partial;
+          session.lastActivity = DateTime.now();
+        } else {
+          // Already parked (a resend replaced the session): park this too.
+          _leftoverFor(session.sender.fingerprint).partials[resumeKey(meta)] =
+              partial;
+        }
+        return _error('Upload interrupted', BIShareStatus.serverError);
+      }
       if (tmp.existsSync()) tmp.deleteSync();
       // Sender aborted (cancel) or the stream errored. Drop the session and emit
       // a terminal "complete" progress so the receiver's progress card clears
@@ -1103,6 +1192,7 @@ class TransferServer {
           encrypted: isEncrypted,
           receivedAt: DateTime.now(),
           verified: verified,
+          liveGroup: meta.liveGroup,
         ),
       );
     }
@@ -1112,7 +1202,10 @@ class TransferServer {
       _sessionBytes(session),
       complete: session.isComplete,
     );
-    if (session.isComplete) _dropSession(sessionId);
+    if (session.isComplete) {
+      _dropSession(sessionId);
+      _discardPartials(session);
+    }
 
     return _json(
       UploadResponse(
@@ -1129,6 +1222,9 @@ class TransferServer {
     if (sessionId != null) {
       final session = _dropSession(sessionId);
       if (session != null) {
+        // Cancelled on purpose: nothing is kept for a resume.
+        session.cancelled = true;
+        _discardPartials(session);
         _progress.add(
           ReceiveProgress(
             sessionId: sessionId,
@@ -1665,10 +1761,153 @@ class TransferServer {
       debugPrint('[Server] reaping idle session ${s.sessionId}');
       final session = _dropSession(s.sessionId);
       if (session != null) {
+        _park(session);
+        _emitProgress(session, '', 0, complete: true);
+      }
+    }
+    // Interrupted transfers nobody came back for.
+    _leftovers.removeWhere((_, l) {
+      if (now.difference(l.at) < _leftoverTtl) return false;
+      for (final p in l.partials.values) {
+        _deleteQuiet(p.path);
+      }
+      return true;
+    });
+  }
+
+  ResumeLeftover _leftoverFor(String fingerprint) =>
+      _leftovers.putIfAbsent(fingerprint, () => ResumeLeftover(DateTime.now()))
+        ..at = DateTime.now();
+
+  /// An interrupted session: remember what arrived (whole files and cut-off
+  /// starts) so the same sender's next offer continues from there.
+  void _park(TransferSession s) {
+    if (!s.tcpResume || s.cancelled || s.isSync) {
+      _discardPartials(s);
+      return;
+    }
+    if (s.completedFileIds.isEmpty && s.partials.isEmpty) return;
+    final l = _leftoverFor(s.sender.fingerprint);
+    for (final id in s.completedFileIds) {
+      final meta = s.files[id];
+      if (meta != null) l.done.add(resumeKey(meta));
+    }
+    for (final e in s.partials.entries) {
+      final meta = s.files[e.key];
+      if (meta == null) {
+        _deleteQuiet(e.value.path);
+        continue;
+      }
+      final old = l.partials[resumeKey(meta)];
+      if (old != null && old.path != e.value.path) _deleteQuiet(old.path);
+      l.partials[resumeKey(meta)] = e.value;
+    }
+    s.partials.clear();
+  }
+
+  /// Match a new offer against what its sender's interrupted transfer left:
+  /// whole files are marked done, cut-off ones continue from their offset.
+  /// Returns the `resumeFrom` answer (empty when nothing matches).
+  Map<String, int> _claimLeftover(TransferSession session) {
+    final resumeFrom = <String, int>{};
+    final l = _leftovers.remove(session.sender.fingerprint);
+    if (l == null) return resumeFrom;
+    for (final e in session.files.entries) {
+      final key = resumeKey(e.value);
+      if (l.done.remove(key)) {
+        session.completedFileIds.add(e.key);
+        resumeFrom[e.key] = e.value.size;
+        continue;
+      }
+      final p = l.partials.remove(key);
+      if (p == null) continue;
+      if (p.bytes < e.value.size && File(p.path).existsSync()) {
+        session.partials[e.key] = p;
+        resumeFrom[e.key] = p.bytes;
+      } else {
+        _deleteQuiet(p.path);
+      }
+    }
+    for (final p in l.partials.values) {
+      _deleteQuiet(p.path);
+    }
+    if (resumeFrom.isNotEmpty) {
+      debugPrint(
+        '[Server] resuming for "${session.sender.alias}": '
+        '${resumeFrom.length} file(s) already here (whole or in part)',
+      );
+    }
+    return resumeFrom;
+  }
+
+  void _discardPartials(TransferSession s) {
+    for (final p in s.partials.values) {
+      _deleteQuiet(p.path);
+    }
+    s.partials.clear();
+  }
+
+  static void _deleteQuiet(String path) {
+    try {
+      final f = File(path);
+      if (f.existsSync()) f.deleteSync();
+    } on Object {
+      // Gone already, or locked: the start-up sweep gets it.
+    }
+  }
+
+  void _sweepLanParts() {
+    try {
+      for (final e in _saveDir.listSync()) {
+        final name = e.uri.pathSegments.last;
+        if (e is File && name.startsWith('.lan-') && name.endsWith('.part')) {
+          _deleteQuiet(e.path);
+        }
+      }
+    } on Object {
+      // Unreadable save folder: nothing to sweep.
+    }
+  }
+
+  // GET /api/v1/upload-offset?sessionId=&fileId=&token=
+  Future<Response> _handleUploadOffset(Request request) async {
+    final q = request.url.queryParameters;
+    final session = _sessions[q['sessionId']];
+    if (session == null) return _error('No session', BIShareStatus.notFound);
+    final fileId = q['fileId'];
+    if (fileId == null || session.tokens[fileId] != q['token']) {
+      return _error('Bad token', BIShareStatus.forbidden);
+    }
+    session.lastActivity = DateTime.now();
+    return _json({'offset': session.partials[fileId]?.bytes ?? 0});
+  }
+
+  /// A new offer from a sender that still holds a session here means that
+  /// sender gave the old one up (its screen locked, the app went to the
+  /// background, Wi-Fi dropped) without a /cancel. Drop the old session once
+  /// it has gone quiet, instead of answering "Device busy" until the 30 s
+  /// reaper runs. A session still moving bytes is left alone.
+  void _dropStalledFrom(String fingerprint) {
+    final now = DateTime.now();
+    final stalled = _sessions.values
+        .where(
+          (s) =>
+              s.sender.fingerprint == fingerprint &&
+              now.difference(s.lastActivity) > const Duration(seconds: 3),
+        )
+        .toList();
+    for (final s in stalled) {
+      debugPrint('[Server] new offer replaces stalled session ${s.sessionId}');
+      final session = _dropSession(s.sessionId);
+      if (session != null) {
+        _park(session);
         _emitProgress(session, '', 0, complete: true);
       }
     }
   }
+
+  /// Whether a transfer is being received right now.
+  bool get isReceiving => _sessions.isNotEmpty;
 
   Response _json(Object data, {int status = BIShareStatus.ok}) => Response(
     status,

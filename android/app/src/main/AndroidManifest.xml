@@ -44,6 +44,8 @@
          seconds after it is closed otherwise). Declared in Play Console. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Already merged in by plugins; named here because TransferKeepAliveService holds one. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- QR scanning -->
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Android TV: run without a touchscreen and support the Leanback launcher.
@@ -149,6 +151,12 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- LAN transfers keep going with the screen off (TransferKeepAliveService.kt). -->
+        <service
+            android:name=".TransferKeepAliveService"
+            android:exported="false"
+            android:stopWithTask="true"
+            android:foregroundServiceType="dataSync" />
         <service
             android:name="com.dexterous.flutterlocalnotifications.ForegroundService"
             android:exported="false"

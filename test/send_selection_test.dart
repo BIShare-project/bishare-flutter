@@ -26,6 +26,11 @@ class _FakeLibrary extends SendMediaLibrary {
 
   @override
   Future<int?> sizeOf(AssetEntity a) async => null;
+
+  /// The library's own name, unlike the export's file name above (as on iOS,
+  /// where the export is `<asset id>_<time>_o_<name>`).
+  @override
+  Future<String?> originalName(AssetEntity a) async => 'Clip ${a.id}.mp4';
 }
 
 AssetEntity _video(String id) =>
@@ -120,11 +125,12 @@ void main() {
 
       final out = await sel.materialize();
       expect(lib.exported, ['1', '2']);
-      expect(out.map((f) => f.name), ['VID_1.mp4', 'd.pdf', 'VID_2.mp4']);
+      // Gallery items go under the library's own name, not the export's.
+      expect(out.map((f) => f.name), ['Clip 1.mp4', 'd.pdf', 'Clip 2.mp4']);
       expect(tray.state.map((f) => f.name), [
-        'VID_1.mp4',
+        'Clip 1.mp4',
         'd.pdf',
-        'VID_2.mp4',
+        'Clip 2.mp4',
       ]);
       expect(sel.state.length, 3);
       expect(sel.state.bytes, isNotNull);
@@ -139,5 +145,28 @@ void main() {
     await settle();
     expect(sel.state.isEmpty, isTrue);
     expect(tray.state, isEmpty);
+  });
+
+  test('half of a received Live Photo goes with its other half', () async {
+    final photo = await file('IMG_9001.JPG', 30);
+    final paired = SendSelectionCubit(
+      tray,
+      library: lib,
+      livePartnerOf: (path) async =>
+          path.endsWith('VID_1.mp4') ? photo : null,
+    );
+    addTearDown(paired.close);
+    paired.toggleAsset(_video('1'), SendKind.video);
+    paired.toggleAsset(_video('2'), SendKind.video);
+    final out = await paired.materialize();
+
+    expect(out, hasLength(3), reason: 'the pair, then the other video');
+    expect(out[0].path, photo, reason: 'the photo leads its pair');
+    expect(out[1].path, endsWith('VID_1.mp4'));
+    expect(out[0].liveGroup, isNotNull);
+    expect(out[1].liveGroup, out[0].liveGroup);
+    expect(out[2].liveGroup, isNull);
+    expect(out[0].name, 'Clip 1.JPG', reason: 'one stem for both halves');
+    expect(out[1].name, 'Clip 1.mp4');
   });
 }

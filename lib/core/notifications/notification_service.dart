@@ -132,17 +132,51 @@ class NotificationService {
     return false;
   }
 
-  /// Notify on every received file. Idempotent.
+  /// One notification per finished transfer: the file's name for one file,
+  /// "100 files received" for a batch. Idempotent.
   void attach(TransferServer server) {
-    _sub ??= server.received.listen(_notify);
+    _server = server;
+    _sub ??= server.received.listen(_collect);
   }
 
-  Future<void> _notify(ReceivedFile f) => notify(
-    'notification.file_received'.tr(),
-    'notification.from'.tr(
-      namedArgs: {'file': f.fileName, 'sender': f.senderAlias},
-    ),
-  );
+  TransferServer? _server;
+  final _arrived = <ReceivedFile>[];
+  Timer? _settle;
+
+  void _collect(ReceivedFile f) {
+    _arrived.add(f);
+    _settle?.cancel();
+    _settle = Timer(const Duration(milliseconds: 1200), _flush);
+  }
+
+  void _flush() {
+    if (_arrived.isEmpty) return;
+    // Still receiving: wait for the end of the transfer.
+    if (_server?.isReceiving ?? false) {
+      _settle = Timer(const Duration(milliseconds: 1200), _flush);
+      return;
+    }
+    final files = [..._arrived];
+    _arrived.clear();
+    final sender = files.last.senderAlias;
+    if (files.length == 1) {
+      unawaited(
+        notify(
+          'notification.file_received'.tr(),
+          'notification.from'.tr(
+            namedArgs: {'file': files.single.fileName, 'sender': sender},
+          ),
+        ),
+      );
+    } else {
+      unawaited(
+        notify(
+          'inbox.n_files_received'.plural(files.length),
+          'inbox.from'.tr(namedArgs: {'alias': sender}),
+        ),
+      );
+    }
+  }
 
   /// Show a generic best-effort local notification (reused for received files,
   /// clipboard sync, etc.).
@@ -182,6 +216,7 @@ class NotificationService {
   }
 
   Future<void> dispose() async {
+    _settle?.cancel();
     await _sub?.cancel();
     _sub = null;
   }

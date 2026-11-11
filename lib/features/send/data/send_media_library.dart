@@ -81,7 +81,10 @@ class SendMediaLibrary {
     final option = PermissionRequestOption(
       androidPermission: AndroidPermission(
         type: _type(kind),
-        mediaLocation: false,
+        // Without ACCESS_MEDIA_LOCATION Android strips the GPS position from
+        // every photo the app reads, and the receiver gets a photo without
+        // its place. (The "All files access" path above reads files whole.)
+        mediaLocation: true,
       ),
     );
     final state = ask
@@ -133,6 +136,27 @@ class SendMediaLibrary {
     final f = await a.originFile;
     if (f == null || !await f.exists()) return null;
     return f;
+  }
+
+  /// The motion of a Live Photo, exported unchanged (the original paired
+  /// video, IMG_4821.MOV). Null for anything else, or when it cannot be had.
+  Future<File?> livePhotoVideo(AssetEntity a) async {
+    if (!a.isLivePhoto) return null;
+    try {
+      final f = await a.originFileWithSubtype;
+      if (f == null || !await f.exists()) return null;
+      return f;
+    } on Object {
+      return null;
+    }
+  }
+
+  /// The asset's own file name (IMG_4821.HEIC), or null when the library has
+  /// none. On iOS the exported original is named
+  /// `<asset id>_<time>_o_IMG_4821.HEIC`; this is what the sender should see.
+  Future<String?> originalName(AssetEntity a) async {
+    final t = await a.titleAsync;
+    return t.trim().isEmpty ? null : t.trim();
   }
 
   /// The file name the library gives the asset.

@@ -8,7 +8,12 @@ part 'prepare.g.dart';
 /// Request body for `POST /api/v1/prepare`. `files` is keyed by fileId.
 @JsonSerializable(explicitToJson: true, includeIfNull: false)
 class PrepareRequest {
-  const PrepareRequest({required this.info, required this.files, this.syncPairId});
+  const PrepareRequest({
+    required this.info,
+    required this.files,
+    this.syncPairId,
+    this.tcpResume,
+  });
 
   factory PrepareRequest.fromJson(Map<String, dynamic> json) =>
       _$PrepareRequestFromJson(json);
@@ -22,6 +27,11 @@ class PrepareRequest {
   /// root at its [FileMetadata.relPath] instead of the inbox. Older peers
   /// ignore the field (it's absent from normal transfers).
   final String? syncPairId;
+
+  /// This sender can continue a cut-off TCP upload (`X-Resume-Offset`) and
+  /// skip files that already arrived ([PrepareResponse.resumeFrom]). Older
+  /// receivers ignore it.
+  final bool? tcpResume;
 
   Map<String, dynamic> toJson() => _$PrepareRequestToJson(this);
 }
@@ -41,6 +51,7 @@ class PrepareResponse {
     this.keepAlive,
     this.streamsPerFile,
     this.supportsResume,
+    this.resumeFrom,
   });
 
   factory PrepareResponse.fromJson(Map<String, dynamic> json) =>
@@ -60,6 +71,12 @@ class PrepareResponse {
   /// sender may use the resume (V2) control protocol to skip already-received
   /// chunks after a reconnect. Absent/false → sender uses the non-resume path.
   final bool? supportsResume;
+
+  /// Answer to [PrepareRequest.tcpResume]: per fileId, the bytes this
+  /// receiver already holds from an interrupted transfer. Equal to the file
+  /// size: the file arrived whole, skip it. Less: send from that offset.
+  /// Present (even empty) when the receiver supports TCP resume.
+  final Map<String, int>? resumeFrom;
 
   Map<String, dynamic> toJson() => _$PrepareResponseToJson(this);
 }

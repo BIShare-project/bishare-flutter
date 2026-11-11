@@ -44,6 +44,24 @@ import workmanager_apple
     uploadTime = .invalid
   }
 
+  /// The same for a LAN send or receive (TransferKeepAlive in Dart): it
+  /// keeps going for the time iOS gives after the screen locks, then pauses
+  /// and continues from where it stopped when BIShare is opened again.
+  private var transferTime: UIBackgroundTaskIdentifier = .invalid
+
+  private func beginTransferTime() {
+    guard transferTime == .invalid else { return }
+    transferTime = UIApplication.shared.beginBackgroundTask(withName: "LAN transfer") { [weak self] in
+      self?.endTransferTime()
+    }
+  }
+
+  private func endTransferTime() {
+    guard transferTime != .invalid else { return }
+    UIApplication.shared.endBackgroundTask(transferTime)
+    transferTime = .invalid
+  }
+
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     // Drive uploads: the file in flight finishes after the app leaves the
@@ -58,6 +76,16 @@ import workmanager_apple
           result(nil)
         case "end":
           self?.endUploadTime()
+          result(nil)
+        case "transferStart":
+          // A transfer is running: the screen does not dim and lock by
+          // itself, and a manual lock still gets iOS's extra time.
+          UIApplication.shared.isIdleTimerDisabled = true
+          self?.beginTransferTime()
+          result(nil)
+        case "transferEnd":
+          UIApplication.shared.isIdleTimerDisabled = false
+          self?.endTransferTime()
           result(nil)
         case "excludeFromBackup":
           // Drive's work folder: plain copies of files being uploaded.
@@ -83,6 +111,10 @@ import workmanager_apple
     // to the iOS Runner target in Xcode for this to compile.
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "BIShareNearbyPlugin") {
       BIShareNearbyPlugin.register(with: registrar)
+    }
+    // iPhone Duo hinge and fold (DevicePosturePlugin below; device_posture.dart).
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "DevicePosturePlugin") {
+      DevicePosturePlugin.register(with: registrar)
     }
     // Image clipboard for Universal Clipboard sync (Flutter's Clipboard API is
     // text-only). See ClipboardImageChannel on the Dart side. Registered here —
@@ -127,5 +159,111 @@ import workmanager_apple
         }
       }
     }
+  }
+}
+
+// MARK: - iPhone Duo hinge and fold
+
+/// The iPhone Duo's hinge and fold, for Dart (lib/core/ui/device_posture.dart).
+///
+/// `app.bishare/posture/events` streams the state whenever the hinge moves;
+/// `app.bishare/posture` answers `state` on demand (Dart asks again when the
+/// window changes size, since the fold's rect turns with the screen).
+///
+/// The state is `{status, angle, folds}`: status `closed`, `partial`, `full`
+/// or `unknown`; folds are the active division regions (the crease while the
+/// device is half open, empty when it lies flat) as `[x, y, w, h]` in points,
+/// which are Flutter's logical pixels. The hinge API is iOS 27.1 and builds
+/// only with the iOS 27 SDK (Swift 6.4); older Xcodes compile a plugin that
+/// reports `unknown` with no folds, so every other device keeps its layout.
+final class DevicePosturePlugin: NSObject, FlutterStreamHandler {
+  private var sink: FlutterEventSink?
+  private var interaction: UIInteraction?
+  private var status = "unknown"
+  private var angle: Double = 0
+
+  static func register(with registrar: FlutterPluginRegistrar) {
+    let instance = DevicePosturePlugin()
+    FlutterEventChannel(
+      name: "app.bishare/posture/events", binaryMessenger: registrar.messenger()
+    ).setStreamHandler(instance)
+    FlutterMethodChannel(
+      name: "app.bishare/posture", binaryMessenger: registrar.messenger()
+    ).setMethodCallHandler { call, result in
+      switch call.method {
+      case "state":
+        instance.attach()
+        result(instance.state())
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
+  func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink)
+    -> FlutterError?
+  {
+    sink = events
+    attach()
+    events(state())
+    return nil
+  }
+
+  func onCancel(withArguments arguments: Any?) -> FlutterError? {
+    sink = nil
+    if let i = interaction, let view = i.view { view.removeInteraction(i) }
+    interaction = nil
+    return nil
+  }
+
+  /// The Flutter view: the root view of the app's key window.
+  private func hostView() -> UIView? {
+    let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+    for scene in scenes {
+      if let window = scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first {
+        return window.rootViewController?.view
+      }
+    }
+    return nil
+  }
+
+  /// Start hinge updates (once the Flutter view exists).
+  private func attach() {
+    guard interaction == nil else { return }
+    #if compiler(>=6.4)
+      if #available(iOS 27.1, *), let view = hostView() {
+        let hinge = UIHingeInteraction { [weak self] _, update in
+          guard let self else { return }
+          if let h = update.hinge {
+            switch h.status {
+            case .closed: self.status = "closed"
+            case .partiallyOpen: self.status = "partial"
+            case .fullyOpen: self.status = "full"
+            default: self.status = "unknown"
+            }
+            self.angle = Double(h.angle)
+          } else {
+            self.status = "unknown"
+          }
+          self.sink?(self.state())
+        }
+        view.addInteraction(hinge)
+        interaction = hinge
+      }
+    #endif
+  }
+
+  private func state() -> [String: Any] {
+    var folds: [[Double]] = []
+    #if compiler(>=6.4)
+      if #available(iOS 27.1, *), let view = hostView() {
+        folds = view.reservedRegions(kind: .division)
+          .filter { $0.isActive }
+          .map { r in
+            [Double(r.frame.minX), Double(r.frame.minY), Double(r.frame.width), Double(r.frame.height)]
+          }
+      }
+    #endif
+    return ["status": status, "angle": angle, "folds": folds]
   }
 }

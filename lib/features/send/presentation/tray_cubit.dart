@@ -38,7 +38,14 @@ class TrayCubit extends Cubit<List<SendableFile>> {
   /// Stage photos and videos already on disk (the Kirim gallery exports them
   /// when sending), compressing images to the current [MediaQuality]. Returns
   /// the staged files in the order given.
-  Future<List<SendableFile>> stageMedia(List<String> paths) async {
+  ///
+  /// [names], when given, are the library's names for those files (same
+  /// order; null keeps the file's own name). The staged file keeps its own
+  /// extension, so a photo made smaller as JPEG goes as IMG_4821.jpg.
+  Future<List<SendableFile>> stageMedia(
+    List<String> paths, {
+    List<String?>? names,
+  }) async {
     final q = _quality.params;
     final resolved = <String>[];
     for (final path in paths) {
@@ -54,7 +61,60 @@ class TrayCubit extends Cubit<List<SendableFile>> {
         resolved.add(path);
       }
     }
-    return _addPaths(resolved);
+    final staged = _addPaths(resolved);
+    if (names == null) return staged;
+    final renamed = [
+      for (var i = 0; i < staged.length; i++)
+        _named(staged[i], i < names.length ? names[i] : null),
+    ];
+    emit([
+      for (final f in state)
+        renamed.where((r) => r.id == f.id).firstOrNull ?? f,
+    ]);
+    return renamed;
+  }
+
+  /// Live Photos go as photo + motion: on in Settings, and only at Original
+  /// quality (a recompressed photo loses the tag that pairs it with its
+  /// motion, so it would not come back as a Live Photo anyway).
+  bool get sendLivePhotos =>
+      (_prefs.getBool('sendLivePhotos') ?? true) &&
+      _quality == MediaQuality.original;
+
+  /// Stage the photo and motion of one Live Photo as a pair: the same base
+  /// name (IMG_4821.HEIC, IMG_4821.MOV) and a shared [SendableFile.liveGroup].
+  Future<List<SendableFile>> stageLivePhoto(
+    String photoPath,
+    String videoPath, {
+    String? name,
+  }) async {
+    final photo = (await stageMedia([photoPath], names: [name])).single;
+    final dot = photo.name.lastIndexOf('.');
+    final stem = dot > 0 ? photo.name.substring(0, dot) : photo.name;
+    final video = _named(_addPaths([videoPath]).single, '$stem.MOV');
+    final group = _uuid.v4();
+    final pair = [photo.inLiveGroup(group), video.inLiveGroup(group)];
+    emit([
+      for (final f in state) pair.where((p) => p.id == f.id).firstOrNull ?? f,
+    ]);
+    return pair;
+  }
+
+  /// [f] under the library name [name], with [f]'s own extension.
+  static SendableFile _named(SendableFile f, String? name) {
+    if (name == null || name.isEmpty || name == f.name) return f;
+    String ext(String n) {
+      final dot = n.lastIndexOf('.');
+      return dot > 0 ? n.substring(dot) : '';
+    }
+
+    final own = ext(f.name);
+    final theirs = ext(name);
+    if (own.toLowerCase() == theirs.toLowerCase()) return f.withName(name);
+    final stem = theirs.isEmpty
+        ? name
+        : name.substring(0, name.length - theirs.length);
+    return f.withName('$stem$own');
   }
 
   /// Stage files as they are (documents received earlier).

@@ -141,6 +141,17 @@ class $TransferRecordsTable extends TransferRecords
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _liveGroupMeta = const VerificationMeta(
+    'liveGroup',
+  );
+  @override
+  late final GeneratedColumn<String> liveGroup = GeneratedColumn<String>(
+    'live_group',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -154,6 +165,7 @@ class $TransferRecordsTable extends TransferRecords
     encrypted,
     verified,
     timestamp,
+    liveGroup,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -246,6 +258,12 @@ class $TransferRecordsTable extends TransferRecords
     } else if (isInserting) {
       context.missing(_timestampMeta);
     }
+    if (data.containsKey('live_group')) {
+      context.handle(
+        _liveGroupMeta,
+        liveGroup.isAcceptableOrUnknown(data['live_group']!, _liveGroupMeta),
+      );
+    }
     return context;
   }
 
@@ -299,6 +317,10 @@ class $TransferRecordsTable extends TransferRecords
         DriftSqlType.dateTime,
         data['${effectivePrefix}timestamp'],
       )!,
+      liveGroup: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}live_group'],
+      ),
     );
   }
 
@@ -320,6 +342,10 @@ class TransferRecord extends DataClass implements Insertable<TransferRecord> {
   final bool encrypted;
   final bool verified;
   final DateTime timestamp;
+
+  /// The still and the motion of one received Live Photo share this id
+  /// (schemaVersion 7).
+  final String? liveGroup;
   const TransferRecord({
     required this.id,
     required this.fileName,
@@ -332,6 +358,7 @@ class TransferRecord extends DataClass implements Insertable<TransferRecord> {
     required this.encrypted,
     required this.verified,
     required this.timestamp,
+    this.liveGroup,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -353,6 +380,9 @@ class TransferRecord extends DataClass implements Insertable<TransferRecord> {
     map['encrypted'] = Variable<bool>(encrypted);
     map['verified'] = Variable<bool>(verified);
     map['timestamp'] = Variable<DateTime>(timestamp);
+    if (!nullToAbsent || liveGroup != null) {
+      map['live_group'] = Variable<String>(liveGroup);
+    }
     return map;
   }
 
@@ -375,6 +405,9 @@ class TransferRecord extends DataClass implements Insertable<TransferRecord> {
       encrypted: Value(encrypted),
       verified: Value(verified),
       timestamp: Value(timestamp),
+      liveGroup: liveGroup == null && nullToAbsent
+          ? const Value.absent()
+          : Value(liveGroup),
     );
   }
 
@@ -397,6 +430,7 @@ class TransferRecord extends DataClass implements Insertable<TransferRecord> {
       encrypted: serializer.fromJson<bool>(json['encrypted']),
       verified: serializer.fromJson<bool>(json['verified']),
       timestamp: serializer.fromJson<DateTime>(json['timestamp']),
+      liveGroup: serializer.fromJson<String?>(json['liveGroup']),
     );
   }
   @override
@@ -414,6 +448,7 @@ class TransferRecord extends DataClass implements Insertable<TransferRecord> {
       'encrypted': serializer.toJson<bool>(encrypted),
       'verified': serializer.toJson<bool>(verified),
       'timestamp': serializer.toJson<DateTime>(timestamp),
+      'liveGroup': serializer.toJson<String?>(liveGroup),
     };
   }
 
@@ -429,6 +464,7 @@ class TransferRecord extends DataClass implements Insertable<TransferRecord> {
     bool? encrypted,
     bool? verified,
     DateTime? timestamp,
+    Value<String?> liveGroup = const Value.absent(),
   }) => TransferRecord(
     id: id ?? this.id,
     fileName: fileName ?? this.fileName,
@@ -443,6 +479,7 @@ class TransferRecord extends DataClass implements Insertable<TransferRecord> {
     encrypted: encrypted ?? this.encrypted,
     verified: verified ?? this.verified,
     timestamp: timestamp ?? this.timestamp,
+    liveGroup: liveGroup.present ? liveGroup.value : this.liveGroup,
   );
   TransferRecord copyWithCompanion(TransferRecordsCompanion data) {
     return TransferRecord(
@@ -461,6 +498,7 @@ class TransferRecord extends DataClass implements Insertable<TransferRecord> {
       encrypted: data.encrypted.present ? data.encrypted.value : this.encrypted,
       verified: data.verified.present ? data.verified.value : this.verified,
       timestamp: data.timestamp.present ? data.timestamp.value : this.timestamp,
+      liveGroup: data.liveGroup.present ? data.liveGroup.value : this.liveGroup,
     );
   }
 
@@ -477,7 +515,8 @@ class TransferRecord extends DataClass implements Insertable<TransferRecord> {
           ..write('deviceFingerprint: $deviceFingerprint, ')
           ..write('encrypted: $encrypted, ')
           ..write('verified: $verified, ')
-          ..write('timestamp: $timestamp')
+          ..write('timestamp: $timestamp, ')
+          ..write('liveGroup: $liveGroup')
           ..write(')'))
         .toString();
   }
@@ -495,6 +534,7 @@ class TransferRecord extends DataClass implements Insertable<TransferRecord> {
     encrypted,
     verified,
     timestamp,
+    liveGroup,
   );
   @override
   bool operator ==(Object other) =>
@@ -510,7 +550,8 @@ class TransferRecord extends DataClass implements Insertable<TransferRecord> {
           other.deviceFingerprint == this.deviceFingerprint &&
           other.encrypted == this.encrypted &&
           other.verified == this.verified &&
-          other.timestamp == this.timestamp);
+          other.timestamp == this.timestamp &&
+          other.liveGroup == this.liveGroup);
 }
 
 class TransferRecordsCompanion extends UpdateCompanion<TransferRecord> {
@@ -525,6 +566,7 @@ class TransferRecordsCompanion extends UpdateCompanion<TransferRecord> {
   final Value<bool> encrypted;
   final Value<bool> verified;
   final Value<DateTime> timestamp;
+  final Value<String?> liveGroup;
   const TransferRecordsCompanion({
     this.id = const Value.absent(),
     this.fileName = const Value.absent(),
@@ -537,6 +579,7 @@ class TransferRecordsCompanion extends UpdateCompanion<TransferRecord> {
     this.encrypted = const Value.absent(),
     this.verified = const Value.absent(),
     this.timestamp = const Value.absent(),
+    this.liveGroup = const Value.absent(),
   });
   TransferRecordsCompanion.insert({
     this.id = const Value.absent(),
@@ -550,6 +593,7 @@ class TransferRecordsCompanion extends UpdateCompanion<TransferRecord> {
     this.encrypted = const Value.absent(),
     this.verified = const Value.absent(),
     required DateTime timestamp,
+    this.liveGroup = const Value.absent(),
   }) : fileName = Value(fileName),
        fileSize = Value(fileSize),
        direction = Value(direction),
@@ -567,6 +611,7 @@ class TransferRecordsCompanion extends UpdateCompanion<TransferRecord> {
     Expression<bool>? encrypted,
     Expression<bool>? verified,
     Expression<DateTime>? timestamp,
+    Expression<String>? liveGroup,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -580,6 +625,7 @@ class TransferRecordsCompanion extends UpdateCompanion<TransferRecord> {
       if (encrypted != null) 'encrypted': encrypted,
       if (verified != null) 'verified': verified,
       if (timestamp != null) 'timestamp': timestamp,
+      if (liveGroup != null) 'live_group': liveGroup,
     });
   }
 
@@ -595,6 +641,7 @@ class TransferRecordsCompanion extends UpdateCompanion<TransferRecord> {
     Value<bool>? encrypted,
     Value<bool>? verified,
     Value<DateTime>? timestamp,
+    Value<String?>? liveGroup,
   }) {
     return TransferRecordsCompanion(
       id: id ?? this.id,
@@ -608,6 +655,7 @@ class TransferRecordsCompanion extends UpdateCompanion<TransferRecord> {
       encrypted: encrypted ?? this.encrypted,
       verified: verified ?? this.verified,
       timestamp: timestamp ?? this.timestamp,
+      liveGroup: liveGroup ?? this.liveGroup,
     );
   }
 
@@ -647,6 +695,9 @@ class TransferRecordsCompanion extends UpdateCompanion<TransferRecord> {
     if (timestamp.present) {
       map['timestamp'] = Variable<DateTime>(timestamp.value);
     }
+    if (liveGroup.present) {
+      map['live_group'] = Variable<String>(liveGroup.value);
+    }
     return map;
   }
 
@@ -663,7 +714,8 @@ class TransferRecordsCompanion extends UpdateCompanion<TransferRecord> {
           ..write('deviceFingerprint: $deviceFingerprint, ')
           ..write('encrypted: $encrypted, ')
           ..write('verified: $verified, ')
-          ..write('timestamp: $timestamp')
+          ..write('timestamp: $timestamp, ')
+          ..write('liveGroup: $liveGroup')
           ..write(')'))
         .toString();
   }
@@ -7726,6 +7778,7 @@ typedef $$TransferRecordsTableCreateCompanionBuilder =
       Value<bool> encrypted,
       Value<bool> verified,
       required DateTime timestamp,
+      Value<String?> liveGroup,
     });
 typedef $$TransferRecordsTableUpdateCompanionBuilder =
     TransferRecordsCompanion Function({
@@ -7740,6 +7793,7 @@ typedef $$TransferRecordsTableUpdateCompanionBuilder =
       Value<bool> encrypted,
       Value<bool> verified,
       Value<DateTime> timestamp,
+      Value<String?> liveGroup,
     });
 
 class $$TransferRecordsTableFilterComposer
@@ -7803,6 +7857,11 @@ class $$TransferRecordsTableFilterComposer
 
   ColumnFilters<DateTime> get timestamp => $composableBuilder(
     column: $table.timestamp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get liveGroup => $composableBuilder(
+    column: $table.liveGroup,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -7870,6 +7929,11 @@ class $$TransferRecordsTableOrderingComposer
     column: $table.timestamp,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get liveGroup => $composableBuilder(
+    column: $table.liveGroup,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TransferRecordsTableAnnotationComposer
@@ -7917,6 +7981,9 @@ class $$TransferRecordsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get timestamp =>
       $composableBuilder(column: $table.timestamp, builder: (column) => column);
+
+  GeneratedColumn<String> get liveGroup =>
+      $composableBuilder(column: $table.liveGroup, builder: (column) => column);
 }
 
 class $$TransferRecordsTableTableManager
@@ -7967,6 +8034,7 @@ class $$TransferRecordsTableTableManager
                 Value<bool> encrypted = const Value.absent(),
                 Value<bool> verified = const Value.absent(),
                 Value<DateTime> timestamp = const Value.absent(),
+                Value<String?> liveGroup = const Value.absent(),
               }) => TransferRecordsCompanion(
                 id: id,
                 fileName: fileName,
@@ -7979,6 +8047,7 @@ class $$TransferRecordsTableTableManager
                 encrypted: encrypted,
                 verified: verified,
                 timestamp: timestamp,
+                liveGroup: liveGroup,
               ),
           createCompanionCallback:
               ({
@@ -7993,6 +8062,7 @@ class $$TransferRecordsTableTableManager
                 Value<bool> encrypted = const Value.absent(),
                 Value<bool> verified = const Value.absent(),
                 required DateTime timestamp,
+                Value<String?> liveGroup = const Value.absent(),
               }) => TransferRecordsCompanion.insert(
                 id: id,
                 fileName: fileName,
@@ -8005,6 +8075,7 @@ class $$TransferRecordsTableTableManager
                 encrypted: encrypted,
                 verified: verified,
                 timestamp: timestamp,
+                liveGroup: liveGroup,
               ),
           withReferenceMapper: (p0) => p0
               .map(

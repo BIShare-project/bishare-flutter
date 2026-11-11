@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -30,40 +32,66 @@ class SettingsPage extends StatelessWidget {
         child: BlocBuilder<SettingsCubit, s.Settings>(
           builder: (context, state) {
             final cubit = context.read<SettingsCubit>();
+            // This device and how it receives and sends ...
+            final first = <Widget>[
+              ProfileCard(
+                alias: state.alias,
+                onTap: () => _editAlias(context, cubit, state.alias),
+              ),
+              ..._receiving(context, state, cubit),
+              ..._sending(context, state, cubit),
+            ];
+            // ... then the account, the other devices, the look and the rest.
+            final second = <Widget>[
+              // BIShare Drive: nothing unless vault_enabled.
+              const VaultSection(),
+              ..._devicesAndSync(context, state, cubit),
+              ..._appearance(context, state, cubit),
+              AppSectionHeader('settings.privacy'.tr()),
+              // Anonymous, aggregate-only usage telemetry so the
+              // public stats reflect LAN transfers (no PII).
+              AppSwitchRow(
+                icon: AppIcons.storageUsage,
+                title: 'settings.telemetry'.tr(),
+                subtitle: 'settings.telemetry_subtitle'.tr(),
+                value: state.telemetryEnabled,
+                onChanged: cubit.setTelemetry,
+              ),
+              const AboutSection(),
+              const VersionFooter(),
+            ];
+            ListView column(List<Widget> children) => ListView(
+              padding: const EdgeInsets.only(bottom: 8),
+              children: children,
+            );
+            // An open iPhone Duo: the settings in two columns, split at the
+            // fold when it is half open. Elsewhere one column, as before.
+            if (context.isFoldableOpen) {
+              return Column(
+                children: [
+                  AppScreenHeader(title: 'settings.title'.tr()),
+                  Expanded(
+                    child: FoldSplit(
+                      left: column(first),
+                      right: column(second),
+                      flat: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(child: column(first)),
+                          Expanded(child: column(second)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
             return AppResponsivePane(
               maxWidth: 720,
               child: Column(
                 children: [
                   AppScreenHeader(title: 'settings.title'.tr()),
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      children: [
-                        ProfileCard(
-                          alias: state.alias,
-                          onTap: () => _editAlias(context, cubit, state.alias),
-                        ),
-                        ..._receiving(context, state, cubit),
-                        ..._sending(context, state, cubit),
-                        // BIShare Drive: nothing unless vault_enabled.
-                        const VaultSection(),
-                        ..._devicesAndSync(context, state, cubit),
-                        ..._appearance(context, state, cubit),
-                        AppSectionHeader('settings.privacy'.tr()),
-                        // Anonymous, aggregate-only usage telemetry so the
-                        // public stats reflect LAN transfers (no PII).
-                        AppSwitchRow(
-                          icon: AppIcons.storageUsage,
-                          title: 'settings.telemetry'.tr(),
-                          subtitle: 'settings.telemetry_subtitle'.tr(),
-                          value: state.telemetryEnabled,
-                          onChanged: cubit.setTelemetry,
-                        ),
-                        const AboutSection(),
-                        const VersionFooter(),
-                      ],
-                    ),
-                  ),
+                  Expanded(child: column([...first, ...second])),
                 ],
               ),
             );
@@ -171,6 +199,17 @@ class SettingsPage extends StatelessWidget {
         onChanged: cubit.setMediaQuality,
       ),
       _divider,
+      // Live Photos exist only in the Apple photo library.
+      if (Platform.isIOS || Platform.isMacOS) ...[
+        AppSwitchRow(
+          icon: AppIcons.image,
+          title: 'settings.live_photos'.tr(),
+          subtitle: 'settings.live_photos_subtitle'.tr(),
+          value: state.sendLivePhotos,
+          onChanged: cubit.setSendLivePhotos,
+        ),
+        _divider,
+      ],
       AppSelectRow<s.TransportMode>(
         icon: AppIcons.zap,
         title: 'settings.transport'.tr(),

@@ -71,6 +71,14 @@ class BIShareApi {
   static const String verifyPin = '/api/v1/verify-pin';
   static const String goodbye = '/api/v1/goodbye';
 
+  /// How much of a cut-off TCP upload the receiver holds:
+  /// `GET ?sessionId=&fileId=&token=` → `{"offset": n}`.
+  static const String uploadOffset = '/api/v1/upload-offset';
+
+  /// Upload header: the body starts at this plaintext byte of the file (the
+  /// receiver already holds the bytes before it).
+  static const String resumeOffsetHeader = 'x-resume-offset';
+
   /// Header on `GET /api/v1/info` from a device that just started or came
   /// back to the foreground; the value is its fingerprint. A receiver that
   /// knows it probes the sender right back, so the returning device reappears
@@ -235,5 +243,6 @@ class BIShareStatus {
   static const int forbidden = 403; // wrong PIN / rejected / hidden
   static const int notFound = 404; // session or file not found
   static const int busy = 409; // another transfer active
+  static const int offsetMismatch = 416; // resume offset not what we hold
   static const int serverError = 500;
 }

@@ -235,7 +235,8 @@
     "select_all": "全選",
     "select_none": "取消全選",
     "detail_saved_as": "儲存為",
-    "open_in_browser": "在瀏覽器中開啟"
+    "open_in_browser": "在瀏覽器中開啟",
+    "live": "原況"
   },
   "history": {
     "all": "全部",
@@ -576,7 +577,9 @@
     "devices_sync": "裝置與同步",
     "version": "版本 {version}",
     "license_line": "開源，Apache License 2.0",
-    "pin_six_digits": "請輸入全部 6 位數字"
+    "pin_six_digits": "請輸入全部 6 位數字",
+    "live_photos": "原況照片",
+    "live_photos_subtitle": "連同動態一起傳送照片。關閉：僅傳送照片。"
   },
   "notification": {
     "clipboard_from": "從 {sender} 複製",
@@ -1382,5 +1385,10 @@
     "zinc": "鋅色",
     "neutral": "中性",
     "stone": "石色"
+  },
+  "transfer_notice": {
+    "channel": "傳輸",
+    "sending": "正在傳送到 {device}",
+    "receiving": "正在從 {device} 接收"
   }
 }

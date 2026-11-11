@@ -16,6 +16,7 @@ class FileMetadata {
     this.expiresInSeconds,
     this.relPath,
     this.mtimeMs,
+    this.liveGroup,
   });
 
   factory FileMetadata.fromJson(Map<String, dynamic> json) =>
@@ -43,6 +44,11 @@ class FileMetadata {
   /// transfer. Null from senders older than 2.5.9, which simply leaves the
   /// write time the filesystem assigns.
   final int? mtimeMs;
+
+  /// The still and the motion of one Live Photo travel as two files sharing
+  /// this id, so the receiver can put them back together (iPhone/iPad save
+  /// them as one Live Photo). Older receivers ignore it and keep two files.
+  final String? liveGroup;
 
   Map<String, dynamic> toJson() => _$FileMetadataToJson(this);
 }

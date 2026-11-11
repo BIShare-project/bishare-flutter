@@ -21,6 +21,10 @@ class TransferRecords extends Table {
   BoolColumn get encrypted => boolean().withDefault(const Constant(false))();
   BoolColumn get verified => boolean().withDefault(const Constant(true))();
   DateTimeColumn get timestamp => dateTime()();
+
+  /// The still and the motion of one received Live Photo share this id
+  /// (schemaVersion 7).
+  TextColumn get liveGroup => text().nullable()();
 }
 
 /// A trusted peer (star + optional custom name + per-device auto-accept).
@@ -108,7 +112,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   /// The ONE incremental upgrade path. Every future schema bump adds its own
   /// `if (from < N)` block below (from < 4, from < 5, …) — never edit or
@@ -149,6 +153,10 @@ class AppDatabase extends _$AppDatabase {
         // upload is.
         await m.addColumn(vaultTransfers, vaultTransfers.assetId);
       }
+      if (from < 7) {
+        // Live Photos received as a pair (transfer-quality-plan.md Phase 4).
+        await m.addColumn(transferRecords, transferRecords.liveGroup);
+      }
     },
   );
 
@@ -176,6 +184,23 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> insertRecord(TransferRecordsCompanion row) =>
       into(transferRecords).insert(row);
+
+  /// The other half of the received Live Photo saved at [savedPath], if any.
+  Future<TransferRecord?> receivedLivePartner(String savedPath) async {
+    final r =
+        await (select(transferRecords)
+              ..where(
+                (t) => t.savedPath.equals(savedPath) & t.liveGroup.isNotNull(),
+              )
+              ..limit(1))
+            .getSingleOrNull();
+    final group = r?.liveGroup;
+    if (r == null || group == null) return null;
+    return (select(transferRecords)
+          ..where((t) => t.liveGroup.equals(group) & t.id.equals(r.id).not())
+          ..limit(1))
+        .getSingleOrNull();
+  }
 
   Future<void> deleteRecord(int id) =>
       (delete(transferRecords)..where((t) => t.id.equals(id))).go();

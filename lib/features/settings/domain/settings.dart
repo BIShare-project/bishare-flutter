@@ -71,6 +71,7 @@ class Settings extends Equatable {
     this.browserUpload = true,
     this.browserUploadMaxGb = 0,
     this.nameWithSender = false,
+    this.sendLivePhotos = true,
     this.telemetryEnabled = true,
     this.clipboardSync = false,
     this.clipboardImages = true,
@@ -121,6 +122,10 @@ class Settings extends Equatable {
   /// sender's own file name (off by default since 2.8.2).
   final bool nameWithSender;
 
+  /// A Live Photo goes as its photo and its motion (two files that an
+  /// iPhone or iPad puts back together); off sends the photo only.
+  final bool sendLivePhotos;
+
   /// Universal-clipboard sync over the LAN (opt-in).
   final bool clipboardSync;
 
@@ -159,6 +164,7 @@ class Settings extends Equatable {
     bool? browserUpload,
     int? browserUploadMaxGb,
     bool? nameWithSender,
+    bool? sendLivePhotos,
     bool? telemetryEnabled,
     bool? clipboardSync,
     bool? clipboardImages,
@@ -181,6 +187,7 @@ class Settings extends Equatable {
     browserUpload: browserUpload ?? this.browserUpload,
     browserUploadMaxGb: browserUploadMaxGb ?? this.browserUploadMaxGb,
     nameWithSender: nameWithSender ?? this.nameWithSender,
+    sendLivePhotos: sendLivePhotos ?? this.sendLivePhotos,
     telemetryEnabled: telemetryEnabled ?? this.telemetryEnabled,
     clipboardSync: clipboardSync ?? this.clipboardSync,
     clipboardImages: clipboardImages ?? this.clipboardImages,
@@ -206,6 +213,7 @@ class Settings extends Equatable {
     browserUpload,
     browserUploadMaxGb,
     nameWithSender,
+    sendLivePhotos,
     telemetryEnabled,
     clipboardSync,
     clipboardImages,

@@ -15,6 +15,7 @@ import 'package:bishare/features/settings/domain/settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/rust_test_lib.dart';
+import 'helpers/start_server.dart';
 
 /// A sender-side timestamp that no test machine's clock is anywhere near, so
 /// "preserved" and "stamped with now" can never be confused: 2024-07-03.
@@ -153,7 +154,7 @@ void main() {
         identity: _Identity('recv-fp', 'Receiver'),
         saveDirectory: saveDir,
       )..autoAccept = AutoAcceptMode.acceptAll;
-      await server.start();
+      await startServerWhenFree(server);
     });
 
     tearDown(() async {

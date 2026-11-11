@@ -241,7 +241,8 @@
     "select_all": "Выбрать все",
     "select_none": "Снять выбор",
     "detail_saved_as": "Сохранено как",
-    "open_in_browser": "Открыть в браузере"
+    "open_in_browser": "Открыть в браузере",
+    "live": "LIVE"
   },
   "history": {
     "all": "Все",
@@ -582,7 +583,9 @@
     "devices_sync": "Устройства и синхронизация",
     "version": "Версия {version}",
     "license_line": "Открытый код, лицензия Apache 2.0",
-    "pin_six_digits": "Введите все 6 цифр"
+    "pin_six_digits": "Введите все 6 цифр",
+    "live_photos": "Live Photos",
+    "live_photos_subtitle": "Отправлять фото вместе с движением. Выкл.: только фото."
   },
   "notification": {
     "clipboard_from": "Скопировано с {sender}",
@@ -1418,5 +1421,10 @@
     "zinc": "Цинковый",
     "neutral": "Нейтральный",
     "stone": "Каменный"
+  },
+  "transfer_notice": {
+    "channel": "Передачи",
+    "sending": "Отправка на {device}",
+    "receiving": "Получение с {device}"
   }
 }

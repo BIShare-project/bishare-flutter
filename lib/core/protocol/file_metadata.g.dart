@@ -16,6 +16,7 @@ FileMetadata _$FileMetadataFromJson(Map<String, dynamic> json) => FileMetadata(
   expiresInSeconds: (json['expiresInSeconds'] as num?)?.toInt(),
   relPath: json['relPath'] as String?,
   mtimeMs: (json['mtimeMs'] as num?)?.toInt(),
+  liveGroup: json['liveGroup'] as String?,
 );
 
 Map<String, dynamic> _$FileMetadataToJson(FileMetadata instance) =>
@@ -29,4 +30,5 @@ Map<String, dynamic> _$FileMetadataToJson(FileMetadata instance) =>
       'expiresInSeconds': ?instance.expiresInSeconds,
       'relPath': ?instance.relPath,
       'mtimeMs': ?instance.mtimeMs,
+      'liveGroup': ?instance.liveGroup,
     };
