@@ -85,6 +85,10 @@ class TransferServer {
   /// "Add date and sender to file names" setting). Off: the sender's own name.
   bool nameWithSender = false;
 
+  /// A received file whose name is already taken (the "When a name already
+  /// exists" setting): keep both, replace, or ask in the accept prompt.
+  NameClash nameClash = NameClash.keepBoth;
+
   /// Folder-sync delegates (Tahap 4), wired by `SyncEngine.attach`. The server
   /// stays transport-only: [onSyncFrame] owns pair auth + crypto + diff/apply
   /// for `POST /api/v1/sync` (null result → 403); [syncRootFor] resolves the
@@ -613,6 +617,8 @@ class TransferServer {
       meta,
       alias,
       addSender: nameWithSender,
+      replace: session?.replaceExisting ?? nameClash == NameClash.replace,
+      claimed: session?.savedPaths,
     );
     try {
       await tmp.rename(saved.path);
@@ -693,6 +699,7 @@ class TransferServer {
       meta,
       senderAlias,
       addSender: nameWithSender,
+      replace: nameClash == NameClash.replace,
     );
     try {
       await tmp.rename(saved.path);
@@ -862,7 +869,24 @@ class TransferServer {
 
   /// Auto-accept or surface a [PendingTransfer] and wait (30s auto-reject).
   Future<bool> _decide(TransferSession session) async {
-    if (autoAccept == AutoAcceptMode.acceptAll) return true;
+    // "Replace" applies without asking. "Ask" with a name already taken
+    // shows the prompt even for a sender that is otherwise auto-accepted:
+    // the user asked to be asked.
+    session.replaceExisting = nameClash == NameClash.replace;
+    final clashes = nameClash == NameClash.ask
+        ? session.files.values
+              .where(
+                (m) => ReceiveNaming.clashes(
+                  _saveDir,
+                  m,
+                  session.sender.alias,
+                  addSender: nameWithSender,
+                ),
+              )
+              .length
+        : 0;
+    final auto = clashes == 0;
+    if (auto && autoAccept == AutoAcceptMode.acceptAll) return true;
     final fp = session.sender.fingerprint;
     // P0: pin the sender's key on first sight and check it matches on repeats.
     // Auto-accept requires a trusted key — a changed/substituted key (MITM)
@@ -873,9 +897,10 @@ class TransferServer {
     final keyOk = pin == KeyPinResult.firstSeen || pin == KeyPinResult.match;
     // Per-device auto-accept (a favorite marked "auto-accept") always wins —
     // but only when the pinned key still matches.
-    if (keyOk && (favoriteAutoAccepts?.call(fp) ?? false)) return true;
+    if (auto && keyOk && (favoriteAutoAccepts?.call(fp) ?? false)) return true;
     // "Favorites only" auto-accepts known favorites; everyone else is prompted.
-    if (keyOk &&
+    if (auto &&
+        keyOk &&
         autoAccept == AutoAcceptMode.favoritesOnly &&
         (isFavorite?.call(fp) ?? false)) {
       return true;
@@ -884,6 +909,7 @@ class TransferServer {
     final pending = PendingTransfer(
       session: session,
       keyChanged: pin == KeyPinResult.changed,
+      clashes: clashes,
     );
     _incoming.add(pending);
     try {
@@ -1169,6 +1195,8 @@ class TransferServer {
         meta,
         session.sender.alias,
         addSender: nameWithSender,
+        replace: session.replaceExisting,
+        claimed: session.savedPaths,
       );
     }
     // rename() fails across volumes (EXDEV) — likely with a custom save location
@@ -1676,11 +1704,15 @@ class TransferServer {
           ? meta!.mime!
           : (lookupMimeType(name) ?? 'application/octet-stream'),
     );
+    // A finished `.part` is swapped in, so replacing never leaves a broken
+    // file. (The classic single-request upload above writes in place and
+    // always keeps both.)
     final target = ReceiveNaming.targetFile(
       _saveDir,
       fileMeta,
       'Browser',
       addSender: nameWithSender,
+      replace: nameClash == NameClash.replace,
     );
     try {
       await part.rename(target.path);

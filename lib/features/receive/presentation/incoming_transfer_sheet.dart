@@ -40,6 +40,8 @@ class IncomingOffer {
     this.keyChanged = false,
     this.fingerprint,
     this.decided,
+    this.clashes = 0,
+    this.onReplace,
   });
 
   /// A LAN transfer waiting in [TransferServer].
@@ -59,6 +61,8 @@ class IncomingOffer {
     keyChanged: p.keyChanged,
     fingerprint: p.sender.fingerprint,
     decided: p.decision.future,
+    clashes: p.clashes,
+    onReplace: (on) => p.replaceExisting = on,
   );
 
   final String alias;
@@ -75,6 +79,11 @@ class IncomingOffer {
   /// Completes when the offer is settled elsewhere (the 30 s timeout), so the
   /// sheet closes instead of offering a dead Accept.
   final Future<void>? decided;
+
+  /// Files whose name is already taken here ("Ask" setting): the sheet asks
+  /// whether to replace them, and tells [onReplace].
+  final int clashes;
+  final ValueChanged<bool>? onReplace;
 
   int get totalBytes => files.fold(0, (s, f) => s + f.size);
 }
@@ -105,6 +114,7 @@ class _Offer extends StatefulWidget {
 
 class _OfferState extends State<_Offer> {
   bool _all = false;
+  bool _replace = false;
 
   @override
   void initState() {
@@ -233,6 +243,22 @@ class _OfferState extends State<_Offer> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ],
+              if (o.clashes > 0 && o.onReplace != null) ...[
+                const SizedBox(height: 12),
+                AppGroup(
+                  card: true,
+                  margin: EdgeInsets.zero,
+                  child: AppSwitchRow(
+                    title: 'receive.replace_existing'.tr(),
+                    subtitle: 'receive.clashes'.plural(o.clashes),
+                    value: _replace,
+                    onChanged: (v) {
+                      setState(() => _replace = v);
+                      o.onReplace!(v);
+                    },
                   ),
                 ),
               ],

@@ -102,4 +102,30 @@ void main() {
     );
     expect(_name(f), matches(RegExp(r'^Video_\d{8}_\d{6}_Leo\.mp4$')));
   });
+
+  test('replace: the plain name, over the file already there', () {
+    if (!rust) return markTestSkipped(rustUnavailableReason);
+    final images = Directory('${dir.path}/Images')..createSync();
+    File('${images.path}/b.HEIC').writeAsStringSync('old');
+    expect(ReceiveNaming.clashes(dir, _meta('b.HEIC'), 'Leo'), isTrue);
+    expect(ReceiveNaming.clashes(dir, _meta('c.HEIC'), 'Leo'), isFalse);
+    final claimed = <String>{};
+    final f = ReceiveNaming.targetFile(
+      dir,
+      _meta('b.HEIC'),
+      'Leo',
+      replace: true,
+      claimed: claimed,
+    );
+    expect(_name(f), 'b.HEIC');
+    // The same name again in the same transfer is kept apart.
+    final g = ReceiveNaming.targetFile(
+      dir,
+      _meta('b.HEIC'),
+      'Leo',
+      replace: true,
+      claimed: claimed,
+    );
+    expect(_name(g), 'b (1).HEIC');
+  });
 }

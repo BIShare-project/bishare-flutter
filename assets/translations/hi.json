@@ -152,7 +152,12 @@
     "code_short": "कोड में 6 अक्षर या अंक होते हैं।",
     "paste_nothing": "पेस्ट करने के लिए कोई कोड या BIShare लिंक नहीं है।",
     "by_qr_beam": "QR Beam से पाएँ",
-    "by_qr_beam_hint": "छोटी फ़ाइल, स्क्रीन से कैमरा, बिना नेटवर्क"
+    "by_qr_beam_hint": "छोटी फ़ाइल, स्क्रीन से कैमरा, बिना नेटवर्क",
+    "replace_existing": "मौजूदा फ़ाइलें बदलें",
+    "clashes": {
+      "one": "इस नाम की {} फ़ाइल पहले से यहाँ है",
+      "other": "इन नामों की {} फ़ाइलें पहले से यहाँ हैं"
+    }
   },
   "invite": {
     "title": "किसी डिवाइस को आमंत्रित करें",
@@ -579,7 +584,14 @@
     "license_line": "ओपन सोर्स, Apache लाइसेंस 2.0",
     "pin_six_digits": "सभी 6 अंक डालें",
     "live_photos": "लाइव फ़ोटो",
-    "live_photos_subtitle": "फ़ोटो को उसकी गति के साथ भेजें। बंद: केवल फ़ोटो।"
+    "live_photos_subtitle": "फ़ोटो को उसकी गति के साथ भेजें। बंद: केवल फ़ोटो।",
+    "name_clash": "जब नाम पहले से मौजूद हो",
+    "name_clash_keep_both": "दोनों रखें",
+    "name_clash_replace": "बदलें",
+    "name_clash_ask": "हर बार पूछें",
+    "name_clash_keep_both_desc": "नई फ़ाइल को एक संख्या मिलती है, जैसे IMG_4821 (1).HEIC",
+    "name_clash_replace_desc": "नई फ़ाइल पुरानी की जगह ले लेती है",
+    "name_clash_ask_desc": "नाम पहले से होने पर स्वीकार करने वाली विंडो पूछती है"
   },
   "notification": {
     "clipboard_from": "{sender} से कॉपी किया गया",

@@ -152,7 +152,12 @@
     "code_short": "O código tem 6 letras ou números.",
     "paste_nothing": "Nenhum código ou link do BIShare para colar.",
     "by_qr_beam": "Receber por QR Beam",
-    "by_qr_beam_hint": "Um arquivo pequeno, da tela para a câmera, sem rede"
+    "by_qr_beam_hint": "Um arquivo pequeno, da tela para a câmera, sem rede",
+    "replace_existing": "Substituir os arquivos existentes",
+    "clashes": {
+      "one": "Já existe {} arquivo com este nome",
+      "other": "Já existem {} arquivos com estes nomes"
+    }
   },
   "invite": {
     "title": "Convidar um dispositivo",
@@ -579,7 +584,14 @@
     "license_line": "Código aberto, licença Apache 2.0",
     "pin_six_digits": "Digite os 6 dígitos",
     "live_photos": "Live Photos",
-    "live_photos_subtitle": "Envia a foto com o movimento. Desligado: só a foto."
+    "live_photos_subtitle": "Envia a foto com o movimento. Desligado: só a foto.",
+    "name_clash": "Quando o nome já existe",
+    "name_clash_keep_both": "Manter os dois",
+    "name_clash_replace": "Substituir",
+    "name_clash_ask": "Perguntar sempre",
+    "name_clash_keep_both_desc": "O novo arquivo recebe um número, como IMG_4821 (1).HEIC",
+    "name_clash_replace_desc": "O novo arquivo substitui o antigo",
+    "name_clash_ask_desc": "O aviso de aceitação pergunta quando um nome já existe"
   },
   "notification": {
     "clipboard_from": "Copiado de {sender}",

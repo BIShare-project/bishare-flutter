@@ -152,7 +152,12 @@
     "code_short": "Ein Code hat 6 Buchstaben oder Ziffern.",
     "paste_nothing": "Kein Code oder BIShare-Link zum Einfügen.",
     "by_qr_beam": "Per QR Beam empfangen",
-    "by_qr_beam_hint": "Eine kleine Datei, vom Bildschirm zur Kamera, ohne Netzwerk"
+    "by_qr_beam_hint": "Eine kleine Datei, vom Bildschirm zur Kamera, ohne Netzwerk",
+    "replace_existing": "Vorhandene Dateien ersetzen",
+    "clashes": {
+      "one": "{} Datei mit diesem Namen ist schon da",
+      "other": "{} Dateien mit diesen Namen sind schon da"
+    }
   },
   "invite": {
     "title": "Gerät einladen",
@@ -579,7 +584,14 @@
     "license_line": "Open Source, Apache-Lizenz 2.0",
     "pin_six_digits": "Alle 6 Ziffern eingeben",
     "live_photos": "Live Photos",
-    "live_photos_subtitle": "Foto mit Bewegung senden. Aus: nur das Foto."
+    "live_photos_subtitle": "Foto mit Bewegung senden. Aus: nur das Foto.",
+    "name_clash": "Wenn der Name schon existiert",
+    "name_clash_keep_both": "Beide behalten",
+    "name_clash_replace": "Ersetzen",
+    "name_clash_ask": "Jedes Mal fragen",
+    "name_clash_keep_both_desc": "Die neue Datei bekommt eine Nummer, z. B. IMG_4821 (1).HEIC",
+    "name_clash_replace_desc": "Die neue Datei ersetzt die alte",
+    "name_clash_ask_desc": "Die Annahme-Abfrage fragt, wenn ein Name vergeben ist"
   },
   "notification": {
     "clipboard_from": "Kopiert von {sender}",

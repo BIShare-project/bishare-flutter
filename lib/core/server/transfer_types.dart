@@ -60,6 +60,13 @@ class TransferSession {
 
   /// Files whose TCP upload was cut off: what arrived so far (fileId →).
   final Map<String, PartialUpload> partials = {};
+
+  /// A file with the name of one already there replaces it ([NameClash]).
+  bool replaceExisting = false;
+
+  /// Paths (lower case) this session saved to: a second file of the same name
+  /// in one transfer never replaces the first.
+  final Set<String> savedPaths = {};
 }
 
 /// The start of a file whose upload was cut off, kept so the sender can send
@@ -89,9 +96,21 @@ String resumeKey(FileMetadata f) =>
 /// An incoming transfer awaiting the user's accept/reject decision. The prepare
 /// HTTP handler blocks on [decision] until the UI resolves it (or it times out).
 class PendingTransfer {
-  PendingTransfer({required this.session, this.keyChanged = false});
+  PendingTransfer({
+    required this.session,
+    this.keyChanged = false,
+    this.clashes = 0,
+  });
 
   final TransferSession session;
+
+  /// Files whose name is already taken in the save folder, counted only when
+  /// the setting is [NameClash.ask]: the prompt then asks what to do.
+  final int clashes;
+
+  /// The answer to [clashes]: replace the files already there.
+  set replaceExisting(bool on) => session.replaceExisting = on;
+  bool get replaceExisting => session.replaceExisting;
 
   /// P0.5: the sender's X25519 key differs from the one we pinned for its
   /// fingerprint (device replaced, or a possible impersonator). The accept
@@ -194,3 +213,9 @@ class ReceivedFile {
 
 /// Auto-accept policy (mirrors native `AutoAcceptMode`).
 enum AutoAcceptMode { alwaysAsk, acceptAll, favoritesOnly }
+
+/// What a received file does when its name is already taken in the save
+/// folder: keep both (the new one becomes `IMG_4821 (1).HEIC`), replace the
+/// old one, or ask in the accept prompt (keep both when accepted without a
+/// prompt).
+enum NameClash { keepBoth, replace, ask }

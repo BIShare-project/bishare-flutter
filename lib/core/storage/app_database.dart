@@ -202,6 +202,14 @@ class AppDatabase extends _$AppDatabase {
         .getSingleOrNull();
   }
 
+  /// Received rows saved at [savedPath] (a file that was then replaced).
+  Future<void> deleteReceivedAt(String savedPath) =>
+      (delete(transferRecords)..where(
+            (t) =>
+                t.direction.equals('received') & t.savedPath.equals(savedPath),
+          ))
+          .go();
+
   Future<void> deleteRecord(int id) =>
       (delete(transferRecords)..where((t) => t.id.equals(id))).go();
 

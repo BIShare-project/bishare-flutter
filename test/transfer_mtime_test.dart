@@ -323,5 +323,91 @@ void main() {
         matches(RegExp(r'^\d{4}-\d{2}-\d{2}_Sender_IMG_4822\.HEIC$')),
       );
     });
+
+    test('"Replace": the second file takes the place of the first', () async {
+      if (!rust) {
+        markTestSkipped('native library not built');
+        return;
+      }
+      server.nameClash = NameClash.replace;
+      final a = File('${srcDir.path}/IMG_0005.HEIC')..writeAsBytesSync([1]);
+      final first = await sendOne(SendableFile.fromPath(a.path, id: 'r1'));
+      // A name handed out moments ago counts as still being moved in.
+      await Future<void>.delayed(const Duration(milliseconds: 2100));
+      a.writeAsBytesSync([2, 2]);
+      final second = await sendOne(SendableFile.fromPath(a.path, id: 'r2'));
+      expect(second.savedPath, first.savedPath);
+      expect(File(second.savedPath).readAsBytesSync(), [2, 2]);
+      final names = Directory(File(first.savedPath).parent.path)
+          .listSync()
+          .map((e) => e.uri.pathSegments.last)
+          .where((n) => n.startsWith('IMG_0005'))
+          .toList();
+      expect(names, ['IMG_0005.HEIC']);
+    });
+
+    test('"Replace" never replaces a file of the same transfer', () async {
+      if (!rust) {
+        markTestSkipped('native library not built');
+        return;
+      }
+      server.nameClash = NameClash.replace;
+      final d1 = Directory('${srcDir.path}/one')..createSync();
+      final d2 = Directory('${srcDir.path}/two')..createSync();
+      final a = File('${d1.path}/IMG_0006.HEIC')..writeAsBytesSync([1]);
+      final b = File('${d2.path}/IMG_0006.HEIC')..writeAsBytesSync([2]);
+      final got = <ReceivedFile>[];
+      final sub = server.received.listen(got.add);
+      final client = TransferClient(_Identity('send-fp', 'Sender'))
+        ..preferredTransport = TransportMode.tcp;
+      await client.send(
+        [
+          SendableFile.fromPath(a.path, id: 's1'),
+          SendableFile.fromPath(b.path, id: 's2'),
+        ],
+        DiscoveredDevice(
+          fingerprint: 'recv-fp',
+          alias: 'Receiver',
+          host: '127.0.0.1',
+          port: BISharePort.main,
+          lastSeen: DateTime.now(),
+          firstSeen: DateTime.now(),
+          version: BIShareConfig.version,
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      await sub.cancel();
+      expect(got, hasLength(2));
+      expect(got.map((r) => r.savedPath).toSet(), hasLength(2));
+      expect(
+        got.map((r) => File(r.savedPath).readAsBytesSync().single).toSet(),
+        {1, 2},
+      );
+    });
+
+    test('"Ask": the prompt counts clashes and its answer is kept', () async {
+      if (!rust) {
+        markTestSkipped('native library not built');
+        return;
+      }
+      final a = File('${srcDir.path}/IMG_0007.HEIC')..writeAsBytesSync([1]);
+      final first = await sendOne(SendableFile.fromPath(a.path, id: 'k1'));
+      // Still auto-accepting everyone (setUp): a clash asks anyway.
+      server.nameClash = NameClash.ask;
+      var clashes = -1;
+      final offer = server.incoming.listen((p) {
+        clashes = p.clashes;
+        p
+          ..replaceExisting = true
+          ..accept();
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 2100));
+      a.writeAsBytesSync([3]);
+      final second = await sendOne(SendableFile.fromPath(a.path, id: 'k2'));
+      await offer.cancel();
+      expect(clashes, 1);
+      expect(second.savedPath, first.savedPath);
+      expect(File(second.savedPath).readAsBytesSync(), [3]);
+    });
   });
 }

@@ -71,6 +71,7 @@ class Settings extends Equatable {
     this.browserUpload = true,
     this.browserUploadMaxGb = 0,
     this.nameWithSender = false,
+    this.nameClash = NameClash.keepBoth,
     this.sendLivePhotos = true,
     this.telemetryEnabled = true,
     this.clipboardSync = false,
@@ -122,6 +123,9 @@ class Settings extends Equatable {
   /// sender's own file name (off by default since 2.8.2).
   final bool nameWithSender;
 
+  /// A received file whose name is already taken: keep both, replace, ask.
+  final NameClash nameClash;
+
   /// A Live Photo goes as its photo and its motion (two files that an
   /// iPhone or iPad puts back together); off sends the photo only.
   final bool sendLivePhotos;
@@ -164,6 +168,7 @@ class Settings extends Equatable {
     bool? browserUpload,
     int? browserUploadMaxGb,
     bool? nameWithSender,
+    NameClash? nameClash,
     bool? sendLivePhotos,
     bool? telemetryEnabled,
     bool? clipboardSync,
@@ -187,6 +192,7 @@ class Settings extends Equatable {
     browserUpload: browserUpload ?? this.browserUpload,
     browserUploadMaxGb: browserUploadMaxGb ?? this.browserUploadMaxGb,
     nameWithSender: nameWithSender ?? this.nameWithSender,
+    nameClash: nameClash ?? this.nameClash,
     sendLivePhotos: sendLivePhotos ?? this.sendLivePhotos,
     telemetryEnabled: telemetryEnabled ?? this.telemetryEnabled,
     clipboardSync: clipboardSync ?? this.clipboardSync,
@@ -213,6 +219,7 @@ class Settings extends Equatable {
     browserUpload,
     browserUploadMaxGb,
     nameWithSender,
+    nameClash,
     sendLivePhotos,
     telemetryEnabled,
     clipboardSync,
@@ -251,4 +258,18 @@ class AccentColors {
     final a = AppPalette.accent(name);
     return brightness == Brightness.dark ? a.darkText : a.light;
   }
+}
+
+extension NameClashLabel on NameClash {
+  String get label => switch (this) {
+    NameClash.keepBoth => 'settings.name_clash_keep_both'.tr(),
+    NameClash.replace => 'settings.name_clash_replace'.tr(),
+    NameClash.ask => 'settings.name_clash_ask'.tr(),
+  };
+
+  String get description => switch (this) {
+    NameClash.keepBoth => 'settings.name_clash_keep_both_desc'.tr(),
+    NameClash.replace => 'settings.name_clash_replace_desc'.tr(),
+    NameClash.ask => 'settings.name_clash_ask_desc'.tr(),
+  };
 }

@@ -152,7 +152,12 @@
     "code_short": "代碼由 6 個字母或數字組成。",
     "paste_nothing": "沒有可貼上的代碼或 BIShare 連結。",
     "by_qr_beam": "透過 QR Beam 接收",
-    "by_qr_beam_hint": "小檔案，螢幕對相機，不需網路"
+    "by_qr_beam_hint": "小檔案，螢幕對相機，不需網路",
+    "replace_existing": "取代現有檔案",
+    "clashes": {
+      "one": "此處已有 {} 個同名檔案",
+      "other": "此處已有 {} 個同名檔案"
+    }
   },
   "invite": {
     "title": "邀請裝置",
@@ -579,7 +584,14 @@
     "license_line": "開源，Apache License 2.0",
     "pin_six_digits": "請輸入全部 6 位數字",
     "live_photos": "原況照片",
-    "live_photos_subtitle": "連同動態一起傳送照片。關閉：僅傳送照片。"
+    "live_photos_subtitle": "連同動態一起傳送照片。關閉：僅傳送照片。",
+    "name_clash": "名稱已存在時",
+    "name_clash_keep_both": "保留兩者",
+    "name_clash_replace": "取代",
+    "name_clash_ask": "每次詢問",
+    "name_clash_keep_both_desc": "新檔案會加上編號，例如 IMG_4821 (1).HEIC",
+    "name_clash_replace_desc": "新檔案取代舊檔案",
+    "name_clash_ask_desc": "名稱重複時，在接收確認中詢問"
   },
   "notification": {
     "clipboard_from": "從 {sender} 複製",

@@ -28,6 +28,9 @@ class HistoryRepository {
   TransferServer? _server;
 
   Future<void> recordReceived(ReceivedFile f) async {
+    // A file received over one already there ("Replace") takes its place in
+    // the Inbox too, instead of two tiles for one file.
+    await _db.deleteReceivedAt(f.savedPath);
     await _db.insertRecord(_receivedRow(f));
     // Android: received photos and videos show in the gallery in place, so
     // a received Live Photo picked from the Photos tab is still the file

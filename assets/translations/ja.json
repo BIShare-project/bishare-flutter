@@ -152,7 +152,12 @@
     "code_short": "コードは英数字 6 文字です。",
     "paste_nothing": "貼り付けられるコードや BIShare のリンクがありません。",
     "by_qr_beam": "QR Beam で受け取る",
-    "by_qr_beam_hint": "小さなファイルを画面からカメラへ。ネットワーク不要"
+    "by_qr_beam_hint": "小さなファイルを画面からカメラへ。ネットワーク不要",
+    "replace_existing": "既存のファイルを置き換える",
+    "clashes": {
+      "one": "同じ名前のファイルがすでに{}件あります",
+      "other": "同じ名前のファイルがすでに{}件あります"
+    }
   },
   "invite": {
     "title": "デバイスを招待",
@@ -579,7 +584,14 @@
     "license_line": "オープンソース、Apache License 2.0",
     "pin_six_digits": "6桁すべて入力してください",
     "live_photos": "Live Photos",
-    "live_photos_subtitle": "写真と動きを一緒に送信します。オフ: 写真のみ。"
+    "live_photos_subtitle": "写真と動きを一緒に送信します。オフ: 写真のみ。",
+    "name_clash": "同じ名前のファイルがあるとき",
+    "name_clash_keep_both": "両方残す",
+    "name_clash_replace": "置き換える",
+    "name_clash_ask": "毎回確認",
+    "name_clash_keep_both_desc": "新しいファイルに番号が付きます（例：IMG_4821 (1).HEIC）",
+    "name_clash_replace_desc": "新しいファイルが古いファイルと置き換わります",
+    "name_clash_ask_desc": "名前が重なるとき、受信の確認画面で尋ねます"
   },
   "notification": {
     "clipboard_from": "{sender}からコピーしました",

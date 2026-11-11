@@ -152,7 +152,12 @@
     "code_short": "代码由 6 个字母或数字组成。",
     "paste_nothing": "没有可粘贴的代码或 BIShare 链接。",
     "by_qr_beam": "通过 QR Beam 接收",
-    "by_qr_beam_hint": "小文件，屏幕对摄像头，无需网络"
+    "by_qr_beam_hint": "小文件，屏幕对摄像头，无需网络",
+    "replace_existing": "替换已有文件",
+    "clashes": {
+      "one": "此处已有 {} 个同名文件",
+      "other": "此处已有 {} 个同名文件"
+    }
   },
   "invite": {
     "title": "邀请设备",
@@ -579,7 +584,14 @@
     "license_line": "开源，Apache License 2.0",
     "pin_six_digits": "请输入全部 6 位数字",
     "live_photos": "实况照片",
-    "live_photos_subtitle": "连同动态一起发送照片。关闭：仅发送照片。"
+    "live_photos_subtitle": "连同动态一起发送照片。关闭：仅发送照片。",
+    "name_clash": "名称已存在时",
+    "name_clash_keep_both": "保留两者",
+    "name_clash_replace": "替换",
+    "name_clash_ask": "每次询问",
+    "name_clash_keep_both_desc": "新文件会加上编号，例如 IMG_4821 (1).HEIC",
+    "name_clash_replace_desc": "新文件替换旧文件",
+    "name_clash_ask_desc": "名称重复时，在接收确认中询问"
   },
   "notification": {
     "clipboard_from": "已从 {sender} 复制",

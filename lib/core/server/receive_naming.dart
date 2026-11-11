@@ -24,6 +24,8 @@ class ReceiveNaming {
     FileMetadata meta,
     String senderAlias, {
     bool addSender = false,
+    bool replace = false,
+    Set<String>? claimed,
   }) {
     final category = Rust.categoryName(meta.fileType); // Images/Videos/…
     final base = unwrapPhotoExport(Rust.sanitizeFilename(meta.fileName));
@@ -35,8 +37,45 @@ class ReceiveNaming {
 
     final dir = Directory('${saveDir.path}${Platform.pathSeparator}$category');
     if (!dir.existsSync()) dir.createSync(recursive: true);
-    return _deduped(dir, name);
+    return replace ? _replacing(dir, name, claimed) : _deduped(dir, name);
   }
+
+  /// Whether [meta] would land on a file that is already there (the accept
+  /// prompt's "N files already exist").
+  static bool clashes(
+    Directory saveDir,
+    FileMetadata meta,
+    String senderAlias, {
+    bool addSender = false,
+  }) {
+    final category = Rust.categoryName(meta.fileType);
+    final base = unwrapPhotoExport(Rust.sanitizeFilename(meta.fileName));
+    if (_isJunkName(_stem(base))) return false; // always a fresh name
+    final name = addSender ? Rust.smartName(base, senderAlias) : base;
+    final sep = Platform.pathSeparator;
+    return File('${saveDir.path}$sep$category$sep$name').existsSync();
+  }
+
+  /// The plain name, over a file already there. A file of the same name from
+  /// the same transfer ([claimed]: paths this session already wrote), or one
+  /// being moved into place right now, is not replaced: that one gets ` (1)`.
+  static File _replacing(Directory dir, String name, Set<String>? claimed) {
+    final candidate = File('${dir.path}${Platform.pathSeparator}$name');
+    final key = candidate.path.toLowerCase();
+    final at = _handedOut[key];
+    final moving = at != null && DateTime.now().difference(at) < _replaceGuard;
+    if (moving || (claimed?.contains(key) ?? false)) {
+      final other = _deduped(dir, name);
+      claimed?.add(other.path.toLowerCase());
+      return other;
+    }
+    _handedOut[key] = DateTime.now();
+    claimed?.add(key);
+    return candidate;
+  }
+
+  /// How long a name just handed out counts as "being moved into place".
+  static const _replaceGuard = Duration(seconds: 2);
 
   /// iOS senders before 2.8.2 sent the photo library's export file name,
   /// `<asset id>_<time>[_o]_<name>` (photo_manager), e.g.

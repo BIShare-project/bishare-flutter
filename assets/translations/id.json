@@ -152,7 +152,12 @@
     "code_short": "Kode berisi 6 huruf atau angka.",
     "paste_nothing": "Tidak ada kode atau tautan BIShare untuk ditempel.",
     "by_qr_beam": "Terima lewat QR Beam",
-    "by_qr_beam_hint": "File kecil, layar ke kamera, tanpa jaringan"
+    "by_qr_beam_hint": "File kecil, layar ke kamera, tanpa jaringan",
+    "replace_existing": "Ganti file yang sudah ada",
+    "clashes": {
+      "one": "{} file dengan nama ini sudah ada",
+      "other": "{} file dengan nama ini sudah ada"
+    }
   },
   "invite": {
     "title": "Undang perangkat",
@@ -579,7 +584,14 @@
     "license_line": "Sumber terbuka, Lisensi Apache 2.0",
     "pin_six_digits": "Isi keenam angka",
     "live_photos": "Live Photo",
-    "live_photos_subtitle": "Kirim foto beserta gerakannya. Mati: fotonya saja."
+    "live_photos_subtitle": "Kirim foto beserta gerakannya. Mati: fotonya saja.",
+    "name_clash": "Jika nama sudah ada",
+    "name_clash_keep_both": "Simpan keduanya",
+    "name_clash_replace": "Ganti",
+    "name_clash_ask": "Tanya setiap kali",
+    "name_clash_keep_both_desc": "File baru diberi nomor, misalnya IMG_4821 (1).HEIC",
+    "name_clash_replace_desc": "File baru menggantikan file lama",
+    "name_clash_ask_desc": "Prompt terima menanyakan saat nama sudah dipakai"
   },
   "notification": {
     "clipboard_from": "Disalin dari {sender}",

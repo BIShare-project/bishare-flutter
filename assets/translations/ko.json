@@ -152,7 +152,12 @@
     "code_short": "코드는 영문자나 숫자 6자입니다.",
     "paste_nothing": "붙여 넣을 코드나 BIShare 링크가 없습니다.",
     "by_qr_beam": "QR Beam으로 받기",
-    "by_qr_beam_hint": "작은 파일을 화면에서 카메라로, 네트워크 없이"
+    "by_qr_beam_hint": "작은 파일을 화면에서 카메라로, 네트워크 없이",
+    "replace_existing": "기존 파일 바꾸기",
+    "clashes": {
+      "one": "같은 이름의 파일이 이미 {}개 있습니다",
+      "other": "같은 이름의 파일이 이미 {}개 있습니다"
+    }
   },
   "invite": {
     "title": "기기 초대",
@@ -579,7 +584,14 @@
     "license_line": "오픈 소스, Apache License 2.0",
     "pin_six_digits": "6자리를 모두 입력하세요",
     "live_photos": "Live Photo",
-    "live_photos_subtitle": "사진과 움직임을 함께 보냅니다. 끄면 사진만 보냅니다."
+    "live_photos_subtitle": "사진과 움직임을 함께 보냅니다. 끄면 사진만 보냅니다.",
+    "name_clash": "같은 이름이 이미 있을 때",
+    "name_clash_keep_both": "둘 다 유지",
+    "name_clash_replace": "바꾸기",
+    "name_clash_ask": "매번 묻기",
+    "name_clash_keep_both_desc": "새 파일에 번호가 붙습니다(예: IMG_4821 (1).HEIC)",
+    "name_clash_replace_desc": "새 파일이 기존 파일을 대체합니다",
+    "name_clash_ask_desc": "이름이 겹치면 수락 화면에서 묻습니다"
   },
   "notification": {
     "clipboard_from": "{sender}에서 복사됨",

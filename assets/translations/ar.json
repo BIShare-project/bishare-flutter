@@ -156,7 +156,12 @@
     "code_short": "يتكوّن الرمز من 6 أحرف أو أرقام.",
     "paste_nothing": "لا يوجد رمز أو رابط BIShare للصقه.",
     "by_qr_beam": "الاستلام عبر QR Beam",
-    "by_qr_beam_hint": "ملف صغير، من الشاشة إلى الكاميرا، دون شبكة"
+    "by_qr_beam_hint": "ملف صغير، من الشاشة إلى الكاميرا، دون شبكة",
+    "replace_existing": "استبدال الملفات الموجودة",
+    "clashes": {
+      "one": "يوجد {} ملف بهذا الاسم هنا",
+      "other": "توجد {} ملفات بهذه الأسماء هنا"
+    }
   },
   "invite": {
     "title": "دعوة جهاز",
@@ -591,7 +596,14 @@
     "license_line": "مفتوح المصدر، ترخيص Apache 2.0",
     "pin_six_digits": "أدخل الأرقام الستة كلها",
     "live_photos": "الصور الحية",
-    "live_photos_subtitle": "أرسل الصورة مع حركتها. عند الإيقاف: الصورة فقط."
+    "live_photos_subtitle": "أرسل الصورة مع حركتها. عند الإيقاف: الصورة فقط.",
+    "name_clash": "عند وجود الاسم مسبقًا",
+    "name_clash_keep_both": "الاحتفاظ بالاثنين",
+    "name_clash_replace": "استبدال",
+    "name_clash_ask": "السؤال في كل مرة",
+    "name_clash_keep_both_desc": "يحصل الملف الجديد على رقم، مثل IMG_4821 (1).HEIC",
+    "name_clash_replace_desc": "يحل الملف الجديد محل القديم",
+    "name_clash_ask_desc": "تسألك نافذة القبول عندما يكون الاسم مستخدمًا"
   },
   "notification": {
     "clipboard_from": "تم النسخ من {sender}",

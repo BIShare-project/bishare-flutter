@@ -158,6 +158,16 @@ class SettingsPage extends StatelessWidget {
       onChanged: cubit.setNameWithSender,
     ),
     _divider,
+    AppSelectRow<NameClash>(
+      icon: AppIcons.copyDuplicate,
+      title: 'settings.name_clash'.tr(),
+      value: state.nameClash,
+      values: NameClash.values,
+      label: (m) => m.label,
+      description: (m) => m.description,
+      onChanged: cubit.setNameClash,
+    ),
+    _divider,
     // Web-Share browser uploads (feature #11): allow toggle + per-upload
     // size cap.
     AppSwitchRow(
