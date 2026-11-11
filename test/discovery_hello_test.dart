@@ -8,6 +8,7 @@ import 'package:bishare/core/server/transfer_server.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/rust_test_lib.dart';
+import 'helpers/start_server.dart';
 
 class _Identity implements DeviceIdentity {
   @override
@@ -47,7 +48,7 @@ void main() {
   setUp(() async {
     saveDir = await Directory.systemTemp.createTemp('bishare-hello-');
     server = TransferServer(identity: _Identity(), saveDirectory: saveDir);
-    await server.start();
+    await startServerWhenFree(server);
     hellos = [];
     sub = server.hellos.listen(hellos.add);
   });

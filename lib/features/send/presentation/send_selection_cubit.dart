@@ -7,6 +7,7 @@ import 'package:photo_manager/photo_manager.dart';
 import '../../../core/apps/installed_apps_channel.dart';
 import '../data/send_media_library.dart';
 import '../domain/sendable_file.dart';
+import '../../../core/io/file_thumbnail.dart';
 import '../data/send_timing.dart';
 import 'tray_cubit.dart';
 
@@ -131,6 +132,10 @@ class SendSelectionCubit extends Cubit<SendSelection> {
   SendKind? _hint;
   bool _materializing = false;
 
+  /// Photos and videos that carry a preview in the offer (TransferClient).
+  static const _offerPreviews = 3;
+  static const _previewWait = Duration(milliseconds: 400);
+
   /// The tab the next staged files come from (More, for a note).
   void hintNext(SendKind kind) => _hint = kind;
 
@@ -247,6 +252,7 @@ class SendSelectionCubit extends Cubit<SendSelection> {
     final sw = Stopwatch()..start();
     var exportMs = 0;
     var exported = 0;
+    final previews = <Future<void>>[];
     try {
       final out = <SendableFile>[];
       final entries = state.entries;
@@ -259,6 +265,20 @@ class SendSelectionCubit extends Cubit<SendSelection> {
             final f = await _library.original(asset);
             exportMs += ex.elapsedMilliseconds;
             exported++;
+            // The offer shows the first few: take the library's own
+            // thumbnail now instead of decoding the original later.
+            // Not awaited here: the library serves thumbnails in the order
+            // asked, behind the ones the Photos grid is still loading.
+            if (f != null && previews.length < _offerPreviews) {
+              previews.add(
+                _library
+                    .thumbnail(asset, 120)
+                    .then((jpg) {
+                      if (jpg != null) rememberThumbnail(f.path, jpg);
+                    })
+                    .catchError((Object _) {}),
+              );
+            }
             if (f != null) {
               // Send the library's own name (IMG_4821.HEIC), not the export's
               // `<asset id>_<time>_o_IMG_4821.HEIC`.
@@ -278,6 +298,12 @@ class SendSelectionCubit extends Cubit<SendSelection> {
             out.addAll(await _tray.stageApks([app]));
         }
         onProgress?.call(i + 1, entries.length);
+      }
+      // A preview not ready by now is left out (the offer goes without it).
+      try {
+        await Future.wait(previews).timeout(_previewWait);
+      } on TimeoutException {
+        // Best-effort.
       }
       // Both halves of one received Live Photo picked: staged once.
       final seen = <String>{};

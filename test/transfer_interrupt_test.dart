@@ -174,29 +174,32 @@ void main() {
     return SendableFile.fromPath(f.path, id: 'f1');
   }
 
-  test('the same sender can send again after an interrupted transfer', () async {
-    if (!rust) {
-      markTestSkipped('native library not built');
-      return;
-    }
-    expect(await _abandonedPrepare('send-fp'), 200);
-    expect(server.isReceiving, isTrue);
+  test(
+    'the same sender can send again after an interrupted transfer',
+    () async {
+      if (!rust) {
+        markTestSkipped('native library not built');
+        return;
+      }
+      expect(await _abandonedPrepare('send-fp'), 200);
+      expect(server.isReceiving, isTrue);
 
-    // The user unlocks the phone and taps Send again, well inside the 30 s
-    // idle reaper window.
-    await Future<void>.delayed(const Duration(seconds: 4));
-    final received = server.received.first;
-    final client = TransferClient(_Identity('send-fp', 'Phone'))
-      ..preferredTransport = TransportMode.tcp;
-    final sending = client.send([photo()], _receiver);
-    expect(client.isSending, isTrue);
-    await sending;
-    expect(client.isSending, isFalse);
+      // The user unlocks the phone and taps Send again, well inside the 30 s
+      // idle reaper window.
+      await Future<void>.delayed(const Duration(seconds: 4));
+      final received = server.received.first;
+      final client = TransferClient(_Identity('send-fp', 'Phone'))
+        ..preferredTransport = TransportMode.tcp;
+      final sending = client.send([photo()], _receiver);
+      expect(client.isSending, isTrue);
+      await sending;
+      expect(client.isSending, isFalse);
 
-    final got = await received.timeout(const Duration(seconds: 20));
-    expect(File(got.savedPath).lengthSync(), 50000);
-    expect(server.isReceiving, isFalse);
-  });
+      final got = await received.timeout(const Duration(seconds: 20));
+      expect(File(got.savedPath).lengthSync(), 50000);
+      expect(server.isReceiving, isFalse);
+    },
+  );
 
   test('another sender still gets "busy" while a session is open', () async {
     if (!rust) {
@@ -281,12 +284,13 @@ void main() {
       ..preferredTransport = TransportMode.tcp;
     await client.send([fa, fb], _receiver);
     await Future<void>.delayed(const Duration(milliseconds: 300));
-    final names = saveDir
-        .listSync(recursive: true)
-        .whereType<File>()
-        .map((e) => e.uri.pathSegments.last)
-        .toList()
-      ..sort();
+    final names =
+        saveDir
+            .listSync(recursive: true)
+            .whereType<File>()
+            .map((e) => e.uri.pathSegments.last)
+            .toList()
+          ..sort();
     expect(names, ['IMG_0001.JPG', 'IMG_0002.JPG']);
     expect(server.isReceiving, isFalse);
   });
@@ -310,10 +314,7 @@ void main() {
     );
     await (await req.close()).drain<void>();
     http.close();
-    expect(
-      saveDir.listSync().where((e) => e.path.endsWith('.part')),
-      isEmpty,
-    );
+    expect(saveDir.listSync().where((e) => e.path.endsWith('.part')), isEmpty);
     final again = await _rawPrepare([f]);
     expect(again['resumeFrom'], isEmpty);
   });
@@ -341,5 +342,56 @@ void main() {
       {for (final r in got) r.fileName: r.liveGroup},
       {'IMG_4821.HEIC': 'g1', 'IMG_4821.MOV': 'g1'},
     );
+  });
+
+  test('many files sent several at a time all arrive whole', () async {
+    if (!rust) {
+      markTestSkipped('native library not built');
+      return;
+    }
+    final files = <SendableFile>[];
+    final digests = <String, String>{};
+    for (var i = 0; i < 40; i++) {
+      final name = 'S_${i.toString().padLeft(3, '0')}.bin';
+      final bytes = List<int>.generate(
+        2000 + i * 977,
+        (k) => (k * 31 + i) & 0xff,
+      );
+      File('${srcDir.path}/$name').writeAsBytesSync(bytes);
+      files.add(SendableFile.fromPath('${srcDir.path}/$name', id: 'f$i'));
+      digests[name] = sha256.convert(bytes).toString();
+    }
+    final total = files.fold<int>(0, (s, f) => s + f.size);
+    final got = <ReceivedFile>[];
+    final sub = server.received.listen(got.add);
+    var last = 0;
+    var backwards = false;
+    final prog = server.progress.listen((p) {
+      if (p.sessionId.isEmpty || p.isComplete) return;
+      if (p.bytesReceived < last) backwards = true;
+      last = p.bytesReceived;
+    });
+    final client = TransferClient(_Identity('send-fp', 'Phone'))
+      ..preferredTransport = TransportMode.tcp;
+    var sentMax = 0;
+    await client.send(
+      files,
+      _receiver,
+      onProgress: (_, _, _, sent, _) {
+        if (sent > sentMax) sentMax = sent;
+      },
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await sub.cancel();
+    await prog.cancel();
+
+    expect(got, hasLength(40));
+    for (final r in got) {
+      final bytes = File(r.savedPath).readAsBytesSync();
+      expect(sha256.convert(bytes).toString(), digests[r.fileName]);
+    }
+    expect(sentMax, total);
+    expect(backwards, isFalse, reason: 'receiver progress went backwards');
+    expect(server.isReceiving, isFalse);
   });
 }

@@ -543,6 +543,7 @@ class DiscoveryService {
         // no QUIC port, so a QUIC-preferred sender was silently falling back to
         // TCP. Every BIShare device runs QUIC on the fixed port — use it.
         quicPort: BISharePort.quic,
+        publicKey: info.publicKey ?? '',
       );
       _misses.remove(info.fingerprint);
       _dedupeByHost(info.fingerprint, resolvedHost);
@@ -652,6 +653,11 @@ class DiscoveryService {
         // carry it, so default to the fixed port rather than dropping to null
         // (which would silently force a QUIC-preferred sender onto TCP).
         quicPort: d.quicPort ?? BISharePort.quic,
+        // Carry the key: the sender skips its pre-send hash only when it
+        // knows the transfer will be encrypted (TransferClient).
+        publicKey: (info.publicKey?.isNotEmpty ?? false)
+            ? info.publicKey!
+            : d.publicKey,
       );
       _dedupeByHost(info.fingerprint, host);
       _emit();

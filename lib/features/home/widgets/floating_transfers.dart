@@ -56,14 +56,26 @@ class FloatingTransfers extends StatelessWidget {
 /// Opens the Inbox tab.
 void _openInbox() => shellTabRequest.value = ShellTabId.inbox;
 
+/// "12 of 100 files · 9.3 MB of 77.6 MB · 10 MB/s · 5 s left": what is done,
+/// how fast, how long. The bar shows the percentage.
 String _progressLine({
   required String first,
   required double fraction,
   required double speed,
   double? eta,
+  int? doneBytes,
+  int? totalBytes,
 }) => [
   first,
-  '${(fraction * 100).clamp(0, 100).toInt()}%',
+  if (doneBytes != null && totalBytes != null && totalBytes > 0)
+    'vault.uploads_bytes'.tr(
+      namedArgs: {
+        'done': formatBytes(doneBytes),
+        'total': formatBytes(totalBytes),
+      },
+    )
+  else
+    '${(fraction * 100).clamp(0, 100).toInt()}%',
   if (speed > 0) fmtSpeed(speed),
   if (speed > 0 && eta != null) fmtEta(eta),
 ].join(' · ');
@@ -134,6 +146,8 @@ class _ReceiveCardState extends State<_ReceiveCard> {
               fraction: p.fraction,
               speed: s.speed,
               eta: s.etaSeconds,
+              doneBytes: p.bytesReceived,
+              totalBytes: p.totalBytes,
             ),
             badge: p.transport,
             fraction: p.fraction,
@@ -199,10 +213,21 @@ class _SendCard extends StatelessWidget {
             icon: AppIcons.uploadFile,
             title: 'home.sending_to'.tr(namedArgs: {'alias': s.deviceAlias}),
             subtitle: _progressLine(
-              first: s.fileName.isEmpty ? 'home.preparing'.tr() : s.fileName,
+              first: s.fileName.isEmpty
+                  ? 'home.preparing'.tr()
+                  : s.filesTotal > 1
+                  ? 'receive.files_of'.tr(
+                      namedArgs: {
+                        'done': '${s.filesDone}',
+                        'total': '${s.filesTotal}',
+                      },
+                    )
+                  : s.fileName,
               fraction: s.fraction,
               speed: s.speed,
               eta: s.etaSeconds,
+              doneBytes: s.sent,
+              totalBytes: s.total,
             ),
             badge: s.transport,
             fraction: s.fraction,

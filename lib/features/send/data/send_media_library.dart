@@ -133,10 +133,33 @@ class SendMediaLibrary {
   /// The original as a file, exported now (an iCloud photo downloads here).
   /// Null when it cannot be had.
   Future<File?> original(AssetEntity a) async {
+    final direct = _onDisk(a);
+    if (direct != null) return direct;
     final f = await a.originFile;
     if (f == null || !await f.exists()) return null;
     return f;
   }
+
+  /// Android: the file where the library keeps it, from what the page query
+  /// already returned (relative path + name), read in place with "All files
+  /// access". Asking the plugin costs a MediaStore query per photo: ~100 ms
+  /// each right after an install or update, 10 s for 100 photos.
+  File? _onDisk(AssetEntity a) {
+    if (!Platform.isAndroid) return null;
+    final rel = a.relativePath;
+    final name = a.title;
+    if (rel == null || name == null || name.isEmpty) return null;
+    // Android 10+: "DCIM/Camera/"; 9 and below: the absolute parent.
+    final dir = rel.startsWith('/') ? rel : '$_externalRoot/$rel';
+    final f = File('${dir.endsWith('/') ? dir : '$dir/'}$name');
+    try {
+      return f.existsSync() ? f : null;
+    } on FileSystemException {
+      return null;
+    }
+  }
+
+  static const _externalRoot = '/storage/emulated/0';
 
   /// The motion of a Live Photo, exported unchanged (the original paired
   /// video, IMG_4821.MOV). Null for anything else, or when it cannot be had.
@@ -155,6 +178,8 @@ class SendMediaLibrary {
   /// none. On iOS the exported original is named
   /// `<asset id>_<time>_o_IMG_4821.HEIC`; this is what the sender should see.
   Future<String?> originalName(AssetEntity a) async {
+    final known = a.title?.trim();
+    if (Platform.isAndroid && known != null && known.isNotEmpty) return known;
     final t = await a.titleAsync;
     return t.trim().isEmpty ? null : t.trim();
   }

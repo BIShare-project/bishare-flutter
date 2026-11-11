@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -9,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/desktop/desktop_service.dart';
 import '../../../core/storage/app_database.dart';
 import '../../../core/ui/app_ui.dart';
+import '../../../core/ui/file_thumb_provider.dart';
 import '../../../core/ui/shell_tab.dart';
 import '../../settings/domain/settings.dart' as s;
 import '../../settings/presentation/settings_cubit.dart';
@@ -94,6 +93,18 @@ class _InboxPageState extends State<InboxPage> {
     _selected.clear();
   });
 
+  /// Everything, or nothing when everything is already picked.
+  void _selectAll(List<TransferRecord> items, List<TransferRecord> picked) =>
+      setState(() {
+        if (picked.length == items.length) {
+          _selected.clear();
+        } else {
+          _selected
+            ..clear()
+            ..addAll(items.map((r) => r.id));
+        }
+      });
+
   void _toggle(TransferRecord r) => setState(() {
     if (!_selected.remove(r.id)) _selected.add(r.id);
   });
@@ -124,10 +135,7 @@ class _InboxPageState extends State<InboxPage> {
       };
       for (var i = 0; i < media.length; i += _columns) {
         lines.add(
-          _Tiles(
-            media.sublist(i, (i + _columns).clamp(0, media.length)),
-            live,
-          ),
+          _Tiles(media.sublist(i, (i + _columns).clamp(0, media.length)), live),
         );
       }
       final files = g.files;
@@ -164,12 +172,16 @@ class _InboxPageState extends State<InboxPage> {
                             'inbox.n_files_received'.plural(items.length),
                             formatBytes(bytes),
                           ].join(' · '),
-                          action: _selecting
-                              ? 'inbox.done'.tr()
-                              : 'compose.select'.tr(),
-                          onAction: _selecting
-                              ? _stopSelecting
-                              : () => setState(() => _selecting = true),
+                          // While selecting: all / none, in plain sight
+                          // (the bar's ✕ ends selecting).
+                          action: !_selecting
+                              ? 'compose.select'.tr()
+                              : picked.length == items.length
+                              ? 'inbox.select_none'.tr()
+                              : 'inbox.select_all'.tr(),
+                          onAction: !_selecting
+                              ? () => setState(() => _selecting = true)
+                              : () => _selectAll(items, picked),
                         ),
                       Expanded(
                         child: items.isEmpty
@@ -188,15 +200,7 @@ class _InboxPageState extends State<InboxPage> {
                     onClear: _stopSelecting,
                     // Select all lives here, not in the header, so the
                     // header keeps one height in every language.
-                    onSummaryTap: () => setState(() {
-                      if (picked.length == items.length) {
-                        _selected.clear();
-                      } else {
-                        _selected
-                          ..clear()
-                          ..addAll(items.map((r) => r.id));
-                      }
-                    }),
+                    onSummaryTap: () => _selectAll(items, picked),
                     summary: AppSelectionSummary(
                       title: picked.isEmpty
                           ? 'inbox.select_files'.tr()
@@ -439,11 +443,7 @@ class _Thumb extends StatelessWidget {
       return Hero(
         tag: record.id,
         child: Image(
-          image: ResizeImage(
-            FileImage(File(path)),
-            width: px,
-            policy: ResizeImagePolicy.fit,
-          ),
+          image: fileThumbImage(path, px),
           fit: BoxFit.cover,
           gaplessPlayback: true,
           errorBuilder: (_, _, _) => glyph(),

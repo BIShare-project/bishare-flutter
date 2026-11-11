@@ -11,6 +11,8 @@ import 'package:video_thumbnail/video_thumbnail.dart';
 /// device sees in the offer before accepting. Returns null for unsupported
 /// types or on any failure (best-effort).
 Future<String?> generateThumbnail(String path, String mime) async {
+  final known = _known.remove(path);
+  if (known != null) return known;
   try {
     if (mime.startsWith('image/')) {
       Uint8List? jpg;
@@ -46,6 +48,16 @@ Future<String?> generateThumbnail(String path, String mime) async {
   return null;
 }
 
+/// Thumbnails the photo library already has (a few ms), by the path of the
+/// exported original, so [generateThumbnail] does not decode a 12 MP HEIC
+/// again (~300 ms each on a mid-range phone). Used once, then forgotten.
+final Map<String, String> _known = {};
+
+void rememberThumbnail(String path, Uint8List jpg) {
+  if (_known.length >= 16) _known.remove(_known.keys.first);
+  _known[path] = base64Encode(jpg);
+}
+
 /// Runs on a background isolate (decode can be heavy for large photos).
 Uint8List? _resizeToJpg(Uint8List bytes) {
   final decoded = img.decodeImage(bytes);
@@ -61,7 +73,10 @@ Uint8List? _resizeToJpg(Uint8List bytes) {
 /// plain upload is refused with ROOM_ENCRYPTION_REQUIRED). A preview of
 /// [maxChars] or more is made again at the web client's size (longest side
 /// 96 px, quality 60); one still too big is left out, the file goes anyway.
-Future<String?> fitRoomThumbnail(String? base64Jpg, {int maxChars = 6000}) async {
+Future<String?> fitRoomThumbnail(
+  String? base64Jpg, {
+  int maxChars = 6000,
+}) async {
   if (base64Jpg == null || base64Jpg.length < maxChars) return base64Jpg;
   try {
     final small = await compute(_shrinkJpg, base64Decode(base64Jpg));

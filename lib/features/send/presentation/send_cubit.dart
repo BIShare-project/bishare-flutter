@@ -24,6 +24,8 @@ class SendState extends Equatable {
     this.speed = 0,
     this.message = '',
     this.transport = 'TCP',
+    this.filesDone = 0,
+    this.filesTotal = 0,
   });
 
   final SendStatus status;
@@ -34,6 +36,10 @@ class SendState extends Equatable {
   final double speed; // bytes/sec
   final String message;
   final String transport; // 'TCP' | 'QUIC' — the transport actually used
+
+  /// Files fully sent, of [filesTotal].
+  final int filesDone;
+  final int filesTotal;
 
   double get fraction => total == 0 ? 0 : sent / total;
 
@@ -50,6 +56,8 @@ class SendState extends Equatable {
     double? speed,
     String? message,
     String? transport,
+    int? filesDone,
+    int? filesTotal,
   }) => SendState(
     status: status ?? this.status,
     deviceAlias: deviceAlias ?? this.deviceAlias,
@@ -59,6 +67,8 @@ class SendState extends Equatable {
     speed: speed ?? this.speed,
     message: message ?? this.message,
     transport: transport ?? this.transport,
+    filesDone: filesDone ?? this.filesDone,
+    filesTotal: filesTotal ?? this.filesTotal,
   );
 
   @override
@@ -71,6 +81,8 @@ class SendState extends Equatable {
     speed,
     message,
     transport,
+    filesDone,
+    filesTotal,
   ];
 }
 
@@ -119,6 +131,7 @@ class SendCubit extends Cubit<SendState> {
         status: SendStatus.sending,
         deviceAlias: device.alias,
         total: total,
+        filesTotal: files.length,
       ),
     );
     try {
@@ -129,6 +142,7 @@ class SendCubit extends Cubit<SendState> {
         cancelToken: _cancelToken,
         onSession: (sid) => _sessionId = sid,
         onTransport: (t) => emit(state.copyWith(transport: t)),
+        onFilesDone: (n) => emit(state.copyWith(filesDone: n)),
         onProgress: (i, count, name, overallSent, overallTotal) {
           final secs = _sw.elapsedMilliseconds / 1000;
           emit(

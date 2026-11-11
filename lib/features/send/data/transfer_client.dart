@@ -165,6 +165,7 @@ class TransferClient {
     CancelToken? cancelToken,
     void Function(String sessionId)? onSession,
     void Function(String transport)? onTransport,
+    void Function(int done)? onFilesDone,
     String? syncPairId,
     Map<String, String>? syncRelPaths,
   }) async {
@@ -178,6 +179,7 @@ class TransferClient {
         cancelToken: cancelToken,
         onSession: onSession,
         onTransport: onTransport,
+        onFilesDone: onFilesDone,
         syncPairId: syncPairId,
         syncRelPaths: syncRelPaths,
       );
@@ -200,6 +202,7 @@ class TransferClient {
     CancelToken? cancelToken,
     void Function(String sessionId)? onSession,
     void Function(String transport)? onTransport,
+    void Function(int done)? onFilesDone,
     String? syncPairId,
     Map<String, String>? syncRelPaths,
   }) async {
@@ -222,22 +225,38 @@ class TransferClient {
           .toList();
       final thumbs = await SendTiming.time(
         'thumbnails ${shown.length}',
+        // Bounded: a slow phone took ~1 s for three, all of it before the
+        // offer goes out. A preview not ready in time is left out.
         () => Future.wait([
-          for (final f in shown) generateThumbnail(f.path, f.mimeType),
+          for (final f in shown)
+            generateThumbnail(
+              f.path,
+              f.mimeType,
+            ).timeout(_previewWait, onTimeout: () => null),
         ]),
       );
       for (var i = 0; i < shown.length; i++) {
         final t = thumbs[i];
         if (t != null) previews[shown[i].id] = t;
       }
+      SendTiming.log('previews ready ${previews.length}/${shown.length}');
     }
 
     // Build file metadata (streaming SHA-256, no whole-file buffering).
     final metas = <String, FileMetadata>{};
     final hashWatch = Stopwatch()..start();
     var hashed = 0;
+    // An encrypted TCP upload is checked chunk by chunk (AES-GCM tags; the
+    // receiver does not re-hash it, see transfer_server.dart), so reading
+    // every file once more to hash it only delays the first byte: 4.9 s for
+    // 100 photos on a mid-range phone (transfer-quality-plan.md, Phase 0).
+    // Plaintext and QUIC still carry the SHA-256: there it is the check.
+    final viaQuic =
+        syncPairId == null && _shouldUseQuic() && device.quicPort != null;
+    final checkedByGcm = device.publicKey.isNotEmpty && !viaQuic;
+    bool hashIt(SendableFile f) => !checkedByGcm && f.size <= _hashSizeLimit;
     for (final f in files) {
-      if (f.size <= _hashSizeLimit) hashed++;
+      if (hashIt(f)) hashed++;
       metas[f.id] = FileMetadata(
         id: f.id,
         fileName: f.name,
@@ -246,7 +265,7 @@ class TransferClient {
         // Large files skip the upfront full-file hash so "Preparing" stays
         // instant and the file is read once (not twice). Encrypted transfers
         // keep integrity via per-chunk AES-GCM auth; small files still verify.
-        sha256: f.size <= _hashSizeLimit ? await _sha256(f) : null,
+        sha256: hashIt(f) ? await _sha256(f) : null,
         preview: previews[f.id],
         relPath: syncRelPaths?[f.id],
         mtimeMs: f.mtimeMs,
@@ -353,6 +372,9 @@ class TransferClient {
     // Per-file byte counters — with concurrent sends the overall progress is the
     // SUM across files, not a running scalar.
     final sentPerFile = [for (final f in files) arrived(f) ? f.size : 0];
+    var filesDone = files.where(arrived).length;
+    if (filesDone > 0) onFilesDone?.call(filesDone);
+    void fileDone() => onFilesDone?.call(++filesDone);
     void emitOverall(int i) {
       var sum = 0;
       for (final s in sentPerFile) {
@@ -469,6 +491,7 @@ class TransferClient {
               );
               sentPerFile[i] = f.size;
               emitOverall(i);
+              fileDone();
               _logFile('QUIC', f, fileWatch.elapsedMilliseconds);
             } on Object catch (e) {
               // A USER cancel surfaces here too (the Rust send errors
@@ -504,7 +527,14 @@ class TransferClient {
       if (tcpQueue.isNotEmpty) {
         onTransport?.call('TCP');
       }
-      for (final i in tcpQueue) {
+      // A receiver that resumes (this version or later) takes several files
+      // of one session at once: small files then stop waiting on each other's
+      // request round trip (~12–28 ms each, Phase 0). Older receivers get
+      // them one at a time, as before.
+      final tcpWorkers = resumeFrom != null ? _tcpConcurrency : 1;
+      var nextTcp = 0;
+      var tcpFailed = false;
+      Future<void> uploadTcp(int i) async {
         final f = files[i];
         final token = prepare.files[f.id]!; // pre-validated above
         final fileWatch = Stopwatch()..start();
@@ -588,8 +618,25 @@ class TransferClient {
         }
         sentPerFile[i] = f.size;
         emitOverall(i);
+        fileDone();
         _logFile('TCP', f, fileWatch.elapsedMilliseconds);
       }
+
+      Future<void> tcpWorker() async {
+        while (!tcpFailed && nextTcp < tcpQueue.length) {
+          final i = tcpQueue[nextTcp++];
+          try {
+            await uploadTcp(i);
+          } on Object {
+            tcpFailed = true;
+            rethrow;
+          }
+        }
+      }
+
+      await Future.wait([
+        for (var k = 0; k < tcpWorkers && k < tcpQueue.length; k++) tcpWorker(),
+      ], eagerError: true);
       final upMs = uploadWatch.elapsedMilliseconds;
       SendTiming.log(
         'upload ${files.length} file(s), $totalSize B: $upMs ms '
@@ -608,6 +655,9 @@ class TransferClient {
   }
 
   static const int _maxUploadAttempts = 3;
+
+  /// Files uploaded at once over TCP to a receiver that supports it.
+  static const int _tcpConcurrency = 3;
 
   void _logFile(String transport, SendableFile f, int ms) => SendTiming.log(
     '$transport ${f.name} ${f.size} B: $ms ms (${SendTiming.rate(f.size, ms)})',
@@ -656,6 +706,9 @@ class TransferClient {
 
   /// How many photos and videos carry a thumbnail in the offer.
   static const int _previewCount = 3;
+
+  /// How long the offer waits for those thumbnails.
+  static const Duration _previewWait = Duration(milliseconds: 500);
 
   Future<void> _backoff(int attempt) =>
       Future<void>.delayed(Duration(milliseconds: 500 * attempt));

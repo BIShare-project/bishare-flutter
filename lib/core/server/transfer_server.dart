@@ -417,11 +417,12 @@ class TransferServer {
   /// `.part` temps; [_finalizeQuic] names/moves/records them like the TCP path.
   void _startQuic() {
     _quicSub?.cancel();
-    _quicSub =
-        quic.quicServe(port: BISharePort.quic, saveDir: _saveDir.path).listen(
-      _onQuicEvent,
-      onError: (Object e) => debugPrint('[Server] QUIC stream error: $e'),
-    );
+    _quicSub = quic
+        .quicServe(port: BISharePort.quic, saveDir: _saveDir.path)
+        .listen(
+          _onQuicEvent,
+          onError: (Object e) => debugPrint('[Server] QUIC stream error: $e'),
+        );
   }
 
   void _onQuicEvent(quic.QuicServerEvent event) {
@@ -847,10 +848,11 @@ class TransferServer {
           ? BIShareConfig.defaultStreamsPerFile
           : null,
       // Phase 4: we keep a durable resume ledger, so v2.3+ senders may resume.
-      supportsResume: BIShareConfig.versionAtLeast(
-        prepareReq.info.version,
-        BIShareConfig.p2pProtocolMinVersion,
-      )
+      supportsResume:
+          BIShareConfig.versionAtLeast(
+            prepareReq.info.version,
+            BIShareConfig.p2pProtocolMinVersion,
+          )
           ? true
           : null,
       resumeFrom: resumeFrom,
@@ -868,8 +870,7 @@ class TransferServer {
     final pin = checkPinnedKey == null
         ? KeyPinResult.match
         : await checkPinnedKey!(fp, session.sender.publicKey);
-    final keyOk =
-        pin == KeyPinResult.firstSeen || pin == KeyPinResult.match;
+    final keyOk = pin == KeyPinResult.firstSeen || pin == KeyPinResult.match;
     // Per-device auto-accept (a favorite marked "auto-accept") always wins —
     // but only when the pinned key still matches.
     if (keyOk && (favoriteAutoAccepts?.call(fp) ?? false)) return true;
@@ -919,8 +920,7 @@ class TransferServer {
     // A resumed upload: the body starts at [offset]; the bytes before it are
     // the partial kept from the cut-off attempt.
     final offset =
-        int.tryParse(request.headers[BIShareApi.resumeOffsetHeader] ?? '') ??
-        0;
+        int.tryParse(request.headers[BIShareApi.resumeOffsetHeader] ?? '') ?? 0;
     final held = session.partials.remove(fileId);
     if (offset > 0 &&
         (held == null ||
@@ -973,10 +973,11 @@ class TransferServer {
       final now = DateTime.now().millisecondsSinceEpoch;
       if (now - lastEmitMs < 80) return;
       lastEmitMs = now;
+      session.tcpInFlight[fileId] = offset + written;
       _emitProgress(
         session,
         meta.fileName,
-        _sessionBytes(session) + offset + written,
+        _sessionBytes(session) + _tcpInFlightBytes(session),
       );
     }
 
@@ -1049,7 +1050,12 @@ class TransferServer {
             // FRB copies `encChunk` into the wire buffer synchronously here, and
             // `await for` pauses the subscription while the body runs, so the
             // scratch view stays valid across the await.
-            final dec = await Rust.decryptChunk(encChunk, key, index, baseNonce);
+            final dec = await Rust.decryptChunk(
+              encChunk,
+              key,
+              index,
+              baseNonce,
+            );
             if (dec == null) {
               throw const FormatException('chunk decryption failed');
             }
@@ -1086,6 +1092,7 @@ class TransferServer {
       }
       hasher?.close();
     } on Object catch (e) {
+      session.tcpInFlight.remove(fileId);
       try {
         await out.close();
       } on Object {
@@ -1131,6 +1138,7 @@ class TransferServer {
     // the transfer is considered verified; otherwise compare the plaintext SHA.
     final verified = !needHash || meta.sha256 == digest?.toString();
     if (!verified) {
+      session.tcpInFlight.remove(fileId);
       if (tmp.existsSync()) tmp.deleteSync();
       // Drop the session + clear progress so a checksum failure doesn't wedge
       // the receiver as "busy" until the idle-reaper runs.
@@ -1175,7 +1183,10 @@ class TransferServer {
     // sender's "Date modified" survives (a later write would overwrite it).
     await applyReceivedMtime(saved, meta.mtimeMs);
 
+    // Counted as done in the same step it stops counting as in flight, so
+    // the session total never dips while other files are still arriving.
     session.completedFileIds.add(fileId);
+    session.tcpInFlight.remove(fileId);
     debugPrint(
       '[Server] received "${meta.fileName}" (${meta.size}B, e2e=$isEncrypted, '
       'sha256-ok=$verified, sync=${session.isSync}) → ${saved.path}',
@@ -1199,7 +1210,7 @@ class TransferServer {
     _emitProgress(
       session,
       meta.fileName,
-      _sessionBytes(session),
+      _sessionBytes(session) + _tcpInFlightBytes(session),
       complete: session.isComplete,
     );
     if (session.isComplete) {
@@ -1278,7 +1289,10 @@ class TransferServer {
       onTimeout: () => false,
     );
     return _json(
-      FileRequestResponse(requestId: msg.requestId, accepted: accepted).toJson(),
+      FileRequestResponse(
+        requestId: msg.requestId,
+        accepted: accepted,
+      ).toJson(),
     );
   }
 
@@ -1402,7 +1416,8 @@ class TransferServer {
         // archive, so the response goes out chunked.
         headers: {
           'content-type': 'application/zip',
-          'content-disposition': 'attachment; filename="${_headerSafe(zipName)}"',
+          'content-disposition':
+              'attachment; filename="${_headerSafe(zipName)}"',
           'access-control-allow-origin': '*',
         },
       );
@@ -1419,8 +1434,8 @@ class TransferServer {
       // the browser read outside it. Compare real path against the ROOT's
       // real path — the root itself may live under a symlinked ancestor
       // (e.g. macOS /var → /private/var), which must not cause rejections.
-      final real = FileSystemEntity.typeSync(resolved) !=
-              FileSystemEntityType.notFound
+      final real =
+          FileSystemEntity.typeSync(resolved) != FileSystemEntityType.notFound
           ? File(resolved).resolveSymbolicLinksSync()
           : resolved;
       final rootReal = _saveDir.existsSync()
@@ -1619,10 +1634,10 @@ class TransferServer {
       case BrowserAppendStatus.mismatch:
         // 409 with the offset that IS on disk — the browser realigns and
         // resumes from there (also the restart-safe resume path).
-        return _json(
-          {'message': 'Offset mismatch', 'expected': result.offset},
-          status: BIShareStatus.busy,
-        );
+        return _json({
+          'message': 'Offset mismatch',
+          'expected': result.offset,
+        }, status: BIShareStatus.busy);
       case BrowserAppendStatus.tooLarge:
         _uploads.discard(id);
         return _json({'message': 'File too large', 'limit': cap}, status: 413);
@@ -1630,10 +1645,9 @@ class TransferServer {
         // Too many concurrent staging uploads — refuse this NEW upload to bound
         // disk use (in-flight uploads still finish). 507 Insufficient Storage;
         // the browser surfaces it as a retryable error.
-        return _json(
-          {'message': 'Server is busy with too many uploads'},
-          status: 507,
-        );
+        return _json({
+          'message': 'Server is busy with too many uploads',
+        }, status: 507);
       case BrowserAppendStatus.failed:
         return _error('Upload failed', BIShareStatus.serverError);
       case BrowserAppendStatus.ok:
@@ -1716,6 +1730,9 @@ class TransferServer {
       name.replaceAll('"', '').replaceAll(RegExp('[\r\n]'), '');
 
   // ---- helpers ----
+
+  int _tcpInFlightBytes(TransferSession s) =>
+      s.tcpInFlight.values.fold<int>(0, (a, b) => a + b);
 
   int _sessionBytes(TransferSession s) => s.files.entries
       .where((e) => s.completedFileIds.contains(e.key))
