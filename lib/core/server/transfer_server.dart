@@ -81,6 +81,10 @@ class TransferServer {
   /// setting). Gates the classic multipart route AND the chunked routes.
   bool browserUploadEnabled = true;
 
+  /// Whether received files are saved as `{yyyy-MM-dd}_{sender}_{name}` (the
+  /// "Add date and sender to file names" setting). Off: the sender's own name.
+  bool nameWithSender = false;
+
   /// Folder-sync delegates (Tahap 4), wired by `SyncEngine.attach`. The server
   /// stays transport-only: [onSyncFrame] owns pair auth + crypto + diff/apply
   /// for `POST /api/v1/sync` (null result → 403); [syncRootFor] resolves the
@@ -590,7 +594,12 @@ class TransferServer {
     final fingerprint = senderFingerprint.isNotEmpty
         ? senderFingerprint
         : session?.sender.fingerprint;
-    final saved = ReceiveNaming.targetFile(_saveDir, meta, alias);
+    final saved = ReceiveNaming.targetFile(
+      _saveDir,
+      meta,
+      alias,
+      addSender: nameWithSender,
+    );
     try {
       await tmp.rename(saved.path);
     } on FileSystemException {
@@ -664,7 +673,12 @@ class TransferServer {
       fileType: fileType,
       mtimeMs: mtimeMs,
     );
-    final saved = ReceiveNaming.targetFile(_saveDir, meta, senderAlias);
+    final saved = ReceiveNaming.targetFile(
+      _saveDir,
+      meta,
+      senderAlias,
+      addSender: nameWithSender,
+    );
     try {
       await tmp.rename(saved.path);
     } on FileSystemException {
@@ -1053,7 +1067,12 @@ class TransferServer {
       // Windows rename() fails onto an existing file — replace explicitly.
       if (saved.existsSync()) await saved.delete();
     } else {
-      saved = ReceiveNaming.targetFile(_saveDir, meta, session.sender.alias);
+      saved = ReceiveNaming.targetFile(
+        _saveDir,
+        meta,
+        session.sender.alias,
+        addSender: nameWithSender,
+      );
     }
     // rename() fails across volumes (EXDEV) — likely with a custom save location
     // on another disk — so fall back to copy+delete.
@@ -1404,7 +1423,12 @@ class TransferServer {
         size: 0,
         fileType: lookupMimeType(filename) ?? 'application/octet-stream',
       );
-      final target = ReceiveNaming.targetFile(_saveDir, meta, 'Browser');
+      final target = ReceiveNaming.targetFile(
+        _saveDir,
+        meta,
+        'Browser',
+        addSender: nameWithSender,
+      );
       final sink = target.openWrite();
       var size = 0;
       var tooLarge = false;
@@ -1542,7 +1566,12 @@ class TransferServer {
           ? meta!.mime!
           : (lookupMimeType(name) ?? 'application/octet-stream'),
     );
-    final target = ReceiveNaming.targetFile(_saveDir, fileMeta, 'Browser');
+    final target = ReceiveNaming.targetFile(
+      _saveDir,
+      fileMeta,
+      'Browser',
+      addSender: nameWithSender,
+    );
     try {
       await part.rename(target.path);
     } on FileSystemException {

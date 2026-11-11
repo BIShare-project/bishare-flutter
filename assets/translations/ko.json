@@ -550,6 +550,8 @@
     "save_default": "기본 (Documents/BIShare)",
     "save_location": "저장 위치",
     "save_location_subtitle": "수신된 파일이 저장되는 위치입니다.",
+    "name_with_sender": "파일 이름에 날짜와 보낸 사람 추가",
+    "name_with_sender_subtitle": "끄면 IMG_4821.HEIC처럼 원래 파일 이름 그대로 저장됩니다",
     "send_accent": "전송 강조 색상",
     "sending": "전송",
     "set_pin": "PIN 설정",

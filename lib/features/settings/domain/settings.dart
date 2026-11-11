@@ -70,6 +70,7 @@ class Settings extends Equatable {
     this.resolvedSaveDir = '',
     this.browserUpload = true,
     this.browserUploadMaxGb = 0,
+    this.nameWithSender = false,
     this.telemetryEnabled = true,
     this.clipboardSync = false,
     this.clipboardImages = true,
@@ -116,6 +117,10 @@ class Settings extends Equatable {
   /// Per-upload size cap for browser uploads, in GB. 0 = unlimited.
   final int browserUploadMaxGb;
 
+  /// Save received files as `{yyyy-MM-dd}_{sender}_{name}` instead of the
+  /// sender's own file name (off by default since 2.8.2).
+  final bool nameWithSender;
+
   /// Universal-clipboard sync over the LAN (opt-in).
   final bool clipboardSync;
 
@@ -153,6 +158,7 @@ class Settings extends Equatable {
     String? resolvedSaveDir,
     bool? browserUpload,
     int? browserUploadMaxGb,
+    bool? nameWithSender,
     bool? telemetryEnabled,
     bool? clipboardSync,
     bool? clipboardImages,
@@ -174,6 +180,7 @@ class Settings extends Equatable {
     resolvedSaveDir: resolvedSaveDir ?? this.resolvedSaveDir,
     browserUpload: browserUpload ?? this.browserUpload,
     browserUploadMaxGb: browserUploadMaxGb ?? this.browserUploadMaxGb,
+    nameWithSender: nameWithSender ?? this.nameWithSender,
     telemetryEnabled: telemetryEnabled ?? this.telemetryEnabled,
     clipboardSync: clipboardSync ?? this.clipboardSync,
     clipboardImages: clipboardImages ?? this.clipboardImages,
@@ -198,6 +205,7 @@ class Settings extends Equatable {
     resolvedSaveDir,
     browserUpload,
     browserUploadMaxGb,
+    nameWithSender,
     telemetryEnabled,
     clipboardSync,
     clipboardImages,

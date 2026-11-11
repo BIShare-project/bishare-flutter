@@ -562,6 +562,8 @@
     "save_default": "افتراضي (Documents/BIShare)",
     "save_location": "موقع الحفظ",
     "save_location_subtitle": "مكان حفظ الملفات المستلمة.",
+    "name_with_sender": "إضافة التاريخ والمُرسِل إلى اسم الملف",
+    "name_with_sender_subtitle": "عند الإيقاف: تحتفظ الملفات باسمها الأصلي، مثل IMG_4821.HEIC",
     "send_accent": "لون تمييز الإرسال",
     "sending": "الإرسال",
     "set_pin": "تعيين رمز PIN",

@@ -556,6 +556,8 @@
     "save_default": "По умолчанию (Documents/BIShare)",
     "save_location": "Место сохранения",
     "save_location_subtitle": "Где сохраняются полученные файлы.",
+    "name_with_sender": "Добавлять дату и отправителя в имя файла",
+    "name_with_sender_subtitle": "Выкл.: файлы сохраняют исходное имя, например IMG_4821.HEIC",
     "send_accent": "Цвет акцента для отправки",
     "sending": "Отправка",
     "set_pin": "Установить PIN-код",

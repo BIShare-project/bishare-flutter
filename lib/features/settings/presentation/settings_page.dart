@@ -122,6 +122,14 @@ class SettingsPage extends StatelessWidget {
       onTap: () => _pickSaveLocation(context, cubit),
     ),
     _divider,
+    AppSwitchRow(
+      icon: AppIcons.renameEdit,
+      title: 'settings.name_with_sender'.tr(),
+      subtitle: 'settings.name_with_sender_subtitle'.tr(),
+      value: state.nameWithSender,
+      onChanged: cubit.setNameWithSender,
+    ),
+    _divider,
     // Web-Share browser uploads (feature #11): allow toggle + per-upload
     // size cap.
     AppSwitchRow(

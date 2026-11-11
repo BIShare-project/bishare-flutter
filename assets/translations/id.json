@@ -550,6 +550,8 @@
     "save_default": "Default (Documents/BIShare)",
     "save_location": "Lokasi penyimpanan",
     "save_location_subtitle": "Di mana file yang diterima disimpan.",
+    "name_with_sender": "Tambahkan tanggal dan pengirim ke nama file",
+    "name_with_sender_subtitle": "Mati: file tetap memakai nama aslinya, misalnya IMG_4821.HEIC",
     "send_accent": "Warna aksen kirim",
     "sending": "Mengirim",
     "set_pin": "Atur PIN",

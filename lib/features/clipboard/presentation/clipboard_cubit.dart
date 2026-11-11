@@ -81,6 +81,7 @@ class ClipboardCubit extends Cubit<ClipboardState> {
         _server.saveDirectory,
         meta,
         entry.senderAlias,
+        addSender: _server.nameWithSender,
       );
       await src.copy(target.path);
       return target.path;

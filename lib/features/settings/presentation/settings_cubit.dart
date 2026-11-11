@@ -55,6 +55,7 @@ class SettingsCubit extends Cubit<Settings> {
   static const _kSaveLocation = 'saveLocation';
   static const _kBrowserUpload = 'browserUpload';
   static const _kBrowserUploadMaxGb = 'browserUploadMaxGb';
+  static const _kNameWithSender = 'nameWithSender';
   static const _kTelemetry = 'telemetryEnabled';
   static const _kClipboardSync = 'clipboardSync';
   static const _kClipboardImages = 'clipboardImages';
@@ -85,6 +86,7 @@ class SettingsCubit extends Cubit<Settings> {
     saveLocation: p.getString(_kSaveLocation) ?? '',
     browserUpload: p.getBool(_kBrowserUpload) ?? true,
     browserUploadMaxGb: p.getInt(_kBrowserUploadMaxGb) ?? 0,
+    nameWithSender: p.getBool(_kNameWithSender) ?? false,
     telemetryEnabled: p.getBool(_kTelemetry) ?? true,
     clipboardSync: p.getBool(_kClipboardSync) ?? false,
     folderCloudSync: p.getBool(_kFolderCloudSync) ?? false,
@@ -100,6 +102,7 @@ class SettingsCubit extends Cubit<Settings> {
     _server.hidden = s.visibility == Visibility.hidden;
     _server.browserUploadEnabled = s.browserUpload;
     _server.browserUploadMaxBytes = s.browserUploadMaxGb * 1024 * 1024 * 1024;
+    _server.nameWithSender = s.nameWithSender;
     _discovery.setAdvertising(s.visibility == Visibility.everyone);
     // On macOS the save dir is resolved at startup via the security-scoped
     // bookmark (see _resolveSaveDirectory) — re-applying the bare prefs path here
@@ -171,6 +174,12 @@ class SettingsCubit extends Cubit<Settings> {
     await _prefs.setString(_kTransport, t.name);
     _client.preferredTransport = t;
     emit(state.copyWith(transport: t));
+  }
+
+  Future<void> setNameWithSender(bool on) async {
+    await _prefs.setBool(_kNameWithSender, on);
+    _server.nameWithSender = on;
+    emit(state.copyWith(nameWithSender: on));
   }
 
   Future<void> setBrowserUpload(bool on) async {

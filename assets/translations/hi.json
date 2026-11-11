@@ -550,6 +550,8 @@
     "save_default": "डिफ़ॉल्ट (Documents/BIShare)",
     "save_location": "सेव करने की जगह",
     "save_location_subtitle": "मिली हुई फ़ाइलें कहाँ सेव होती हैं।",
+    "name_with_sender": "फ़ाइल के नाम में तारीख़ और भेजने वाले का नाम जोड़ें",
+    "name_with_sender_subtitle": "बंद होने पर फ़ाइलें अपना मूल नाम रखती हैं, जैसे IMG_4821.HEIC",
     "send_accent": "भेजने का एक्सेंट रंग",
     "sending": "भेजना",
     "set_pin": "PIN सेट करें",

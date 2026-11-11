@@ -550,6 +550,8 @@
     "save_default": "預設（Documents/BIShare）",
     "save_location": "儲存位置",
     "save_location_subtitle": "接收的檔案會儲存在這裡。",
+    "name_with_sender": "在檔案名稱中加入日期和傳送者",
+    "name_with_sender_subtitle": "關閉時，檔案保留原始名稱，例如 IMG_4821.HEIC",
     "send_accent": "傳送強調色",
     "sending": "傳送",
     "set_pin": "設定 PIN 碼",

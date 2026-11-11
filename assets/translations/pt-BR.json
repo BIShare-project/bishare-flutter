@@ -550,6 +550,8 @@
     "save_default": "Padrão (Documents/BIShare)",
     "save_location": "Local de salvamento",
     "save_location_subtitle": "Onde os arquivos recebidos ficam salvos.",
+    "name_with_sender": "Adicionar data e remetente ao nome do arquivo",
+    "name_with_sender_subtitle": "Desativado: os arquivos mantêm o nome original, como IMG_4821.HEIC",
     "send_accent": "Cor de destaque para envio",
     "sending": "Enviando",
     "set_pin": "Definir PIN",
