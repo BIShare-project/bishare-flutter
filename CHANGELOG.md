@@ -5,6 +5,35 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- **Live Photos travel whole.** The photo and its motion are sent together;
+  saved on an iPhone or iPad they are a Live Photo again, and on Android and
+  computers they show as one LIVE item that turns back into a Live Photo when
+  sent on to an iPhone. Setting: Live Photos (iPhone, Mac).
+- **When a name already exists:** keep both (default), replace, or ask in the
+  accept prompt.
+- **iPhone Duo:** two panes when open, tabs at the side when closed.
+- Transfer cards show files done and data sent.
+
+### Changed
+- **Transfers survive a locked screen and a dropped Wi-Fi.** Android keeps
+  going with a progress notification; iPhone keeps the screen on during a
+  transfer. A cut-off file continues from where it stopped instead of
+  starting over.
+- **Faster with many files:** 100 photos from a mid-range Android phone to a
+  Mac in 5.5 s instead of 14.6 s (three files at a time, no second read of
+  every file before sending).
+- Received files keep the sender's name; the date-and-sender prefix is now a
+  setting (off).
+- Received photos and videos on Android appear in the gallery where they
+  were saved, once a transfer ends; one notification per transfer.
+
+### Fixed
+- Photos keep their GPS position when sent from Android.
+- The Inbox no longer freezes with many received iPhone photos (HEIC).
+- The receive prompt on the other device appears without a long wait after
+  a fresh install.
+
 ## [2.8.0] — unreleased
 
 ### Changed
