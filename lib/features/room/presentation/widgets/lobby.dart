@@ -41,6 +41,89 @@ class _LobbyState extends State<Lobby> {
     final failed =
         widget.state.status == RoomStatus.error &&
         widget.state.error.isNotEmpty;
+    final start = <Widget>[
+      if (failed)
+        Container(
+          margin: const EdgeInsets.fromLTRB(14, 4, 14, 8),
+          padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 12, 10),
+          decoration: BoxDecoration(
+            color: t.danger.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              AppSvgIcon(AppIcons.circleAlert, size: 18, color: t.danger),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  widget.state.error,
+                  style: AppType.secondary.copyWith(color: t.danger),
+                ),
+              ),
+            ],
+          ),
+        ),
+      AppSectionHeader('room.start_room'.tr()),
+      AppShowcase(
+        showcaseKey: ShowcaseKeys.roomCreate,
+        title: 'showcase.room_create_title'.tr(),
+        description: 'showcase.room_create_body'.tr(),
+        targetRadius: 16,
+        child: Column(
+          children: [
+            _Choice(
+              icon: AppIcons.globePublic,
+              title: 'room.remote_room'.tr(),
+              subtitle: 'room.remote_desc'.tr(),
+              onTap: () => cubit.createRoom(local: false),
+            ),
+            const AppRowDivider(indent: 70),
+            _Choice(
+              icon: AppIcons.wifi,
+              title: 'room.local_room'.tr(),
+              subtitle: 'room.local_desc'.tr(),
+              onTap: () => cubit.createRoom(local: true),
+            ),
+          ],
+        ),
+      ),
+    ];
+    final join = <Widget>[
+      AppSectionHeader('room.join_with_code'.tr()),
+      AppShowcase(
+        showcaseKey: ShowcaseKeys.roomJoin,
+        title: 'showcase.room_join_title'.tr(),
+        description: 'showcase.room_join_body'.tr(),
+        targetRadius: 14,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 2, 14, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppCodeBoxes(controller: _code, length: 4, onComplete: _join),
+              const SizedBox(height: 12),
+              ListenableBuilder(
+                listenable: _code,
+                builder: (context, _) => AppButton(
+                  label: 'room.join_room'.tr(),
+                  icon: AppIcons.logIn,
+                  size: AppButtonSize.large,
+                  fullWidth: true,
+                  disabled: _code.text.trim().length < 4,
+                  onPressed: () => _join(_code.text),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 20),
+      AppValueRow(
+        icon: AppIcons.teamGroup,
+        title: 'room.how_it_works'.tr(),
+        onTap: () => showHowItWorks(context),
+      ),
+    ];
     return Column(
       children: [
         AppScreenHeader(
@@ -48,107 +131,44 @@ class _LobbyState extends State<Lobby> {
           subtitle: 'room.subtitle'.tr(),
         ),
         Expanded(
-          child: AppResponsivePane(
-            maxWidth: 560,
-            child: ListView(
-              padding: const EdgeInsets.only(bottom: 120),
-              children: [
-                if (failed)
-                  Container(
-                    margin: const EdgeInsets.fromLTRB(14, 4, 14, 8),
-                    padding: const EdgeInsetsDirectional.fromSTEB(
-                      12,
-                      10,
-                      12,
-                      10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: t.danger.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        AppSvgIcon(
-                          AppIcons.circleAlert,
-                          size: 18,
-                          color: t.danger,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            widget.state.error,
-                            style: AppType.secondary.copyWith(color: t.danger),
-                          ),
-                        ),
-                      ],
-                    ),
+          // An open iPhone Duo: starting a room on one side, joining one on
+          // the other (split at the fold when half open). Elsewhere one
+          // column, as before.
+          child: context.isFoldableOpen
+              ? FoldSplit(
+                  left: ListView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    children: start,
                   ),
-                AppSectionHeader('room.start_room'.tr()),
-                AppShowcase(
-                  showcaseKey: ShowcaseKeys.roomCreate,
-                  title: 'showcase.room_create_title'.tr(),
-                  description: 'showcase.room_create_body'.tr(),
-                  targetRadius: 16,
-                  child: Column(
+                  right: ListView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    children: join,
+                  ),
+                  flat: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _Choice(
-                        icon: AppIcons.globePublic,
-                        title: 'room.remote_room'.tr(),
-                        subtitle: 'room.remote_desc'.tr(),
-                        onTap: () => cubit.createRoom(local: false),
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          children: start,
+                        ),
                       ),
-                      const AppRowDivider(indent: 70),
-                      _Choice(
-                        icon: AppIcons.wifi,
-                        title: 'room.local_room'.tr(),
-                        subtitle: 'room.local_desc'.tr(),
-                        onTap: () => cubit.createRoom(local: true),
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          children: join,
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                AppSectionHeader('room.join_with_code'.tr()),
-                AppShowcase(
-                  showcaseKey: ShowcaseKeys.roomJoin,
-                  title: 'showcase.room_join_title'.tr(),
-                  description: 'showcase.room_join_body'.tr(),
-                  targetRadius: 14,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 2, 14, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        AppCodeBoxes(
-                          controller: _code,
-                          length: 4,
-                          onComplete: _join,
-                        ),
-                        const SizedBox(height: 12),
-                        ListenableBuilder(
-                          listenable: _code,
-                          builder: (context, _) => AppButton(
-                            label: 'room.join_room'.tr(),
-                            icon: AppIcons.logIn,
-                            size: AppButtonSize.large,
-                            fullWidth: true,
-                            disabled: _code.text.trim().length < 4,
-                            onPressed: () => _join(_code.text),
-                          ),
-                        ),
-                      ],
-                    ),
+                )
+              : AppResponsivePane(
+                  maxWidth: 560,
+                  child: ListView(
+                    padding: const EdgeInsets.only(bottom: 120),
+                    children: [...start, const SizedBox(height: 12), ...join],
                   ),
                 ),
-                const SizedBox(height: 20),
-                AppValueRow(
-                  icon: AppIcons.teamGroup,
-                  title: 'room.how_it_works'.tr(),
-                  onTap: () => showHowItWorks(context),
-                ),
-              ],
-            ),
-          ),
         ),
       ],
     );

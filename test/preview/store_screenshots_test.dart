@@ -46,6 +46,7 @@ import 'package:bishare/features/send/presentation/send_selection_cubit.dart';
 import 'package:bishare/core/theme/app_tokens.dart';
 import 'package:bishare/core/ui/app_bottom_nav.dart';
 import 'package:bishare/core/ui/app_nav_rail.dart';
+import 'package:bishare/core/ui/app_responsive.dart';
 import 'package:bishare/core/ui/app_showcase.dart';
 import 'package:bishare/core/ui/app_svg_icon.dart';
 import 'package:bishare/features/discovery/domain/discovered_device.dart';
@@ -80,7 +81,7 @@ import 'package:bishare/features/vault/presentation/vault_account_page.dart';
 import 'package:bishare/features/vault/presentation/vault_desktop_pairing.dart';
 import 'package:bishare/features/web_nearby/presentation/web_nearby_cubit.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -120,16 +121,19 @@ const Map<String, _Preset> _presets = {
     size: Size(466, 678),
     ratio: 3,
     platform: TargetPlatform.iOS,
-    insets: EdgeInsets.only(top: 54, bottom: 30),
+    // Closed, iOS keeps the status bar in a strip on the right (iOS 27.2
+    // simulator), and the app's tabs join it (sideStripOf).
+    insets: EdgeInsets.only(right: 84, bottom: 20),
     self: 'iPhone 17',
     type: 'mobile',
   ),
-  // iPhone Duo inner display: 2007×2853
+  // iPhone Duo open: the inner display lies sideways, 951 × 669 pt
+  // (2853 × 2007), with the status strip on its right (iOS 27.2 simulator).
   'ios_duo_inner': (
-    size: Size(669, 951),
+    size: Size(951, 669),
     ratio: 3,
     platform: TargetPlatform.iOS,
-    insets: EdgeInsets.only(top: 32, bottom: 24),
+    insets: EdgeInsets.only(right: 85, bottom: 20),
     self: 'iPad Pro',
     type: 'mobile',
   ),
@@ -206,14 +210,36 @@ const Map<String, String> _scriptFont = {
   'zh-Hant': 'NotoSansTC',
 };
 
-final String? _dir = Platform.environment['BISHARE_SHOTS_DIR'];
-final ThemeMode _theme = Platform.environment['BISHARE_SHOTS_THEME'] == 'light'
+/// On a simulator or device (integration_test/store_shots_test.dart): the
+/// real screen's size, insets and fold, the app's own fonts, settings from
+/// --dart-define (a device has no host environment) and host paths under
+/// BISHARE_SHOTS_ROOT (the repo, readable from the iOS Simulator).
+const bool _onDevice = bool.fromEnvironment('BISHARE_SHOTS_DEVICE');
+const Map<String, String> _defines = {
+  'BISHARE_SHOTS_DIR': String.fromEnvironment('BISHARE_SHOTS_DIR'),
+  'BISHARE_SHOTS_THEME': String.fromEnvironment('BISHARE_SHOTS_THEME'),
+  'BISHARE_SHOTS_LOCALES': String.fromEnvironment('BISHARE_SHOTS_LOCALES'),
+  'BISHARE_SHOTS_PRESETS': String.fromEnvironment('BISHARE_SHOTS_PRESETS'),
+  'BISHARE_SHOTS_ONLY': String.fromEnvironment('BISHARE_SHOTS_ONLY'),
+  'BISHARE_SHOTS_PLAN': String.fromEnvironment('BISHARE_SHOTS_PLAN'),
+  'BISHARE_SHOTS_ROOT': String.fromEnvironment('BISHARE_SHOTS_ROOT'),
+};
+String? _env(String key) {
+  final d = _defines[key];
+  return d != null && d.isNotEmpty ? d : Platform.environment[key];
+}
+
+/// The repo root for host files ('' = the working directory, as on the host).
+final String _root = _env('BISHARE_SHOTS_ROOT') == null
+    ? ''
+    : '${_env('BISHARE_SHOTS_ROOT')}/';
+
+final String? _dir = _env('BISHARE_SHOTS_DIR');
+final ThemeMode _theme = _env('BISHARE_SHOTS_THEME') == 'light'
     ? ThemeMode.light
     : ThemeMode.dark;
-List<String> _list(String key) => (Platform.environment[key] ?? '')
-    .split(',')
-    .where((s) => s.isNotEmpty)
-    .toList();
+List<String> _list(String key) =>
+    (_env(key) ?? '').split(',').where((s) => s.isNotEmpty).toList();
 
 String _tag(Locale l) => l.countryCode == null
     ? l.languageCode
@@ -250,7 +276,7 @@ List<String> get _photoNames => _photoBytes.keys.toList()..sort();
 
 Future<void> _loadPhotos() async {
   if (_photoBytes.isNotEmpty) return;
-  final dir = Directory('store/screens/photos');
+  final dir = Directory('${_root}store/screens/photos');
   for (final f in dir.listSync().whereType<File>()) {
     if (f.path.endsWith('.jpg')) {
       _photoBytes[f.uri.pathSegments.last] = await f.readAsBytes();
@@ -326,7 +352,7 @@ List<TransferRecord> _received() {
       TransferRecord(
         id: i + 1,
         fileName: 'IMG_${2041 + i}.jpg',
-        savedPath: File('store/screens/photos/$name').absolute.path,
+        savedPath: File('${_root}store/screens/photos/$name').absolute.path,
         fileSize: 3200000 + i * 410000,
         fileType: 'image/jpeg',
         direction: 'received',
@@ -596,7 +622,7 @@ void _registerDrive(String self, {required bool phone}) {
   when(() => account.load()).thenAnswer((_) async {});
   when(() => account.refreshInfo()).thenAnswer((_) async {});
   when(() => account.usedBytes).thenReturn(1843200000);
-  final plan = Platform.environment['BISHARE_SHOTS_PLAN'];
+  final plan = _env('BISHARE_SHOTS_PLAN');
   when(
     () => account.quotaBytes,
   ).thenReturn(plan == null ? 5000000000 : VaultPurchases.sizeOf(plan));
@@ -853,13 +879,40 @@ Widget _shell(BuildContext context, int index, Widget page) {
     AppNavItem(icon: AppIcons.settings, label: 'nav.tab_settings'.tr()),
   ];
   final t = context.tokens;
-  if (MediaQuery.sizeOf(context).width >= 760) {
+  final strip = sideStripOf(context);
+  if (strip != null) {
+    final pad = MediaQuery.viewPaddingOf(context);
+    final right = strip == SideStrip.right;
+    final side = AppSideNav(
+      items: items,
+      currentIndex: index,
+      onTap: (_) {},
+      width: right ? pad.right : pad.left,
+    );
+    final body = MediaQuery.removePadding(
+      context: context,
+      removeRight: right,
+      removeLeft: !right,
+      child: page,
+    );
+    return Scaffold(
+      backgroundColor: t.bg,
+      body: Row(
+        textDirection: TextDirection.ltr,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: right
+            ? [Expanded(child: body), side]
+            : [side, Expanded(child: body)],
+      ),
+    );
+  }
+  if (context.isWideLayout) {
     return Scaffold(
       backgroundColor: t.bg,
       body: Row(
         children: [
           AppNavRail(items: items, currentIndex: index, onTap: (_) {}),
-          Expanded(child: page),
+          Expanded(child: besideNavRail(context, page)),
         ],
       ),
     );
@@ -878,7 +931,7 @@ Widget _shell(BuildContext context, int index, Widget page) {
 /// The five screens, in store order: (file name, tab or null when pushed, page).
 final List<(String, int?, Widget)> _screens = [
   ('1_share', 0, const HomePage()),
-  ('2_inbox', 1, const InboxTab()),
+  ('2_inbox', 1, const InboxTab(openNewest: true)),
   ('3_link', null, const RemoteSharePage()),
   ('5_settings', 4, const SettingsPage()),
 ];
@@ -973,7 +1026,7 @@ void main() {
       .where((l) => onlyLocales.isEmpty || onlyLocales.contains(l))
       .map((l) => _scriptFont[l])
       .toSet();
-  if (scripts.length > 1) {
+  if (scripts.length > 1 && !_onDevice) {
     test('store screenshots: one language per run when it needs Noto glyphs '
         '(BISHARE_SHOTS_LOCALES), see store/screens/shoot.sh', () {
       fail('mixed scripts: $scripts');
@@ -986,14 +1039,17 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     EasyLocalization.logger.enableBuildModes = [];
     await EasyLocalization.ensureInitialized();
-    await _loadFonts(scripts.single);
+    // A device draws every script with the app's and the system's fonts.
+    if (!_onDevice) await _loadFonts(scripts.single);
   });
 
   // One test for every preset: a second testWidgets in the same process
   // draws nothing but black (easy_localization never finishes loading there).
   testWidgets('store screenshots', (tester) async {
     addTearDown(tester.view.reset);
-    // Soft shadows as on a device; the test binding draws them solid.
+    // Soft shadows as on a device; the test binding draws them solid (a
+    // device already does, and must end with the value it started with).
+    final shadows = debugDisableShadows;
     debugDisableShadows = false;
     try {
       for (final MapEntry(key: name, value: preset) in {
@@ -1010,7 +1066,7 @@ void main() {
         }
       }
     } finally {
-      debugDisableShadows = true;
+      debugDisableShadows = shadows;
     }
   });
 }
@@ -1022,18 +1078,24 @@ Future<void> _run(
   _Preset preset,
   List<String> onlyLocales,
 ) async {
-  final ratio = preset.ratio;
-  tester.view
-    ..physicalSize = preset.size * ratio
-    ..devicePixelRatio = ratio
-    ..padding = FakeViewPadding(
-      top: preset.insets.top * ratio,
-      bottom: preset.insets.bottom * ratio,
-    )
-    ..viewPadding = FakeViewPadding(
-      top: preset.insets.top * ratio,
-      bottom: preset.insets.bottom * ratio,
-    );
+  final ratio = _onDevice ? tester.view.devicePixelRatio : preset.ratio;
+  if (!_onDevice) {
+    tester.view
+      ..physicalSize = preset.size * ratio
+      ..devicePixelRatio = ratio
+      ..padding = FakeViewPadding(
+        left: preset.insets.left * ratio,
+        top: preset.insets.top * ratio,
+        right: preset.insets.right * ratio,
+        bottom: preset.insets.bottom * ratio,
+      )
+      ..viewPadding = FakeViewPadding(
+        left: preset.insets.left * ratio,
+        top: preset.insets.top * ratio,
+        right: preset.insets.right * ratio,
+        bottom: preset.insets.bottom * ratio,
+      );
+  }
 
   await tester.runAsync(() async {
     await GetIt.instance.reset();
@@ -1139,7 +1201,12 @@ Future<void> _run(
     final lang = _tag(locale);
     for (final (file, tab, page, view) in <(String, int?, Widget, DriveView?)>[
       for (final (file, tab, page) in _screens) (file, tab, page, null),
-      ('4_drive', 2, const DrivePage(), phone ? DriveView.media : null),
+      (
+        '4_drive',
+        2,
+        const DrivePage(previewFirstPhoto: true),
+        phone ? DriveView.media : null,
+      ),
       ..._driveScreens,
       if (preset.platform == TargetPlatform.windows) ..._desktopScreens,
     ]) {
@@ -1158,7 +1225,13 @@ Future<void> _run(
                 tab == null ? const SizedBox() : _shell(context, tab, page),
             routes: [
               if (tab == null)
-                GoRoute(path: 'page', builder: (context, _) => page),
+                GoRoute(
+                  path: 'page',
+                  // As ShellPushedPage draws it: beside the rail on an open
+                  // iPhone Duo (other devices keep their framed pages).
+                  builder: (context, _) =>
+                      context.isFoldableOpen ? _shell(context, 0, page) : page,
+                ),
             ],
           ),
         ],
@@ -1237,6 +1310,20 @@ Future<void> _run(
           await tester.tap(target.first);
           await _settle(tester);
         }
+      }
+      if (_onDevice) {
+        // On a simulator the host takes the screenshot (simctl io screenshot,
+        // store/screens/shoot_sim.sh): the device's own status bar and
+        // screen, not just this app's layer. Say what to save, then hold
+        // still while it does.
+        // ignore: avoid_print
+        print('BISHARE_SHOT $name/$lang/$file');
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(seconds: 3)),
+        );
+        await tester.pump();
+        router.dispose();
+        continue;
       }
       await tester.runAsync(() async {
         final render =

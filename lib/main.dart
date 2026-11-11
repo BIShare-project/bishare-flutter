@@ -7,6 +7,7 @@ import 'bootstrap.dart';
 import 'core/desktop/desktop_service.dart';
 import 'core/l10n/app_locales.dart';
 import 'core/platform/tv.dart';
+import 'core/ui/device_posture.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,4 +43,6 @@ Future<void> main() async {
       child: const BIShareApp(),
     ),
   );
+  // iPhone Duo hinge and fold (iOS only; a no-op everywhere else).
+  DevicePostureService.instance.start();
 }

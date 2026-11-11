@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:showcaseview/showcaseview.dart';
@@ -46,6 +46,12 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   ShellTabId _tab = ShellTabId.send;
+
+  /// Keeps the tabs' state when the shell changes layout (bottom bar, side
+  /// strip, rail): opening or closing an iPhone Duo moves the same pages into
+  /// the new frame instead of building them again, so the scroll position,
+  /// the library tab and the Drive folder stay where they were.
+  final GlobalKey _contentKey = GlobalKey();
   final FeatureFlags _flags = getIt<FeatureFlags>();
   StreamSubscription<DeepLinkAction>? _linkSub;
   StreamSubscription<WebNearbyEvent>? _webNearbySub;
@@ -368,30 +374,33 @@ class _MainShellState extends State<MainShell> {
     // pulses and progress stop drawing frames (redesign-plan.md 1.4).
     final tabs = _tabs;
     final index = tabs.indexOf(_tab).clamp(0, tabs.length - 1);
-    final content = Stack(
-      fit: StackFit.expand,
-      children: [
-        IndexedStack(
-          index: index,
-          children: [
-            for (final t in tabs)
-              KeyedSubtree(
-                key: ValueKey(t),
-                child: TickerMode(
-                  enabled: t == _tab,
-                  child: ShellTab(active: t == _tab, child: _pages[t]!),
+    final content = KeyedSubtree(
+      key: _contentKey,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          IndexedStack(
+            index: index,
+            children: [
+              for (final t in tabs)
+                KeyedSubtree(
+                  key: ValueKey(t),
+                  child: TickerMode(
+                    enabled: t == _tab,
+                    child: ShellTab(active: t == _tab, child: _pages[t]!),
+                  ),
                 ),
-              ),
-          ],
-        ),
-        // Live transfers float above every tab, not only Send (4.2).
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: FloatingTransfers(onSendTab: _tab == ShellTabId.send),
-        ),
-      ],
+            ],
+          ),
+          // Live transfers float above every tab, not only Send (4.2).
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: FloatingTransfers(onSendTab: _tab == ShellTabId.send),
+          ),
+        ],
+      ),
     );
 
     Widget nav(Widget Function(List<AppNavItem> items) build) => AppShowcase(
@@ -417,8 +426,40 @@ class _MainShellState extends State<MainShell> {
                 onTap: (i) => _select(tabs[i]),
               ),
             ),
-            Expanded(child: content),
+            Expanded(child: besideNavRail(context, content)),
           ],
+        ),
+      );
+    }
+    // iPhone Duo outer display: the tabs join the system's side strip instead
+    // of a bar under the content (see sideStripOf). Rows stay left-to-right so
+    // the strip keeps its physical side in Arabic too.
+    final strip = sideStripOf(context);
+    if (strip != null) {
+      final pad = MediaQuery.viewPaddingOf(context);
+      final right = strip == SideStrip.right;
+      final side = nav(
+        (items) => AppSideNav(
+          items: items,
+          currentIndex: index,
+          onTap: (i) => _select(tabs[i]),
+          width: right ? pad.right : pad.left,
+        ),
+      );
+      final body = MediaQuery.removePadding(
+        context: context,
+        removeRight: right,
+        removeLeft: !right,
+        child: content,
+      );
+      return Scaffold(
+        backgroundColor: t.bg,
+        body: Row(
+          textDirection: TextDirection.ltr,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: right
+              ? [Expanded(child: body), side]
+              : [side, Expanded(child: body)],
         ),
       );
     }
@@ -435,7 +476,6 @@ class _MainShellState extends State<MainShell> {
     );
   }
 }
-
 
 /// The bar's items for [tabs], with the Inbox count: what arrived since the
 /// Inbox was last left, none while it is open. Only this rebuilds when a
@@ -527,7 +567,7 @@ class ShellPushedPage extends StatelessWidget {
               },
             ),
           ),
-          Expanded(child: child),
+          Expanded(child: besideNavRail(context, child)),
         ],
       ),
     );

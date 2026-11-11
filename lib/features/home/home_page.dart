@@ -85,19 +85,26 @@ class HomePage extends StatelessWidget {
                 },
               ),
             ],
-            child: Stack(
-              children: [
-                if (isDesktop) const SendDesktopPane() else const _SendTabs(),
-                // The selection bar; the shell floats live transfers above it.
-                if (!isDesktop)
-                  const Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: SendSelectionBar(),
-                  ),
-              ],
-            ),
+            // An open iPhone Duo: the library and its selection bar beside
+            // the destinations, as on a computer (Apple's two columns for the
+            // inner display). Phones, iPads and Android keep one column.
+            // Half open like a book, the fold splits them: the library on
+            // one side, the destinations on the other, nothing on the crease.
+            child: !isDesktop && context.isFoldableOpen
+                ? const FoldSplit(
+                    left: _LibraryWithBar(),
+                    right: SendDestinations(width: double.infinity),
+                    flat: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: _LibraryWithBar()),
+                        SendDestinations(width: 300),
+                      ],
+                    ),
+                  )
+                : isDesktop
+                ? const SendDesktopPane()
+                : const _LibraryWithBar(),
           ),
         ),
       ),
@@ -234,4 +241,18 @@ class _SendTabs extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The library tabs with the selection bar over their bottom edge (the shell
+/// floats live transfers above it).
+class _LibraryWithBar extends StatelessWidget {
+  const _LibraryWithBar();
+
+  @override
+  Widget build(BuildContext context) => const Stack(
+    children: [
+      _SendTabs(),
+      Positioned(left: 0, right: 0, bottom: 0, child: SendSelectionBar()),
+    ],
+  );
 }

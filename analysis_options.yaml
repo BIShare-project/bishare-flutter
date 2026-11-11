@@ -15,6 +15,12 @@ analyzer:
     - "**/*.config.dart"
     - "lib/src/rust/**" # flutter_rust_bridge generated bindings
     - "rust_builder/**" # vendored cargokit build tool — its own Dart package/deps, not app code
+    - build/**
+    - android/**
+    - ios/**
+    - windows/**
+    - macos/**
+    - linux/**
 
 linter:
   rules:

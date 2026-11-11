@@ -30,6 +30,83 @@ class InRoom extends StatelessWidget {
     final t = context.tokens;
     final session = state.session!;
     final me = getIt<DeviceIdentity>().fingerprint;
+    final info = <Widget>[
+      _CodeCard(session: session, security: state.security),
+      if (state.members.isNotEmpty) ...[
+        AppSectionHeader('room.members'.tr()),
+        _Members(members: state.members),
+      ],
+    ];
+    final files = <Widget>[
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: AppButton(
+                label: 'room.photos'.tr(),
+                icon: AppIcons.image,
+                variant: AppButtonVariant.secondary,
+                onPressed: () => _pick(context, media: true),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: AppButton(
+                label: 'room.files'.tr(),
+                icon: AppIcons.folder,
+                variant: AppButtonVariant.secondary,
+                onPressed: () => _pick(context, media: false),
+              ),
+            ),
+          ],
+        ),
+      ),
+      if (state.uploadingLabel != null)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Row(
+            children: [
+              SizedBox.square(
+                dimension: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: t.accent,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'room.uploading'.tr(
+                    namedArgs: {'label': '${state.uploadingLabel}'},
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppType.secondary.copyWith(color: t.text2),
+                ),
+              ),
+            ],
+          ),
+        ),
+      const SizedBox(height: 8),
+      AppSectionHeader('room.shared_files'.tr()),
+      if (state.files.isEmpty)
+        AppEmptyState(
+          icon: AppIcons.folderOpen,
+          title: 'room.no_files'.tr(),
+          message: 'room.no_files_hint'.tr(),
+        )
+      else
+        for (var i = 0; i < state.files.length; i++) ...[
+          if (i > 0) const AppRowDivider(indent: 70),
+          RoomFileRow(
+            file: state.files[i],
+            isMine: state.files[i].ownerFingerprint == me,
+            onDownload: () => _download(context, state.files[i]),
+            onOpen: () => _open(context, state.files[i]),
+          ),
+        ],
+    ];
     return Column(
       children: [
         AppScreenHeader(
@@ -51,87 +128,36 @@ class InRoom extends StatelessWidget {
           ],
         ),
         Expanded(
-          child: AppResponsivePane(
-            maxWidth: 640,
-            child: ListView(
-              padding: const EdgeInsets.only(bottom: 120),
-              children: [
-                _CodeCard(session: session, security: state.security),
-                if (state.members.isNotEmpty) ...[
-                  AppSectionHeader('room.members'.tr()),
-                  _Members(members: state.members),
-                ],
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 4),
-                  child: Row(
+          // An open iPhone Duo: the shared files on one side, the code and
+          // who is in the room on the other (split at the fold when it is
+          // half open). Phones, iPads and computers: one column, as before.
+          child: context.isFoldableOpen
+              ? FoldSplit(
+                  left: ListView(
+                    padding: const EdgeInsets.only(bottom: 120),
+                    children: files,
+                  ),
+                  right: _Side(children: info),
+                  flat: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Expanded(
-                        child: AppButton(
-                          label: 'room.photos'.tr(),
-                          icon: AppIcons.image,
-                          variant: AppButtonVariant.secondary,
-                          onPressed: () => _pick(context, media: true),
+                        child: ListView(
+                          padding: const EdgeInsets.only(bottom: 120),
+                          children: files,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: AppButton(
-                          label: 'room.files'.tr(),
-                          icon: AppIcons.folder,
-                          variant: AppButtonVariant.secondary,
-                          onPressed: () => _pick(context, media: false),
-                        ),
-                      ),
+                      SizedBox(width: 320, child: _Side(children: info)),
                     ],
                   ),
-                ),
-                if (state.uploadingLabel != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: Row(
-                      children: [
-                        SizedBox.square(
-                          dimension: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: t.accent,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'room.uploading'.tr(
-                              namedArgs: {'label': '${state.uploadingLabel}'},
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppType.secondary.copyWith(color: t.text2),
-                          ),
-                        ),
-                      ],
-                    ),
+                )
+              : AppResponsivePane(
+                  maxWidth: 640,
+                  child: ListView(
+                    padding: const EdgeInsets.only(bottom: 120),
+                    children: [...info, ...files],
                   ),
-                const SizedBox(height: 8),
-                AppSectionHeader('room.shared_files'.tr()),
-                if (state.files.isEmpty)
-                  AppEmptyState(
-                    icon: AppIcons.folderOpen,
-                    title: 'room.no_files'.tr(),
-                    message: 'room.no_files_hint'.tr(),
-                  )
-                else
-                  for (var i = 0; i < state.files.length; i++) ...[
-                    if (i > 0) const AppRowDivider(indent: 70),
-                    RoomFileRow(
-                      file: state.files[i],
-                      isMine: state.files[i].ownerFingerprint == me,
-                      onDownload: () => _download(context, state.files[i]),
-                      onOpen: () => _open(context, state.files[i]),
-                    ),
-                  ],
-              ],
-            ),
-          ),
+                ),
         ),
       ],
     );
@@ -245,9 +271,8 @@ class _CodeCard extends StatelessWidget {
   final RoomSecurity security;
 
   /// The browser page that joins this room; only internet rooms have one.
-  String? get _webLink => session.remote
-      ? 'https://bishare.app/rooms?code=${session.code}'
-      : null;
+  String? get _webLink =>
+      session.remote ? 'https://bishare.app/rooms?code=${session.code}' : null;
 
   @override
   Widget build(BuildContext context) {
@@ -405,6 +430,27 @@ class _Members extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The room's side on an open iPhone Duo: the code and the members.
+class _Side extends StatelessWidget {
+  const _Side({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: t.surface,
+        border: BorderDirectional(start: BorderSide(color: t.line)),
+      ),
+      child: ListView(
+        padding: const EdgeInsets.only(top: 8, bottom: 24),
+        children: children,
       ),
     );
   }

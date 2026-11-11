@@ -123,7 +123,11 @@ class _VoiceBodyState extends State<_VoiceBody> {
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            child: AppButton(label: 'send.close'.tr(), variant: AppButtonVariant.outline, onPressed: () => widget.onDone(null),),
+            child: AppButton(
+              label: 'send.close'.tr(),
+              variant: AppButtonVariant.outline,
+              onPressed: () => widget.onDone(null),
+            ),
           ),
         ],
       );
@@ -149,11 +153,19 @@ class _VoiceBodyState extends State<_VoiceBody> {
         Row(
           children: [
             Expanded(
-              child: AppButton(label: 'send.cancel'.tr(), variant: AppButtonVariant.outline, onPressed: _cancel,),
+              child: AppButton(
+                label: 'send.cancel'.tr(),
+                variant: AppButtonVariant.outline,
+                onPressed: _cancel,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: AppButton(label: 'send.stop_and_add'.tr(), icon: AppIcons.check, onPressed: _recording ? _finish : null,),
+              child: AppButton(
+                label: 'send.stop_and_add'.tr(),
+                icon: AppIcons.check,
+                onPressed: _recording ? _finish : null,
+              ),
             ),
           ],
         ),

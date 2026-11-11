@@ -7,6 +7,7 @@ import 'app_button.dart';
 import 'app_format.dart';
 import 'app_responsive.dart';
 import 'app_svg_icon.dart';
+import 'device_posture.dart';
 
 /// Presents a prompt: the app-wide replacement for Material [AlertDialog]s.
 /// Adaptive: a **centered dialog** on wide layouts (desktop /
@@ -424,7 +425,26 @@ class _Dialog extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => DevicePostureBuilder(
+    builder: (context, posture) {
+      // Half open like a book, the dialog moves to the wider side instead of
+      // resting on the fold (Apple's guidance for iPhone Duo). No fold: the
+      // middle of the screen, as before.
+      final fold = posture.verticalFold;
+      final dialog = _box(context);
+      if (fold == null) return dialog;
+      final width = MediaQuery.sizeOf(context).width;
+      final rightSide = width - fold.right >= fold.left;
+      return Padding(
+        padding: rightSide
+            ? EdgeInsets.only(left: fold.right)
+            : EdgeInsets.only(right: width - fold.left),
+        child: dialog,
+      );
+    },
+  );
+
+  Widget _box(BuildContext context) {
     final t = context.tokens;
     final radius = BorderRadius.circular(20);
     return Center(

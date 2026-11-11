@@ -43,7 +43,9 @@ TARGETS = {
     # iPhone Duo (Apple's screenshot specifications): optional now, required
     # from April 2027 for apps built with the iOS 27.1 SDK
     "ios_duo_outer": (1398, 2034, "duo_outer", "ios_duo_outer"),
-    "ios_duo_inner": (2007, 2853, "duo_inner", "ios_duo_inner"),
+    # open, the inner display lies sideways (the simulator; Apple takes both
+    # 2007x2853 and 2853x2007)
+    "ios_duo_inner": (2853, 2007, "duo_inner", "ios_duo_inner"),
 }
 # the required 6.1" size (iPhone with Dynamic Island, medium): the 6.9"
 # set scaled, the same aspect
@@ -191,6 +193,26 @@ def status_ios(screen: Image.Image, scale: float, island: bool = True) -> None:
         d.rounded_rectangle((x0, cy + 6 * scale - hh, x0 + 3 * scale, cy + 6 * scale), radius=1 * scale, fill=(255, 255, 255))
 
 
+def status_duo_strip(screen: Image.Image, scale: float, strip_pt: float = 84) -> None:
+    """iPhone Duo: iOS keeps the time and the Wi-Fi in a strip on the right,
+    closed (outer display, the app's tabs lower in the same strip) and open
+    (inner display, sideways)."""
+    d = ImageDraw.Draw(screen)
+    w = screen.width
+    cx = w - strip_pt / 2 * scale
+    f = font("en", round(17 * scale), 600)
+    t = "9:41"
+    tw = d.textlength(t, font=f)
+    d.text((cx - tw / 2, 72 * scale), t, font=f, fill=(255, 255, 255))
+    cy = 112 * scale
+    for i, rad in enumerate((9.5, 6.2, 2.8)):
+        rr = rad * scale
+        if i < 2:
+            d.arc((cx - rr, cy - rr, cx + rr, cy + rr), 225, 315, fill=(255, 255, 255), width=round(2 * scale))
+        else:
+            d.pieslice((cx - rr * 1.3, cy - rr * 1.3, cx + rr * 1.3, cy + rr * 1.3), 225, 315, fill=(255, 255, 255))
+
+
 def status_android(screen: Image.Image, scale: float, hole: bool = True) -> None:
     d = ImageDraw.Draw(screen)
     w = screen.width
@@ -301,15 +323,39 @@ def chip(title: str, sub: str, kind: str, color: str, base: float, lang: str) ->
 
 
 # ---------------------------------------------------------------- devices
+# Apple's iPhone Duo product bezels (Design Resources, Bezel-iPhone-Duo.dmg,
+# Night Sky), kept out of the repo in store/screenshots/_bezels: the bezel
+# PNG and where the screen sits in it (left, top), in its own pixels.
+BEZELS = pathlib.Path(__file__).resolve().parent.parent / "screenshots" / "_bezels"
+DUO_BEZEL = {
+    "duo_outer": ("iPhone Duo - Night Sky - Outer Closed Portrait.png", (88, 80)),
+    "duo_inner": ("iPhone Duo - Night Sky - Inner Open Landscape.png", (120, 120)),
+}
+
+
+def duo_device(raw: Image.Image, kind: str, dw: int) -> tuple[Image.Image, int]:
+    """The capture inside Apple's own iPhone Duo bezel, `dw` wide."""
+    name, (sx, sy) = DUO_BEZEL[kind]
+    bezel = Image.open(BEZELS / name).convert("RGBA")
+    body = Image.new("RGBA", bezel.size, (0, 0, 0, 0))
+    body.paste(raw.convert("RGBA"), (sx, sy))
+    body.alpha_composite(bezel)
+    scale = dw / body.width
+    body = body.resize((dw, round(body.height * scale)), Image.LANCZOS)
+    return body, round(sx * scale)
+
+
 def device(raw: Image.Image, kind: str, dw: int) -> tuple[Image.Image, int]:
     """The capture inside a device body `dw` wide. Returns (image, rim+bezel inset)."""
-    phone = kind in ("iphone", "android", "duo_outer")
+    if SIM and kind in DUO_BEZEL and (BEZELS / DUO_BEZEL[kind][0]).exists():
+        return duo_device(raw, kind, dw)
+    phone = kind in ("iphone", "android")
     rim = round(dw * (0.012 if phone else 0.008))
     bezel = round(dw * (0.022 if phone else 0.018))
     sw = dw - 2 * (rim + bezel)
     sh = round(raw.height * sw / raw.width)
     dh = sh + 2 * (rim + bezel)
-    radius = round(dw * {"iphone": 0.135, "android": 0.1, "duo_outer": 0.11, "duo_inner": 0.06}.get(kind, 0.05))
+    radius = round(dw * {"iphone": 0.135, "android": 0.1, "duo_outer": 0.07, "duo_inner": 0.06}.get(kind, 0.05))
     body = Image.new("RGBA", (dw, dh), (0, 0, 0, 0))
     d = ImageDraw.Draw(body)
     d.rounded_rectangle((0, 0, dw - 1, dh - 1), radius=radius, fill=RIM + (255,))
@@ -338,7 +384,7 @@ CHIP_Y = {
 }
 
 # logical width of each raw preset in points, so status bars scale right
-LOGICAL_W = {"iphone": 440, "android": 412, "ipad": 1032, "android_tablet": 800, "duo_outer": 466, "duo_inner": 669}
+LOGICAL_W = {"iphone": 440, "android": 412, "ipad": 1032, "android_tablet": 800, "duo_outer": 466, "duo_inner": 951}
 
 
 def home_indicator(screen: Image.Image, scale: float, width_pt: float, bottom_pt: float) -> None:
@@ -349,22 +395,45 @@ def home_indicator(screen: Image.Image, scale: float, width_pt: float, bottom_pt
     d.rounded_rectangle((w / 2 - bw / 2, y, w / 2 + bw / 2, y + bh), radius=bh / 2, fill=(255, 255, 255, 230))
 
 
+def crease(screen: Image.Image) -> None:
+    """The fold down the middle of the open iPhone Duo, faint, as the glass
+    shows it."""
+    w, h = screen.size
+    band = max(6, round(w * 0.006))
+    g = Image.new("RGBA", (band * 2, h), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(g)
+    for i in range(band * 2):
+        a = round(34 * (1 - abs(i - band) / band))
+        gd.line((i, 0, i, h), fill=(255, 255, 255, a))
+    screen.alpha_composite(g, (w // 2 - band, 0))
+
+
+# --sim: the raw captures are the simulator's own screenshots, with iOS's
+# status bar already on them; only the fold is drawn
+SIM = False
+
+
 def framed_screen(raw: Image.Image, kind: str) -> Image.Image:
     """The raw capture with a status bar on its top inset and the home
     indicator on its bottom one (the test leaves both insets empty)."""
     shot = raw.convert("RGBA")
+    if SIM:
+        return shot
     scale = shot.width / LOGICAL_W[kind]
-    if kind in ("iphone", "duo_outer"):
+    if kind == "iphone":
         home_indicator(shot, scale, 140, 8)
-    elif kind == "duo_inner":
-        home_indicator(shot, scale, 220, 8)
     elif kind == "ipad":
         home_indicator(shot, scale, 300, 7)
     elif kind in ("android", "android_tablet"):
         home_indicator(shot, scale, 108 if kind == "android" else 160, 9)
-    if kind in ("iphone", "duo_outer"):
+    if kind == "iphone":
         status_ios(shot, scale, island=True)
-    elif kind in ("ipad", "duo_inner"):
+    elif kind == "duo_outer":
+        status_duo_strip(shot, scale)
+    elif kind == "duo_inner":
+        status_duo_strip(shot, scale, 85)
+        crease(shot)
+    elif kind == "ipad":
         status_ios(shot, scale, island=False)
     elif kind == "android":
         status_android(shot, scale, hole=True)
@@ -447,7 +516,25 @@ def compose(target: str, lang: str, screen: str, raw: Image.Image) -> Image.Imag
         # this device is a computer here
         kinds = [("laptop", c) if k == "phone" else (k, c) for k, c in kinds]
 
-    if kind == "mac":
+    if kind == "duo_inner":
+        # sideways, like the Mac: one caption line over the open device
+        base = h * 1.0
+        y = captions_block(canvas, lang, eyebrow, head, sub, base, h * 0.06, w * 0.8, single_line=True)
+        dw = round(w * 0.6)
+        body, inset = device(framed_screen(raw, kind), kind, dw)
+        dx, dy = (w - dw) // 2, round(y + h * 0.035)
+        sh = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+        ImageDraw.Draw(sh).rounded_rectangle((dx, dy + h * 0.02, dx + dw, dy + body.height + h * 0.02), radius=dw * 0.06, fill=(0, 0, 0, 170))
+        canvas.alpha_composite(sh.filter(ImageFilter.GaussianBlur(h * 0.03)))
+        canvas.alpha_composite(body, (dx, dy))
+        screen_h = body.height - 2 * inset
+        ya, yb = CHIP_Y[screen]
+        # the left badge sits below the tab rail, the right one beside the
+        # side panel, so neither covers a label
+        ya, yb = max(ya + 0.1, 0.66), yb + 0.1
+        anchors = [(dx - base * 0.06, dy + inset + screen_h * ya, -2.5), (dx + dw + base * 0.06, dy + inset + screen_h * yb, 2.0)]
+        chip_base = base * 0.8
+    elif kind == "mac":
         base = h * 1.0
         y = captions_block(canvas, lang, eyebrow, head, sub, base, h * 0.06, w * 0.8, single_line=True)
         win = mac_window(raw, round(w * 0.64))
@@ -461,14 +548,19 @@ def compose(target: str, lang: str, screen: str, raw: Image.Image) -> Image.Imag
         anchors = [(wx - base * 0.06, wy + win.height * (ya + 0.1), -2.5), (wx + win.width + base * 0.06, wy + win.height * (yb + 0.1), 2.0)]
         chip_base = base * 0.9
     else:
-        tablet = kind in ("ipad", "android_tablet", "duo_inner")
+        tablet = kind in ("ipad", "android_tablet")
         base = w * (0.62 if tablet else 1.0)
         y = captions_block(canvas, lang, eyebrow, head, sub, base, h * (0.05 if tablet else 0.058), w * (0.82 if tablet else 0.86))
         dw = round(w * (0.8 if tablet else 0.86))
-        body, inset = device(framed_screen(raw, kind), kind, dw)
         # every screenshot of a set starts its device at the same height,
         # unless a long caption needs more room
-        dx, dy = (w - dw) // 2, round(max(h * (0.235 if tablet else 0.262), y + base * 0.05))
+        dy = round(max(h * (0.235 if tablet else 0.262), y + base * 0.05))
+        if kind == "duo_outer":
+            # the whole closed iPhone Duo on the canvas, framed like the open
+            # one (not cut off at the bottom like a phone)
+            dw = min(dw, round((h * 0.965 - dy) * raw.width / raw.height * 0.96))
+        body, inset = device(framed_screen(raw, kind), kind, dw)
+        dx = (w - dw) // 2
         sh = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
         ImageDraw.Draw(sh).rounded_rectangle((dx, dy + base * 0.03, dx + dw, dy + body.height), radius=dw * 0.12, fill=(0, 0, 0, 160))
         canvas.alpha_composite(sh.filter(ImageFilter.GaussianBlur(base * 0.05)))
@@ -477,6 +569,10 @@ def compose(target: str, lang: str, screen: str, raw: Image.Image) -> Image.Imag
         ya, yb = CHIP_Y[screen]
         if tablet:  # the UI sits in the top part of a tablet screen
             ya, yb = ya * 0.75, yb * 0.75
+        elif kind == "duo_outer":
+            # left: beside the photos; right: the empty foot of the side
+            # strip, under the tabs
+            ya, yb = 0.5, 1.0
         anchors = [(dx - base * 0.03, dy + inset + screen_h * ya, -2.5), (dx + dw + base * 0.03, dy + inset + screen_h * yb, 2.0)]
         chip_base = base
 
@@ -486,6 +582,12 @@ def compose(target: str, lang: str, screen: str, raw: Image.Image) -> Image.Imag
         c = c.rotate(ang, resample=Image.BICUBIC, expand=True)
         # chip 0 hangs over the left edge, chip 1 over the right; both stay on the canvas
         x = ax - c.width * 0.32 if i == 0 else ax - c.width * 0.68
+        if kind == "duo_inner":
+            # mostly in the margin beside the open device, off its UI
+            x = ax - c.width * 0.8 if i == 0 else ax - c.width * 0.2
+        elif kind == "duo_outer":
+            # mostly in the margins beside the closed device
+            x = ax - c.width * 0.72 if i == 0 else ax - c.width * 0.3
         x = min(max(x, -c.width * 0.02), w - c.width * 0.98)
         canvas.alpha_composite(c, (round(x), round(ay - c.height / 2)))
     return canvas.convert("RGB")
@@ -502,7 +604,10 @@ def main() -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--lang", action="append", help="default: every language that has raw captures")
     ap.add_argument("--target", action="append", help="default: every target that has raw captures")
+    ap.add_argument("--sim", action="store_true", help="raw captures are simulator screenshots (status bar included)")
     args = ap.parse_args()
+    global SIM
+    SIM = args.sim
     raw_root, out_root = pathlib.Path(args.raw), pathlib.Path(args.out)
     written = 0
     for target, (_, _, _, preset) in TARGETS.items():

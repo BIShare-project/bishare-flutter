@@ -58,6 +58,23 @@ class DriveController extends ChangeNotifier {
   final Set<String> _selected = {};
   String? _anchor;
 
+  // [prune] and [reveal] notify after an await. The Drive screen can go away
+  // meanwhile: on an iPhone Duo, opening or closing it swaps the shell's
+  // layout and rebuilds the screen with a new controller. A late notify from
+  // the old one is dropped instead of throwing "used after being disposed".
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   DriveView get view => _view;
   List<VaultObject> get path => List.unmodifiable(_path);
   String? get folder => _path.isEmpty ? null : _path.last.id;

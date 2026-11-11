@@ -17,7 +17,6 @@ class SendDesktopPane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = context.tokens;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -31,40 +30,7 @@ class SendDesktopPane extends StatelessWidget {
             ],
           ),
         ),
-        Container(
-          width: 340,
-          decoration: BoxDecoration(
-            color: t.surface,
-            border: BorderDirectional(start: BorderSide(color: t.line)),
-          ),
-          child: ListView(
-            padding: const EdgeInsets.only(top: 14, bottom: 24),
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                child: Text(
-                  'compose.send_to'.tr(),
-                  style: AppType.pageTitle.copyWith(color: t.text),
-                ),
-              ),
-              BlocSelector<SendSelectionCubit, SendSelection, bool>(
-                selector: (s) => s.isEmpty,
-                builder: (context, empty) => Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 2, 18, 0),
-                  child: Text(
-                    empty
-                        ? 'compose.send_to_empty'.tr()
-                        : 'compose.send_to_hint'.tr(),
-                    style: AppType.secondary.copyWith(color: t.text2),
-                  ),
-                ),
-              ),
-              const DeviceSection(),
-              AppSectionHeader('compose.ways'.tr()),
-              const SendWays(inSheet: false),
-            ],
-          ),
-        ),
+        const SendDestinations(width: 340),
       ],
     );
   }
@@ -209,6 +175,54 @@ class _Chosen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// The destinations beside the files: the devices nearby (tap one to send)
+/// and the other ways. Beside the drop zone on a computer, and beside the
+/// library on an open iPhone Duo.
+class SendDestinations extends StatelessWidget {
+  const SendDestinations({super.key, required this.width});
+
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return Container(
+      width: width,
+      decoration: BoxDecoration(
+        color: t.surface,
+        border: BorderDirectional(start: BorderSide(color: t.line)),
+      ),
+      child: ListView(
+        padding: const EdgeInsets.only(top: 14, bottom: 24),
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Text(
+              'compose.send_to'.tr(),
+              style: AppType.pageTitle.copyWith(color: t.text),
+            ),
+          ),
+          BlocSelector<SendSelectionCubit, SendSelection, bool>(
+            selector: (s) => s.isEmpty,
+            builder: (context, empty) => Padding(
+              padding: const EdgeInsets.fromLTRB(18, 2, 18, 0),
+              child: Text(
+                empty
+                    ? 'compose.send_to_empty'.tr()
+                    : 'compose.send_to_hint'.tr(),
+                style: AppType.secondary.copyWith(color: t.text2),
+              ),
+            ),
+          ),
+          const DeviceSection(),
+          AppSectionHeader('compose.ways'.tr()),
+          const SendWays(inSheet: false),
+        ],
+      ),
     );
   }
 }

@@ -211,7 +211,8 @@ class _RemoteSharePageState extends State<RemoteSharePage> {
       backgroundColor: context.tokens.bg,
       body: SafeArea(
         child: AppResponsivePane(
-          maxWidth: 520,
+          // An open iPhone Duo lays the page out in two columns (PickView).
+          maxWidth: context.isFoldableOpen ? double.infinity : 520,
           child: Column(
             children: [
               RemoteShareHeader(

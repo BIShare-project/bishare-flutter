@@ -23,6 +23,7 @@ import '../../data/vault_upload_batch.dart';
 import '../../data/vault_uploader.dart';
 import '../vault_sign_in_buttons.dart';
 import 'drive_actions.dart';
+import 'drive_preview_pane.dart';
 import '../vault_account_page.dart';
 import 'drive_controller.dart';
 import 'drive_transfers_page.dart';
@@ -38,9 +39,13 @@ import 'drive_widgets.dart';
 /// folders, drag and drop and keyboard shortcuts on computers. Lives in the
 /// Inbox tab as its second segment ([segment]).
 class DrivePage extends StatefulWidget {
-  const DrivePage({super.key, this.segment});
+  const DrivePage({super.key, this.segment, this.previewFirstPhoto = false});
 
   final Widget? segment;
+
+  /// On an open iPhone Duo, start with the first photo in the preview (the
+  /// store screenshots); otherwise the preview opens when a file is tapped.
+  final bool previewFirstPhoto;
 
   @override
   State<DrivePage> createState() => _DrivePageState();
@@ -72,10 +77,20 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
   List<VaultObject> _visible = const [];
   Stream<List<VaultObject>>? _items;
   String? _itemsKey;
-  late final Stream<Map<String?, int>> _counts = _dao.watchChildCounts();
-  late final Stream<List<VaultObject>> _live = _dao.watchLive();
-  late final Stream<List<VaultObject>> _trash = _dao.watchTrash();
-  late final Stream<List<VaultTransfer>> _transfers = _dao.watchTransfers();
+  // Broadcast: on an iPhone Duo the same list is moved between layouts as it
+  // opens, closes or half folds, and each move listens to these again.
+  late final Stream<Map<String?, int>> _counts = _dao
+      .watchChildCounts()
+      .asBroadcastStream();
+  late final Stream<List<VaultObject>> _live = _dao
+      .watchLive()
+      .asBroadcastStream();
+  late final Stream<List<VaultObject>> _trash = _dao
+      .watchTrash()
+      .asBroadcastStream();
+  late final Stream<List<VaultTransfer>> _transfers = _dao
+      .watchTransfers()
+      .asBroadcastStream();
   Map<String, String> _folderNames = const {};
   VaultStatus? _started;
   bool _dragging = false;
@@ -109,6 +124,9 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
 
   /// Drive's own sidebar needs this much room next to the app's.
   static const _sidebarMinWidth = 720.0;
+
+  /// The file shown beside the list on an open iPhone Duo (null: none).
+  final ValueNotifier<VaultObject?> _preview = ValueNotifier(null);
 
   /// The storage line follows uploads (VaultAccount.followUsage).
   StreamSubscription<Object?>? _usage;
@@ -165,6 +183,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
     super.initState();
     // A phone opens on its photos, as the redesign's Drive does.
     if (_library) _ctrl.setView(DriveView.media);
+    if (widget.previewFirstPhoto) unawaited(_previewFirstPhoto());
     _account.addListener(_onAccount);
     unawaited(_account.load().then((_) => _onAccount()));
     _usage = _account.followUsage();
@@ -195,6 +214,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _preview.dispose();
     unawaited(_pathSub?.cancel());
     unawaited(_usage?.cancel());
     _account.removeListener(_onAccount);
@@ -326,8 +346,54 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
       _ctrl.toggle(o.id);
       return;
     }
+    _openOrPreview(o);
+  }
+
+  Future<void> _previewFirstPhoto() async {
+    final live = await _dao.watchLive().first;
+    final photo = live
+        .where((o) => o.kind == 'file' && (o.mime ?? '').startsWith('image/'))
+        .firstOrNull;
+    if (photo != null && mounted && context.isFoldableOpen) {
+      _preview.value = photo;
+    }
+  }
+
+  /// A file on an open iPhone Duo opens in the preview beside the list;
+  /// folders, and everything on other devices, open as before.
+  void _openOrPreview(VaultObject o) {
+    if (o.kind == 'file' && context.isFoldableOpen) {
+      _preview.value = o;
+      return;
+    }
     unawaited(_act.open(o));
   }
+
+  /// [list] with the chosen file beside it (split at the fold when the
+  /// iPhone Duo is half open); the list alone while nothing is chosen.
+  Widget _withPreview(Widget list) => ValueListenableBuilder<VaultObject?>(
+    valueListenable: _preview,
+    builder: (context, o, _) {
+      if (o == null) return list;
+      final pane = DrivePreviewPane(
+        object: o,
+        actions: _itemActions(o),
+        onOpen: () => unawaited(_act.open(o)),
+        onClose: () => _preview.value = null,
+      );
+      return FoldSplit(
+        left: list,
+        right: pane,
+        flat: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: list),
+            SizedBox(width: 360, child: pane),
+          ],
+        ),
+      );
+    },
+  );
 
   void _longPress(VaultObject o) {
     HapticFeedback.selectionClick();
@@ -497,6 +563,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
         ),
       ];
     }
+    final saveToPhotos = _phone && items.any((o) => isMedia(o.mime));
     return [
       if (_phone)
         (
@@ -512,18 +579,29 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
           () => _act.download(items),
           false,
         ),
+      // Phones: every photo and video in the selection into the photo
+      // library at once (other files are skipped). The bar holds four, so
+      // Copy steps aside then (it stays in each file's menu).
+      if (saveToPhotos)
+        (
+          AppIcons.imageDown,
+          'vault.save_to_photos'.tr(),
+          () => _act.saveToPhotos(items),
+          false,
+        ),
       (
         AppIcons.moveFile,
         'vault.move'.tr(),
         () => _act.moveOrCopy(items, copy: false),
         false,
       ),
-      (
-        AppIcons.copyDuplicate,
-        'vault.copy'.tr(),
-        () => _act.moveOrCopy(items, copy: true),
-        false,
-      ),
+      if (!saveToPhotos)
+        (
+          AppIcons.copyDuplicate,
+          'vault.copy'.tr(),
+          () => _act.moveOrCopy(items, copy: true),
+          false,
+        ),
       (
         AppIcons.trashDelete,
         // Short on the bar (four actions share it); the item sheet says
@@ -590,7 +668,12 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
     final ready = _account.status == VaultStatus.ready;
     return LayoutBuilder(
       builder: (context, box) =>
-          _page(ready, wide: box.maxWidth >= _sidebarMinWidth),
+          // An open iPhone Duo uses the phone layout beside a preview
+          // instead of Drive's own sidebar (see _withPreview).
+          _page(
+            ready,
+            wide: box.maxWidth >= _sidebarMinWidth && !context.isFoldableOpen,
+          ),
     );
   }
 
@@ -614,6 +697,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
       body = _wide();
     } else {
       body = _narrow();
+      if (ready && context.isFoldableOpen) body = _withPreview(body);
     }
     if (_desktop) {
       // A click anywhere on the page gives the shortcuts the keyboard back
@@ -682,10 +766,18 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
 
   List<Widget> _headerActions({required bool wide}) {
     if (_ctrl.selecting) {
+      final all =
+          _visible.isNotEmpty &&
+          _visible.every((o) => _ctrl.isSelected(o.id));
       return [
-        AppIconButton(
-          icon: AppIcons.squareCheck,
-          onPressed: () => _ctrl.selectAll(_visible),
+        // Said in words: an icon alone was not found.
+        TextButton(
+          onPressed: all
+              ? _ctrl.clearSelection
+              : () => _ctrl.selectAll(_visible),
+          child: Text(
+            all ? 'inbox.select_none'.tr() : 'inbox.select_all'.tr(),
+          ),
         ),
         AppIconButton(icon: AppIcons.close, onPressed: _ctrl.clearSelection),
       ];
@@ -949,7 +1041,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
               ? DriveGalleryView(
                   backup: _photos!,
                   dao: _dao,
-                  onOpen: (o) => unawaited(_act.open(o)),
+                  onOpen: _openOrPreview,
                   onMore: _more,
                   onLink: (o) => unawaited(_act.shareLink(o)),
                   onSend: (path) => unawaited(_act.sendToDevice(path)),

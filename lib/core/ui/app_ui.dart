@@ -47,6 +47,7 @@ export 'app_nav_rail.dart';
 export 'app_row_menu.dart';
 export 'media_thumb.dart';
 export 'app_responsive.dart';
+export 'device_posture.dart';
 export 'app_screen_header.dart';
 export 'app_section.dart';
 export 'app_search_field.dart';
