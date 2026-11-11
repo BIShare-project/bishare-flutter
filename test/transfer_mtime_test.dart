@@ -270,5 +270,57 @@ void main() {
         );
       },
     );
+
+    // Received names (a user's report, Nov 2026): IMG_4821.HEIC must arrive
+    // as IMG_4821.HEIC, byte for byte; the date-and-sender prefix only when
+    // the receiver turned it on.
+    test('a photo keeps its name and its bytes', () async {
+      if (!rust) {
+        markTestSkipped('native library not built');
+        return;
+      }
+      final bytes = List<int>.generate(90000, (i) => (i * 31) & 0xff);
+      final src = File('${srcDir.path}/IMG_4821.HEIC')..writeAsBytesSync(bytes);
+      final got = await sendOne(SendableFile.fromPath(src.path, id: 'p1'));
+      final saved = File(got.savedPath);
+      expect(saved.uri.pathSegments.last, 'IMG_4821.HEIC');
+      expect(got.fileName, 'IMG_4821.HEIC');
+      expect(saved.readAsBytesSync(), bytes);
+    });
+
+    test(
+      'the same name twice: the second does not overwrite the first',
+      () async {
+        if (!rust) {
+          markTestSkipped('native library not built');
+          return;
+        }
+        final a = File('${srcDir.path}/IMG_0001.HEIC')..writeAsBytesSync([1]);
+        final first = await sendOne(SendableFile.fromPath(a.path, id: 'p2'));
+        a.writeAsBytesSync([2]);
+        final second = await sendOne(SendableFile.fromPath(a.path, id: 'p3'));
+        expect(File(first.savedPath).uri.pathSegments.last, 'IMG_0001.HEIC');
+        expect(
+          File(second.savedPath).uri.pathSegments.last,
+          'IMG_0001 (1).HEIC',
+        );
+        expect(File(first.savedPath).readAsBytesSync(), [1]);
+        expect(File(second.savedPath).readAsBytesSync(), [2]);
+      },
+    );
+
+    test('with the setting on, the date and sender lead the name', () async {
+      if (!rust) {
+        markTestSkipped('native library not built');
+        return;
+      }
+      server.nameWithSender = true;
+      final src = File('${srcDir.path}/IMG_4822.HEIC')..writeAsBytesSync([7]);
+      final got = await sendOne(SendableFile.fromPath(src.path, id: 'p4'));
+      expect(
+        File(got.savedPath).uri.pathSegments.last,
+        matches(RegExp(r'^\d{4}-\d{2}-\d{2}_Sender_IMG_4822\.HEIC$')),
+      );
+    });
   });
 }
