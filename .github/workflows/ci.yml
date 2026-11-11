@@ -60,7 +60,7 @@ jobs:
 
   flutter:
     needs: rust-vectors # Dart is skipped if the vectors are red
-    runs-on: macos-14
+    runs-on: macos-15
     defaults:
       run:
         working-directory: bishare-flutter
