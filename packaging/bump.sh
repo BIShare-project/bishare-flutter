@@ -20,9 +20,12 @@ sha() { shasum -a 256 "$1" | cut -d' ' -f1; }
 fetch() { curl -fsSL --retry 3 -o "$TMP/$1" "$BASE/$1" || { echo "missing release asset: $BASE/$1" >&2; exit 1; }; }
 
 fetch "$ZIP"; ZIP_SHA="$(sha "$TMP/$ZIP")"
-fetch "$DMG"; DMG_SHA="$(sha "$TMP/$DMG")"
+# The DMG is optional: when the release has none (the Developer ID job failed),
+# the Windows manifests still move and the Homebrew cask stays where it was.
+DMG_SHA=""
+if curl -fsSL --retry 3 -o "$TMP/$DMG" "$BASE/$DMG"; then DMG_SHA="$(sha "$TMP/$DMG")"; fi
 echo "v$VER  zip $ZIP_SHA"
-echo "v$VER  dmg $DMG_SHA"
+echo "v$VER  dmg ${DMG_SHA:-none (Homebrew cask not updated)}"
 
 python3 - "$VER" "$ZIP_SHA" "$DMG_SHA" <<'PY'
 import re, sys, pathlib
@@ -51,13 +54,14 @@ edit("chocolatey/tools/chocolateyinstall.ps1", [
     (r"url64bit\s*= '[^']+'", f"url64bit       = '{zip_url}'"),
     (r"checksum64\s*= '[0-9a-f]+'", f"checksum64     = '{zip_sha}'"),
 ])
-edit("homebrew/bishare.rb", [
-    (r'^  version "[^"]+"', f'  version "{ver}"'),
-    (r'^  sha256 "[0-9a-f]+"', f'  sha256 "{dmg_sha}"'),
-])
+if dmg_sha:
+  edit("homebrew/bishare.rb", [
+      (r'^  version "[^"]+"', f'  version "{ver}"'),
+      (r'^  sha256 "[0-9a-f]+"', f'  sha256 "{dmg_sha}"'),
+  ])
 PY
 
-if [ "$TAP" = "--tap" ]; then
+if [ "$TAP" = "--tap" ] && [ -n "$DMG_SHA" ]; then
   # A third-party tap works today without Homebrew's notability bar:
   #   brew install BIShare-project/tap/bishare
   TAPREPO="BIShare-project/homebrew-tap"
