@@ -71,7 +71,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with: { components: rustfmt }
       - uses: subosito/flutter-action@v2
-        with: { channel: stable }
+        with: { channel: stable, flutter-version: 3.47.7 }  # same Flutter as local tests
       # frb_generated.rs + lib/src/rust/frb_generated*.dart are gitignored →
       # regenerate before analyze/test (matches runtime FRB version).
       - name: flutter_rust_bridge codegen
