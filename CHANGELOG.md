@@ -3,6 +3,17 @@
 All notable changes to BIShare are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Fixed
+- **Sharing from the Photos app keeps the original file.** Share → BIShare
+  in Photos (the share extension) now asks iOS for the photo or video as it
+  was taken (HEIC stays HEIC), keeps its own name and date, and sends a Live
+  Photo as its photo and motion together, like choosing it inside BIShare.
+- **The share extension is end-to-end encrypted.** It now sends with the same
+  X25519 + AES-256-GCM scheme as the app, under one stable identity, so the
+  receiver can pin it and accept it automatically.
+
 ## [2.9.0] — 2026-11-12
 
 ### Added

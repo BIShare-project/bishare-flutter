@@ -3,6 +3,8 @@ import SwiftUI
 import Network
 import UniformTypeIdentifiers
 import CryptoKit
+import ImageIO
+import Photos
 
 // MARK: - BIShare protocol constants (mirrors lib/core/constants/protocol.dart)
 //
@@ -77,6 +79,11 @@ struct ShareFile {
     let url: URL
     let size: Int
     let mimeType: String
+    /// The original "Date modified" (Unix ms), so the receiver keeps it.
+    var mtimeMs: Int64? = nil
+    /// Shared by the still and the motion of one Live Photo, so the receiver
+    /// puts them back together (FileMetadata.liveGroup in the app).
+    var liveGroup: String? = nil
 }
 
 // MARK: - View Model
@@ -92,6 +99,9 @@ class ShareViewModel {
     var selectedDevice: ShareDevice?
 
     weak var extensionContext: NSExtensionContext?
+
+    /// This extension's stable fingerprint and X25519 key (ShareCrypto.swift).
+    private let identity = ShareIdentity.load()
 
     private var browser: NWBrowser?
     private var probeConnections: [NWConnection] = []
@@ -414,59 +424,185 @@ class ShareViewModel {
         }
 
         let group = DispatchGroup()
-        let tmp = FileManager.default.temporaryDirectory
-
         for item in items {
             guard let attachments = item.attachments else { continue }
             for provider in attachments {
-                let type = [UTType.image.identifier, UTType.movie.identifier, UTType.item.identifier]
-                    .first { provider.hasItemConformingToTypeIdentifier($0) } ?? UTType.item.identifier
                 group.enter()
-
-                // Preferred path: a file-backed item (photo/video). Copy it out of
-                // the provider's transient temp into ours by STREAMING (copyItem
-                // never loads the bytes into memory) so a large video can't blow
-                // the extension's ~120 MB memory limit.
-                provider.loadFileRepresentation(forTypeIdentifier: type) { [weak self] srcURL, _ in
-                    guard let self else { group.leave(); return }
-                    if let srcURL {
-                        let dest = tmp.appendingPathComponent("\(UUID().uuidString)-\(srcURL.lastPathComponent)")
-                        if (try? FileManager.default.copyItem(at: srcURL, to: dest)) != nil {
-                            let size = ((try? FileManager.default.attributesOfItem(atPath: dest.path))?[.size] as? Int) ?? 0
-                            let mime = UTType(filenameExtension: dest.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
-                            DispatchQueue.main.async {
-                                self.files.append(ShareFile(name: srcURL.lastPathComponent, url: dest, size: size, mimeType: mime))
-                            }
-                        }
-                        group.leave()
-                        return
-                    }
-                    // Fallback for non-file items (text / URL) — tiny; stage to a temp file.
-                    provider.loadItem(forTypeIdentifier: type, options: nil) { item, _ in
-                        defer { group.leave() }
-                        var payload: Data?
-                        var name = "\(UUID().uuidString).dat"
-                        if let d = item as? Data {
-                            payload = d
-                        } else if let u = item as? URL {
-                            payload = u.isFileURL ? try? Data(contentsOf: u) : u.absoluteString.data(using: .utf8)
-                            name = u.lastPathComponent
-                        } else if let s = item as? String {
-                            payload = s.data(using: .utf8); name = "shared.txt"
-                        }
-                        let dest = tmp.appendingPathComponent(name)
-                        guard let payload, (try? payload.write(to: dest)) != nil else { return }
-                        let mime = UTType(filenameExtension: dest.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
-                        DispatchQueue.main.async {
-                            self.files.append(ShareFile(name: name, url: dest, size: payload.count, mimeType: mime))
+                // A Live Photo goes as its photo and its motion, paired, like
+                // the app's own picker does. Anything that fails falls back to
+                // the plain file below (the still alone).
+                if provider.canLoadObject(ofClass: PHLivePhoto.self) {
+                    loadLivePhoto(provider) { [weak self] pair in
+                        guard let self else { group.leave(); return }
+                        if let pair {
+                            DispatchQueue.main.async { self.files.append(contentsOf: pair) }
+                            group.leave()
+                        } else {
+                            self.loadFile(provider) { group.leave() }
                         }
                     }
+                } else {
+                    loadFile(provider) { group.leave() }
                 }
             }
         }
 
         group.notify(queue: .main) { [weak self] in
             self?.status = .ready
+        }
+    }
+
+    /// The type to ask [provider] for: the first photo or video type it
+    /// registered, which is its own original (for an iPhone photo usually
+    /// public.heic). Asking for the generic public.image instead lets iOS hand
+    /// over a converted copy (HEIC to JPEG), which changes the format, the
+    /// size and some of the metadata.
+    private static func originalType(of provider: NSItemProvider) -> String {
+        for id in provider.registeredTypeIdentifiers {
+            guard let t = UTType(id) else { continue }
+            if t.conforms(to: .image) || t.conforms(to: .audiovisualContent) { return id }
+        }
+        return [UTType.image.identifier, UTType.movie.identifier, UTType.item.identifier]
+            .first { provider.hasItemConformingToTypeIdentifier($0) } ?? UTType.item.identifier
+    }
+
+    /// [suggested] (the item's own name, often without an extension) with the
+    /// extension of the file actually received, or the received file's name.
+    private static func originalName(suggested: String?, received: URL) -> String {
+        let ext = received.pathExtension
+        guard let base = suggested?.trimmingCharacters(in: .whitespacesAndNewlines), !base.isEmpty
+        else { return received.lastPathComponent }
+        let baseExt = (base as NSString).pathExtension
+        if !baseExt.isEmpty, baseExt.lowercased() == ext.lowercased() { return base }
+        if ext.isEmpty { return base }
+        let stem = baseExt.isEmpty ? base : (base as NSString).deletingPathExtension
+        return "\(stem).\(ext)"
+    }
+
+    /// Copy one shared item into our temp folder, streaming (copyItem never
+    /// loads the bytes into memory) so a large video can't blow the
+    /// extension's ~120 MB memory limit.
+    private func loadFile(_ provider: NSItemProvider, done: @escaping () -> Void) {
+        let type = Self.originalType(of: provider)
+        let tmp = FileManager.default.temporaryDirectory
+        provider.loadFileRepresentation(forTypeIdentifier: type) { [weak self] srcURL, _ in
+            guard let self else { done(); return }
+            if let srcURL {
+                let name = Self.originalName(suggested: provider.suggestedName, received: srcURL)
+                let mtime = Self.originalDate(of: srcURL)
+                let dest = tmp.appendingPathComponent("\(UUID().uuidString)-\(name)")
+                if (try? FileManager.default.copyItem(at: srcURL, to: dest)) != nil {
+                    let size = ((try? FileManager.default.attributesOfItem(atPath: dest.path))?[.size] as? Int) ?? 0
+                    let mime = UTType(filenameExtension: dest.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
+                    DispatchQueue.main.async {
+                        self.files.append(ShareFile(name: name, url: dest, size: size, mimeType: mime, mtimeMs: mtime))
+                    }
+                }
+                done()
+                return
+            }
+            // Fallback for non-file items (text / URL): tiny, staged to a temp file.
+            provider.loadItem(forTypeIdentifier: type, options: nil) { item, _ in
+                defer { done() }
+                var payload: Data?
+                var name = "\(UUID().uuidString).dat"
+                if let d = item as? Data {
+                    payload = d
+                } else if let u = item as? URL {
+                    payload = u.isFileURL ? try? Data(contentsOf: u) : u.absoluteString.data(using: .utf8)
+                    name = u.lastPathComponent
+                } else if let s = item as? String {
+                    payload = s.data(using: .utf8); name = "shared.txt"
+                }
+                let dest = tmp.appendingPathComponent(name)
+                guard let payload, (try? payload.write(to: dest)) != nil else { return }
+                let mime = UTType(filenameExtension: dest.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
+                DispatchQueue.main.async {
+                    self.files.append(ShareFile(name: name, url: dest, size: payload.count, mimeType: mime))
+                }
+            }
+        }
+    }
+
+    /// The original date of a shared file, Unix ms. The file iOS hands over is
+    /// often a fresh export stamped "now"; a date from the last few minutes is
+    /// therefore not trusted, and a photo's EXIF capture date is used instead.
+    /// Nil when neither is known (the receiver then keeps its write time).
+    private static func originalDate(of url: URL) -> Int64? {
+        let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .creationDateKey])
+        let fileDate = [values?.contentModificationDate, values?.creationDate]
+            .compactMap { $0 }
+            .min()
+        if let fileDate, fileDate < Date().addingTimeInterval(-300) {
+            return Int64(fileDate.timeIntervalSince1970 * 1000)
+        }
+        if let exif = exifCaptureDate(of: url) {
+            return Int64(exif.timeIntervalSince1970 * 1000)
+        }
+        return nil
+    }
+
+    /// EXIF DateTimeOriginal (with its offset when present) of an image file.
+    private static func exifCaptureDate(of url: URL) -> Date? {
+        guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [CFString: Any],
+              let exif = props[kCGImagePropertyExifDictionary] as? [CFString: Any],
+              let original = exif[kCGImagePropertyExifDateTimeOriginal] as? String
+        else { return nil }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        if let offset = exif[kCGImagePropertyExifOffsetTimeOriginal] as? String {
+            f.dateFormat = "yyyy:MM:dd HH:mm:ssXXX"
+            if let d = f.date(from: original + offset) { return d }
+        }
+        f.dateFormat = "yyyy:MM:dd HH:mm:ss"
+        f.timeZone = .current
+        return f.date(from: original)
+    }
+
+    /// The photo and the motion of a shared Live Photo, written to temp files
+    /// under their library names (IMG_4821.HEIC, IMG_4821.MOV) and paired by
+    /// one liveGroup. Nil if any step fails.
+    private func loadLivePhoto(_ provider: NSItemProvider, done: @escaping ([ShareFile]?) -> Void) {
+        provider.loadObject(ofClass: PHLivePhoto.self) { object, _ in
+            guard let live = object as? PHLivePhoto else { done(nil); return }
+            let resources = PHAssetResource.assetResources(for: live)
+            guard let photo = resources.first(where: { $0.type == .photo }),
+                  let video = resources.first(where: { $0.type == .pairedVideo })
+            else { done(nil); return }
+
+            let tmp = FileManager.default.temporaryDirectory
+            let groupId = UUID().uuidString.lowercased()
+            let options = PHAssetResourceRequestOptions()
+            options.isNetworkAccessAllowed = true
+
+            func write(_ r: PHAssetResource, _ then: @escaping (ShareFile?) -> Void) {
+                let name = r.originalFilename
+                let dest = tmp.appendingPathComponent("\(UUID().uuidString)-\(name)")
+                PHAssetResourceManager.default().writeData(for: r, toFile: dest, options: options) { error in
+                    guard error == nil,
+                          let size = (try? FileManager.default.attributesOfItem(atPath: dest.path))?[.size] as? Int
+                    else { then(nil); return }
+                    let mime = UTType(filenameExtension: dest.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
+                    then(ShareFile(name: name, url: dest, size: size, mimeType: mime, liveGroup: groupId))
+                }
+            }
+
+            write(photo) { still in
+                guard var still else { done(nil); return }
+                write(video) { motion in
+                    guard var motion else {
+                        try? FileManager.default.removeItem(at: still.url)
+                        done(nil)
+                        return
+                    }
+                    // One date for both halves: the photo's capture time.
+                    let date = Self.exifCaptureDate(of: still.url).map { Int64($0.timeIntervalSince1970 * 1000) }
+                    still.mtimeMs = date
+                    motion.mtimeMs = date
+                    done([still, motion])
+                }
+            }
         }
     }
 
@@ -509,10 +645,13 @@ class ShareViewModel {
                     // pure-Dart SHA-256 per chunk — its single biggest speed cost
                     // (the ~600 KB/s). Integrity rides on TCP; the main app also
                     // omits sha256 for large files.
-                    fileMetadatas[fid] = [
+                    var meta: [String: Any] = [
                         "id": fid, "fileName": file.name,
                         "size": file.size, "fileType": file.mimeType
                     ]
+                    if let m = file.mtimeMs { meta["mtimeMs"] = m }
+                    if let g = file.liveGroup { meta["liveGroup"] = g }
+                    fileMetadatas[fid] = meta
                 }
 
                 let body: [String: Any] = [
@@ -521,7 +660,11 @@ class ShareViewModel {
                         "version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "2.0",
                         "deviceModel": UIDevice.current.model,
                         "deviceType": "mobile",
-                        "fingerprint": UUID().uuidString,
+                        // The extension's own stable identity: the same
+                        // device on every share, and its X25519 key makes the
+                        // transfer end-to-end encrypted (ShareCrypto.swift).
+                        "fingerprint": identity.fingerprint,
+                        "publicKey": identity.publicKeyBase64,
                         "port": Int(kMainPort),
                         "protocol": "https",
                         "download": false
@@ -549,6 +692,11 @@ class ShareViewModel {
                 }
 
                 let prepareResp = try JSONDecoder().decode(PrepareResp.self, from: data)
+                // The receiver answers with its key when it agreed to E2E; an
+                // older receiver sends none and the files go as before.
+                let sessionKey = prepareResp.publicKey.flatMap {
+                    identity.sessionKey(peerPublicKeyBase64: $0)
+                }
 
                 // Step 2: STREAM each file from disk (`fromFile:` never buffers the
                 // whole file in memory → no jetsam on large files) with byte-level
@@ -566,7 +714,7 @@ class ShareViewModel {
                     // against macOS delayed-ACK — pinned throughput at ~1 MB/s.
                     let query = "sessionId=\(prepareResp.sessionId)&fileId=\(fid)&token=\(token)"
                     var lastEmit = Date.distantPast
-                    try await uploadFile(file, to: device.host, port: device.port, query: query) { [weak self] frac in
+                    try await uploadFile(file, to: device.host, port: device.port, query: query, key: sessionKey) { [weak self] frac in
                         // #2: throttle the main-thread hop to ~10/s — a hop per
                         // socket write would saturate the extension's main thread.
                         let now = Date()
@@ -606,7 +754,8 @@ class ShareViewModel {
     /// on its client sockets; this gives the extension the same. The body is
     /// streamed from disk in 1 MB reads (bounded RAM — jetsam-safe).
     private func uploadFile(_ file: ShareFile, to host: String, port: UInt16,
-                            query: String, onProgress: @escaping (Double) -> Void) async throws {
+                            query: String, key: SymmetricKey?,
+                            onProgress: @escaping (Double) -> Void) async throws {
         let tcp = NWProtocolTCP.Options()
         tcp.noDelay = true // <-- the fix
         let params = NWParameters(tls: nil, tcp: tcp)
@@ -643,21 +792,34 @@ class ShareViewModel {
         let hostHdr = host.contains(":")
             ? "[\(host.split(separator: "%").first.map(String.init) ?? host)]"
             : host
-        let head = "POST /api/v1/upload?\(query) HTTP/1.1\r\n" +
+        // With a session key the body is the framed AES-GCM stream the
+        // receiver expects after `X-Encrypted: chunked`; a new sealer (a new
+        // base nonce) per upload, never reused.
+        let sealer = key.map { ChunkSealer(key: $0) }
+        let length = sealer == nil ? file.size : ChunkSealer.wireLength(plainSize: file.size)
+        var head = "POST /api/v1/upload?\(query) HTTP/1.1\r\n" +
             "Host: \(hostHdr):\(port)\r\n" +
             "Content-Type: application/octet-stream\r\n" +
-            "Content-Length: \(file.size)\r\n" +
-            "Connection: close\r\n\r\n"
+            "Content-Length: \(length)\r\n"
+        if sealer != nil { head += "X-Encrypted: chunked\r\n" }
+        head += "Connection: close\r\n\r\n"
         try await sendAll(conn, Data(head.utf8))
 
-        // Stream the body in 1 MB reads — never buffers the whole file.
+        // Stream the body in 1 MiB reads (the chunk size), never buffering the
+        // whole file.
         let fh = try FileHandle(forReadingFrom: file.url)
         defer { try? fh.close() }
         var sent = 0
+        var index: UInt64 = 0
         while true {
-            let chunk = fh.readData(ofLength: 1 << 20)
+            let chunk = fh.readData(ofLength: ChunkSealer.chunkSize)
             if chunk.isEmpty { break }
-            try await sendAll(conn, chunk)
+            if let sealer {
+                try await sendAll(conn, try sealer.frame(chunk, index: index))
+                index += 1
+            } else {
+                try await sendAll(conn, chunk)
+            }
             sent += chunk.count
             onProgress(file.size > 0 ? Double(sent) / Double(file.size) : 1)
         }
@@ -730,6 +892,9 @@ class ShareViewModel {
 struct PrepareResp: Codable {
     let sessionId: String
     let files: [String: String]
+    /// The receiver's X25519 key, present when it agreed to end-to-end
+    /// encryption for this session.
+    let publicKey: String?
 }
 
 struct ProbeDeviceInfo: Codable {
