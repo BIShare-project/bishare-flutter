@@ -591,7 +591,14 @@
     "name_clash_ask": "毎回確認",
     "name_clash_keep_both_desc": "新しいファイルに番号が付きます（例：IMG_4821 (1).HEIC）",
     "name_clash_replace_desc": "新しいファイルが古いファイルと置き換わります",
-    "name_clash_ask_desc": "名前が重なるとき、受信の確認画面で尋ねます"
+    "name_clash_ask_desc": "名前が重なるとき、受信の確認画面で尋ねます",
+    "type_folders": "種類別フォルダ",
+    "type_folders_on": "写真、動画、書類、アプリをそれぞれ別のフォルダに保存",
+    "type_folders_off": "受信したファイルをすべて1つのフォルダに保存",
+    "sort_by_type": "種類別のフォルダに分ける",
+    "type_folders_hint": "種類をタップすると、専用のフォルダを選べます。",
+    "folder_no_permission": "そこに保存するには、BIShareにすべてのファイルへのアクセスが必要です。",
+    "folder_not_writable": "BIShareはそのフォルダに保存できません。別のフォルダを選んでください。"
   },
   "notification": {
     "clipboard_from": "{sender}からコピーしました",
@@ -636,7 +643,8 @@
     "cat_audio": "オーディオ",
     "cat_documents": "書類",
     "cat_archives": "アーカイブ",
-    "cat_other": "その他"
+    "cat_other": "その他",
+    "cat_apps": "アプリ"
   },
   "onboarding": {
     "perm_continue": "続ける",

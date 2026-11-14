@@ -26,6 +26,7 @@ import 'room_service.dart'
         RoomMemberLeftEvent,
         RoomFileAddedEvent,
         RoomClosedEvent;
+import '../../../core/server/receive_folders.dart';
 
 /// Local (same-Wi-Fi) transfer rooms over Bonjour + HTTP on port 58319 — no
 /// relay/internet. Byte-for-byte compatible with the native `RoomService` local
@@ -594,8 +595,9 @@ class LocalRoomService {
   }
 
   Future<File> _uniquePath(String fileName) async {
-    final dir = _server.saveDirectory;
-    if (!dir.existsSync()) dir.createSync(recursive: true);
+    // The type subfolder (or the folder chosen for the type), like every
+    // other receive path (ReceiveFolders).
+    final dir = ReceiveFolders.dirFor(_server.saveDirectory, fileName, null);
     final safe = fileName.split(RegExp(r'[/\\]')).last.trim();
     final base = safe.isEmpty ? 'file' : safe;
     final dot = base.lastIndexOf('.');

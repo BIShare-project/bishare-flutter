@@ -72,6 +72,8 @@ class Settings extends Equatable {
     this.browserUploadMaxGb = 0,
     this.nameWithSender = false,
     this.nameClash = NameClash.keepBoth,
+    this.sortByType = true,
+    this.typeFolders = const {},
     this.sendLivePhotos = true,
     this.telemetryEnabled = true,
     this.clipboardSync = false,
@@ -126,6 +128,15 @@ class Settings extends Equatable {
   /// A received file whose name is already taken: keep both, replace, ask.
   final NameClash nameClash;
 
+  /// Received files go into a subfolder per type (Images, Videos, …) of the
+  /// save folder. Off: straight into the save folder.
+  final bool sortByType;
+
+  /// A folder the person chose for a type (category name → path), on the
+  /// platforms that can write outside the app. Types not listed use their
+  /// subfolder of the save folder (ReceiveFolders).
+  final Map<String, String> typeFolders;
+
   /// A Live Photo goes as its photo and its motion (two files that an
   /// iPhone or iPad puts back together); off sends the photo only.
   final bool sendLivePhotos;
@@ -169,6 +180,8 @@ class Settings extends Equatable {
     int? browserUploadMaxGb,
     bool? nameWithSender,
     NameClash? nameClash,
+    bool? sortByType,
+    Map<String, String>? typeFolders,
     bool? sendLivePhotos,
     bool? telemetryEnabled,
     bool? clipboardSync,
@@ -193,6 +206,8 @@ class Settings extends Equatable {
     browserUploadMaxGb: browserUploadMaxGb ?? this.browserUploadMaxGb,
     nameWithSender: nameWithSender ?? this.nameWithSender,
     nameClash: nameClash ?? this.nameClash,
+    sortByType: sortByType ?? this.sortByType,
+    typeFolders: typeFolders ?? this.typeFolders,
     sendLivePhotos: sendLivePhotos ?? this.sendLivePhotos,
     telemetryEnabled: telemetryEnabled ?? this.telemetryEnabled,
     clipboardSync: clipboardSync ?? this.clipboardSync,
@@ -220,6 +235,8 @@ class Settings extends Equatable {
     browserUploadMaxGb,
     nameWithSender,
     nameClash,
+    sortByType,
+    typeFolders,
     sendLivePhotos,
     telemetryEnabled,
     clipboardSync,

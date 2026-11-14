@@ -13,6 +13,7 @@ import '../../history/data/history_repository.dart';
 import '../domain/room_models.dart';
 import 'room_service.dart' show RoomEvent, RoomMemberJoinedEvent, RoomMemberLeftEvent, RoomFileAddedEvent, RoomUploadStartEvent, RoomUploadDoneEvent;
 import 'webrtc_signaling.dart';
+import '../../../core/server/receive_folders.dart';
 
 const _emojis = ['🦊', '🐼', '🐧', '🦉', '🐙', '🦜', '🐳', '🦄', '🐝', '🦩'];
 const _chunkSize = 256 * 1024;
@@ -423,8 +424,9 @@ class WebrtcRoomService {
   }
 
   Future<File> _uniquePath(String fileName) async {
-    final dir = _server.saveDirectory;
-    if (!dir.existsSync()) dir.createSync(recursive: true);
+    // The type subfolder (or the folder chosen for the type), like every
+    // other receive path (ReceiveFolders).
+    final dir = ReceiveFolders.dirFor(_server.saveDirectory, fileName, null);
     // dir.path, NOT '$dir' — interpolating the Directory object bakes
     // "Directory: '/…'" into the path, so every received room file was written
     // to a garbage location (and downstream consumers crashed opening it).

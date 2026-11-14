@@ -16,6 +16,7 @@ import '../../../core/server/transfer_types.dart';
 import '../../history/data/history_repository.dart';
 import 'binary_frame.dart';
 import 'cloud_transfer_service.dart' show ProgressCb, CloudDownloadException;
+import '../../../core/server/receive_folders.dart';
 
 /// Events surfaced while sending over the stream relay (drives the sender UI).
 sealed class StreamSendEvent {
@@ -398,8 +399,9 @@ class StreamRelayService {
   }
 
   Future<File> _uniquePath(String fileName) async {
-    final dir = _server.saveDirectory;
-    if (!dir.existsSync()) dir.createSync(recursive: true);
+    // The type subfolder (or the folder chosen for the type), like every
+    // other receive path (ReceiveFolders).
+    final dir = ReceiveFolders.dirFor(_server.saveDirectory, fileName, null);
     final safe = fileName.split(RegExp(r'[/\\]')).last.trim();
     final base = safe.isEmpty ? 'file' : safe;
     final dot = base.lastIndexOf('.');

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import '../protocol/file_metadata.dart';
 import '../rust/rust_facade.dart';
+import 'receive_folders.dart';
 
 /// Decides where an incoming file is saved and under what name — parity with the
 /// native receiver's `FileCategorizer` + `SmartNaming` (both reused via Rust FFI):
@@ -27,16 +28,17 @@ class ReceiveNaming {
     bool replace = false,
     Set<String>? claimed,
   }) {
-    final category = Rust.categoryName(meta.fileType); // Images/Videos/…
     final base = unwrapPhotoExport(Rust.sanitizeFilename(meta.fileName));
+    // Images/Videos/…, or the folder the person chose for the type, or the
+    // save folder itself when sorting by type is off (ReceiveFolders).
+    final category = ReceiveFolders.categoryOf(base, meta.fileType);
     final name = _isJunkName(_stem(base))
         ? _friendlyName(category, _ext(base), senderAlias)
         : addSender
         ? Rust.smartName(base, senderAlias)
         : base;
 
-    final dir = Directory('${saveDir.path}${Platform.pathSeparator}$category');
-    if (!dir.existsSync()) dir.createSync(recursive: true);
+    final dir = ReceiveFolders.dirFor(saveDir, base, meta.fileType);
     return replace ? _replacing(dir, name, claimed) : _deduped(dir, name);
   }
 
@@ -48,12 +50,11 @@ class ReceiveNaming {
     String senderAlias, {
     bool addSender = false,
   }) {
-    final category = Rust.categoryName(meta.fileType);
     final base = unwrapPhotoExport(Rust.sanitizeFilename(meta.fileName));
     if (_isJunkName(_stem(base))) return false; // always a fresh name
     final name = addSender ? Rust.smartName(base, senderAlias) : base;
-    final sep = Platform.pathSeparator;
-    return File('${saveDir.path}$sep$category$sep$name').existsSync();
+    final dir = ReceiveFolders.dirFor(saveDir, base, meta.fileType);
+    return File('${dir.path}${Platform.pathSeparator}$name').existsSync();
   }
 
   /// The plain name, over a file already there. A file of the same name from
@@ -105,6 +106,7 @@ class ReceiveNaming {
       'Videos' => 'Video',
       'Documents' => 'Document',
       'Archives' => 'Archive',
+      'Apps' => 'App',
       _ => 'File',
     };
     final safeSender = sender

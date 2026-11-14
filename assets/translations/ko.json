@@ -591,7 +591,14 @@
     "name_clash_ask": "매번 묻기",
     "name_clash_keep_both_desc": "새 파일에 번호가 붙습니다(예: IMG_4821 (1).HEIC)",
     "name_clash_replace_desc": "새 파일이 기존 파일을 대체합니다",
-    "name_clash_ask_desc": "이름이 겹치면 수락 화면에서 묻습니다"
+    "name_clash_ask_desc": "이름이 겹치면 수락 화면에서 묻습니다",
+    "type_folders": "종류별 폴더",
+    "type_folders_on": "사진, 동영상, 문서, 앱을 각각의 폴더에 저장",
+    "type_folders_off": "받은 파일을 모두 한 폴더에 저장",
+    "sort_by_type": "종류별 폴더로 정리",
+    "type_folders_hint": "종류를 누르면 전용 폴더를 고를 수 있습니다.",
+    "folder_no_permission": "거기에 저장하려면 BIShare에 모든 파일 접근 권한이 필요합니다.",
+    "folder_not_writable": "BIShare가 그 폴더에 저장할 수 없습니다. 다른 폴더를 고르세요."
   },
   "notification": {
     "clipboard_from": "{sender}에서 복사됨",
@@ -636,7 +643,8 @@
     "cat_audio": "오디오",
     "cat_documents": "문서",
     "cat_archives": "압축 파일",
-    "cat_other": "기타"
+    "cat_other": "기타",
+    "cat_apps": "앱"
   },
   "onboarding": {
     "perm_continue": "계속",

@@ -591,7 +591,14 @@
     "name_clash_ask": "每次詢問",
     "name_clash_keep_both_desc": "新檔案會加上編號，例如 IMG_4821 (1).HEIC",
     "name_clash_replace_desc": "新檔案取代舊檔案",
-    "name_clash_ask_desc": "名稱重複時，在接收確認中詢問"
+    "name_clash_ask_desc": "名稱重複時，在接收確認中詢問",
+    "type_folders": "依類型分資料夾",
+    "type_folders_on": "照片、影片、文件和 App 各存一個資料夾",
+    "type_folders_off": "收到的所有檔案都存在一個資料夾",
+    "sort_by_type": "依類型存到不同資料夾",
+    "type_folders_hint": "點一下某個類型即可為它選擇專屬資料夾。",
+    "folder_no_permission": "BIShare 需要「所有檔案存取權」才能存到那裡。",
+    "folder_not_writable": "BIShare 無法存到該資料夾，請選擇其他資料夾。"
   },
   "notification": {
     "clipboard_from": "從 {sender} 複製",
@@ -636,7 +643,8 @@
     "cat_audio": "音訊",
     "cat_documents": "文件",
     "cat_archives": "壓縮檔",
-    "cat_other": "其他"
+    "cat_other": "其他",
+    "cat_apps": "App"
   },
   "onboarding": {
     "perm_continue": "繼續",

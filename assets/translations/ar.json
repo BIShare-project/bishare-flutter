@@ -603,7 +603,14 @@
     "name_clash_ask": "السؤال في كل مرة",
     "name_clash_keep_both_desc": "يحصل الملف الجديد على رقم، مثل IMG_4821 (1).HEIC",
     "name_clash_replace_desc": "يحل الملف الجديد محل القديم",
-    "name_clash_ask_desc": "تسألك نافذة القبول عندما يكون الاسم مستخدمًا"
+    "name_clash_ask_desc": "تسألك نافذة القبول عندما يكون الاسم مستخدمًا",
+    "type_folders": "مجلدات حسب النوع",
+    "type_folders_on": "الصور والفيديو والمستندات والتطبيقات كلٌّ في مجلده",
+    "type_folders_off": "كل الملفات المستلمة في مجلد واحد",
+    "sort_by_type": "فرز في مجلدات حسب النوع",
+    "type_folders_hint": "اضغط على نوع لتختار له مجلدًا خاصًا.",
+    "folder_no_permission": "يحتاج BIShare إلى الوصول إلى كل الملفات ليحفظ هناك.",
+    "folder_not_writable": "لا يستطيع BIShare الحفظ في هذا المجلد. اختر مجلدًا آخر."
   },
   "notification": {
     "clipboard_from": "تم النسخ من {sender}",
@@ -648,7 +655,8 @@
     "cat_audio": "الصوت",
     "cat_documents": "المستندات",
     "cat_archives": "الأرشيفات",
-    "cat_other": "أخرى"
+    "cat_other": "أخرى",
+    "cat_apps": "التطبيقات"
   },
   "onboarding": {
     "perm_continue": "متابعة",

@@ -599,7 +599,14 @@
     "name_clash_ask": "Спрашивать каждый раз",
     "name_clash_keep_both_desc": "Новый файл получает номер, например IMG_4821 (1).HEIC",
     "name_clash_replace_desc": "Новый файл заменяет старый",
-    "name_clash_ask_desc": "Окно приёма спрашивает, когда имя занято"
+    "name_clash_ask_desc": "Окно приёма спрашивает, когда имя занято",
+    "type_folders": "Папки по типу",
+    "type_folders_on": "Фото, видео, документы и приложения раскладываются по своим папкам",
+    "type_folders_off": "Все полученные файлы попадают в одну папку",
+    "sort_by_type": "Раскладывать по папкам по типу",
+    "type_folders_hint": "Нажмите на тип, чтобы выбрать для него папку.",
+    "folder_no_permission": "Чтобы сохранять туда, BIShare нужен доступ ко всем файлам.",
+    "folder_not_writable": "BIShare не может сохранять в эту папку. Выберите другую."
   },
   "notification": {
     "clipboard_from": "Скопировано с {sender}",
@@ -644,7 +651,8 @@
     "cat_audio": "Аудио",
     "cat_documents": "Документы",
     "cat_archives": "Архивы",
-    "cat_other": "Другое"
+    "cat_other": "Другое",
+    "cat_apps": "Приложения"
   },
   "onboarding": {
     "perm_continue": "Продолжить",

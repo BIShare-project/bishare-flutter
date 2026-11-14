@@ -13,6 +13,7 @@ import '../domain/settings.dart' as s;
 import '../../vault/presentation/vault_section.dart';
 import 'settings_cubit.dart';
 import 'settings_widgets.dart';
+import 'type_folders_sheet.dart';
 
 /// Settings tab (redesign-plan.md "Pengaturan"), in the order the settings
 /// are used: this device, Receiving, Sending, Drive, Devices and sync,
@@ -148,6 +149,17 @@ class SettingsPage extends StatelessWidget {
           ? 'settings.save_default'.tr()
           : _tidySaveDir(state.resolvedSaveDir),
       onTap: () => _pickSaveLocation(context, cubit),
+    ),
+    _divider,
+    AppValueRow(
+      icon: AppIcons.folderOpen,
+      title: 'settings.type_folders'.tr(),
+      subtitle:
+          (state.sortByType
+                  ? 'settings.type_folders_on'
+                  : 'settings.type_folders_off')
+              .tr(),
+      onTap: () => showTypeFoldersSheet(context, cubit),
     ),
     _divider,
     AppSwitchRow(
@@ -392,7 +404,7 @@ class SettingsPage extends StatelessWidget {
               label: 'settings.choose_folder'.tr(),
               onTap: () => Navigator.pop(ctx, 'choose'),
             ),
-          if (canPick)
+          if (canPick && cubit.canRevealSaveFolder)
             AppSheetAction(
               icon: AppIcons.externalLink,
               label: 'settings.open_folder'.tr(),
@@ -410,7 +422,8 @@ class SettingsPage extends StatelessWidget {
       case 'default':
         await cubit.setSaveLocation('');
       case 'choose':
-        await cubit.pickSaveLocation();
+        final result = await cubit.pickSaveLocation();
+        if (context.mounted) showFolderResult(context, result);
       case 'reveal':
         await cubit.revealSaveLocation();
     }

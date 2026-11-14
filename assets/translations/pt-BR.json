@@ -591,7 +591,14 @@
     "name_clash_ask": "Perguntar sempre",
     "name_clash_keep_both_desc": "O novo arquivo recebe um número, como IMG_4821 (1).HEIC",
     "name_clash_replace_desc": "O novo arquivo substitui o antigo",
-    "name_clash_ask_desc": "O aviso de aceitação pergunta quando um nome já existe"
+    "name_clash_ask_desc": "O aviso de aceitação pergunta quando um nome já existe",
+    "type_folders": "Pastas por tipo",
+    "type_folders_on": "Fotos, vídeos, documentos e apps vão cada um para a sua pasta",
+    "type_folders_off": "Todos os arquivos recebidos vão para uma pasta só",
+    "sort_by_type": "Separar em pastas por tipo",
+    "type_folders_hint": "Toque em um tipo para escolher a pasta dele.",
+    "folder_no_permission": "O BIShare precisa de acesso a todos os arquivos para salvar ali.",
+    "folder_not_writable": "O BIShare não consegue salvar nessa pasta. Escolha outra."
   },
   "notification": {
     "clipboard_from": "Copiado de {sender}",
@@ -636,7 +643,8 @@
     "cat_audio": "Áudio",
     "cat_documents": "Documentos",
     "cat_archives": "Arquivos compactados",
-    "cat_other": "Outros"
+    "cat_other": "Outros",
+    "cat_apps": "Apps"
   },
   "onboarding": {
     "perm_continue": "Continuar",

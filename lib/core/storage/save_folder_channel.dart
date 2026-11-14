@@ -11,7 +11,9 @@ import 'package:url_launcher/url_launcher.dart';
 ///   restarts. [restore] re-establishes that access at startup.
 /// * **Windows / Linux** (no sandbox): file_picker's directory picker; the plain
 ///   path persists directly.
-/// * **iOS / Android**: not offered — the app saves to its Documents dir.
+/// * **Android**: file_picker's directory picker. Writing there needs All
+///   files access (MANAGE_EXTERNAL_STORAGE), which the caller asks for first.
+/// * **iOS**: not offered — the app saves to its Documents dir.
 class SaveFolderChannel {
   const SaveFolderChannel._();
 
@@ -19,7 +21,35 @@ class SaveFolderChannel {
 
   /// Whether a custom save folder can be chosen on this platform.
   static bool get isSupported =>
+      Platform.isMacOS ||
+      Platform.isWindows ||
+      Platform.isLinux ||
+      Platform.isAndroid;
+
+  /// Whether the save folder can be opened in a file browser from the app
+  /// (desktops; Android has no file:// hand-off to the Files app).
+  static bool get canReveal =>
       Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+
+  /// Whether a folder can be chosen per file type. Not on macOS, where each
+  /// folder would need its own security-scoped bookmark, nor on iOS.
+  static bool get supportsTypeFolders =>
+      Platform.isWindows || Platform.isLinux || Platform.isAndroid;
+
+  /// True if a file can be created in [path] (a picked folder can be
+  /// read-only, or on storage the app may not write to).
+  static bool isWritable(String path) {
+    try {
+      final probe = File(
+        '$path${Platform.pathSeparator}.bishare-write-test-${DateTime.now().microsecondsSinceEpoch}',
+      );
+      probe.writeAsStringSync('');
+      probe.deleteSync();
+      return true;
+    } on FileSystemException {
+      return false;
+    }
+  }
 
   /// The received-files directory for a user-CHOSEN base folder: always a
   /// `BIShare/` subfolder of it, created if missing. Received files never land
@@ -65,6 +95,7 @@ class SaveFolderChannel {
         return null;
       }
     }
+    if (Platform.isAndroid) return FilePicker.getDirectoryPath();
     if (Platform.isWindows || Platform.isLinux) {
       return FilePicker.getDirectoryPath(
         dialogTitle: 'Choose where BIShare saves received files',

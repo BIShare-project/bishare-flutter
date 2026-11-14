@@ -1,0 +1,172 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSLocalNetworkUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يعثر BIShare على الأجهزة القريبة وينقل الملفات عبر شبكتك المحلية."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare findet Geräte in der Nähe und überträgt Dateien über dein lokales Netzwerk."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare needs local network access to discover and send files to nearby devices."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare encuentra dispositivos cercanos y transfiere archivos por tu red local."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare trouve les appareils à proximité et transfère les fichiers sur votre réseau local."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare आस-पास के डिवाइस ढूँढता है और आपके लोकल नेटवर्क पर फ़ाइलें भेजता है।"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare menemukan perangkat terdekat dan mengirim file lewat jaringan lokal Anda."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShareは近くのデバイスを見つけ、ローカルネットワーク経由でファイルを転送します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare는 주변 기기를 찾고 로컬 네트워크로 파일을 전송합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O BIShare encontra dispositivos próximos e transfere arquivos pela sua rede local."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare находит устройства рядом и передаёт файлы по вашей локальной сети."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare 通过本地网络查找附近的设备并传输文件。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare 透過區域網路尋找附近的裝置並傳輸檔案。"
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يقرأ BIShare صورة Live Photo التي تشاركها ليرسل الصورة وحركتها معًا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare liest das geteilte Live Photo, um Foto und Bewegung zusammen zu senden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare reads the Live Photo you share so it can send the photo and its motion together."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare lee la Live Photo que compartes para enviar la foto y su movimiento juntos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare lit la Live Photo que vous partagez pour envoyer la photo et son mouvement ensemble."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare आपकी शेयर की गई Live Photo पढ़ता है ताकि फ़ोटो और उसकी हलचल साथ भेज सके।"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare membaca Live Photo yang Anda bagikan agar foto dan gerakannya terkirim bersama."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShareは共有されたLive Photosを読み込み、写真と動きを一緒に送信します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare는 공유한 Live Photo를 읽어 사진과 움직임을 함께 보냅니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O BIShare lê a Live Photo que você compartilha para enviar a foto e o movimento juntos."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare читает Live Photo, которым вы делитесь, чтобы отправить фото вместе с движением."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare 会读取你共享的实况照片，以便把照片和动态一起发送。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIShare 會讀取你分享的原況照片，以便把照片和動態一起傳送。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

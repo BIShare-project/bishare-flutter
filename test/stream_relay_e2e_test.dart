@@ -291,9 +291,14 @@ void main() {
         reason: 'every record authenticated by its GCM tag',
       );
       expect(got.fileName, 'clip.mp4');
+      // Received files are sorted by type (ReceiveFolders): the clip is in
+      // Videos/, and nothing else was left anywhere in the save folder.
       expect(
-        saveDir.listSync().map((e) => e.path.split('/').last),
-        ['clip.mp4'],
+        saveDir
+            .listSync(recursive: true)
+            .whereType<File>()
+            .map((e) => e.path.substring(saveDir.path.length + 1)),
+        ['Videos/clip.mp4'],
         reason: 'no ciphertext scratch left beside the file',
       );
 
@@ -329,7 +334,7 @@ void main() {
         ),
       );
       expect(
-        saveDir.listSync(),
+        saveDir.listSync(recursive: true).whereType<File>(),
         isEmpty,
         reason: 'the reserved target must be removed',
       );

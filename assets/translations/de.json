@@ -591,7 +591,14 @@
     "name_clash_ask": "Jedes Mal fragen",
     "name_clash_keep_both_desc": "Die neue Datei bekommt eine Nummer, z. B. IMG_4821 (1).HEIC",
     "name_clash_replace_desc": "Die neue Datei ersetzt die alte",
-    "name_clash_ask_desc": "Die Annahme-Abfrage fragt, wenn ein Name vergeben ist"
+    "name_clash_ask_desc": "Die Annahme-Abfrage fragt, wenn ein Name vergeben ist",
+    "type_folders": "Ordner nach Typ",
+    "type_folders_on": "Fotos, Videos, Dokumente und Apps landen jeweils in einem eigenen Ordner",
+    "type_folders_off": "Alle empfangenen Dateien landen in einem Ordner",
+    "sort_by_type": "Nach Typ in Ordner sortieren",
+    "type_folders_hint": "Tippe auf einen Typ, um einen eigenen Ordner zu wählen.",
+    "folder_no_permission": "BIShare braucht den Zugriff auf alle Dateien, um dort zu speichern.",
+    "folder_not_writable": "BIShare kann in diesem Ordner nicht speichern. Wähle einen anderen."
   },
   "notification": {
     "clipboard_from": "Kopiert von {sender}",
@@ -636,7 +643,8 @@
     "cat_audio": "Audio",
     "cat_documents": "Dokumente",
     "cat_archives": "Archive",
-    "cat_other": "Sonstige"
+    "cat_other": "Sonstige",
+    "cat_apps": "Apps"
   },
   "onboarding": {
     "perm_continue": "Weiter",

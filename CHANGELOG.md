@@ -5,6 +5,21 @@ All notable changes to BIShare are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- **Folders by type, your way.** Settings → Folders by type sorts received
+  files into Images, Videos, Audio, Documents, Apps, Archives and Other (as
+  before), or keeps them all together; on Android, Windows and Linux each type
+  can go to a folder of your choice. Apps (APK, EXE, DMG…) now get their own
+  folder, and Word, Excel and PowerPoint files go to Documents.
+- **Choose the save folder on Android** (with All files access), as on
+  computers.
+
+### Changed
+- Files received in rooms, by link, from a browser and over the stream relay
+  are sorted by type too, like direct transfers.
+- The share extension's screens and permission prompts are in all 13
+  languages.
+
 ### Fixed
 - **Sharing from the Photos app keeps the original file.** Share → BIShare
   in Photos (the share extension) now asks iOS for the photo or video as it

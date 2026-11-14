@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../core/server/receive_folders.dart';
 import '../../../core/storage/app_database.dart';
 import '../domain/managed_file.dart';
 
@@ -12,14 +13,7 @@ import '../domain/managed_file.dart';
 class FileScanner {
   FileScanner._();
 
-  static const _known = {
-    'Images',
-    'Videos',
-    'Audio',
-    'Documents',
-    'Archives',
-    'Other',
-  };
+  static final _known = ReceiveFolders.categories.toSet();
 
   static Future<List<ManagedFile>> scan(
     Directory dir,
@@ -31,8 +25,26 @@ class FileScanner {
         if (r.savedPath != null) r.savedPath!: r,
     };
     final out = <ManagedFile>[];
-    for (final entity in dir.listSync(recursive: true, followLinks: false)) {
+    // Folders chosen for a type can sit outside the save folder; list them too
+    // (once, if one is inside another).
+    final roots = <Directory>[dir];
+    for (final d in ReceiveFolders.customDirs()) {
+      if (!d.existsSync()) continue;
+      final inside = roots.any(
+        (r) => p.isWithin(r.path, d.path) || p.equals(r.path, d.path),
+      );
+      if (!inside) roots.add(d);
+    }
+    final entities = [
+      for (final (i, r) in roots.indexed)
+        for (final e in r.listSync(recursive: true, followLinks: false))
+          (e, i > 0),
+    ];
+    for (final (entity, chosenFolder) in entities) {
       if (entity is! File) continue;
+      // A folder chosen for a type may hold the person's other files (a
+      // camera folder, say): from there, only what BIShare received.
+      if (chosenFolder && !byPath.containsKey(entity.path)) continue;
       final name = p.basename(entity.path);
       if (name.startsWith('.')) continue; // skip .<uuid>.part temp files
       final FileStat st;
@@ -60,26 +72,17 @@ class FileScanner {
     return out;
   }
 
-  /// Prefer the category subfolder the receiver saved into; else derive from the
-  /// MIME/extension.
+  /// Prefer the category subfolder the receiver saved into; else the type
+  /// the receiver would give it (ReceiveFolders, the same rule).
   static String _category(String path, String name, String? mime) {
     final parent = p.basename(p.dirname(path));
     if (_known.contains(parent)) return parent;
-    final m = mime ?? lookupMimeType(name) ?? '';
-    if (m.startsWith('image/')) return 'Images';
-    if (m.startsWith('video/')) return 'Videos';
-    if (m.startsWith('audio/')) return 'Audio';
-    if (m.startsWith('text/') ||
-        m.contains('pdf') ||
-        m.contains('word') ||
-        m.contains('document')) {
-      return 'Documents';
+    for (final c in ReceiveFolders.categories) {
+      final chosen = ReceiveFolders.custom[c];
+      if (chosen != null && chosen.isNotEmpty && p.isWithin(chosen, path)) {
+        return c;
+      }
     }
-    if (m.contains('zip') ||
-        m.contains('archive') ||
-        m.contains('compressed')) {
-      return 'Archives';
-    }
-    return 'Other';
+    return ReceiveFolders.categoryOf(name, mime);
   }
 }

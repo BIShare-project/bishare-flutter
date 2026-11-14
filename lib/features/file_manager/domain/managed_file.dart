@@ -63,5 +63,6 @@ String categoryLabel(String category) => switch (category) {
   'Audio' => 'files.cat_audio'.tr(),
   'Documents' => 'files.cat_documents'.tr(),
   'Archives' => 'files.cat_archives'.tr(),
+  'Apps' => 'files.cat_apps'.tr(),
   _ => 'files.cat_other'.tr(),
 };

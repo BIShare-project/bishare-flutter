@@ -16,6 +16,7 @@ class StorageBar extends StatelessWidget {
     ('Videos', Color(0xFFBF5AF2)),
     ('Audio', Color(0xFFFF375F)),
     ('Documents', Color(0xFFFF9F0A)),
+    ('Apps', Color(0xFF64D2FF)),
     ('Archives', Color(0xFF30D158)),
     ('Other', Color(0xFF8E8E93)),
   ];

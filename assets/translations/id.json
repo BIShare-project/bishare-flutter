@@ -553,7 +553,7 @@
     "receiving": "Menerima",
     "require_pin": "Minta PIN",
     "save": "Simpan",
-    "save_default": "Default (Documents/BIShare)",
+    "save_default": "Bawaan (Dokumen/BIShare)",
     "save_location": "Lokasi penyimpanan",
     "save_location_subtitle": "Di mana file yang diterima disimpan.",
     "name_with_sender": "Tambahkan tanggal dan pengirim ke nama file",
@@ -591,7 +591,14 @@
     "name_clash_ask": "Tanya setiap kali",
     "name_clash_keep_both_desc": "File baru diberi nomor, misalnya IMG_4821 (1).HEIC",
     "name_clash_replace_desc": "File baru menggantikan file lama",
-    "name_clash_ask_desc": "Prompt terima menanyakan saat nama sudah dipakai"
+    "name_clash_ask_desc": "Prompt terima menanyakan saat nama sudah dipakai",
+    "type_folders": "Folder per jenis",
+    "type_folders_on": "Foto, video, dokumen, dan aplikasi masing-masing di foldernya sendiri",
+    "type_folders_off": "Semua file yang diterima masuk ke satu folder",
+    "sort_by_type": "Pisahkan ke folder per jenis",
+    "type_folders_hint": "Ketuk satu jenis untuk memilih foldernya sendiri.",
+    "folder_no_permission": "BIShare butuh akses semua file untuk menyimpan di sana.",
+    "folder_not_writable": "BIShare tidak bisa menyimpan ke folder itu. Pilih folder lain."
   },
   "notification": {
     "clipboard_from": "Disalin dari {sender}",
@@ -636,7 +643,8 @@
     "cat_audio": "Audio",
     "cat_documents": "Dokumen",
     "cat_archives": "Arsip",
-    "cat_other": "Lainnya"
+    "cat_other": "Lainnya",
+    "cat_apps": "Aplikasi"
   },
   "onboarding": {
     "perm_continue": "Lanjutkan",

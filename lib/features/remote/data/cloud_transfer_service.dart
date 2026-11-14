@@ -12,6 +12,7 @@ import '../../../core/network/header_text.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/server/transfer_types.dart';
 import '../../history/data/history_repository.dart';
+import '../../../core/server/receive_folders.dart';
 
 typedef ProgressCb = void Function(int received, int total);
 
@@ -668,8 +669,9 @@ class CloudTransferService {
   /// name is **reserved immediately** (a zero-byte placeholder) so two
   /// concurrent downloads can never resolve to the same path (TOCTOU-safe).
   Future<File> _target(String fileName) async {
-    final dir = _server.saveDirectory;
-    if (!dir.existsSync()) dir.createSync(recursive: true);
+    // The type subfolder (or the folder chosen for the type), like every
+    // other receive path (ReceiveFolders).
+    final dir = ReceiveFolders.dirFor(_server.saveDirectory, fileName, null);
     final safe = _sanitize(fileName);
     final dot = safe.lastIndexOf('.');
     final stem = dot > 0 ? safe.substring(0, dot) : safe;

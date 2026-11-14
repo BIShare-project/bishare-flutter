@@ -21,6 +21,7 @@ import '../../../core/server/transfer_types.dart';
 import '../../history/data/history_repository.dart';
 import '../domain/room_models.dart';
 import 'room_e2e.dart';
+import '../../../core/server/receive_folders.dart';
 
 /// A live room event pushed over the WebSocket (presence + broadcasts).
 sealed class RoomEvent {
@@ -771,8 +772,9 @@ class RoomService {
   }
 
   Future<File> _uniquePath(String fileName) async {
-    final dir = _server.saveDirectory;
-    if (!dir.existsSync()) dir.createSync(recursive: true);
+    // The type subfolder (or the folder chosen for the type), like every
+    // other receive path (ReceiveFolders).
+    final dir = ReceiveFolders.dirFor(_server.saveDirectory, fileName, null);
     final safe = fileName.split(RegExp(r'[/\\]')).last.trim();
     final base = safe.isEmpty ? 'file' : safe;
     final dot = base.lastIndexOf('.');

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import '../../../core/di/locator.dart';
 import '../../../core/storage/app_database.dart';
@@ -7,8 +8,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/identity/device_identity.dart';
+import '../../../core/server/receive_folders.dart';
 import '../../../core/server/transfer_server.dart';
 import '../../../core/server/transfer_types.dart';
+import '../../../core/storage/all_files_access.dart';
 import '../../../core/storage/save_folder_channel.dart';
 import '../../clipboard/data/clipboard_service.dart';
 import '../../discovery/data/discovery_service.dart';
@@ -57,6 +60,8 @@ class SettingsCubit extends Cubit<Settings> {
   static const _kBrowserUploadMaxGb = 'browserUploadMaxGb';
   static const _kNameWithSender = 'nameWithSender';
   static const _kNameClash = 'nameClash';
+  static const _kSortByType = 'sortByType';
+  static const _kTypeFolders = 'typeFolders';
   static const kSendLivePhotos = 'sendLivePhotos';
   static const _kTelemetry = 'telemetryEnabled';
   static const _kClipboardSync = 'clipboardSync';
@@ -92,6 +97,8 @@ class SettingsCubit extends Cubit<Settings> {
     nameClash:
         NameClash.values.asNameMap()[p.getString(_kNameClash)] ??
         NameClash.keepBoth,
+    sortByType: p.getBool(_kSortByType) ?? true,
+    typeFolders: _decodeTypeFolders(p.getString(_kTypeFolders)),
     sendLivePhotos: p.getBool(kSendLivePhotos) ?? true,
     telemetryEnabled: p.getBool(_kTelemetry) ?? true,
     clipboardSync: p.getBool(_kClipboardSync) ?? false,
@@ -110,13 +117,23 @@ class SettingsCubit extends Cubit<Settings> {
     _server.browserUploadMaxBytes = s.browserUploadMaxGb * 1024 * 1024 * 1024;
     _server.nameWithSender = s.nameWithSender;
     _server.nameClash = s.nameClash;
+    ReceiveFolders.sortByType = s.sortByType;
+    ReceiveFolders.custom = SaveFolderChannel.supportsTypeFolders
+        ? s.typeFolders
+        : const {};
     _discovery.setAdvertising(s.visibility == Visibility.everyone);
     // On macOS the save dir is resolved at startup via the security-scoped
     // bookmark (see _resolveSaveDirectory) — re-applying the bare prefs path here
     // would point at a folder we no longer hold write access to.
     if (!Platform.isMacOS && s.saveLocation.isNotEmpty) {
-      // Files go into a BIShare/ subfolder of the chosen folder (not loose in it).
-      _server.saveDirectory = SaveFolderChannel.bishareSubdir(s.saveLocation);
+      // Files go into a BIShare/ subfolder of the chosen folder (not loose in
+      // it). On Android the folder is only usable while All files access is
+      // granted; if it was revoked, keep the default rather than fail every
+      // transfer.
+      final dir = SaveFolderChannel.bishareSubdir(s.saveLocation);
+      if (!Platform.isAndroid || SaveFolderChannel.isWritable(dir.path)) {
+        _server.saveDirectory = dir;
+      }
     }
     _clipboard
       ..configure(
@@ -193,6 +210,59 @@ class SettingsCubit extends Cubit<Settings> {
     await _prefs.setString(_kNameClash, mode.name);
     _server.nameClash = mode;
     emit(state.copyWith(nameClash: mode));
+  }
+
+  /// Sort received files into a subfolder per type, or keep them together.
+  Future<void> setSortByType(bool on) async {
+    await _prefs.setBool(_kSortByType, on);
+    ReceiveFolders.sortByType = on;
+    emit(state.copyWith(sortByType: on));
+  }
+
+  /// Let the person choose the folder for files of [category]. The result
+  /// says what happened (cancelled, no permission, a folder the app cannot
+  /// write to), so the page can tell them why nothing changed.
+  Future<TypeFolderResult> pickTypeFolder(String category) async {
+    if (!SaveFolderChannel.supportsTypeFolders) {
+      return TypeFolderResult.unsupported;
+    }
+    if (AllFilesAccess.applies && !await AllFilesAccess.request()) {
+      return TypeFolderResult.noPermission;
+    }
+    final path = await SaveFolderChannel.pick();
+    if (path == null || path.isEmpty) return TypeFolderResult.cancelled;
+    if (!SaveFolderChannel.isWritable(path)) {
+      return TypeFolderResult.notWritable;
+    }
+    await _setTypeFolders({...state.typeFolders, category: path});
+    return TypeFolderResult.changed;
+  }
+
+  /// Files of [category] go back to their subfolder of the save folder.
+  Future<void> resetTypeFolder(String category) =>
+      _setTypeFolders({...state.typeFolders}..remove(category));
+
+  Future<void> _setTypeFolders(Map<String, String> folders) async {
+    await _prefs.setString(_kTypeFolders, jsonEncode(folders));
+    ReceiveFolders.custom = folders;
+    emit(state.copyWith(typeFolders: folders));
+  }
+
+  static Map<String, String> _decodeTypeFolders(String? raw) {
+    if (raw == null || raw.isEmpty) return const {};
+    try {
+      final m = jsonDecode(raw);
+      if (m is! Map) return const {};
+      return {
+        for (final e in m.entries)
+          if (e.key is String &&
+              e.value is String &&
+              ReceiveFolders.categories.contains(e.key))
+            e.key as String: e.value as String,
+      };
+    } on FormatException {
+      return const {};
+    }
   }
 
   Future<void> setSendLivePhotos(bool on) async {
@@ -294,13 +364,36 @@ class SettingsCubit extends Cubit<Settings> {
 
   /// Prompt the user for a save folder. On macOS this also persists a
   /// security-scoped bookmark so access survives restarts.
-  Future<void> pickSaveLocation() async {
+  Future<TypeFolderResult> pickSaveLocation() async {
+    // Android writes outside Downloads only with All files access.
+    if (AllFilesAccess.applies && !await AllFilesAccess.request()) {
+      return TypeFolderResult.noPermission;
+    }
     final path = await SaveFolderChannel.pick();
-    if (path == null || path.isEmpty) return;
+    if (path == null || path.isEmpty) return TypeFolderResult.cancelled;
+    if (!SaveFolderChannel.isWritable(path)) {
+      return TypeFolderResult.notWritable;
+    }
     await setSaveLocation(path);
+    return TypeFolderResult.changed;
   }
+
+  /// Whether the save folder can be opened in a file browser from here.
+  bool get canRevealSaveFolder => SaveFolderChannel.canReveal;
+
+  /// Whether a folder can be chosen per file type on this platform.
+  bool get canPickTypeFolders => SaveFolderChannel.supportsTypeFolders;
 
   /// Open the current save folder in the system file browser.
   Future<void> revealSaveLocation() =>
       SaveFolderChannel.reveal(_server.saveDirectory.path);
+}
+
+/// What came of choosing a folder.
+enum TypeFolderResult {
+  changed,
+  cancelled,
+  noPermission,
+  notWritable,
+  unsupported,
 }

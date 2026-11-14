@@ -591,7 +591,14 @@
     "name_clash_ask": "Ask each time",
     "name_clash_keep_both_desc": "The new file gets a number, like IMG_4821 (1).HEIC",
     "name_clash_replace_desc": "The new file takes the place of the old one",
-    "name_clash_ask_desc": "The accept prompt asks when a name is taken"
+    "name_clash_ask_desc": "The accept prompt asks when a name is taken",
+    "type_folders": "Folders by type",
+    "type_folders_on": "Photos, videos, documents and apps each go in their own folder",
+    "type_folders_off": "All received files go in one folder",
+    "sort_by_type": "Sort into folders by type",
+    "type_folders_hint": "Tap a type to choose its own folder.",
+    "folder_no_permission": "BIShare needs All files access to save there.",
+    "folder_not_writable": "BIShare can't save to that folder. Choose another one."
   },
   "notification": {
     "clipboard_from": "Copied from {sender}",
@@ -636,7 +643,8 @@
     "cat_audio": "Audio",
     "cat_documents": "Documents",
     "cat_archives": "Archives",
-    "cat_other": "Other"
+    "cat_other": "Other",
+    "cat_apps": "Apps"
   },
   "onboarding": {
     "perm_continue": "Continue",

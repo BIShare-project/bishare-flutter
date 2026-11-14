@@ -13,6 +13,7 @@ import '../../../core/server/transfer_types.dart';
 import '../../../core/webrtc/ice_servers.dart';
 import '../../history/data/history_repository.dart';
 import '../../room/data/webrtc_signaling.dart';
+import '../../../core/server/receive_folders.dart';
 
 /// The app↔web "Nearby" bridge — makes this device appear in the browser
 /// Nearby tab on bishare.app/transfer (and browsers appear here), by joining
@@ -491,8 +492,9 @@ class WebNearbyService {
 
   Future<IOSink> _openOutput(_PeerSession s) async {
     final name = (s.meta?['name'] as String?) ?? 'file';
-    final dir = _server.saveDirectory;
-    if (!dir.existsSync()) dir.createSync(recursive: true);
+    // The type subfolder (or the folder chosen for the type), like every
+    // other receive path (ReceiveFolders).
+    final dir = ReceiveFolders.dirFor(_server.saveDirectory, name, null);
     final dirPath = dir.path;
     final safe = name.replaceAll(RegExp(r'[/\\]'), '_');
     var target = File('$dirPath${Platform.pathSeparator}$safe');

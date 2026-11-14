@@ -9,18 +9,12 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>BIShare needs local network access to discover and send files to nearby devices.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_bishare._tcp</string>
 	</array>
 	<key>NSExtension</key>
 	<dict>
-		<key>NSExtensionPointIdentifier</key>
-		<string>com.apple.share-services</string>
-		<key>NSExtensionPrincipalClass</key>
-		<string>$(PRODUCT_MODULE_NAME).ShareViewController</string>
 		<key>NSExtensionAttributes</key>
 		<dict>
 			<key>NSExtensionActivationRule</key>
@@ -37,6 +31,14 @@
 				<integer>1</integer>
 			</dict>
 		</dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.share-services</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>$(PRODUCT_MODULE_NAME).ShareViewController</string>
 	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>BIShare needs local network access to discover and send files to nearby devices.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>BIShare reads the Live Photo you share so it can send the photo and its motion together.</string>
 </dict>
 </plist>
