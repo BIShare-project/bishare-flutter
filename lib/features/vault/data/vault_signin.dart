@@ -60,7 +60,13 @@ class VaultSignin {
   static bool get googleAvailable => _googleNative && !byApproval;
 
   static bool get appleAvailable =>
-      (Platform.isIOS || Platform.isMacOS) && !byApproval;
+      (Platform.isIOS || Platform.isMacOS) && !byApproval && !_appleRemoved;
+
+  /// The Mac DMG (Developer ID) build: Apple leaves Sign in with Apple out of
+  /// Developer ID provisioning profiles, so that build is made without the
+  /// entitlement and offers phone approval and Google instead
+  /// (release.yml, job macos).
+  static const _appleRemoved = bool.fromEnvironment('BISHARE_NO_APPLE_SIGNIN');
 
   /// A Mac offers both: approval by a phone first (no browser sign-in to get
   /// through), then Apple and Google (owner 2026-10-28).

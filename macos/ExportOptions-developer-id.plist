@@ -4,15 +4,21 @@
 <dict>
   <!-- Direct-download build (the DMG on GitHub Releases), as opposed to
        ExportOptions.plist which is the Mac App Store submission. Signed with
-       the Developer ID Application certificate from repo secrets; no
-       provisioning profile is involved because the build carries no
-       restricted entitlements. Notarization happens after export. -->
+       the Developer ID Application certificate from repo secrets and the
+       profile "BIShare Developer ID", which .github/scripts/devid_profile.py
+       fetches or creates through the App Store Connect API on every run
+       (keychain and app groups need it). Notarization happens after export. -->
   <key>method</key>
   <string>developer-id</string>
   <key>teamID</key>
   <string>59T9LR42SG</string>
   <key>signingStyle</key>
   <string>manual</string>
+  <key>provisioningProfiles</key>
+  <dict>
+    <key>com.bishare.app</key>
+    <string>BIShare Developer ID</string>
+  </dict>
   <key>signingCertificate</key>
   <string>Developer ID Application</string>
   <key>destination</key>

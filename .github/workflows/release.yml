@@ -118,8 +118,44 @@ jobs:
       # Every tag lands on the internal track and stops there. Promotion to
       # production is a button in Play Console, on purpose — a tag should never
       # be able to reach users on its own.
-      - name: Upload to Google Play (internal track)
+      # A staging test run may already have sent this versionCode to Play
+      # (dispatch with play_track=internal before the tag). Play refuses a
+      # second upload, and that refusal used to fail the whole tag run, which
+      # skipped SourceForge and the packages. Check first and skip if present.
+      - name: Is this versionCode already on Play?
+        id: playcheck
         if: github.ref_type == 'tag' || inputs.play_track == 'internal'
+        env:
+          SA_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          pip install --quiet pyjwt cryptography
+          python3 - <<'PY'
+          import json, os, time, urllib.parse, urllib.request, zipfile, re, subprocess
+          import jwt
+          sa = json.loads(os.environ["SA_JSON"])
+          now = int(time.time())
+          a = jwt.encode({"iss": sa["client_email"], "scope": "https://www.googleapis.com/auth/androidpublisher",
+                          "aud": sa["token_uri"], "iat": now, "exp": now + 600}, sa["private_key"], algorithm="RS256")
+          tok = json.load(urllib.request.urlopen(sa["token_uri"], urllib.parse.urlencode(
+              {"grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion": a}).encode()))["access_token"]
+          base = "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/com.bishare.app/edits"
+          def call(method, url):
+              r = urllib.request.Request(url, method=method, headers={"Authorization": "Bearer " + tok})
+              return json.load(urllib.request.urlopen(r)) if method != "DELETE" else urllib.request.urlopen(r)
+          edit = call("POST", base)["id"]
+          codes = {b["versionCode"] for b in call("GET", f"{base}/{edit}/bundles").get("bundles", [])}
+          call("DELETE", f"{base}/{edit}")
+          vc = int(re.search(r"^version:\s*[^+]+\+(\d+)", open("pubspec.yaml").read(), re.M).group(1))
+          if os.environ.get("BUILD_NUMBER"):
+              vc = int(os.environ["BUILD_NUMBER"])
+          have = vc in codes
+          print(f"versionCode {vc} already on Play: {have}")
+          if have:
+              print(f"::warning::versionCode {vc} is already on Play (uploaded by an earlier run); skipping the upload")
+          open(os.environ["GITHUB_OUTPUT"], "a").write(f"exists={'true' if have else 'false'}\n")
+          PY
+      - name: Upload to Google Play (internal track)
+        if: (github.ref_type == 'tag' || inputs.play_track == 'internal') && steps.playcheck.outputs.exists != 'true'
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
@@ -227,6 +263,12 @@ jobs:
           OUT=$(xcrun altool --upload-app --type ios -f "$IPA" \
             --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1); RC=$?
           echo "$OUT"
+          # The same build number already on TestFlight (a staging test run of
+          # this exact commit, uploaded before the tag) is not a failure: the
+          # tag must still go on to the GitHub Release, SourceForge and packages.
+          if echo "$OUT" | grep -q "INVALID.DUPLICATE"; then
+            echo "::warning::build already on TestFlight (uploaded by an earlier run); skipping"; exit 0
+          fi
           [ $RC -eq 0 ] && ! echo "$OUT" | grep -q "ERROR" || { echo "::error::TestFlight upload failed"; exit 1; }
       - uses: actions/upload-artifact@v4
         with:
@@ -346,6 +388,12 @@ jobs:
           OUT=$(xcrun altool --upload-app --type macos -f "$PKG" \
             --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1); RC=$?
           echo "$OUT"
+          # The same build number already on TestFlight (a staging test run of
+          # this exact commit, uploaded before the tag) is not a failure: the
+          # tag must still go on to the GitHub Release, SourceForge and packages.
+          if echo "$OUT" | grep -q "INVALID.DUPLICATE"; then
+            echo "::warning::build already on TestFlight (uploaded by an earlier run); skipping"; exit 0
+          fi
           [ $RC -eq 0 ] && ! echo "$OUT" | grep -q "ERROR" || { echo "::error::TestFlight upload failed"; exit 1; }
       - uses: actions/upload-artifact@v4
         with:
@@ -361,10 +409,13 @@ jobs:
   # happened when the .pkg was double-clicked. Only this kind of build is
   # accepted for installation from a website.
   #
-  # No provisioning profile and no -allowProvisioningUpdates: Sign in with
-  # Apple is the one restricted entitlement, and it is stripped here (login is
-  # behind a remote flag), so manual signing with the certificate alone is
-  # enough and nothing gets minted on the account.
+  # Signing: archive with automatic signing like mac-app-store, then export as
+  # developer-id with the Developer ID certificate (throwaway keychain) and the
+  # profile "BIShare Developer ID", fetched or created through the API by
+  # .github/scripts/devid_profile.py. Apple leaves Sign in with Apple out of
+  # Developer ID profiles, so this build drops that entitlement and is built
+  # with BISHARE_NO_APPLE_SIGNIN (Drive offers phone approval and Google).
+  # Before this, every tag since Drive shipped failed here.
   macos:
     if: github.ref_type == 'tag' || inputs.mac_dmg == 'build'
     runs-on: macos-15
@@ -414,23 +465,36 @@ jobs:
           cargo install flutter_rust_bridge_codegen --version $FRB_VERSION
           flutter_rust_bridge_codegen generate
       - run: dart run build_runner build --delete-conflicting-outputs
+      - name: Developer ID profile (fetch or create) and no Sign in with Apple
+        run: |
+          pip3 install --quiet --break-system-packages pyjwt cryptography
+          python3 .github/scripts/devid_profile.py
+          /usr/libexec/PlistBuddy -c "Delete :com.apple.developer.applesignin" macos/Runner/Release.entitlements
       - name: Prepare the macOS build (configuration only)
         run: |
           flutter build macos --release --config-only \
+            --dart-define=BISHARE_NO_APPLE_SIGNIN=true \
             ${BUILD_NUMBER:+--build-number="$BUILD_NUMBER"} \
             ${BUILD_NAME:+--build-name="$BUILD_NAME"}
-      - name: Archive (Developer ID, hardened runtime, manual signing)
+      - name: Archive (automatic signing via API key, hardened runtime)
         run: |
           xcodebuild -workspace macos/Runner.xcworkspace -scheme Runner -configuration Release \
             -destination 'generic/platform=macOS' -archivePath build/macos/Runner-devid.xcarchive archive \
-            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$DEVID_IDENTITY" DEVELOPMENT_TEAM="$TEAM_ID" \
-            PROVISIONING_PROFILE_SPECIFIER="" ENABLE_HARDENED_RUNTIME=YES OTHER_CODE_SIGN_FLAGS="--timestamp"
-      - name: Export the app
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM="$TEAM_ID" ENABLE_HARDENED_RUNTIME=YES
+      - name: Export the app (Developer ID, profile fetched or created)
         timeout-minutes: 20
         run: |
+          set -o pipefail
           xcodebuild -exportArchive -archivePath build/macos/Runner-devid.xcarchive \
-            -exportOptionsPlist macos/ExportOptions-developer-id.plist -exportPath build/macos/devid
+            -exportOptionsPlist macos/ExportOptions-developer-id.plist -exportPath build/macos/devid \
+            2>&1 | tee build/macos/devid-export.log
           ls -la build/macos/devid
+          codesign -dvv build/macos/devid/*.app 2>&1 | grep -q "Authority=Developer ID Application" \
+            || { echo "::error::exported app is not signed with Developer ID"; exit 1; }
       # notarytool prints the verdict; anything but Accepted is a failure, and
       # the notarization log says why (missing timestamp, non-hardened binary…).
       - name: Notarize and staple the app
