@@ -1417,5 +1417,13 @@
     "paused": "一時停止中 · 続けるには {device} で BIShare を開いてください",
     "resuming": "再開しています…",
     "paused_short": "一時停止中"
+  },
+  "connect": {
+    "connecting": "{name} に接続中…",
+    "failed": "{name} に接続できませんでした。両方のデバイスが同じ Wi-Fi にあるか確認してください。",
+    "ready": "{name} の準備ができました。送るファイルを選んでください。",
+    "my_qr_title": "自分の QR コード",
+    "my_qr_subtitle": "同じ Wi-Fi の別のデバイスで BIShare を使ってスキャンすると、すぐに接続できます。",
+    "no_network": "このデバイスはまだ Wi-Fi やローカルネットワークに接続されていません。"
   }
 }

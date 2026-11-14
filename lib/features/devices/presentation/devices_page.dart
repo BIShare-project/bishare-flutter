@@ -11,6 +11,7 @@ import '../../web_nearby/data/web_nearby_service.dart';
 import '../../web_nearby/presentation/web_nearby_cubit.dart';
 import 'device_detail_sheet.dart';
 import 'devices_cubit.dart';
+import 'my_qr_sheet.dart';
 
 /// The Devices dashboard: every peer this device has ever known, in two
 /// sections, "Online now" (currently discovered) and "Known devices"
@@ -74,6 +75,11 @@ class _DevicesPageState extends State<DevicesPage> {
                     subtitle: 'devices.devices_count'.plural(state.all.length),
                     onBack: () => Navigator.of(context).maybePop(),
                     actions: [
+                      AppIconButton(
+                        icon: AppIcons.qrShare,
+                        tooltip: 'connect.my_qr_title'.tr(),
+                        onPressed: () => showMyQrSheet(context),
+                      ),
                       AppIconButton(
                         icon: AppIcons.search,
                         tooltip: 'devices.search_placeholder'.tr(),

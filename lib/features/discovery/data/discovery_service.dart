@@ -517,6 +517,32 @@ class DiscoveryService {
     }
   }
 
+  /// A device named by a scanned QR code (`bishare://connect`): probe its
+  /// addresses directly instead of waiting for mDNS, which some networks
+  /// block. Returns the device once it answers, and only if it is the one the
+  /// code names ([fingerprint]); null otherwise.
+  Future<DiscoveredDevice?> connectTo(
+    List<String> hosts,
+    String fingerprint,
+  ) async {
+    final usable = hosts.where(_isUsableIPv4).toSet().toList();
+    if (usable.isEmpty) return null;
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 3),
+        receiveTimeout: const Duration(seconds: 3),
+        responseType: ResponseType.json,
+        validateStatus: (_) => true,
+      ),
+    );
+    try {
+      await Future.wait(usable.map((h) => _probeHost(dio, h)));
+    } finally {
+      dio.close(force: true);
+    }
+    return _devices[fingerprint];
+  }
+
   Future<void> _probeHost(Dio dio, String host) async {
     try {
       final res = await dio.get<Map<String, dynamic>>(

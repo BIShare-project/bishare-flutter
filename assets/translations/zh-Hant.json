@@ -1417,5 +1417,13 @@
     "paused": "已暫停 · 在 {device} 上開啟 BIShare 以繼續",
     "resuming": "正在繼續…",
     "paused_short": "已暫停"
+  },
+  "connect": {
+    "connecting": "正在連線至 {name}…",
+    "failed": "無法連線至 {name}。請確認兩台裝置連接的是同一個 Wi-Fi。",
+    "ready": "{name} 已就緒。請選擇要傳送的檔案。",
+    "my_qr_title": "我的 QR 碼",
+    "my_qr_subtitle": "在同一 Wi-Fi 下的另一台裝置上用 BIShare 掃描，即可立即連線。",
+    "no_network": "此裝置尚未連接 Wi-Fi 或區域網路。"
   }
 }

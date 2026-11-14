@@ -1417,5 +1417,13 @@
     "paused": "En pausa · abre BIShare en {device} para continuar",
     "resuming": "Reanudando…",
     "paused_short": "En pausa"
+  },
+  "connect": {
+    "connecting": "Conectando con {name}…",
+    "failed": "No se pudo llegar a {name}. Asegúrate de que ambos dispositivos estén en la misma Wi-Fi.",
+    "ready": "{name} está listo. Elige los archivos que quieres enviar.",
+    "my_qr_title": "Mi código QR",
+    "my_qr_subtitle": "Escanéalo con BIShare en otro dispositivo de la misma Wi-Fi para conectarte al instante.",
+    "no_network": "Este dispositivo aún no está en una red Wi-Fi o local."
   }
 }

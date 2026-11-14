@@ -72,4 +72,30 @@ void main() {
     expect(DeepLink.parse(''), isNull);
     expect(DeepLink.parse('https://example.com/transfer/AB2C3D'), isNull);
   });
+
+  test('a connect QR round-trips; one without hosts or fingerprint is ignored',
+      () {
+    final link = DeepLink.parse(
+      ConnectLink.uriFor(
+        hosts: ['192.168.1.5', '10.0.0.7'],
+        fingerprint: 'fp-123',
+        name: 'Leo’s Mac & iPad',
+        port: 58317,
+      ),
+    );
+    expect(
+      link,
+      isA<ConnectLink>()
+          .having((l) => l.hosts, 'hosts', ['192.168.1.5', '10.0.0.7'])
+          .having((l) => l.port, 'port', 58317)
+          .having((l) => l.fingerprint, 'fingerprint', 'fp-123')
+          .having((l) => l.name, 'name', 'Leo’s Mac & iPad'),
+    );
+    expect(DeepLink.parse('bishare://connect?fp=fp-123'), isNull);
+    expect(DeepLink.parse('bishare://connect?h=192.168.1.5'), isNull);
+    expect(
+      DeepLink.parse('bishare://connect?h=192.168.1.5&fp=x'),
+      isA<ConnectLink>().having((l) => l.port, 'port', 58317),
+    );
+  });
 }

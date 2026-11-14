@@ -44,6 +44,26 @@ class LocalIp {
     return candidates.first.ip;
   }
 
+  /// Every usable LAN IPv4 of this device, best first (at most [max]): what
+  /// another device can try to reach us at ("Show my QR").
+  static Future<List<String>> all({int max = 3}) async {
+    final candidates = <_Candidate>[];
+    final interfaces = await NetworkInterface.list(
+      type: InternetAddressType.IPv4,
+      includeLoopback: false,
+      includeLinkLocal: false,
+    );
+    for (final iface in interfaces) {
+      for (final addr in iface.addresses) {
+        if (_isUsableIPv4(addr.address)) {
+          candidates.add(_Candidate(iface.name, addr.address));
+        }
+      }
+    }
+    candidates.sort((a, b) => _priority(a).compareTo(_priority(b)));
+    return candidates.map((c) => c.ip).toSet().take(max).toList();
+  }
+
   static int _priority(_Candidate c) {
     var score = 100;
     final idx = _preferred.indexOf(c.name);

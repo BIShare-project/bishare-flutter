@@ -13,6 +13,11 @@ All notable changes to BIShare are documented here. The format is based on
   folder, and Word, Excel and PowerPoint files go to Documents.
 - **Choose the save folder on Android** (with All files access), as on
   computers.
+- **Connect by QR code.** Devices → QR icon shows a code with this device's
+  address. Scanning it with BIShare on another device on the same Wi-Fi
+  connects the two at once, even on networks that hide devices from each
+  other (office, hotel, some routers). The code carries the device's
+  fingerprint, so only that device is accepted.
 
 ### Changed
 - Files received in rooms, by link, from a browser and over the stream relay

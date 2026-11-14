@@ -16,6 +16,7 @@ import '../core/share/share_intent_service.dart';
 import '../core/storage/app_database.dart';
 import '../core/ui/app_showcase.dart';
 import '../core/ui/app_ui.dart';
+import '../features/discovery/data/discovery_service.dart';
 import '../features/home/home_page.dart';
 import '../features/home/widgets/floating_transfers.dart';
 import '../features/inbox/presentation/inbox_cubit.dart';
@@ -306,6 +307,8 @@ class _MainShellState extends State<MainShell> {
           );
         case RescanSharedLink():
           _select(ShellTabId.send); // jump to the Send tab
+        case ConnectLink(:final hosts, :final fingerprint, :final name):
+          unawaited(_connect(hosts, fingerprint, name));
       }
     } catch (e) {
       // Log error but don't crash the app
@@ -315,6 +318,39 @@ class _MainShellState extends State<MainShell> {
         toast(context, 'nav.error_processing_link'.tr());
       }
     }
+  }
+
+  /// A scanned "Show my QR" code: reach that device at its addresses now,
+  /// then open Send, where it appears among the nearby devices.
+  Future<void> _connect(
+    List<String> hosts,
+    String fingerprint,
+    String name,
+  ) async {
+    final label = name.isEmpty ? hosts.first : name;
+    toast(
+      context,
+      'connect.connecting'.tr(namedArgs: {'name': label}),
+    );
+    final device = await getIt<DiscoveryService>().connectTo(
+      hosts,
+      fingerprint,
+    );
+    if (!mounted) return;
+    if (device == null) {
+      toast(
+        context,
+        'connect.failed'.tr(namedArgs: {'name': label}),
+        type: ToastType.error,
+      );
+      return;
+    }
+    toast(
+      context,
+      'connect.ready'.tr(namedArgs: {'name': device.alias}),
+      type: ToastType.success,
+    );
+    _select(ShellTabId.send);
   }
 
   /// The Microsoft Store has no in-app rating dialog for this plugin, so a

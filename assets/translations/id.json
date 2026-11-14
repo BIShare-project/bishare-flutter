@@ -1417,5 +1417,13 @@
     "paused": "Dijeda · buka BIShare di {device} untuk melanjutkan",
     "resuming": "Melanjutkan…",
     "paused_short": "Dijeda"
+  },
+  "connect": {
+    "connecting": "Menghubungkan ke {name}…",
+    "failed": "Tidak bisa menjangkau {name}. Pastikan kedua perangkat memakai Wi-Fi yang sama.",
+    "ready": "{name} siap. Pilih file untuk dikirim.",
+    "my_qr_title": "Kode QR saya",
+    "my_qr_subtitle": "Pindai dengan BIShare di perangkat lain pada Wi-Fi yang sama untuk langsung terhubung.",
+    "no_network": "Perangkat ini belum tersambung ke Wi-Fi atau jaringan lokal."
   }
 }

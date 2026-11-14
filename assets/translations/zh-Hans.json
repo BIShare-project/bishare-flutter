@@ -1417,5 +1417,13 @@
     "paused": "已暂停 · 在 {device} 上打开 BIShare 以继续",
     "resuming": "正在继续…",
     "paused_short": "已暂停"
+  },
+  "connect": {
+    "connecting": "正在连接 {name}…",
+    "failed": "无法连接 {name}。请确认两台设备连接的是同一个 Wi-Fi。",
+    "ready": "{name} 已就绪。请选择要发送的文件。",
+    "my_qr_title": "我的二维码",
+    "my_qr_subtitle": "在同一 Wi-Fi 下的另一台设备上用 BIShare 扫描，即可立即连接。",
+    "no_network": "此设备尚未连接 Wi-Fi 或局域网。"
   }
 }

@@ -51,6 +51,40 @@ class RescanSharedLink extends DeepLinkAction {
   const RescanSharedLink();
 }
 
+/// `bishare://connect?h=<ip>[,<ip>]&p=<port>&fp=<fingerprint>&n=<name>` — the
+/// QR another device shows ("Show my QR"): reach it at these addresses
+/// directly, without waiting for discovery.
+class ConnectLink extends DeepLinkAction {
+  const ConnectLink({
+    required this.hosts,
+    required this.port,
+    required this.fingerprint,
+    required this.name,
+  });
+
+  final List<String> hosts;
+  final int port;
+  final String fingerprint;
+  final String name;
+
+  /// The QR payload for this device.
+  static String uriFor({
+    required List<String> hosts,
+    required String fingerprint,
+    required String name,
+    int port = BISharePort.main,
+  }) => Uri(
+    scheme: CloudConfig.scheme,
+    host: 'connect',
+    queryParameters: {
+      'h': hosts.join(','),
+      'p': '$port',
+      'fp': fingerprint,
+      'n': name,
+    },
+  ).toString();
+}
+
 /// Parses incoming URIs and raw QR strings into a [DeepLinkAction]. Grounded to
 /// the native iOS `handleWebURL` / `handleDeepLink` / QR-scanner dispatch, so
 /// links produced by any BIShare client resolve identically.
@@ -99,6 +133,22 @@ class DeepLink {
 
       case CloudConfig.scheme: // bishare://
         if (uri.host == 'share') return const RescanSharedLink();
+        if (uri.host == 'connect') {
+          final q = uri.queryParameters;
+          final hosts = (q['h'] ?? '')
+              .split(',')
+              .map((h) => h.trim())
+              .where((h) => h.isNotEmpty)
+              .toList();
+          final fp = q['fp'] ?? '';
+          if (hosts.isEmpty || fp.isEmpty) return null;
+          return ConnectLink(
+            hosts: hosts,
+            port: int.tryParse(q['p'] ?? '') ?? BISharePort.main,
+            fingerprint: fp,
+            name: q['n'] ?? '',
+          );
+        }
         if (uri.host == 'download') {
           final host = uri.queryParameters['host'];
           final port = uri.queryParameters['port'] ?? '${BISharePort.main}';
