@@ -3,7 +3,7 @@
 All notable changes to BIShare are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [2.9.1] — 2026-11-14
 
 ### Added
 - **Folders by type, your way.** Settings → Folders by type sorts received
