@@ -53,13 +53,16 @@ class RescanSharedLink extends DeepLinkAction {
 
 /// `bishare://connect?h=<ip>[,<ip>]&p=<port>&fp=<fingerprint>&n=<name>` — the
 /// QR another device shows ("Show my QR"): reach it at these addresses
-/// directly, without waiting for discovery.
+/// directly, without waiting for discovery. With `s=<network>&k=<password>`
+/// it is the QR of "Hotspot": join that device's hotspot first.
 class ConnectLink extends DeepLinkAction {
   const ConnectLink({
     required this.hosts,
     required this.port,
     required this.fingerprint,
     required this.name,
+    this.ssid,
+    this.pass,
   });
 
   final List<String> hosts;
@@ -67,12 +70,21 @@ class ConnectLink extends DeepLinkAction {
   final String fingerprint;
   final String name;
 
+  /// The hotspot to join before the addresses can be reached, or null when
+  /// both devices are on one network already.
+  final String? ssid;
+
+  /// Its password; empty for an open network.
+  final String? pass;
+
   /// The QR payload for this device.
   static String uriFor({
     required List<String> hosts,
     required String fingerprint,
     required String name,
     int port = BISharePort.main,
+    String? ssid,
+    String? pass,
   }) => Uri(
     scheme: CloudConfig.scheme,
     host: 'connect',
@@ -81,6 +93,7 @@ class ConnectLink extends DeepLinkAction {
       'p': '$port',
       'fp': fingerprint,
       'n': name,
+      if (ssid != null && ssid.isNotEmpty) ...{'s': ssid, 'k': pass ?? ''},
     },
   ).toString();
 }
@@ -147,6 +160,8 @@ class DeepLink {
             port: int.tryParse(q['p'] ?? '') ?? BISharePort.main,
             fingerprint: fp,
             name: q['n'] ?? '',
+            ssid: (q['s'] ?? '').isEmpty ? null : q['s'],
+            pass: (q['s'] ?? '').isEmpty ? null : q['k'] ?? '',
           );
         }
         if (uri.host == 'download') {

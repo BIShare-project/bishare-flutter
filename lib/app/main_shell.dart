@@ -25,6 +25,7 @@ import '../features/receive/presentation/incoming_transfer_sheet.dart';
 import '../features/remote/data/cloud_transfer_service.dart';
 import '../features/remote/data/stream_relay_service.dart';
 import '../features/remote/presentation/remote_download.dart';
+import '../features/hotspot/presentation/hotspot_sheet.dart';
 import '../features/room/presentation/room_page.dart';
 import '../features/send/presentation/tray_cubit.dart';
 import '../features/settings/presentation/settings_page.dart';
@@ -307,8 +308,8 @@ class _MainShellState extends State<MainShell> {
           );
         case RescanSharedLink():
           _select(ShellTabId.send); // jump to the Send tab
-        case ConnectLink(:final hosts, :final fingerprint, :final name):
-          unawaited(_connect(hosts, fingerprint, name));
+        case final ConnectLink link:
+          unawaited(_connect(link));
       }
     } catch (e) {
       // Log error but don't crash the app
@@ -322,20 +323,48 @@ class _MainShellState extends State<MainShell> {
 
   /// A scanned "Show my QR" code: reach that device at its addresses now,
   /// then open Send, where it appears among the nearby devices.
-  Future<void> _connect(
-    List<String> hosts,
-    String fingerprint,
-    String name,
-  ) async {
-    final label = name.isEmpty ? hosts.first : name;
+  ///
+  /// A "Hotspot" code also names that device's hotspot: unless the device
+  /// answers already (both on one network), join the hotspot first, then
+  /// keep trying while the new network comes up.
+  Future<void> _connect(ConnectLink link) async {
+    final discovery = getIt<DiscoveryService>();
+    final label = link.name.isEmpty ? link.hosts.first : link.name;
+    final ssid = link.ssid;
+    var device = ssid == null
+        ? null
+        : await discovery.connectTo(link.hosts, link.fingerprint, quick: true);
+    if (!mounted) return;
+    if (ssid != null && device == null) {
+      toast(context, 'hotspot.joining'.tr(namedArgs: {'name': ssid}));
+      final joined = await joinHotspot(
+        context,
+        ssid: ssid,
+        pass: link.pass ?? '',
+      );
+      if (!mounted) return;
+      if (!joined) {
+        toast(
+          context,
+          'hotspot.join_failed'.tr(namedArgs: {'name': ssid}),
+          type: ToastType.error,
+        );
+        return;
+      }
+    }
     toast(
       context,
       'connect.connecting'.tr(namedArgs: {'name': label}),
     );
-    final device = await getIt<DiscoveryService>().connectTo(
-      hosts,
-      fingerprint,
-    );
+    for (var i = 0; device == null && i < (ssid == null ? 1 : 8); i++) {
+      if (i > 0) await Future<void>.delayed(const Duration(seconds: 1));
+      device = await discovery.connectTo(link.hosts, link.fingerprint);
+    }
+    // A hotspot turned on by hand: its address was not known when the code
+    // was made, so look over the network just joined.
+    if (device == null && ssid != null) {
+      device = await discovery.findOnSubnet(link.fingerprint);
+    }
     if (!mounted) return;
     if (device == null) {
       toast(

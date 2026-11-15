@@ -3,6 +3,29 @@
 All notable changes to BIShare are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- **Connect without Wi-Fi.** The Wi-Fi button on the Send tab: on one phone
+  Hotspot starts a hotspot (Android 13+ by itself; elsewhere you turn it on
+  and BIShare remembers its name and password) and shows a QR code; on the
+  other, Wi-Fi scans it, joins that hotspot (Android 10+ with one system
+  question; iPhone shows the name and password to join in Settings) and
+  connects the two devices.
+
+### Changed
+- **The save folder is used exactly as chosen.** Received files go straight
+  into the folder you pick, not into a BIShare subfolder of it; folders by
+  type are made inside it. A folder chosen before keeps its BIShare
+  subfolder, so files keep landing where they did.
+- **Android: any folder of internal storage**, the storage root included,
+  from BIShare's own folder browser (the system picker refuses the root), with
+  New folder.
+
+### Fixed
+- A device listed from an earlier network no longer counts as connected when
+  a QR code is scanned; only a device that answers does.
+
 ## [2.9.1] — 2026-11-14
 
 ### Added

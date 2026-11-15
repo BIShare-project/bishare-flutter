@@ -37,6 +37,11 @@ class DiscoveryService {
   /// When each address last greeted us, so a burst of hellos costs one probe.
   final Map<String, DateTime> _greetedAt = {};
 
+  /// Devices reached at an address other than the one they report for
+  /// themselves (over a hotspot, a phone on two networks reports the other
+  /// one's). Their host stays the address that answered until they go.
+  final Set<String> _direct = {};
+
   BonsoirBroadcast? _broadcast;
   BonsoirDiscovery? _discovery;
   StreamSubscription<BonsoirDiscoveryEvent>? _sub;
@@ -171,6 +176,7 @@ class DiscoveryService {
       ..addAll(_devices.values.map((d) => d.host));
     _devices.clear();
     _misses.clear();
+    _direct.clear();
     _emit();
   }
 
@@ -228,7 +234,7 @@ class DiscoveryService {
       ),
     );
     try {
-      await _probeHost(dio, ip);
+      await _probeHost(dio, ip, direct: true);
     } finally {
       dio.close(force: true);
     }
@@ -428,8 +434,11 @@ class DiscoveryService {
     final fingerprint = attrs['fingerprint'] ?? service.name;
     if (fingerprint == _identity.fingerprint) return; // skip self
 
-    final host = _resolveHost(attrs, service.hostAddresses);
-    if (host == null) return; // unreachable — no usable IPv4
+    final announced = _resolveHost(attrs, service.hostAddresses);
+    if (announced == null) return; // unreachable — no usable IPv4
+    final host = _direct.contains(fingerprint)
+        ? _devices[fingerprint]?.host ?? announced
+        : announced;
 
     final port = int.tryParse(attrs['port'] ?? '') ?? service.port;
     final quicPort = int.tryParse(attrs['quicPort'] ?? '');
@@ -521,37 +530,83 @@ class DiscoveryService {
   /// addresses directly instead of waiting for mDNS, which some networks
   /// block. Returns the device once it answers, and only if it is the one the
   /// code names ([fingerprint]); null otherwise.
+  ///
+  /// The probe greets ([BIShareApi.helloHeader]), so the other device adds
+  /// this one too, and the address that answers is the one kept: over a
+  /// hotspot the address a device reports for itself can be its other
+  /// network's.
+  /// [quick] gives up after a second: a first try before joining a hotspot.
   Future<DiscoveredDevice?> connectTo(
     List<String> hosts,
-    String fingerprint,
-  ) async {
+    String fingerprint, {
+    bool quick = false,
+  }) async {
     final usable = hosts.where(_isUsableIPv4).toSet().toList();
     if (usable.isEmpty) return null;
+    final wait = Duration(seconds: quick ? 1 : 3);
     final dio = Dio(
       BaseOptions(
-        connectTimeout: const Duration(seconds: 3),
-        receiveTimeout: const Duration(seconds: 3),
+        connectTimeout: wait,
+        receiveTimeout: wait,
         responseType: ResponseType.json,
         validateStatus: (_) => true,
+        headers: {
+          if (_advertise) BIShareApi.helloHeader: _identity.fingerprint,
+        },
       ),
     );
+    final List<String?> found;
     try {
-      await Future.wait(usable.map((h) => _probeHost(dio, h)));
+      found = await Future.wait(
+        usable.map((h) => _probeHost(dio, h, direct: true)),
+      );
     } finally {
       dio.close(force: true);
     }
-    return _devices[fingerprint];
+    // Only a device that answered now: one listed from an earlier network
+    // (mDNS caches it for a while) is not reachable for being listed.
+    return found.contains(fingerprint) ? _devices[fingerprint] : null;
   }
 
-  Future<void> _probeHost(Dio dio, String host) async {
+  /// The device [fingerprint] after a fresh look over this device's subnet,
+  /// or null: for a hotspot whose address the scanned code could not name.
+  Future<DiscoveredDevice?> findOnSubnet(String fingerprint) async {
+    final before = _devices[fingerprint]?.lastSeen;
+    await probeSubnet(force: true);
+    final d = _devices[fingerprint];
+    return d != null && d.lastSeen != before ? d : null;
+  }
+
+  /// With [direct], [host] is an address the device was reached at for sure
+  /// (a scanned QR, or the source of its greeting), and it is kept over the
+  /// address the device reports for itself.
+  ///
+  /// Returns the fingerprint of the device that answered, or null.
+  Future<String?> _probeHost(
+    Dio dio,
+    String host, {
+    bool direct = false,
+  }) async {
     try {
       final res = await dio.get<Map<String, dynamic>>(
         'http://$host:${BISharePort.main}${BIShareApi.info}',
       );
-      if (res.statusCode != BIShareStatus.ok || res.data == null) return;
+      if (res.statusCode != BIShareStatus.ok || res.data == null) return null;
       final info = DeviceInfo.fromJson(res.data!);
-      if (info.fingerprint == _identity.fingerprint) return;
-      final resolvedHost = (info.ip != null && _isUsableIPv4(info.ip!))
+      if (info.fingerprint == _identity.fingerprint) return null;
+      if (direct) {
+        // Pinned only while the two differ; a device back on one network
+        // goes by its own report again.
+        if (info.ip != null && info.ip != host) {
+          _direct.add(info.fingerprint);
+        } else {
+          _direct.remove(info.fingerprint);
+        }
+      }
+      final resolvedHost =
+          !_direct.contains(info.fingerprint) &&
+              info.ip != null &&
+              _isUsableIPv4(info.ip!)
           ? info.ip!
           : host;
       _devices[info.fingerprint] = DiscoveredDevice(
@@ -575,8 +630,10 @@ class DiscoveryService {
       _dedupeByHost(info.fingerprint, resolvedHost);
       debugPrint('[Discovery] probe found "${info.alias}" @ $resolvedHost');
       _emit();
+      return info.fingerprint;
     } on Object {
       // Not a BIShare peer / unreachable — ignore.
+      return null;
     }
   }
 
@@ -652,7 +709,10 @@ class DiscoveryService {
         if (_devices.remove(d.fingerprint) != null) _emit();
         return;
       }
-      final host = (info.ip != null && _isUsableIPv4(info.ip!))
+      final host =
+          !_direct.contains(info.fingerprint) &&
+              info.ip != null &&
+              _isUsableIPv4(info.ip!)
           ? info.ip!
           : d.host;
       // Re-key under the canonical HTTP fingerprint (absorbs any TXT/HTTP drift).
@@ -696,6 +756,7 @@ class DiscoveryService {
     final n = (_misses[fingerprint] ?? 0) + 1;
     if (n >= _maxMisses) {
       _misses.remove(fingerprint);
+      _direct.remove(fingerprint);
       if (_devices.remove(fingerprint) != null) _emit();
       // The peer went unreachable at its known IP. It may have moved to a new
       // address on this subnet (DHCP renew / hotspot flip) faster than its mDNS

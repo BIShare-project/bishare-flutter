@@ -6,6 +6,7 @@ import '../../../core/server/receive_folders.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../file_manager/domain/managed_file.dart' show categoryLabel;
 import '../domain/settings.dart' as s;
+import 'folder_browser_sheet.dart';
 import 'settings_cubit.dart';
 
 /// "Folders by type": received files sorted into a folder per type (Images,
@@ -79,6 +80,15 @@ class _TypeFolders extends StatelessWidget {
 
   /// The last two parts of a path ("…/BIShare/Images").
   static String _tidy(String path) {
+    // Straight under Android's storage root: "Internal storage/Images",
+    // not "…/0/Images".
+    final slash = path.lastIndexOf('/');
+    if (slash > 0) {
+      final root = storageRootLabel(path.substring(0, slash));
+      if (root != null) return '$root/${path.substring(slash + 1)}';
+    }
+    final own = storageRootLabel(path);
+    if (own != null) return own;
     final parts = path
         .split(RegExp(r'[\\/]+'))
         .where((p) => p.isNotEmpty)
@@ -118,7 +128,14 @@ class _TypeFolders extends StatelessWidget {
     );
     switch (choice) {
       case 'choose':
-        final result = await cubit.pickTypeFolder(category);
+        if (!context.mounted) return;
+        final result = await cubit.pickTypeFolder(
+          category,
+          choose: folderChooser(
+            context,
+            start: state.typeFolders[category] ?? state.resolvedSaveDir,
+          ),
+        );
         if (context.mounted) showFolderResult(context, result);
       case 'default':
         await cubit.resetTypeFolder(category);

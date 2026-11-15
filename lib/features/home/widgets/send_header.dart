@@ -4,10 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/desktop/desktop_service.dart';
+import '../../../core/network/hotspot_link.dart';
 import '../../../core/ui/app_showcase.dart';
 import '../../../core/ui/app_ui.dart';
 import '../../discovery/domain/discovered_device.dart';
 import '../../discovery/presentation/discovery_cubit.dart';
+import '../../hotspot/presentation/hotspot_sheet.dart';
 import '../../settings/domain/settings.dart';
 import '../../settings/presentation/settings_cubit.dart';
 import 'device_section.dart';
@@ -108,6 +110,12 @@ class SendHeader extends StatelessWidget {
               ],
             ),
           ),
+          if (HotspotLink.offered)
+            AppIconButton(
+              icon: AppIcons.wifi,
+              tooltip: 'hotspot.title'.tr(),
+              onPressed: () => showConnectSheet(context),
+            ),
           if (supportsCameraScan)
             AppShowcase(
               showcaseKey: ShowcaseKeys.homeActions,

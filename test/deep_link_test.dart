@@ -95,7 +95,28 @@ void main() {
     expect(DeepLink.parse('bishare://connect?h=192.168.1.5'), isNull);
     expect(
       DeepLink.parse('bishare://connect?h=192.168.1.5&fp=x'),
-      isA<ConnectLink>().having((l) => l.port, 'port', 58317),
+      isA<ConnectLink>()
+          .having((l) => l.port, 'port', 58317)
+          .having((l) => l.ssid, 'ssid', isNull),
+    );
+  });
+
+  test('a hotspot QR carries the network and its password', () {
+    final link = DeepLink.parse(
+      ConnectLink.uriFor(
+        hosts: ['192.168.43.1'],
+        fingerprint: 'fp-123',
+        name: 'Pixel',
+        ssid: 'AndroidShare_1234 & co',
+        pass: 'p@ss w=rd&1',
+      ),
+    );
+    expect(
+      link,
+      isA<ConnectLink>()
+          .having((l) => l.ssid, 'ssid', 'AndroidShare_1234 & co')
+          .having((l) => l.pass, 'pass', 'p@ss w=rd&1')
+          .having((l) => l.hosts, 'hosts', ['192.168.43.1']),
     );
   });
 }

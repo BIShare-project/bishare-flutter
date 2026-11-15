@@ -8,6 +8,11 @@
     <uses-permission
         android:name="android.permission.NEARBY_WIFI_DEVICES"
         android:usesPermissionFlags="neverForLocation" />
+    <!-- "Hotspot" and "Wi-Fi" on the Send tab: start a local-only hotspot
+         (with Nearby devices above) and join the one a scanned QR code names.
+         Both are normal permissions, granted at install. -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
     <!-- Voice message + contact sharing -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.READ_CONTACTS"/>

@@ -82,7 +82,7 @@ Future<void> setupLocator() async {
     debugPrint('[locator] feature flags load failed: $e');
   }
   final identity = await DeviceIdentity.load(prefs: prefs, secure: secure);
-  final saveDir = await _resolveSaveDirectory();
+  final saveDir = await _resolveSaveDirectory(prefs);
 
   final server = TransferServer(identity: identity, saveDirectory: saveDir);
   final db = AppDatabase();
@@ -480,14 +480,16 @@ Future<void> setupLocator() async {
 /// * **iOS**: the app Documents dir (iOS surfaces it in the Files app).
 /// * **Android**: public Downloads directory (visible in Files app + Gallery).
 ///
-/// Files always land in a `BIShare/` subfolder — of the default location AND of
-/// any user-picked folder — so a chosen folder (e.g. the Desktop) isn't
-/// cluttered with loose received files (mirrors Android/iOS).
-Future<Directory> _resolveSaveDirectory() async {
+/// The default location gets a `BIShare/` subfolder; a folder the person
+/// chose is used as it is (from 2.9.2; choices made before keep their
+/// `BIShare/` subfolder, see SettingsCubit._savedLocation).
+Future<Directory> _resolveSaveDirectory(SharedPreferences prefs) async {
   if (Platform.isMacOS) {
     final picked = await SaveFolderChannel.restore();
     if (picked != null && picked.isNotEmpty && Directory(picked).existsSync()) {
-      return SaveFolderChannel.bishareSubdir(picked);
+      return prefs.getBool(SaveFolderChannel.exactKey) ?? false
+          ? SaveFolderChannel.exact(picked)
+          : SaveFolderChannel.bishareSubdir(picked);
     }
   }
   if (Platform.isAndroid) {

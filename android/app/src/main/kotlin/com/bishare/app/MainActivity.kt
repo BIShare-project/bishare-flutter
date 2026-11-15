@@ -59,6 +59,7 @@ class MainActivity : FlutterActivity() {
     private var clipChanges = 0
     private var clipListener: ClipboardManager.OnPrimaryClipChangedListener? = null
     private var pending: List<String>? = null
+    private var hotspot: HotspotChannel? = null
 
     /// The Dart call waiting for the lock screen confirmation (Drive recovery
     /// phrase, see lib/core/platform/device_lock.dart).
@@ -203,6 +204,9 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+        // "Hotspot" and "Wi-Fi" on the Send tab.
+        hotspot?.dispose()
+        hotspot = HotspotChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
         // A LAN transfer in progress: foreground service + wake/Wi-Fi locks.
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "app.bishare/transfer_keepalive")
             .setMethodCallHandler { call, result ->
@@ -475,6 +479,8 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        hotspot?.dispose()
+        hotspot = null
         secretHandler.removeCallbacks(secretClear)
         clipListener?.let {
             (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)

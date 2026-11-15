@@ -90,7 +90,7 @@ class SettingsCubit extends Cubit<Settings> {
     transport:
         TransportMode.values.asNameMap()[p.getString(_kTransport)] ??
         TransportMode.auto,
-    saveLocation: p.getString(_kSaveLocation) ?? '',
+    saveLocation: _savedLocation(p),
     browserUpload: p.getBool(_kBrowserUpload) ?? true,
     browserUploadMaxGb: p.getInt(_kBrowserUploadMaxGb) ?? 0,
     nameWithSender: p.getBool(_kNameWithSender) ?? false,
@@ -107,6 +107,24 @@ class SettingsCubit extends Cubit<Settings> {
     clipboardMaxSizeMb: p.getInt(_kClipboardMaxSizeMb) ?? 5,
     clipboardCloud: p.getBool(_kClipboardCloud) ?? false,
   );
+
+  /// The folder files are saved in, exactly as chosen. Before 2.9.2 a chosen
+  /// folder got a BIShare/ subfolder; those choices are moved to that
+  /// subfolder once, so files keep landing where they did. On macOS the
+  /// security-scoped bookmark is of the chosen folder itself, so there the
+  /// old choice keeps its subfolder through [SaveFolderChannel.exactKey]
+  /// (locator's _resolveSaveDirectory).
+  static String _savedLocation(SharedPreferences p) {
+    final saved = p.getString(_kSaveLocation) ?? '';
+    if (Platform.isMacOS || p.getBool(SaveFolderChannel.exactKey) != null) {
+      return saved;
+    }
+    p.setBool(SaveFolderChannel.exactKey, true);
+    if (saved.isEmpty) return saved;
+    final legacy = '$saved${Platform.pathSeparator}BIShare';
+    p.setString(_kSaveLocation, legacy);
+    return legacy;
+  }
 
   void _apply(Settings s) {
     _identity.alias = s.alias; // persists to prefs 'deviceAlias'
@@ -126,11 +144,10 @@ class SettingsCubit extends Cubit<Settings> {
     // bookmark (see _resolveSaveDirectory) — re-applying the bare prefs path here
     // would point at a folder we no longer hold write access to.
     if (!Platform.isMacOS && s.saveLocation.isNotEmpty) {
-      // Files go into a BIShare/ subfolder of the chosen folder (not loose in
-      // it). On Android the folder is only usable while All files access is
-      // granted; if it was revoked, keep the default rather than fail every
-      // transfer.
-      final dir = SaveFolderChannel.bishareSubdir(s.saveLocation);
+      // Files go straight into the chosen folder. On Android the folder is
+      // only usable while All files access is granted; if it was revoked,
+      // keep the default rather than fail every transfer.
+      final dir = SaveFolderChannel.exact(s.saveLocation);
       if (!Platform.isAndroid || SaveFolderChannel.isWritable(dir.path)) {
         _server.saveDirectory = dir;
       }
@@ -222,14 +239,17 @@ class SettingsCubit extends Cubit<Settings> {
   /// Let the person choose the folder for files of [category]. The result
   /// says what happened (cancelled, no permission, a folder the app cannot
   /// write to), so the page can tell them why nothing changed.
-  Future<TypeFolderResult> pickTypeFolder(String category) async {
+  Future<TypeFolderResult> pickTypeFolder(
+    String category, {
+    Future<String?> Function()? choose,
+  }) async {
     if (!SaveFolderChannel.supportsTypeFolders) {
       return TypeFolderResult.unsupported;
     }
     if (AllFilesAccess.applies && !await AllFilesAccess.request()) {
       return TypeFolderResult.noPermission;
     }
-    final path = await SaveFolderChannel.pick();
+    final path = await (choose ?? SaveFolderChannel.pick)();
     if (path == null || path.isEmpty) return TypeFolderResult.cancelled;
     if (!SaveFolderChannel.isWritable(path)) {
       return TypeFolderResult.notWritable;
@@ -337,9 +357,10 @@ class SettingsCubit extends Cubit<Settings> {
 
   Future<void> setSaveLocation(String path) async {
     await _prefs.setString(_kSaveLocation, path);
+    await _prefs.setBool(SaveFolderChannel.exactKey, true);
     if (path.isNotEmpty) {
-      // Save into a BIShare/ subfolder of the picked folder, not loose in it.
-      _server.saveDirectory = SaveFolderChannel.bishareSubdir(path);
+      // Files go straight into the chosen folder, as the person chose it.
+      _server.saveDirectory = SaveFolderChannel.exact(path);
     } else {
       // "Use default": also forget the macOS security-scoped bookmark, else the
       // old custom folder is silently restored on the next launch.
@@ -364,12 +385,17 @@ class SettingsCubit extends Cubit<Settings> {
 
   /// Prompt the user for a save folder. On macOS this also persists a
   /// security-scoped bookmark so access survives restarts.
-  Future<TypeFolderResult> pickSaveLocation() async {
+  ///
+  /// [choose] replaces the system picker (Android: the in-app folder browser,
+  /// which can choose the storage root).
+  Future<TypeFolderResult> pickSaveLocation({
+    Future<String?> Function()? choose,
+  }) async {
     // Android writes outside Downloads only with All files access.
     if (AllFilesAccess.applies && !await AllFilesAccess.request()) {
       return TypeFolderResult.noPermission;
     }
-    final path = await SaveFolderChannel.pick();
+    final path = await (choose ?? SaveFolderChannel.pick)();
     if (path == null || path.isEmpty) return TypeFolderResult.cancelled;
     if (!SaveFolderChannel.isWritable(path)) {
       return TypeFolderResult.notWritable;

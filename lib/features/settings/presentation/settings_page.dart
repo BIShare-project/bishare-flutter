@@ -11,6 +11,7 @@ import '../../../core/server/transfer_types.dart';
 import '../../../core/ui/app_ui.dart';
 import '../domain/settings.dart' as s;
 import '../../vault/presentation/vault_section.dart';
+import 'folder_browser_sheet.dart';
 import 'settings_cubit.dart';
 import 'settings_widgets.dart';
 import 'type_folders_sheet.dart';
@@ -377,6 +378,8 @@ class SettingsPage extends StatelessWidget {
   /// otherwise be all that shows before "BIShare" gets truncated. Splits on both
   /// separators so it reads the same on Windows.
   static String _tidySaveDir(String path) {
+    final root = storageRootLabel(path);
+    if (root != null) return root;
     final parts = path
         .split(RegExp(r'[\\/]+'))
         .where((p) => p.isNotEmpty)
@@ -422,7 +425,10 @@ class SettingsPage extends StatelessWidget {
       case 'default':
         await cubit.setSaveLocation('');
       case 'choose':
-        final result = await cubit.pickSaveLocation();
+        if (!context.mounted) return;
+        final result = await cubit.pickSaveLocation(
+          choose: folderChooser(context, start: cubit.currentSaveDir),
+        );
         if (context.mounted) showFolderResult(context, result);
       case 'reveal':
         await cubit.revealSaveLocation();

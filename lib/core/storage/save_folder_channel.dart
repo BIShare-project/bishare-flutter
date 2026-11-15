@@ -51,7 +51,23 @@ class SaveFolderChannel {
     }
   }
 
-  /// The received-files directory for a user-CHOSEN base folder: always a
+  /// Set once the saved folder is the folder files land in, as chosen.
+  /// Missing means a choice made before 2.9.2, which got a BIShare/
+  /// subfolder ([bishareSubdir]).
+  static const exactKey = 'saveLocationExact';
+
+  /// The chosen folder itself, created if it went missing.
+  static Directory exact(String path) {
+    final dir = Directory(path);
+    try {
+      if (!dir.existsSync()) dir.createSync(recursive: true);
+    } on FileSystemException {
+      // isWritable decides whether it is used.
+    }
+    return dir;
+  }
+
+  /// Before 2.9.2: the received-files directory for a user-CHOSEN base folder: always a
   /// `BIShare/` subfolder of it, created if missing. Received files never land
   /// loose in the picked folder (e.g. straight onto the Desktop) — the picked
   /// location is treated as a base, exactly like the default/Android/iOS paths.
