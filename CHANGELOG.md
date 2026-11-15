@@ -3,7 +3,7 @@
 All notable changes to BIShare are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [2.9.2] — 2026-11-15
 
 ### Added
 - **Connect without Wi-Fi.** The Wi-Fi button on the Send tab: on one phone
