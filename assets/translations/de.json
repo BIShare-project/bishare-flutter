@@ -1312,7 +1312,35 @@
     "backup_turn_on": "Einschalten",
     "backup_explain": "Fotos und Videos von diesem Telefon kommen in den Ordner „{folder}“ in deinem Drive, zuerst auf dem Telefon verschlüsselt.",
     "clear_finished": "Abgeschlossene entfernen",
-    "backup_short": "Sichern"
+    "backup_short": "Sichern",
+    "backup_offer_title": "Fotos sichern",
+    "backup_offer_sub": "Bewahren Sie die Fotos und Videos dieses Telefons sicher in Ihrem Drive auf.",
+    "backup_offer_private": "Zuerst auf diesem Telefon verschlüsselt. BIShare kann sie nicht sehen.",
+    "backup_offer_wifi": "Nur über WLAN, also ohne mobile Daten.",
+    "backup_offer_free": "{size} kostenlos. Keine Zahlung nötig.",
+    "backup_offer_free_plain": "Sie nutzt den Platz in Ihrem Drive.",
+    "backup_offer_yes": "Fotos sichern",
+    "backup_offer_later": "Nicht jetzt",
+    "backup_stopped": "Sicherung angehalten",
+    "backup_stopped_left": {
+      "one": "{} Foto oder Video ist nicht gesichert. Ihr Drive ist voll.",
+      "other": "{} Fotos und Videos sind nicht gesichert. Ihr Drive ist voll."
+    },
+    "backup_short_room": "Noch etwa {need} zu sichern, {free} frei in Ihrem Drive.",
+    "backup_try_free": "Gratis testen",
+    "backup_more_room": "Mehr Platz",
+    "backup_full_notice_title": "Fotosicherung angehalten",
+    "backup_full_notice_body": "Ihr Drive ist voll. Neue Fotos und Videos werden nicht gesichert.",
+    "plans_trial_days": {
+      "one": "{} Tag kostenlos",
+      "other": "{} Tage kostenlos"
+    },
+    "plans_cta_trial": {
+      "one": "{} Tag kostenlos testen",
+      "other": "{} Tage kostenlos testen"
+    },
+    "plans_trial_then": "Danach {price}",
+    "plans_trial_note": "Wenn Sie vor Ende des Testzeitraums kündigen, zahlen Sie nichts. Danach verlängert sich der Tarif automatisch."
   },
   "compose": {
     "visible": "Sichtbar",

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/billing_client_wrappers.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
+import 'package:in_app_purchase_storekit/store_kit_2_wrappers.dart';
 
 import 'vault_account.dart';
 import 'vault_api.dart';
@@ -22,9 +23,14 @@ class VaultPurchases extends ChangeNotifier {
     required VaultAccount account,
     required VaultApi api,
     InAppPurchase? store,
+    ({int days, Set<String> products})? Function()? appleTrial,
+    Future<bool> Function(String productId)? appleTrialEligible,
   }) : _account = account,
        _api = api,
-       _storeOverride = store;
+       _storeOverride = store,
+       _appleTrial = appleTrial,
+       _appleTrialEligible =
+           appleTrialEligible ?? SK2Product.isIntroductoryOfferEligible;
 
   /// The eight products (bishare-api server/modules/vault/plans.ts).
   static const productIds = <String>{
@@ -83,12 +89,33 @@ class VaultPurchases extends ChangeNotifier {
   final VaultApi _api;
   final InAppPurchase? _storeOverride;
   InAppPurchase get _store => _storeOverride ?? InAppPurchase.instance;
+
+  /// The App Store's free trial as the server states it (FeatureFlags
+  /// .driveTrial): StoreKit does not tell the app how long one lasts.
+  final ({int days, Set<String> products})? Function()? _appleTrial;
+
+  /// StoreKit 2: whether this Apple account may still take an introductory
+  /// offer in the product's subscription group (one per person).
+  final Future<bool> Function(String productId) _appleTrialEligible;
   StreamSubscription<List<PurchaseDetails>>? _sub;
 
   /// The store answered and these products are on sale in this country.
   bool available = false;
   bool loading = false;
   Map<String, ProductDetails> products = const {};
+
+  /// The free trials this person may take, by product: the days each lasts.
+  /// Google Play lists a trial only for someone who may take it; in the App
+  /// Store it is the server's word and StoreKit's that the person may still
+  /// take an introductory offer. Empty where no trial is on offer.
+  Map<String, int> trials = const {};
+
+  /// Google Play: the offer that carries a product's trial. Buying it, not
+  /// the plain plan, is what starts the trial.
+  Map<String, ProductDetails> _trialOffers = const {};
+
+  /// The days of free trial on [productId] for this person, if any.
+  int? trialDays(String productId) => trials[productId];
 
   /// A purchase in progress (the store's sheet is up, or the server is
   /// checking it).
@@ -133,7 +160,10 @@ class VaultPurchases extends ChangeNotifier {
       available = await _store.isAvailable();
       if (available) {
         final r = await _store.queryProductDetails(productIds);
-        products = {for (final p in r.productDetails) p.id: p};
+        final listed = sortListed(r.productDetails);
+        products = listed.plans;
+        _trialOffers = listed.trialOffers;
+        trials = _android ? listed.trialDays : await _appleTrials();
         if (r.notFoundIDs.isNotEmpty) {
           debugPrint('[vault] not on sale here: ${r.notFoundIDs}');
         }
@@ -146,10 +176,81 @@ class VaultPurchases extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// What a store's list comes to: each product once, at its plain price,
+  /// and Google Play's free trials apart. Play lists a subscription once for
+  /// its base plan and once more for every offer the person may take, all
+  /// under the product's id; kept by id alone, a trial's "Free" took the
+  /// place of the price. Offers that are not a free trial are left out.
+  @visibleForTesting
+  static ({
+    Map<String, ProductDetails> plans,
+    Map<String, ProductDetails> trialOffers,
+    Map<String, int> trialDays,
+  })
+  sortListed(List<ProductDetails> list) {
+    final plans = <String, ProductDetails>{};
+    final offers = <String, ProductDetails>{};
+    final days = <String, int>{};
+    for (final p in list) {
+      final index = p is GooglePlayProductDetails ? p.subscriptionIndex : null;
+      final offer = index == null
+          ? null
+          : (p as GooglePlayProductDetails)
+                .productDetails
+                .subscriptionOfferDetails?[index];
+      if (offer == null || offer.offerId == null) {
+        plans[p.id] = p;
+        continue;
+      }
+      final phases = offer.pricingPhases;
+      if (phases.length < 2 || phases.first.priceAmountMicros != 0) continue;
+      final cycles = phases.first.billingCycleCount;
+      final length =
+          periodDays(phases.first.billingPeriod) * (cycles < 1 ? 1 : cycles);
+      if (length <= 0) continue;
+      offers[p.id] = p;
+      days[p.id] = length;
+    }
+    return (plans: plans, trialOffers: offers, trialDays: days);
+  }
+
+  /// The days in an ISO 8601 period as the stores write them ("P1W", "P3D",
+  /// "P1M"); 0 for anything else. A month counts 30 days, a year 365.
+  @visibleForTesting
+  static int periodDays(String period) {
+    final m = RegExp(
+      r'^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)W)?(?:(\d+)D)?$',
+    ).firstMatch(period);
+    if (m == null) return 0;
+    int n(int i) => int.tryParse(m[i] ?? '') ?? 0;
+    return n(1) * 365 + n(2) * 30 + n(3) * 7 + n(4);
+  }
+
+  /// App Store and Mac App Store: the trial the server states, for the
+  /// products of it on sale here, when StoreKit says this person may still
+  /// take an introductory offer.
+  Future<Map<String, int>> _appleTrials() async {
+    final stated = _appleTrial?.call();
+    if (stated == null) return const {};
+    final out = <String, int>{};
+    try {
+      for (final id in stated.products) {
+        if (!products.containsKey(id)) continue;
+        if (await _appleTrialEligible(id)) out[id] = stated.days;
+      }
+    } on Object catch (e) {
+      // StoreKit could not say: no trial is promised.
+      debugPrint('[vault] trial: $e');
+      return const {};
+    }
+    return out;
+  }
+
   /// Start buying [productId]. On Google a change from the current plan
   /// replaces it: a bigger plan at once (the rest of the old one is credited),
   /// a smaller one at the next renewal. On Apple the subscription group does
-  /// the same by itself.
+  /// the same by itself. Someone with no plan who may take a free trial gets
+  /// it: on Google by buying the trial's offer, on Apple by itself.
   Future<void> buy(String productId) async {
     final details = products[productId];
     final vaultId = _account.vaultId;
@@ -177,6 +278,14 @@ class VaultPurchases extends ChangeNotifier {
                   : ReplacementMode.deferred,
             ),
           );
+        } else if (old == null) {
+          final trial = _trialOffers[productId];
+          if (trial != null) {
+            param = PurchaseParam(
+              productDetails: trial,
+              applicationUserName: user,
+            );
+          }
         }
       }
       await _store.buyNonConsumable(purchaseParam: param);

@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_links.dart';
 import '../../../../core/di/locator.dart';
+import '../../../../core/telemetry/telemetry_service.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../../data/vault_account.dart';
 import '../../data/vault_purchases.dart';
@@ -39,12 +40,23 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
   /// The size the page suggests, and picks first.
   static const _recommended = 250 * 1000000000;
 
+  /// The person chose a size: a free trial showing up no longer moves it.
+  bool _picked = false;
+
+  /// The trial was counted as shown (once per visit).
+  bool _trialSeen = false;
+
+  TelemetryService? get _telemetry =>
+      getIt.isRegistered<TelemetryService>() ? getIt<TelemetryService>() : null;
+
   @override
   void initState() {
     super.initState();
     _plan = _account.plan;
     _purchases.addListener(_onPurchases);
     _account.addListener(_onAccount);
+    if (_paidSize == null) _telemetry?.recordCta('app_drive_plans', 'view');
+    _onPurchases();
     unawaited(_purchases.load());
     unawaited(_account.refreshInfo().catchError((Object _) {}));
     _usage = _account.followUsage();
@@ -82,6 +94,28 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
       toast(context, _errorText(error), type: ToastType.error);
     }
     _error = error;
+    // A free trial on offer: the page opens on the size that has it.
+    final trial = _trialSize;
+    if (trial == null) return;
+    if (!_trialSeen) {
+      _trialSeen = true;
+      _telemetry?.recordCta('app_drive_trial', 'view');
+    }
+    if (!_picked && _size != trial && mounted) setState(() => _size = trial);
+  }
+
+  /// The days of free trial on [productId] for someone with no plan yet,
+  /// when this store sells the plans here.
+  int? _trialDays(String productId) =>
+      _paidSize == null && !_elsewhere ? _purchases.trialDays(productId) : null;
+
+  /// The smallest size with a free trial, in the period shown.
+  int? get _trialSize {
+    for (final size in VaultPurchases.sizes) {
+      final id = VaultPurchases.productFor(size, yearly: _yearly);
+      if (_trialDays(id) != null) return size;
+    }
+    return null;
   }
 
   String _errorText(String code) => switch (code) {
@@ -556,7 +590,10 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
         saving: saving == null
             ? null
             : 'vault.plans_save'.tr(namedArgs: {'pct': '$saving'}),
-        onChanged: (v) => setState(() => _yearly = v),
+        onChanged: (v) {
+          setState(() => _yearly = v);
+          _onPurchases();
+        },
       ),
       const SizedBox(height: 14),
       for (final size in VaultPurchases.sizes) _sizeCard(size, elsewhere),
@@ -579,8 +616,10 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
     final id = VaultPurchases.productFor(size, yearly: _yearly);
     final details = _purchases.products[id];
     final month = _yearly && details != null ? _perMonth(details) : null;
+    final trial = details == null ? null : _trialDays(id);
     return _PlanCard(
       size: size,
+      trial: trial == null ? null : 'vault.plans_trial_days'.plural(trial),
       billed: details == null
           ? 'vault.plans_unavailable'.tr()
           : _billed(details, yearly: _yearly),
@@ -590,7 +629,12 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
       selected: size == _size,
       current: _account.plan == id,
       recommended: size == _recommended,
-      onTap: elsewhere ? null : () => setState(() => _size = size),
+      onTap: elsewhere
+          ? null
+          : () => setState(() {
+              _picked = true;
+              _size = size;
+            }),
     );
   }
 
@@ -601,8 +645,13 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
     final details = _purchases.products[id];
     final current = _account.plan == id;
     final paid = _paidSize;
+    // Free first, then the price: said on the button, by the price and in
+    // the line under it, as the stores require next to a trial.
+    final trial = current || details == null ? null : _trialDays(id);
     final label = current
         ? 'vault.plans_cta_current'.tr()
+        : trial != null
+        ? 'vault.plans_cta_trial'.plural(trial)
         : paid == null
         ? 'vault.plans_cta_get'.tr(namedArgs: {'size': decimalBytes(_size)})
         : paid == _size
@@ -622,16 +671,29 @@ class _DrivePlansPageState extends State<DrivePlansPage> {
                 ? null
                 : details == null
                 ? 'vault.plans_unavailable'.tr()
+                : trial != null
+                ? 'vault.plans_trial_then'.tr(
+                    namedArgs: {'price': _billed(details, yearly: _yearly)},
+                  )
                 : _billed(details, yearly: _yearly),
             loading: _purchases.busyProduct == id,
             onPressed:
                 details == null || current || _purchases.busyProduct != null
                 ? null
-                : () => unawaited(_purchases.buy(id)),
+                : () {
+                    if (paid == null) {
+                      _telemetry?.recordCta('app_drive_plans', 'click');
+                    }
+                    if (trial != null) {
+                      _telemetry?.recordCta('app_drive_trial', 'click');
+                    }
+                    unawaited(_purchases.buy(id));
+                  },
           ),
           const SizedBox(height: 9),
           Text(
-            'vault.plans_cta_note'.tr(),
+            (trial != null ? 'vault.plans_trial_note' : 'vault.plans_cta_note')
+                .tr(),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
@@ -903,9 +965,13 @@ class _PlanCard extends StatelessWidget {
     required this.current,
     required this.recommended,
     required this.onTap,
+    this.trial,
   });
 
   final int size;
+
+  /// "7 days free" when this person may start the plan with a free trial.
+  final String? trial;
 
   /// The price as billed ("$59.99 a year"), or why there is none.
   final String billed;
@@ -990,6 +1056,8 @@ class _PlanCard extends StatelessWidget {
                             ),
                             if (current)
                               AppBadge('vault.plans_current'.tr())
+                            else if (trial != null)
+                              _Ribbon(trial!)
                             else if (recommended)
                               _Ribbon('vault.plans_recommended'.tr()),
                           ],

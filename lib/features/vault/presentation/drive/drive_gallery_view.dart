@@ -4,13 +4,18 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mime/mime.dart';
 
 import '../../../../core/storage/app_database.dart';
 import '../../../../core/storage/vault_tables.dart';
+import '../../../../core/telemetry/telemetry_service.dart';
 import '../../../../core/ui/app_ui.dart';
+import '../../data/vault_account.dart';
 import '../../data/vault_photo_backup.dart';
 import '../../data/vault_photo_library.dart';
+import '../../data/vault_purchases.dart';
+import 'drive_format.dart';
 import 'drive_widgets.dart';
 
 /// One picture of the gallery: on this phone, or only in the Drive.
@@ -48,10 +53,19 @@ class DriveGalleryView extends StatefulWidget {
     required this.onMore,
     required this.onLink,
     required this.onSend,
+    this.account,
+    this.purchases,
+    this.telemetry,
   });
 
   final VaultPhotoBackup backup;
   final VaultDao dao;
+
+  /// The Drive's room and plans, for the line that says backup has stopped
+  /// (or will) for lack of room, with the way to more.
+  final VaultAccount? account;
+  final VaultPurchases? purchases;
+  final TelemetryService? telemetry;
 
   /// A photo that is only in the Drive: open it, or its actions.
   final void Function(VaultObject) onOpen;
@@ -106,6 +120,44 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
     _shownFor = _backup.access;
     unawaited(_reload());
     unawaited(_backup.refreshAccess());
+    _noteFull();
+  }
+
+  /// The full-Drive line was counted as shown (once per visit).
+  bool _fullSeen = false;
+
+  /// What a photo or video in this Drive weighs on average, once there are
+  /// enough to say; what is left to back up is estimated from it.
+  int? _avgBytes;
+
+  /// Backup has stopped for lack of room: count the line as shown, and ask
+  /// the store for the plans, so the line can name a free trial.
+  void _noteFull() {
+    if (!_backup.on || !_backup.noRoom) return;
+    if (!_fullSeen) {
+      _fullSeen = true;
+      widget.telemetry?.recordCta('app_backup_full', 'view');
+    }
+    _loadPlans();
+  }
+
+  /// The store was asked for the plans (once per visit: a store that has
+  /// none to give is not asked again with every frame).
+  bool _plansAsked = false;
+
+  void _loadPlans() {
+    final purchases = widget.purchases;
+    if (purchases == null || _plansAsked) return;
+    _plansAsked = true;
+    if (purchases.loading || purchases.products.isNotEmpty) return;
+    unawaited(purchases.load().then((_) {
+      if (mounted) setState(() {});
+    }));
+  }
+
+  void _morePlans() {
+    widget.telemetry?.recordCta('app_backup_full', 'click');
+    unawaited(context.push('/drive-plans'));
   }
 
   @override
@@ -123,6 +175,7 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
       _shownFor = _backup.access;
       unawaited(_reload());
     }
+    _noteFull();
     setState(() {});
   }
 
@@ -309,6 +362,7 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
           builder: (context, driveSnap) {
             final backed = backedSnap.data ?? const <String, String>{};
             _backedHashes = backed;
+            _avgBytes = _averageBytes(driveSnap.data ?? const []);
             final uploads = uploadsSnap.data ?? const <String, String>{};
             final ids = backed.keys.toSet();
             final items = _timeline(
@@ -343,6 +397,18 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
         ),
       ),
     );
+  }
+
+  /// Too few say little: one long video would stand for the whole library.
+  static const _averageFrom = 20;
+
+  static int? _averageBytes(List<VaultObject> media) {
+    if (media.length < _averageFrom) return null;
+    var sum = 0;
+    for (final o in media) {
+      sum += o.size ?? 0;
+    }
+    return sum ~/ media.length;
   }
 
   Widget _body(
@@ -393,7 +459,15 @@ class _DriveGalleryViewState extends State<DriveGalleryView> {
         SliverToBoxAdapter(
           child: noAccess
               ? _AccessCard(backup: _backup)
-              : _BackupCard(backup: _backup, onSwitch: _switch),
+              : _BackupCard(
+                  backup: _backup,
+                  onSwitch: _switch,
+                  account: widget.account,
+                  purchases: widget.purchases,
+                  avgBytes: _avgBytes,
+                  onNeedsRoom: _loadPlans,
+                  onMoreRoom: _morePlans,
+                ),
         ),
         if (!noAccess && !waiting && items.isNotEmpty)
           SliverToBoxAdapter(
@@ -762,15 +836,65 @@ class _AccessCard extends StatelessWidget {
 /// "Turn on" while it is off. Tapping it opens the switches (backup, Wi-Fi
 /// only) and their explanation in a sheet.
 class _BackupCard extends StatelessWidget {
-  const _BackupCard({required this.backup, required this.onSwitch});
+  const _BackupCard({
+    required this.backup,
+    required this.onSwitch,
+    required this.onNeedsRoom,
+    required this.onMoreRoom,
+    this.account,
+    this.purchases,
+    this.avgBytes,
+  });
 
   final VaultPhotoBackup backup;
   final Future<void> Function(bool) onSwitch;
+  final VaultAccount? account;
+  final VaultPurchases? purchases;
+
+  /// The average size of a photo or video in this Drive, when known.
+  final int? avgBytes;
+
+  /// The line says room is short: the plans are worth asking the store for.
+  final VoidCallback onNeedsRoom;
+
+  /// "More room" (or the free trial) was tapped.
+  final VoidCallback onMoreRoom;
+
+  /// The room left in the Drive, when the server has said.
+  int? get _free {
+    final quota = account?.quotaBytes;
+    final used = account?.usedBytes;
+    if (quota == null || used == null) return null;
+    return quota > used ? quota - used : 0;
+  }
+
+  /// A free trial on any plan, for someone on the free plan.
+  bool get _trial {
+    final p = purchases;
+    if (p == null || (account?.plan ?? 'free') != 'free') return false;
+    return p.trials.isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
     final left = backup.left;
+    final free = _free;
+    // What is left would not fit: said while there is still room, not only
+    // when the Drive is full.
+    final need = avgBytes != null && left != null && left > 0
+        ? avgBytes! * left
+        : null;
+    final short =
+        backup.on &&
+        !backup.noRoom &&
+        need != null &&
+        free != null &&
+        need > free;
+    final needsRoom = backup.on && (backup.noRoom || short);
+    if (needsRoom) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => onNeedsRoom());
+    }
     final (String icon, Color color, String title, String sub) = !backup.on
         ? (
             AppIcons.cloudOff,
@@ -782,8 +906,22 @@ class _BackupCard extends StatelessWidget {
         ? (
             AppIcons.circleAlert,
             t.danger,
-            'vault.backup_title'.tr(),
-            'vault.backup_no_room'.tr(),
+            'vault.backup_stopped'.tr(),
+            left != null && left > 0
+                ? 'vault.backup_stopped_left'.plural(left)
+                : 'vault.backup_no_room'.tr(),
+          )
+        : short
+        ? (
+            AppIcons.cloudSync,
+            t.accent,
+            'vault.backup_left'.plural(left ?? 0),
+            'vault.backup_short_room'.tr(
+              namedArgs: {
+                'need': decimalBytes(need),
+                'free': decimalBytes(free),
+              },
+            ),
           )
         : left == null
         ? (
@@ -812,8 +950,16 @@ class _BackupCard extends StatelessWidget {
       iconColor: color,
       title: title,
       subtitle: sub,
+      subtitleLines: needsRoom ? 3 : 1,
       busy: backup.on && backup.scanning,
-      trailing: backup.on
+      trailing: needsRoom
+          ? AppButton(
+              label: (_trial ? 'vault.backup_try_free' : 'vault.backup_more_room')
+                  .tr(),
+              size: AppButtonSize.small,
+              onPressed: onMoreRoom,
+            )
+          : backup.on
           ? AppSvgIcon(AppIcons.chevronRight, size: 18, color: t.text3)
           : AppButton(
               label: 'vault.backup_turn_on'.tr(),

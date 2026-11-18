@@ -1312,7 +1312,35 @@
     "backup_turn_on": "켜기",
     "backup_explain": "이 휴대폰의 사진과 동영상은 휴대폰에서 먼저 암호화된 뒤 Drive의 “{folder}” 폴더로 들어갑니다.",
     "clear_finished": "완료된 항목 지우기",
-    "backup_short": "백업"
+    "backup_short": "백업",
+    "backup_offer_title": "사진 백업하기",
+    "backup_offer_sub": "이 휴대폰의 사진과 동영상을 Drive에 안전하게 보관하세요.",
+    "backup_offer_private": "이 휴대폰에서 먼저 암호화됩니다. BIShare는 내용을 볼 수 없습니다.",
+    "backup_offer_wifi": "Wi-Fi에서만 진행되어 모바일 데이터를 쓰지 않습니다.",
+    "backup_offer_free": "{size} 무료. 결제가 필요 없습니다.",
+    "backup_offer_free_plain": "Drive의 공간을 사용합니다.",
+    "backup_offer_yes": "사진 백업",
+    "backup_offer_later": "나중에",
+    "backup_stopped": "백업이 중지됨",
+    "backup_stopped_left": {
+      "one": "{}개가 백업되지 않았습니다. Drive가 가득 찼습니다.",
+      "other": "{}개가 백업되지 않았습니다. Drive가 가득 찼습니다."
+    },
+    "backup_short_room": "남은 백업 약 {need}, Drive 여유 공간 {free}.",
+    "backup_try_free": "무료 체험",
+    "backup_more_room": "공간 늘리기",
+    "backup_full_notice_title": "사진 백업이 중지됨",
+    "backup_full_notice_body": "Drive가 가득 찼습니다. 새 사진과 동영상이 백업되지 않습니다.",
+    "plans_trial_days": {
+      "one": "{}일 무료",
+      "other": "{}일 무료"
+    },
+    "plans_cta_trial": {
+      "one": "{}일 무료 체험",
+      "other": "{}일 무료 체험"
+    },
+    "plans_trial_then": "이후 {price}",
+    "plans_trial_note": "체험 기간이 끝나기 전에 해지하면 요금이 청구되지 않습니다. 이후에는 자동 갱신됩니다."
   },
   "compose": {
     "visible": "표시 중",

@@ -45,6 +45,7 @@ class VaultPhotoBackup extends ChangeNotifier {
     Future<void> Function()? catchUp,
     Stream<void>? networkChanges,
     Future<List<String>> Function()? exportDirs,
+    this.onNoRoom,
     this.batch = 30,
   }) : _library = library,
        _exportDirs = exportDirs ?? _appTempDirs,
@@ -178,6 +179,10 @@ class VaultPhotoBackup extends ChangeNotifier {
 
   /// Photos looked at (exported, hashed, queued) per round.
   final int batch;
+
+  /// The Drive just refused a photo for lack of room: backup stops here
+  /// until there is room (VaultBackupNotice says so when the app is away).
+  final Future<void> Function()? onNoRoom;
 
   static const _kOn = 'vault.photoBackup';
   static const _kWifiOnly = 'vault.photoBackupWifiOnly';
@@ -470,6 +475,7 @@ class VaultPhotoBackup extends ChangeNotifier {
       if (_noRoom) return;
       _noRoom = true;
       notifyListeners();
+      unawaited(onNoRoom?.call());
     }
     await _loadRetries();
     final nowMs = DateTime.now().millisecondsSinceEpoch;

@@ -3,6 +3,35 @@
 All notable changes to BIShare are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.9.3] — 2026-11-17
+
+### Added
+- **Drive offers to back up your photos.** The first time a Drive is opened
+  on a phone with backup off, one sheet offers it: encrypted on the phone,
+  over Wi-Fi only, inside the free 5 GB. Saying no is final for the sheet;
+  the line above the gallery keeps its "Turn on".
+- **Backup says when room runs out, and before.** The line above the gallery
+  now tells how many photos and videos are not backed up once the Drive is
+  full, and already while there is room when what is left will not fit, with
+  the way to more room. A notification says so too when backup stops while
+  the app is closed (at most once a week).
+- **Free trial on Drive plans, when the store offers one.** The plans page
+  shows the trial on the plan that has it ("7 days free"), opens on that
+  plan, and names the price that follows by the button. Nothing is shown
+  until the App Store or Google Play offers this person a trial.
+
+### Fixed
+- **iPhone and iPad: buying a Drive plan could fail on iOS 27 and iPadOS
+  27.** The purchase sheet is now opened in the app's window, as Apple asks
+  (in_app_purchase_storekit 0.4.17).
+- **Android: a plan with an offer in Google Play kept its price.** Play lists
+  a plan once more for every offer; the plans page could have shown the
+  offer's "Free" in place of the monthly price.
+- **Windows, Mac and Linux: the window can be resized and maximized.** It was
+  locked to 1000 × 680, and on Windows Maximize moved it to the top-left
+  corner at that size (bishare-web issue #1). It now opens at 1000 × 680 and
+  goes down to 900 × 600.
+
 ## [2.9.2] — 2026-11-15
 
 ### Added
