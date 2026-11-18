@@ -1312,7 +1312,35 @@
     "backup_turn_on": "चालू करें",
     "backup_explain": "इस फ़ोन की फ़ोटो और वीडियो आपके Drive के “{folder}” फ़ोल्डर में जाते हैं, पहले फ़ोन पर एन्क्रिप्ट होकर।",
     "clear_finished": "पूरे हो चुके हटाएँ",
-    "backup_short": "बैकअप"
+    "backup_short": "बैकअप",
+    "backup_offer_title": "अपनी फ़ोटो का बैकअप लें",
+    "backup_offer_sub": "इस फ़ोन की फ़ोटो और वीडियो अपनी Drive में सुरक्षित रखें।",
+    "backup_offer_private": "पहले इसी फ़ोन पर एन्क्रिप्ट होती हैं। BIShare इन्हें नहीं देख सकता।",
+    "backup_offer_wifi": "सिर्फ़ Wi-Fi पर, इसलिए मोबाइल डेटा खर्च नहीं होता।",
+    "backup_offer_free": "{size} मुफ़्त। कोई भुगतान नहीं।",
+    "backup_offer_free_plain": "यह आपकी Drive की जगह इस्तेमाल करता है।",
+    "backup_offer_yes": "फ़ोटो का बैकअप लें",
+    "backup_offer_later": "अभी नहीं",
+    "backup_stopped": "बैकअप रुक गया है",
+    "backup_stopped_left": {
+      "one": "{} फ़ोटो या वीडियो का बैकअप नहीं हुआ। आपकी Drive भर गई है।",
+      "other": "{} फ़ोटो और वीडियो का बैकअप नहीं हुआ। आपकी Drive भर गई है।"
+    },
+    "backup_short_room": "बैकअप के लिए लगभग {need} बाकी है, आपकी Drive में {free} खाली है।",
+    "backup_try_free": "मुफ़्त आज़माएँ",
+    "backup_more_room": "और जगह",
+    "backup_full_notice_title": "फ़ोटो बैकअप रुक गया है",
+    "backup_full_notice_body": "आपकी Drive भर गई है। नई फ़ोटो और वीडियो का बैकअप नहीं हो रहा।",
+    "plans_trial_days": {
+      "one": "{} दिन मुफ़्त",
+      "other": "{} दिन मुफ़्त"
+    },
+    "plans_cta_trial": {
+      "one": "{} दिन मुफ़्त आज़माएँ",
+      "other": "{} दिन मुफ़्त आज़माएँ"
+    },
+    "plans_trial_then": "फिर {price}",
+    "plans_trial_note": "ट्रायल खत्म होने से पहले रद्द करें तो कोई भुगतान नहीं। उसके बाद प्लान अपने-आप रिन्यू होता है।"
   },
   "compose": {
     "visible": "दिखाई दे रहा है",

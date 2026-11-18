@@ -12,6 +12,7 @@ import 'package:workmanager/workmanager.dart';
 import '../../../core/rust/rust_facade.dart';
 import '../../../core/storage/app_database.dart';
 import 'vault_api.dart';
+import 'vault_backup_notice.dart';
 import 'vault_files.dart';
 import 'vault_keys.dart';
 import 'vault_photo_backup.dart';
@@ -214,6 +215,7 @@ class VaultBackground {
       onWifi: onWifi,
       networkChanges: const Stream.empty(),
       catchUp: sync.pull,
+      onNoRoom: VaultBackupNotice(prefs: prefs).full,
     );
 
     // The app opening meanwhile asks this run to stop.
@@ -313,6 +315,7 @@ class VaultBackground {
     if (folder == 'vault.backup_folder') return; // not loaded yet
     await prefs.setString(folderNameKey, folder);
     await VaultUploadNotice.saveTexts(prefs);
+    await VaultBackupNotice.saveTexts(prefs);
   }
 
   /// The system stops the run early (Android).

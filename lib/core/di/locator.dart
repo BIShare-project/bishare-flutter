@@ -37,6 +37,7 @@ import '../../features/web_nearby/data/web_nearby_service.dart';
 import '../../features/vault/data/vault_account.dart';
 import '../../features/vault/data/vault_api.dart';
 import '../../features/vault/data/vault_background.dart';
+import '../../features/vault/data/vault_backup_notice.dart';
 import '../../features/vault/data/vault_purchases.dart';
 import '../../features/vault/data/vault_reminders.dart';
 import '../../features/vault/data/vault_downloader.dart';
@@ -320,6 +321,7 @@ Future<void> setupLocator() async {
       () => VaultPurchases(
         account: getIt<VaultAccount>(),
         api: getIt<VaultApi>(),
+        appleTrial: () => getIt<FeatureFlags>().driveTrial,
       ),
     )
     ..registerLazySingleton<PhotoLibrary>(DevicePhotoLibrary.new)
@@ -343,6 +345,7 @@ Future<void> setupLocator() async {
               'Camera';
         },
         catchUp: () => getIt<VaultSync>().pull(),
+        onNoRoom: VaultBackupNotice(prefs: getIt<SharedPreferences>()).full,
       ),
     );
 

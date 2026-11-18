@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/di/locator.dart';
 import '../../../../core/storage/app_database.dart';
 import '../../../../core/storage/vault_tables.dart';
+import '../../../../core/telemetry/telemetry_service.dart';
 import '../../../../core/ui/app_ui.dart';
 import '../../../../core/ui/shell_tab.dart';
 import '../../data/vault_account.dart';
@@ -18,11 +19,13 @@ import '../../data/vault_background.dart';
 import '../../data/vault_api.dart';
 import '../../data/vault_downloads.dart';
 import '../../data/vault_photo_backup.dart';
+import '../../data/vault_purchases.dart';
 import '../../data/vault_sync.dart';
 import '../../data/vault_upload_batch.dart';
 import '../../data/vault_uploader.dart';
 import '../vault_sign_in_buttons.dart';
 import 'drive_actions.dart';
+import 'drive_backup_offer.dart';
 import 'drive_preview_pane.dart';
 import '../vault_account_page.dart';
 import 'drive_controller.dart';
@@ -210,6 +213,38 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
     _active = active;
     // Back on screen: the keyboard shortcuts follow this page again.
     if (active && _desktop && !_searchFocus.hasFocus) _focus.requestFocus();
+    if (active) _offerBackupSoon();
+  }
+
+  bool _offeringBackup = false;
+
+  /// Once the Drive is on screen and ready on a phone: offer to back up its
+  /// photos, a moment after the page has settled (DriveBackupOffer).
+  void _offerBackupSoon() {
+    final photos = _photos;
+    if (photos == null || _offeringBackup) return;
+    if (_account.status != VaultStatus.ready || !_library || photos.on) return;
+    _offeringBackup = true;
+    Future<void>.delayed(const Duration(milliseconds: 700), () async {
+      try {
+        // Still this page, on screen, with nothing over it.
+        if (!mounted || !_active) return;
+        if (ModalRoute.of(context)?.isCurrent != true) return;
+        await DriveBackupOffer.offer(
+          context,
+          backup: photos,
+          prefs: getIt<SharedPreferences>(),
+          ready: _account.status == VaultStatus.ready,
+          // The free plan's size is what backup costs: nothing.
+          freeBytes: _account.plan == 'free' ? _account.quotaBytes : null,
+          telemetry: getIt.isRegistered<TelemetryService>()
+              ? getIt<TelemetryService>()
+              : null,
+        );
+      } finally {
+        _offeringBackup = false;
+      }
+    });
   }
 
   @override
@@ -295,6 +330,7 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
     unawaited(_sync.start());
     unawaited(_uploader.run());
     unawaited(_refreshInfo());
+    if (_active) _offerBackupSoon();
   }
 
   Future<void> _refreshInfo() async {
@@ -1041,6 +1077,13 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
               ? DriveGalleryView(
                   backup: _photos!,
                   dao: _dao,
+                  account: _account,
+                  purchases: getIt.isRegistered<VaultPurchases>()
+                      ? getIt<VaultPurchases>()
+                      : null,
+                  telemetry: getIt.isRegistered<TelemetryService>()
+                      ? getIt<TelemetryService>()
+                      : null,
                   onOpen: _openOrPreview,
                   onMore: _more,
                   onLink: (o) => unawaited(_act.shareLink(o)),

@@ -1312,7 +1312,35 @@
     "backup_turn_on": "Activer",
     "backup_explain": "Les photos et vidéos de ce téléphone vont dans le dossier « {folder} » de votre Drive, chiffrées d’abord sur le téléphone.",
     "clear_finished": "Effacer les terminés",
-    "backup_short": "Sauvegarder"
+    "backup_short": "Sauvegarder",
+    "backup_offer_title": "Sauvegardez vos photos",
+    "backup_offer_sub": "Gardez les photos et vidéos de ce téléphone à l’abri dans votre Drive.",
+    "backup_offer_private": "Chiffrées d’abord sur ce téléphone. BIShare ne peut pas les voir.",
+    "backup_offer_wifi": "En Wi-Fi uniquement, donc sans données mobiles.",
+    "backup_offer_free": "{size} gratuits. Aucun paiement requis.",
+    "backup_offer_free_plain": "Elle utilise l’espace de votre Drive.",
+    "backup_offer_yes": "Sauvegarder les photos",
+    "backup_offer_later": "Pas maintenant",
+    "backup_stopped": "La sauvegarde est arrêtée",
+    "backup_stopped_left": {
+      "one": "{} photo ou vidéo n’est pas sauvegardée. Votre Drive est plein.",
+      "other": "{} photos et vidéos ne sont pas sauvegardées. Votre Drive est plein."
+    },
+    "backup_short_room": "Environ {need} restent à sauvegarder, {free} libres dans votre Drive.",
+    "backup_try_free": "Essai gratuit",
+    "backup_more_room": "Plus d’espace",
+    "backup_full_notice_title": "La sauvegarde des photos est arrêtée",
+    "backup_full_notice_body": "Votre Drive est plein. Les nouvelles photos et vidéos ne sont pas sauvegardées.",
+    "plans_trial_days": {
+      "one": "{} jour gratuit",
+      "other": "{} jours gratuits"
+    },
+    "plans_cta_trial": {
+      "one": "Essayer {} jour gratuitement",
+      "other": "Essayer {} jours gratuitement"
+    },
+    "plans_trial_then": "Ensuite {price}",
+    "plans_trial_note": "Résiliez avant la fin de l’essai et vous ne payez rien. Ensuite, le forfait se renouvelle automatiquement."
   },
   "compose": {
     "visible": "Visible",

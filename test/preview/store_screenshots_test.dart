@@ -9,7 +9,11 @@
 // Optional: BISHARE_SHOTS_PRESETS=ios_phone,mac, BISHARE_SHOTS_ONLY=plans
 // (screens whose file name contains one of the words), BISHARE_SHOTS_THEME=light
 // (the stores get dark), and BISHARE_SHOTS_PLAN=drive_250gb_yearly (the plans
-// page as a subscriber sees it; the stores get the free Drive). Output:
+// page as a subscriber sees it; the stores get the free Drive). To look at
+// the free trial and the backup prompts: BISHARE_SHOTS_TRIAL=7 (a trial of
+// that many days on the 100 GB plans) and BISHARE_SHOTS_BACKUP=off (the offer
+// to back up photos), full (backup stopped, the Drive full) or short (what is
+// left will not fit). Output:
 // `<dir>/<preset>/<lang>/<n>_<screen>.png`. The UI is the app's own widgets
 // with fixed state (a cast of peers, a room, default settings), drawn the way
 // the target platform draws it (debugDefaultTargetPlatformOverride). The
@@ -222,6 +226,8 @@ const Map<String, String> _defines = {
   'BISHARE_SHOTS_PRESETS': String.fromEnvironment('BISHARE_SHOTS_PRESETS'),
   'BISHARE_SHOTS_ONLY': String.fromEnvironment('BISHARE_SHOTS_ONLY'),
   'BISHARE_SHOTS_PLAN': String.fromEnvironment('BISHARE_SHOTS_PLAN'),
+  'BISHARE_SHOTS_TRIAL': String.fromEnvironment('BISHARE_SHOTS_TRIAL'),
+  'BISHARE_SHOTS_BACKUP': String.fromEnvironment('BISHARE_SHOTS_BACKUP'),
   'BISHARE_SHOTS_ROOT': String.fromEnvironment('BISHARE_SHOTS_ROOT'),
 };
 String? _env(String key) {
@@ -489,7 +495,8 @@ List<VaultObject> _driveObjects() {
       size: 96256,
       ago: 120,
     ),
-    for (var i = 0; i < 14; i++)
+    // "short": enough photos in the Drive to say what one weighs on average.
+    for (var i = 0; i < (_env('BISHARE_SHOTS_BACKUP') == 'short' ? 24 : 14); i++)
       o(
         'p$i',
         i % 5 == 3 ? 'VID_${2101 + i}.mp4' : 'IMG_${2101 + i}.jpg',
@@ -680,6 +687,18 @@ void _registerDrive(String self, {required bool phone}) {
     ])
       p.id: p,
   });
+  // A free trial on the 100 GB plans, when asked for (the stores get none).
+  final trial = int.tryParse(_env('BISHARE_SHOTS_TRIAL') ?? '');
+  final trials = {
+    if (trial != null) ...{
+      'drive_100gb_monthly': trial,
+      'drive_100gb_yearly': trial,
+    },
+  };
+  when(() => purchases.trials).thenReturn(trials);
+  when(
+    () => purchases.trialDays(any()),
+  ).thenAnswer((i) => trials[i.positionalArguments.first as String]);
   when(() => purchases.loading).thenReturn(false);
   when(() => purchases.available).thenReturn(true);
   when(() => purchases.busyProduct).thenReturn(null);
@@ -733,12 +752,20 @@ void _registerDrive(String self, {required bool phone}) {
   when(() => backup.available).thenReturn(phone);
   when(() => backup.library).thenReturn(library);
   when(() => backup.access).thenReturn(PhotoAccess.full);
-  when(() => backup.on).thenReturn(true);
+  final backupState = _env('BISHARE_SHOTS_BACKUP');
+  when(() => backup.on).thenReturn(backupState != 'off');
+  when(() => backup.setOn(any())).thenAnswer((_) async => true);
   when(() => backup.wifiOnly).thenReturn(true);
   when(() => backup.scanning).thenReturn(false);
-  when(() => backup.left).thenReturn(7);
+  when(() => backup.left).thenReturn(
+    switch (backupState) {
+      'full' => 1932,
+      'short' => 6400,
+      _ => 7,
+    },
+  );
   when(() => backup.total).thenReturn(30);
-  when(() => backup.noRoom).thenReturn(false);
+  when(() => backup.noRoom).thenReturn(backupState == 'full');
   when(() => backup.gaveUp).thenReturn(0);
   when(
     () => backup.refreshAccess(ask: any(named: 'ask')),
@@ -1295,7 +1322,10 @@ Future<void> _run(
         ),
       );
       await _settle(tester);
-      if (view != null) {
+      // The offer to back up photos is over the page by now: a tap on a tab
+      // would close it (a phone opens on its photos by itself).
+      final offered = _env('BISHARE_SHOTS_BACKUP') == 'off' && phone;
+      if (view != null && !offered) {
         // Phones show Drive's tabs (Photos, Files, ...); a computer, the
         // sidebar's views.
         final label = switch (view) {

@@ -1312,7 +1312,35 @@
     "backup_turn_on": "Nyalakan",
     "backup_explain": "Foto dan video dari ponsel ini masuk ke folder “{folder}” di Drive Anda, dienkripsi di ponsel dulu.",
     "clear_finished": "Hapus yang selesai",
-    "backup_short": "Cadangkan"
+    "backup_short": "Cadangkan",
+    "backup_offer_title": "Cadangkan foto Anda",
+    "backup_offer_sub": "Simpan foto dan video di ponsel ini dengan aman di Drive Anda.",
+    "backup_offer_private": "Dienkripsi di ponsel ini lebih dulu. BIShare tidak bisa melihatnya.",
+    "backup_offer_wifi": "Hanya lewat Wi-Fi, jadi tidak memakai data seluler.",
+    "backup_offer_free": "{size} gratis. Tanpa pembayaran.",
+    "backup_offer_free_plain": "Memakai ruang di Drive Anda.",
+    "backup_offer_yes": "Cadangkan foto",
+    "backup_offer_later": "Nanti saja",
+    "backup_stopped": "Pencadangan berhenti",
+    "backup_stopped_left": {
+      "one": "{} foto atau video belum dicadangkan. Drive Anda penuh.",
+      "other": "{} foto dan video belum dicadangkan. Drive Anda penuh."
+    },
+    "backup_short_room": "Sekitar {need} lagi untuk dicadangkan, tersisa {free} di Drive Anda.",
+    "backup_try_free": "Coba gratis",
+    "backup_more_room": "Tambah ruang",
+    "backup_full_notice_title": "Pencadangan foto berhenti",
+    "backup_full_notice_body": "Drive Anda penuh. Foto dan video baru tidak dicadangkan.",
+    "plans_trial_days": {
+      "one": "Gratis {} hari",
+      "other": "Gratis {} hari"
+    },
+    "plans_cta_trial": {
+      "one": "Coba gratis {} hari",
+      "other": "Coba gratis {} hari"
+    },
+    "plans_trial_then": "Lalu {price}",
+    "plans_trial_note": "Batalkan sebelum masa coba berakhir dan Anda tidak membayar apa pun. Setelah itu paket diperpanjang otomatis."
   },
   "compose": {
     "visible": "Terlihat",

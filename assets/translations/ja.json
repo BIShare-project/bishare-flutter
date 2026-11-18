@@ -1312,7 +1312,35 @@
     "backup_turn_on": "オンにする",
     "backup_explain": "このスマートフォンの写真とビデオは、スマートフォン上で暗号化されてからDriveの「{folder}」フォルダに保存されます。",
     "clear_finished": "完了したものを消去",
-    "backup_short": "バックアップ"
+    "backup_short": "バックアップ",
+    "backup_offer_title": "写真をバックアップ",
+    "backup_offer_sub": "このスマートフォンの写真とビデオをDriveに安全に保存します。",
+    "backup_offer_private": "まずこのスマートフォンで暗号化されます。BIShareには中身が見えません。",
+    "backup_offer_wifi": "Wi-Fiのみで行うため、モバイルデータは使いません。",
+    "backup_offer_free": "{size}まで無料。支払いは不要です。",
+    "backup_offer_free_plain": "Driveの空き容量を使います。",
+    "backup_offer_yes": "写真をバックアップ",
+    "backup_offer_later": "今はしない",
+    "backup_stopped": "バックアップが停止しました",
+    "backup_stopped_left": {
+      "one": "{}件がバックアップされていません。Driveがいっぱいです。",
+      "other": "{}件がバックアップされていません。Driveがいっぱいです。"
+    },
+    "backup_short_room": "バックアップ残り約{need}、Driveの空きは{free}です。",
+    "backup_try_free": "無料で試す",
+    "backup_more_room": "容量を増やす",
+    "backup_full_notice_title": "写真のバックアップが停止しました",
+    "backup_full_notice_body": "Driveがいっぱいです。新しい写真とビデオはバックアップされません。",
+    "plans_trial_days": {
+      "one": "{}日間無料",
+      "other": "{}日間無料"
+    },
+    "plans_cta_trial": {
+      "one": "{}日間無料で試す",
+      "other": "{}日間無料で試す"
+    },
+    "plans_trial_then": "その後 {price}",
+    "plans_trial_note": "トライアル終了前に解約すれば料金はかかりません。終了後は自動更新されます。"
   },
   "compose": {
     "visible": "表示中",

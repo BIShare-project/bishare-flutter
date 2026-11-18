@@ -1312,7 +1312,35 @@
     "backup_turn_on": "Turn on",
     "backup_explain": "Photos and videos from this phone go to the “{folder}” folder in your Drive, encrypted on the phone first.",
     "clear_finished": "Clear finished",
-    "backup_short": "Back up"
+    "backup_short": "Back up",
+    "backup_offer_title": "Back up your photos",
+    "backup_offer_sub": "Keep the photos and videos on this phone safe in your Drive.",
+    "backup_offer_private": "Encrypted on this phone first. BIShare cannot see them.",
+    "backup_offer_wifi": "Over Wi-Fi only, so it uses no mobile data.",
+    "backup_offer_free": "{size} free. No payment needed.",
+    "backup_offer_free_plain": "It uses the room in your Drive.",
+    "backup_offer_yes": "Back up photos",
+    "backup_offer_later": "Not now",
+    "backup_stopped": "Backup has stopped",
+    "backup_stopped_left": {
+      "one": "{} photo or video is not backed up. Your Drive is full.",
+      "other": "{} photos and videos are not backed up. Your Drive is full."
+    },
+    "backup_short_room": "About {need} still to back up, {free} free in your Drive.",
+    "backup_try_free": "Try free",
+    "backup_more_room": "More room",
+    "backup_full_notice_title": "Photo backup has stopped",
+    "backup_full_notice_body": "Your Drive is full. New photos and videos are not backed up.",
+    "plans_trial_days": {
+      "one": "{} day free",
+      "other": "{} days free"
+    },
+    "plans_cta_trial": {
+      "one": "Try free for {} day",
+      "other": "Try free for {} days"
+    },
+    "plans_trial_then": "Then {price}",
+    "plans_trial_note": "Cancel before the trial ends and you pay nothing. After it, the plan renews automatically."
   },
   "compose": {
     "visible": "Visible",

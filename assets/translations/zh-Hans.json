@@ -1312,7 +1312,35 @@
     "backup_turn_on": "开启",
     "backup_explain": "这部手机上的照片和视频会先在手机上加密，再存入你 Drive 中的“{folder}”文件夹。",
     "clear_finished": "清除已完成",
-    "backup_short": "备份"
+    "backup_short": "备份",
+    "backup_offer_title": "备份你的照片",
+    "backup_offer_sub": "把这部手机上的照片和视频安全地存入你的 Drive。",
+    "backup_offer_private": "先在这部手机上加密，BIShare 无法查看。",
+    "backup_offer_wifi": "仅通过 Wi-Fi 进行，不消耗移动数据。",
+    "backup_offer_free": "{size} 免费，无需付款。",
+    "backup_offer_free_plain": "使用你 Drive 中的空间。",
+    "backup_offer_yes": "备份照片",
+    "backup_offer_later": "暂不",
+    "backup_stopped": "备份已停止",
+    "backup_stopped_left": {
+      "one": "有 {} 项未备份。你的 Drive 已满。",
+      "other": "有 {} 项未备份。你的 Drive 已满。"
+    },
+    "backup_short_room": "还有约 {need} 待备份，你的 Drive 剩余 {free}。",
+    "backup_try_free": "免费试用",
+    "backup_more_room": "更多空间",
+    "backup_full_notice_title": "照片备份已停止",
+    "backup_full_notice_body": "你的 Drive 已满。新的照片和视频不会备份。",
+    "plans_trial_days": {
+      "one": "免费 {} 天",
+      "other": "免费 {} 天"
+    },
+    "plans_cta_trial": {
+      "one": "免费试用 {} 天",
+      "other": "免费试用 {} 天"
+    },
+    "plans_trial_then": "之后{price}",
+    "plans_trial_note": "在试用结束前取消，无需付费。试用结束后自动续订。"
   },
   "compose": {
     "visible": "可被发现",

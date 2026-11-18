@@ -72,6 +72,28 @@ class TelemetryService {
     unawaited(_postInterest(topic: topic, event: event));
   }
 
+  /// Fire-and-forget; one tally for a prompt of the app that it was shown
+  /// ('view') or acted on ('click'): the offer to back up photos
+  /// ('app_backup_offer'), the full-Drive line over the gallery
+  /// ('app_backup_full'), the Drive plans page ('app_drive_plans') and a free
+  /// trial on it ('app_drive_trial'). A count per day, nothing else; the
+  /// server refuses ids it does not know.
+  void recordCta(String id, String event) {
+    if (!enabled) return;
+    unawaited(_postCta(id: id, event: event));
+  }
+
+  Future<void> _postCta({required String id, required String event}) async {
+    try {
+      await _dio.post<void>(
+        '/api/v1/telemetry/cta',
+        data: {'id': id, 'event': event},
+      );
+    } catch (_) {
+      // best-effort — never surfaced to the user
+    }
+  }
+
   /// Last UTC date (`YYYY-MM-DD`) this install reported itself active.
   static const _activeDayKey = 'telemetryActiveDay';
 

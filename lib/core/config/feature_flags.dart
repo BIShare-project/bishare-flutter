@@ -63,6 +63,21 @@ class FeatureFlags extends ChangeNotifier {
   bool get vaultOpen => _flags['vault_enabled'] == true;
   bool get vaultInternal => _flags['vault_enabled'] == 'internal';
 
+  /// The free trial on Drive plans in the App Store, as the flag `drive_trial`
+  /// states it: `{"days": 7, "products": ["drive_100gb_monthly", …]}`. The
+  /// app cannot read an introductory offer's length from StoreKit, so the
+  /// flag carries it; it is set only once the offers are live in App Store
+  /// Connect. Google Play's trial is read from Play itself and needs no flag.
+  ({int days, Set<String> products})? get driveTrial {
+    final v = _flags['drive_trial'];
+    if (v is! Map) return null;
+    final days = v['days'];
+    final products = v['products'];
+    if (days is! int || days <= 0 || products is! List) return null;
+    final ids = products.whereType<String>().toSet();
+    return ids.isEmpty ? null : (days: days, products: ids);
+  }
+
   /// A tester's own switch on this device. While the flag is "internal" it is
   /// what shows the Drive entry; the server still refuses sign-ins that are
   /// not on its allowlist.
