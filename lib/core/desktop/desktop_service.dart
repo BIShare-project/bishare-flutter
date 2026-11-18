@@ -57,13 +57,15 @@ class DesktopService with WindowListener {
   static Future<void> initWindow() async {
     if (!isDesktop) return;
     await windowManager.ensureInitialized();
-    // Landscape (≥760 wide → the desktop side-rail layout), locked to a fixed
-    // size (min == max + non-resizable).
-    const size = Size(1000, 680);
+    // Opens landscape at 1000 × 680 and can be resized and maximized. The
+    // minimum keeps the desktop layout with Send's two columns whole (at 800
+    // wide "Choose a folder" was cut) and still fits a 1366 × 768 screen at
+    // 125 %. The window used to be locked to one size, but Windows still
+    // offered Maximize, which moved it to the top-left corner at that same
+    // size (bishare-web issue #1).
     const opts = WindowOptions(
-      size: size,
-      minimumSize: size,
-      maximumSize: size,
+      size: Size(1000, 680),
+      minimumSize: Size(900, 600),
       center: true,
       title: 'BIShare',
       titleBarStyle: TitleBarStyle.normal,
@@ -72,7 +74,6 @@ class DesktopService with WindowListener {
       await windowManager.show();
       await windowManager.focus();
     });
-    await windowManager.setResizable(false); // lock the window size
     // Intercept the close button → hide to tray instead of quitting.
     await windowManager.setPreventClose(true);
   }
