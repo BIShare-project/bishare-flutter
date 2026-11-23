@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Microsoft Store listing for BIShare, all languages, as Partner Center CSV.
 
-Partner Center cannot be reached through the submission API from this
-account (creating the Entra tenant fails with 715-123280), so the listing goes
-in through "Import and export Store listings": export the CSV from Partner
-Center, run
+The listing goes in through "Import and export Store listings" (builds and
+release notes are submitted by store/msstore_submit.py from CI): export the
+CSV from Partner Center, run
 
     python3 store/msstore_listing.py <exported.csv> <out.csv>
 

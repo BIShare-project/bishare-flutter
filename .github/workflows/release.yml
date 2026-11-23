@@ -53,6 +53,11 @@ on:
         type: choice
         options: ["none", "build"]
         default: "none"
+      msstore:
+        description: "Microsoft Store: check only (dry run), or a draft submission left unsubmitted (tags always submit)"
+        type: choice
+        options: ["none", "dry-run", "draft"]
+        default: "none"
 
 permissions:
   contents: write
@@ -774,6 +779,34 @@ jobs:
             BIShare-*-linux-x64.deb
             BIShare-*-linux-x86_64.AppImage
           if-no-files-found: error
+
+  # Microsoft Store: every tag sends the store MSIX with the release notes of
+  # store/listing.json (play.<locale>.whatsNew) and submits it, like the iOS
+  # and Android builds. Its own job, so a Store refusal (a submission still in
+  # certification, say) never holds back the GitHub release.
+  msstore:
+    needs: [windows]
+    if: ${{ github.ref_type == 'tag' || (inputs.msstore != '' && inputs.msstore != 'none') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: windows }
+      - name: Submit to the Microsoft Store
+        env:
+          MSSTORE_TENANT_ID: ${{ secrets.MSSTORE_TENANT_ID }}
+          MSSTORE_CLIENT_ID: ${{ secrets.MSSTORE_CLIENT_ID }}
+          MSSTORE_CLIENT_SECRET: ${{ secrets.MSSTORE_CLIENT_SECRET }}
+          MSSTORE_PRODUCT_ID: ${{ secrets.MSSTORE_PRODUCT_ID }}
+          MODE: ${{ github.ref_type == 'tag' && 'submit' || inputs.msstore }}
+        run: |
+          MSIX=$(find . -name '*-store.msix' | head -1)
+          [ -n "$MSIX" ] || { echo "no store MSIX in the windows artifact"; exit 1; }
+          case "$MODE" in
+            submit) python3 store/msstore_submit.py "$MSIX" ;;
+            draft) python3 store/msstore_submit.py "$MSIX" --no-commit ;;
+            *) python3 store/msstore_submit.py "$MSIX" --dry-run ;;
+          esac
 
   release:
     needs: [android, windows, linux, macos]
