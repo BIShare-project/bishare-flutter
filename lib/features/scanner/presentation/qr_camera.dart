@@ -1,6 +1,9 @@
 import 'package:camera/camera.dart' show FlashMode;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_zxing/flutter_zxing.dart';
+
+import '../../../core/ui/app_ui.dart';
 
 /// Torch state + control for a [QrCamera]. The camera itself is owned by the
 /// reader widget, which recreates it on app resume, so the handle is re-attached
@@ -72,8 +75,12 @@ class _QrCameraState extends State<QrCamera> {
       // the page's frame is only a guide, and a code held off-centre should
       // still read.
       cropPercent: 1,
-      scanDelay: widget.continuous ? Duration.zero : const Duration(milliseconds: 100),
-      scanDelaySuccess: widget.continuous ? Duration.zero : const Duration(seconds: 1),
+      scanDelay: widget.continuous
+          ? Duration.zero
+          : const Duration(milliseconds: 100),
+      scanDelaySuccess: widget.continuous
+          ? Duration.zero
+          : const Duration(seconds: 1),
       showScannerOverlay: false,
       showFlashlight: false,
       showToggleCamera: false,
@@ -89,6 +96,101 @@ class _QrCameraState extends State<QrCamera> {
         final text = code.text;
         if (code.isValid && text != null) widget.onCode(text);
       },
+    );
+  }
+}
+
+/// Close, title and torch over the camera image.
+class QrCameraTopBar extends StatelessWidget {
+  const QrCameraTopBar({
+    super.key,
+    required this.title,
+    required this.controller,
+    this.showTorch = true,
+  });
+
+  final String title;
+  final QrCameraController controller;
+
+  /// Off once the camera has nothing left to read: an empty slot keeps the
+  /// title centred.
+  final bool showTorch;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+      child: Row(
+        children: [
+          QrCircleButton(
+            icon: AppIcons.close,
+            onTap: () {
+              tapHaptic();
+              context.pop();
+            },
+          ),
+          const Spacer(),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const Spacer(),
+          if (showTorch)
+            ValueListenableBuilder<bool>(
+              valueListenable: controller,
+              builder: (context, on, _) {
+                return QrCircleButton(
+                  icon: on ? AppIcons.flashlight : AppIcons.flashlightOff,
+                  active: on,
+                  onTap: () {
+                    tapHaptic();
+                    controller.toggleTorch();
+                  },
+                );
+              },
+            )
+          else
+            const SizedBox(width: 42),
+        ],
+      ),
+    );
+  }
+}
+
+/// A round button over the camera image (close, torch).
+class QrCircleButton extends StatelessWidget {
+  const QrCircleButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+    this.active = false,
+  });
+
+  final String icon;
+  final VoidCallback onTap;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: active ? Colors.white : Colors.black.withValues(alpha: 0.4),
+          shape: BoxShape.circle,
+        ),
+        child: AppSvgIcon(
+          icon,
+          size: 20,
+          color: active ? Colors.black : Colors.white,
+        ),
+      ),
     );
   }
 }

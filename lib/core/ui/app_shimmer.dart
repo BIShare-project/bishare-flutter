@@ -84,3 +84,60 @@ class AppSkeletonBox extends StatelessWidget {
     ),
   );
 }
+
+/// Rows that are on their way: a square, a title line and a shorter line.
+class AppRowsSkeleton extends StatelessWidget {
+  const AppRowsSkeleton({
+    super.key,
+    this.count = 6,
+    this.inset = 16,
+    this.titleWidths = const (0.7, 0.55),
+    this.subtitleWidth = 0.35,
+  });
+
+  final int count;
+
+  /// Space at each side of a row.
+  final double inset;
+
+  /// Widths of the title line in even and odd rows, as a part of the row.
+  final (double, double) titleWidths;
+  final double subtitleWidth;
+
+  @override
+  Widget build(BuildContext context) => AppShimmer(
+    child: Column(
+      children: [
+        for (var i = 0; i < count; i++)
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: inset,
+              vertical: 10,
+            ),
+            child: Row(
+              children: [
+                const AppSkeletonBox(width: 44, height: 44, radius: 11),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FractionallySizedBox(
+                        widthFactor: i.isEven ? titleWidths.$1 : titleWidths.$2,
+                        child: const AppSkeletonBox(height: 14, radius: 7),
+                      ),
+                      const SizedBox(height: 8),
+                      FractionallySizedBox(
+                        widthFactor: subtitleWidth,
+                        child: const AppSkeletonBox(height: 11, radius: 6),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    ),
+  );
+}

@@ -29,7 +29,7 @@ class QrBeamPage extends StatelessWidget {
                 maxWidth: 560,
                 child: ListView(
                   children: [
-                    _Choice(
+                    AppChoiceRow(
                       icon: AppIcons.qrShare,
                       title: 'qr_beam.send_title'.tr(),
                       subtitle: 'qr_beam.send_desc'.tr(),
@@ -39,7 +39,7 @@ class QrBeamPage extends StatelessWidget {
                     // mobile-only (supportsCameraScan), send-only on desktop.
                     if (supportsCameraScan) ...[
                       const AppRowDivider(indent: 70),
-                      _Choice(
+                      AppChoiceRow(
                         icon: AppIcons.scanDocument,
                         title: 'qr_beam.receive_title'.tr(),
                         subtitle: 'qr_beam.receive_desc'.tr(),
@@ -65,68 +65,3 @@ class QrBeamPage extends StatelessWidget {
 }
 
 /// A direction: a round icon, what it does, a chevron.
-class _Choice extends StatelessWidget {
-  const _Choice({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final String icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tokens;
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: () {
-          tapHaptic();
-          onTap();
-        },
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 68),
-          child: Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 12, 10),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: t.accentSoft,
-                    shape: BoxShape.circle,
-                  ),
-                  child: AppSvgIcon(icon, size: 21, color: t.accent),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: AppType.rowStrong.copyWith(color: t.text),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: AppType.secondary.copyWith(color: t.text2),
-                      ),
-                    ],
-                  ),
-                ),
-                AppSvgIcon(AppIcons.chevronRight, size: 18, color: t.text3),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
