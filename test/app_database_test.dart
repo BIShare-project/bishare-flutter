@@ -542,4 +542,30 @@ void main() {
     );
     await db.close();
   });
+
+  test('migration to v7 opens a v6 database that already has the column', () async {
+    // A build made between the column and the version bump left exactly this
+    // behind: user_version 6, live_group present. The Mac where it ran could
+    // no longer open the database, and Drive waited on it for ever.
+    final dir = await Directory.systemTemp.createTemp('bishare_db_test');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/app.db');
+
+    final first = AppDatabase(NativeDatabase(file));
+    await first.insertRecord(TransferRecordsCompanion.insert(
+      fileName: 'kept.jpg',
+      fileSize: 1,
+      direction: 'received',
+      deviceAlias: 'Phone',
+      timestamp: DateTime(2026),
+    ));
+    await first.close();
+
+    final db = AppDatabase(NativeDatabase(file, setup: (raw) {
+      if (raw.userVersion == 7) raw.userVersion = 6;
+    }));
+    final rows = await db.watchReceived().first;
+    expect(rows.map((r) => r.fileName), ['kept.jpg']);
+    await db.close();
+  });
 }
