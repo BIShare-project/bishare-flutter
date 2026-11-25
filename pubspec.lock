@@ -925,10 +925,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_webrtc
-      sha256: ebf5ceef2897caae425ed65a38b2961c29d9d9a626159418ed460e1a65038c00
+      sha256: b98ef03376401e54ff87fc78907b38e562b15ca8424aba589c263eddc3c1ecf9
       url: "https://pub.dev"
     source: hosted
-    version: "1.6.2+hotfix.4"
+    version: "1.6.3"
   flutter_zxing:
     dependency: "direct main"
     description:
@@ -1026,10 +1026,10 @@ packages:
     dependency: transitive
     description:
       name: google_sign_in_ios
-      sha256: b8efb315c778390f1b1c4fc14d74c42784dd9ee0c1d0c26b13f30b46826319ad
+      sha256: bc03e8f8cf0e5a5cbbc1d582516e5f792c734f0a41d324d4760dcb8bef523b28
       url: "https://pub.dev"
     source: hosted
-    version: "6.3.8"
+    version: "6.4.0"
   google_sign_in_platform_interface:
     dependency: "direct main"
     description:
