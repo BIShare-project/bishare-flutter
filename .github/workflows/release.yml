@@ -781,7 +781,7 @@ jobs:
           if-no-files-found: error
 
   # Microsoft Store: every tag sends the store MSIX with the release notes of
-  # store/listing.json (play.<locale>.whatsNew) and submits it, like the iOS
+  # store/listing.json (msstore.whatsNew) and submits it, like the iOS
   # and Android builds. Its own job, so a Store refusal (a submission still in
   # certification, say) never holds back the GitHub release.
   msstore:

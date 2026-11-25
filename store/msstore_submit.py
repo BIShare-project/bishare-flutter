@@ -9,14 +9,15 @@ app added to Partner Center with the Manager role) and MSSTORE_PRODUCT_ID.
 
 What it does: a new submission (a copy of the last published one), the old
 packages out and <store.msix> in, the release notes of every listing from
-listing.json `play.<locale>.whatsNew` (the same text Google Play shows), then
-the commit; it waits for the Store to accept the package. With --dry-run it
+listing.json `msstore.whatsNew` (Windows has its own text: the phone notes name
+things a PC does not have), then the commit; it waits for the Store to accept the package. With --dry-run it
 only reads: it prints what it would send. --no-commit leaves the submission
 as a draft in Partner Center.
 
 A submission the Store is still working on (certification, publishing) cannot
 be replaced: the script stops and says so. A draft left in Partner Center is
-replaced.
+replaced. It also stops, before anything is written, when `msstore.version` is
+not this release or a Store language has no notes.
 """
 
 import io
@@ -68,17 +69,26 @@ def call(tok: str, method: str, path: str, body: dict | None = None) -> dict:
         sys.exit(f"{method} {path}: HTTP {e.code} {e.read().decode(errors='replace')[:600]}")
 
 
-def notes_for(listing_lang: str, play: dict) -> str | None:
-    """The Play what's-new of the language closest to a Store listing language."""
+def read_listing() -> dict:
+    return json.loads((HERE / "listing.json").read_text())
+
+
+def notes_problem(listing: dict) -> str | None:
+    """Why the Windows release notes cannot go out, or None."""
+    ms = listing.get("msstore") or {}
+    if ms.get("version") != listing["version"]:
+        return f"listing.json msstore notes are for {ms.get('version')}, the release is {listing['version']}: write the Windows notes first"
+    for lang, text in ms["whatsNew"].items():
+        if not text.strip() or len(text) > NOTES_MAX:
+            return f"listing.json msstore {lang}: {len(text)} characters (1 to {NOTES_MAX})"
+    return None
+
+
+def notes_for(listing_lang: str, notes: dict) -> str | None:
+    """The Windows notes of a Store listing language ("zh" is Traditional Chinese)."""
     lang = listing_lang.lower()
-    special = {"zh-hans": "zh-CN", "zh-cn": "zh-CN", "zh-hant": "zh-TW", "zh-tw": "zh-TW", "zh": "zh-TW",
-               "en": "en-US", "es": "es-ES", "pt": "pt-BR"}
-    key = special.get(lang)
-    if not key:
-        exact = {k.lower(): k for k in play}
-        key = exact.get(lang) or next((k for k in play if k.lower().split("-")[0] == lang.split("-")[0]), None)
-    text = (play.get(key) or {}).get("whatsNew") if key else None
-    return text[:NOTES_MAX] if text else None
+    special = {"zh-hant": "zh", "zh-tw": "zh", "zh-hk": "zh", "zh-cn": "zh-hans"}
+    return notes.get(lang) or notes.get(special.get(lang) or lang.split("-")[0])
 
 
 def main() -> int:
@@ -90,14 +100,21 @@ def main() -> int:
     if not msix.is_file():
         sys.exit(f"no package at {msix}")
 
-    listing = json.loads((HERE / "listing.json").read_text())
+    listing = read_listing()
     pub = re.search(r"^version:\s*([0-9.]+)\+", (HERE.parent / "pubspec.yaml").read_text(), re.M).group(1)
     if listing["version"] != pub:
         sys.exit(f"store/listing.json is for {listing['version']}, pubspec says {pub}: write this release's notes first")
+    if problem := notes_problem(listing):
+        sys.exit(problem)
+    notes = listing["msstore"]["whatsNew"]
 
     tok = token()
     app_id = env("MSSTORE_PRODUCT_ID")
     app = call(tok, "GET", app_id)
+    published = call(tok, "GET", f"{app_id}/submissions/{app['lastPublishedApplicationSubmission']['id']}")
+    missing = [lang for lang in published.get("listings", {}) if not notes_for(lang, notes)]
+    if missing:
+        sys.exit(f"no Windows release notes for {', '.join(missing)}: add them to listing.json msstore.whatsNew")
     pending = app.get("pendingApplicationSubmission")
     if pending:
         status = call(tok, "GET", f"{app_id}/submissions/{pending['id']}/status").get("status")
@@ -107,23 +124,15 @@ def main() -> int:
         if not dry:
             call(tok, "DELETE", f"{app_id}/submissions/{pending['id']}")
 
-    if dry:
-        sub = call(tok, "GET", f"{app_id}/submissions/{app['lastPublishedApplicationSubmission']['id']}")
-    else:
-        sub = call(tok, "POST", f"{app_id}/submissions")
+    sub = published if dry else call(tok, "POST", f"{app_id}/submissions")
 
     for p in sub.get("applicationPackages", []):
         p["fileStatus"] = "PendingDelete"
     sub.setdefault("applicationPackages", []).append({"fileName": msix.name, "fileStatus": "PendingUpload"})
 
-    missing = []
     for lang, l in sub.get("listings", {}).items():
-        text = notes_for(lang, listing["play"])
-        if text:
-            l["baseListing"]["releaseNotes"] = text
-        else:
-            missing.append(lang)
-    print(f"release notes for {len(sub.get('listings', {})) - len(missing)} listings" + (f"; none for {', '.join(missing)}" if missing else ""))
+        l["baseListing"]["releaseNotes"] = notes_for(lang, notes)
+    print(f"release notes for {len(sub.get('listings', {}))} listings")
     print(f"package: {msix.name} ({msix.stat().st_size // 1024} KB), replacing {len(sub['applicationPackages']) - 1}")
 
     if dry:
