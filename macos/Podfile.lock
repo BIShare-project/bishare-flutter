@@ -41,7 +41,7 @@ PODS:
   - flutter_webrtc (1.6.2):
     - FlutterMacOS
     - WebRTC-SDK (= 150.7871.01)
-  - flutter_zxing (3.1.0):
+  - flutter_zxing (3.1.1):
     - FlutterMacOS
   - FlutterMacOS (1.0.0)
   - gal (1.0.0):
@@ -249,7 +249,7 @@ SPEC CHECKSUMS:
   flutter_local_notifications: 1fc7ffb10a83d6a2eeeeddb152d43f1944b0aad0
   flutter_secure_storage_darwin: 46e401699982ee74142909676535e0f6a7321e58
   flutter_webrtc: af708ba091a5d71e101f9f631a9f96c107581a3d
-  flutter_zxing: c4574479da5c1b105b54e4b7ed31765e990b2ec7
+  flutter_zxing: 449ed9bd2f6fa37f7cb1dde1bd1cd0a19ed6a8fb
   FlutterMacOS: c232990155153907050900a2e175c7773903ba4e
   gal: baecd024ebfd13c441269ca7404792a7152fde89
   google_sign_in_ios: 92f9b87736ef92fbfda3bdd2036283d2e44bfc29
