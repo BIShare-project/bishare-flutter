@@ -1,6 +1,6 @@
 cask "bishare" do
-  version "2.9.3"
-  sha256 "e49c1e6958ec0775a3db6e8d19abac64e04c28a9daa7cf132c1660c5ca4cb013" # filled by packaging/bump.sh
+  version "2.9.4"
+  sha256 "3349052498b9c5a9bcc9d49bb7c58d635e1a6bf4a7511db6a8f8dea28582100c" # filled by packaging/bump.sh
 
   url "https://github.com/BIShare-project/bishare-flutter/releases/download/v#{version}/BIShare-#{version}-macos.dmg"
   name "BIShare"
