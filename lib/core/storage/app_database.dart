@@ -155,7 +155,15 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 7) {
         // Live Photos received as a pair (transfer-quality-plan.md Phase 4).
-        await m.addColumn(transferRecords, transferRecords.liveGroup);
+        // Only when missing: a build made between the column and the version
+        // bump left v6 databases that have it, and adding it twice failed
+        // every open after.
+        final cols = await customSelect(
+          "SELECT name FROM pragma_table_info('transfer_records')",
+        ).get();
+        if (!cols.any((c) => c.read<String>('name') == 'live_group')) {
+          await m.addColumn(transferRecords, transferRecords.liveGroup);
+        }
       }
     },
   );

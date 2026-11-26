@@ -105,7 +105,11 @@ class _QrBeamReceivePageState extends State<QrBeamReceivePage> {
             SafeArea(
               child: Column(
                 children: [
-                  _TopBar(controller: _controller, showTorch: !done),
+                  QrCameraTopBar(
+                    title: 'qr_beam.receive_title'.tr(),
+                    controller: _controller,
+                    showTorch: !done,
+                  ),
                   const Spacer(),
                   if (done)
                     _DoneCard(name: _savedName!)
@@ -252,89 +256,6 @@ class _DoneCard extends StatelessWidget {
             },
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _TopBar extends StatelessWidget {
-  const _TopBar({required this.controller, required this.showTorch});
-
-  final QrCameraController controller;
-  final bool showTorch;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-      child: Row(
-        children: [
-          _CircleButton(
-            icon: AppIcons.close,
-            onTap: () {
-              tapHaptic();
-              context.pop();
-            },
-          ),
-          const Spacer(),
-          Text(
-            'qr_beam.receive_title'.tr(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Spacer(),
-          if (showTorch)
-            ValueListenableBuilder<bool>(
-              valueListenable: controller,
-              builder: (context, on, _) {
-                return _CircleButton(
-                  icon: on ? AppIcons.flashlight : AppIcons.flashlightOff,
-                  active: on,
-                  onTap: () {
-                    tapHaptic();
-                    controller.toggleTorch();
-                  },
-                );
-              },
-            )
-          else
-            const SizedBox(width: 42),
-        ],
-      ),
-    );
-  }
-}
-
-class _CircleButton extends StatelessWidget {
-  const _CircleButton({
-    required this.icon,
-    required this.onTap,
-    this.active = false,
-  });
-
-  final String icon;
-  final VoidCallback onTap;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: active ? Colors.white : Colors.black.withValues(alpha: 0.4),
-          shape: BoxShape.circle,
-        ),
-        child: AppSvgIcon(
-          icon,
-          size: 20,
-          color: active ? Colors.black : Colors.white,
-        ),
       ),
     );
   }

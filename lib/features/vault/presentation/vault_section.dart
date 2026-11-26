@@ -94,7 +94,7 @@ class _VaultGroupState extends State<_VaultGroup> {
               AppListTile(
                 leading: const AppGlyph(AppIcons.settings),
                 title: Text('vault.manage'.tr()),
-                trailing: const _Chevron(),
+                trailing: const VaultChevron(),
                 onTap: () => context.push('/drive-account'),
               ),
             );
@@ -111,8 +111,9 @@ class _VaultGroupState extends State<_VaultGroup> {
   }
 }
 
-class _Chevron extends StatelessWidget {
-  const _Chevron();
+/// The chevron of the Drive rows in Settings.
+class VaultChevron extends StatelessWidget {
+  const VaultChevron({super.key});
 
   @override
   Widget build(BuildContext context) => AppSvgIcon(

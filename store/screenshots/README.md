@@ -45,3 +45,21 @@ required anyway) if you want the listing to be captures of the shipped binary.
 
 `01-secure-link.png` shows a real transfer code from a live upload. It was
 one-time and expired 24h after 2026-09-08.
+
+## Every language (`windows/<lang>/`)
+
+`compose_l10n.py` builds the same five Microsoft Store shots for all 13 app
+languages, with the captions of `store/screens/captions.py` and the caption
+faces of `store/screens/frame.py` (Arabic, Hindi and CJK need them). Raw
+captures first, one process per language:
+
+    BISHARE_SHOTS_DIR=<raw> BISHARE_SHOTS_LOCALES=<lang> \
+      BISHARE_SHOTS_PRESETS=windows_store \
+      BISHARE_SHOTS_ONLY=1_share,2_inbox,3_link,4_drive,5_settings \
+      flutter test test/preview/store_screenshots_test.dart
+    python3 store/screenshots/compose_l10n.py <raw> [lang ...]
+
+Needs Pillow with raqm. The listing text and the import CSV for Partner Center
+come from `store/msstore_listing.py`; see its docstring for the import rules
+that cost hours (folder name in image paths, no URLs in descriptions, and
+small batches, since one 23 MB import trips Partner Center's firewall).

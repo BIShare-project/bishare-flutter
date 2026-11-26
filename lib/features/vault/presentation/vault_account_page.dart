@@ -23,6 +23,7 @@ import '../data/vault_key_copy.dart';
 import '../data/vault_purchases.dart';
 import '../data/vault_signin.dart';
 import 'vault_account_overview.dart';
+import 'vault_section.dart';
 
 /// The Drive account on this device (drive-plan.md tasks 3.7, 3.8, 3.9):
 /// where the key is, the ways back in, the key for a new device by QR code
@@ -544,7 +545,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: sub.isEmpty ? null : Text(sub),
-      trailing: const _Chevron(),
+      trailing: const VaultChevron(),
       onTap: _busy ? null : () => _deviceMenu(d),
     );
   }
@@ -944,14 +945,14 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
               AppListTile(
                 leading: const AppGlyph(AppIcons.qrShare),
                 title: Text('vault.show_code'.tr()),
-                trailing: const _Chevron(),
+                trailing: const VaultChevron(),
                 onTap: _busy ? null : _showCode,
               ),
               const AppRowDivider(indent: 58),
               AppListTile(
                 leading: const AppGlyph(AppIcons.keyboard),
                 title: Text('vault.enter_phrase'.tr()),
-                trailing: const _Chevron(),
+                trailing: const VaultChevron(),
                 onTap: _busy ? null : _enterPhrase,
               ),
             ],
@@ -987,7 +988,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
                     leading: const AppGlyph(AppIcons.scanDocument),
                     title: Text('vault.add_device'.tr()),
                     subtitle: Text('vault.add_device_body'.tr()),
-                    trailing: const _Chevron(),
+                    trailing: const VaultChevron(),
                     onTap: _busy ? null : _addDevice,
                   ),
                 );
@@ -1003,7 +1004,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
                     leading: const AppGlyph(AppIcons.monitor),
                     title: Text('vault.web_open'.tr()),
                     subtitle: Text('vault.web_open_body'.tr()),
-                    trailing: const _Chevron(),
+                    trailing: const VaultChevron(),
                     onTap: _busy ? null : _openWeb,
                   ),
                 );
@@ -1105,7 +1106,7 @@ class _VaultAccountPageState extends State<VaultAccountPage> {
         leading: const AppGlyph(AppIcons.eyePreview),
         title: Text('vault.phrase_row'.tr()),
         subtitle: Text('vault.phrase_row_body'.tr()),
-        trailing: const _Chevron(),
+        trailing: const VaultChevron(),
         onTap: _busy ? null : _showPhrase,
       ),
     );
@@ -1268,15 +1269,4 @@ class _PairScanPageState extends State<VaultPairScanPage> {
       ),
     );
   }
-}
-
-class _Chevron extends StatelessWidget {
-  const _Chevron();
-
-  @override
-  Widget build(BuildContext context) => AppSvgIcon(
-    AppIcons.chevronRight,
-    size: 18,
-    color: context.tokens.text2.withValues(alpha: 0.6),
-  );
 }

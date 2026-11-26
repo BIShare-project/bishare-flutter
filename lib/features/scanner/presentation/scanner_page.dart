@@ -116,7 +116,10 @@ class _ScannerPageState extends State<ScannerPage> {
               bottom: false,
               child: Column(
                 children: [
-                  _TopBar(controller: _controller),
+                  QrCameraTopBar(
+                    title: 'scanner.title'.tr(),
+                    controller: _controller,
+                  ),
                   // The frame centres on the camera area above the panel.
                   const Expanded(child: Center(child: _ScanFrame())),
                   ReceiveTone(
@@ -132,85 +135,6 @@ class _ScannerPageState extends State<ScannerPage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TopBar extends StatelessWidget {
-  const _TopBar({required this.controller});
-
-  final QrCameraController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-      child: Row(
-        children: [
-          _CircleButton(
-            icon: AppIcons.close,
-            onTap: () {
-              tapHaptic();
-              context.pop();
-            },
-          ),
-          const Spacer(),
-          Text(
-            'scanner.title'.tr(),
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Spacer(),
-          ValueListenableBuilder<bool>(
-            valueListenable: controller,
-            builder: (context, on, _) {
-              return _CircleButton(
-                icon: on ? AppIcons.flashlight : AppIcons.flashlightOff,
-                active: on,
-                onTap: () {
-                  tapHaptic();
-                  controller.toggleTorch();
-                },
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CircleButton extends StatelessWidget {
-  const _CircleButton({
-    required this.icon,
-    required this.onTap,
-    this.active = false,
-  });
-
-  final String icon;
-  final VoidCallback onTap;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: active ? Colors.white : Colors.black.withValues(alpha: 0.4),
-          shape: BoxShape.circle,
-        ),
-        child: AppSvgIcon(
-          icon,
-          size: 20,
-          color: active ? Colors.black : Colors.white,
         ),
       ),
     );

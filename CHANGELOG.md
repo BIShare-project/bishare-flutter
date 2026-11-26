@@ -3,6 +3,20 @@
 All notable changes to BIShare are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.9.4] — 2026-11-26
+
+### Fixed
+- **Mac: Drive no longer keeps loading after an update** when the local
+  database already had the column the v7 migration adds.
+
+### Changed
+- **Updated components:** 38 packages to their latest patch and minor
+  releases, among them flutter_webrtc 1.6.3 (rooms, Web Nearby),
+  GoogleSignIn 10.1 (Drive sign-in on iOS and macOS), drift 2.35,
+  flutter_zxing 3.1.1, tray_manager 0.8.3 and bonsoir 7.1.
+- **Microsoft Store:** every tag submits the Windows build with its own
+  release notes in 14 listings.
+
 ## [2.9.3] — 2026-11-17
 
 ### Added

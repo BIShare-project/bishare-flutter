@@ -803,17 +803,14 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
   List<Widget> _headerActions({required bool wide}) {
     if (_ctrl.selecting) {
       final all =
-          _visible.isNotEmpty &&
-          _visible.every((o) => _ctrl.isSelected(o.id));
+          _visible.isNotEmpty && _visible.every((o) => _ctrl.isSelected(o.id));
       return [
         // Said in words: an icon alone was not found.
         TextButton(
           onPressed: all
               ? _ctrl.clearSelection
               : () => _ctrl.selectAll(_visible),
-          child: Text(
-            all ? 'inbox.select_none'.tr() : 'inbox.select_all'.tr(),
-          ),
+          child: Text(all ? 'inbox.select_none'.tr() : 'inbox.select_all'.tr()),
         ),
         AppIconButton(icon: AppIcons.close, onPressed: _ctrl.clearSelection),
       ];
@@ -1129,7 +1126,13 @@ class _DrivePageState extends State<DrivePage> with TickerProviderStateMixin {
     return StreamBuilder<List<VaultObject>>(
       stream: _itemsStream(),
       builder: (context, snap) {
-        if (!snap.hasData) return const _RowsLoading();
+        if (!snap.hasData) {
+          return const AppRowsSkeleton(
+            inset: 14,
+            titleWidths: (0.6, 0.45),
+            subtitleWidth: 0.3,
+          );
+        }
         final items = snap.data!;
         _visible = items;
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1666,40 +1669,3 @@ class _TrashNote extends StatelessWidget {
 }
 
 /// Rows on their way, under a shimmer.
-class _RowsLoading extends StatelessWidget {
-  const _RowsLoading();
-
-  @override
-  Widget build(BuildContext context) => AppShimmer(
-    child: Column(
-      children: [
-        for (var i = 0; i < 6; i++)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              children: [
-                const AppSkeletonBox(width: 44, height: 44, radius: 11),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      FractionallySizedBox(
-                        widthFactor: i.isEven ? 0.6 : 0.45,
-                        child: const AppSkeletonBox(height: 14, radius: 7),
-                      ),
-                      const SizedBox(height: 8),
-                      const FractionallySizedBox(
-                        widthFactor: 0.3,
-                        child: AppSkeletonBox(height: 11, radius: 6),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    ),
-  );
-}

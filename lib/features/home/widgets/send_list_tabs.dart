@@ -85,46 +85,6 @@ class _PickRow extends StatelessWidget {
 }
 
 /// Rows on their way: the row's shape under a shimmer.
-class _RowsSkeleton extends StatelessWidget {
-  const _RowsSkeleton({this.count = 6});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) => AppShimmer(
-    child: Column(
-      children: [
-        for (var i = 0; i < count; i++)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              children: [
-                const AppSkeletonBox(width: 44, height: 44, radius: 11),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      FractionallySizedBox(
-                        widthFactor: i.isEven ? 0.7 : 0.55,
-                        child: const AppSkeletonBox(height: 14, radius: 7),
-                      ),
-                      const SizedBox(height: 8),
-                      const FractionallySizedBox(
-                        widthFactor: 0.35,
-                        child: AppSkeletonBox(height: 11, radius: 6),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    ),
-  );
-}
-
 /// A file-type tile for list rows.
 class _FileArt extends StatelessWidget {
   const _FileArt(this.icon);
@@ -262,7 +222,7 @@ class _SendAudioTabState extends State<SendAudioTab>
         ),
         if (Platform.isAndroid) ...[
           if (_access == SendMediaAccess.unknown)
-            const _RowsSkeleton(count: 4)
+            const AppRowsSkeleton(count: 4)
           else if (_access == SendMediaAccess.none)
             AppEmptyState(
               icon: AppIcons.fileAudio,
@@ -276,7 +236,7 @@ class _SendAudioTabState extends State<SendAudioTab>
           else ...[
             AppSectionHeader('compose.all_audio'.tr()),
             if (_audio == null)
-              const _RowsSkeleton(count: 4)
+              const AppRowsSkeleton(count: 4)
             else if (_audio!.isEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
@@ -371,7 +331,7 @@ class _SendAppsTabState extends State<SendAppsTab>
     super.build(context);
     final apps = _apps;
     if (apps == null) {
-      return const SingleChildScrollView(child: _RowsSkeleton(count: 10));
+      return const SingleChildScrollView(child: AppRowsSkeleton(count: 10));
     }
     final q = _q.trim().toLowerCase();
     final shown = q.isEmpty
@@ -630,7 +590,7 @@ class _SendDocsTabState extends State<SendDocsTab>
     return [
       AppSectionHeader('compose.docs_on_device'.tr()),
       if (_deviceDocs == null)
-        const _RowsSkeleton(count: 4)
+        const AppRowsSkeleton(count: 4)
       else if (docs.isEmpty)
         Padding(
           padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
@@ -799,7 +759,12 @@ Future<void> composeTextNote(BuildContext context) async {
     builder: (ctx) => Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppTextField(controller: controller, autofocus: true, maxLines: 4, hint: 'home.type_something'.tr(),),
+        AppTextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 4,
+          hint: 'home.type_something'.tr(),
+        ),
         const SizedBox(height: 14),
         AppButton(
           label: 'home.add'.tr(),

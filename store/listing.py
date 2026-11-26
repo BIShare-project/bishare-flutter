@@ -14,8 +14,9 @@ macOS) and Google Play. Adapted from the games repo's store_listing.py.
 --check        limits (App Store name 30 / subtitle 30 / keywords 100 /
                promotional 170 / description 4000 / what's new 4000; Play
                title 30 / short 80 / full 4000 / what's new 500), keywords
-               that repeat the name or subtitle, spaces around commas, and any
-               "MIT" licence left in a description. Exits 1 on a problem.
+               that repeat the name or subtitle, spaces around commas, any
+               "MIT" licence left in a description, and the Microsoft Store's
+               own notes (msstore: this version, 1500 each). Exits 1 on a problem.
 --asc          for IOS and MAC_OS: the editable version (created with
                --create-version when there is none) gets description,
                keywords, promotional text and, with --whats-new, what's new;
@@ -58,6 +59,8 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+
+from msstore_submit import notes_problem
 
 HERE = pathlib.Path(__file__).parent
 ASC = "https://api.appstoreconnect.apple.com"
@@ -122,6 +125,9 @@ def check(listing: dict) -> int:
                 print(f"asc  {loc:8} name {len(l['name']):2} subtitle {len(l['subtitle']):2} keywords {len(kw):3} description {len(l['description']):4} whatsNew {len(l['whatsNew']):3}")
             else:
                 print(f"play {loc:8} title {len(l['title']):2} short {len(l['short']):2} full {len(l['full']):4} whatsNew {len(l['whatsNew']):3}")
+    if problem := notes_problem(listing):
+        print(problem)
+        bad += 1
     print("ok" if not bad else f"{bad} problem(s)")
     return 1 if bad else 0
 
